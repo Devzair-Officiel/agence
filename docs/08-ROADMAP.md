@@ -76,16 +76,16 @@ Les outils empêchent l’introduction de code non typé, mal structuré ou non 
 
 ## Phase 3 — Design system et accessibilité de base
 
-- [ ] Définir les tokens de couleur.
-- [ ] Définir typographies et espacements.
-- [ ] Définir conteneurs et grille.
-- [ ] Créer les composants de base nécessaires seulement.
-- [ ] Créer header, footer et navigation.
+- [x] Définir les tokens de couleur.
+- [x] Définir typographies et espacements.
+- [x] Définir conteneurs et grille.
+- [x] Créer les composants de base nécessaires seulement.
+- [x] Créer header, footer et navigation.
 - [ ] Tester clavier et focus.
 - [ ] Tester les contrastes.
 - [ ] Tester mobile et zoom.
 - [ ] Documenter les variantes.
-- [ ] Éviter les composants universels surconfigurés.
+- [x] Éviter les composants universels surconfigurés.
 
 ### Critère de sortie
 

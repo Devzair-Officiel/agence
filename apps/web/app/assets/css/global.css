@@ -1,0 +1,102 @@
+/*
+ * Devzair — Styles globaux
+ * S'applique à l'ensemble du site après tokens + reset + fonts + animations.
+ */
+
+html {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body);
+  color: var(--text-primary);
+  background-color: var(--background-primary);
+  font-size: 1rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: clamp(2rem, 4.2vw, 3.25rem);
+  letter-spacing: -0.032em;
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+h3 {
+  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  font-weight: var(--font-weight-heading-medium);
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+::selection {
+  background-color: var(--color-petrol);
+  color: var(--color-cream);
+}
+
+/* Anneau de focus visible partout, uniformisé sur le bleu Devzair.
+   Distinct de la couleur d'action (pétrole) pour éviter la confusion. */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: var(--radius-sm);
+}
+
+/* Retire le focus quand le focus est purement au clic sur les éléments
+   qui n'ont pas besoin de l'annoncer visuellement. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link — invisible tant qu'il n'a pas le focus, puis flottant en haut. */
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  inset-block-start: var(--space-4);
+  z-index: var(--z-skip-link);
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--color-ink);
+  color: var(--color-cream);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline-color: var(--color-devzair-blue);
+  outline-offset: 2px;
+}
+
+/* Verrou de scroll quand le menu mobile ou une modale est ouvert.
+   Appliqué au html plutôt qu'au body pour couvrir tous les cas. */
+html.is-scroll-locked,
+html.is-scroll-locked body {
+  overflow: hidden;
+  touch-action: none;
+}

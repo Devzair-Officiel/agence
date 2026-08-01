@@ -1,0 +1,17 @@
+/*
+ * Devzair — Polices
+ *
+ * Les @font-face seront réactivés lorsque les fichiers woff2 auront été livrés
+ * dans /public/fonts/. En attendant, on ne référence AUCUN fichier absent
+ * (sinon Nuxt fait passer les 404 par vue-router et pollue la console).
+ *
+ * Fichiers attendus (à ajouter avant la Phase 5) :
+ *   /public/fonts/schibsted-grotesk-600.woff2
+ *   /public/fonts/schibsted-grotesk-700.woff2
+ *   /public/fonts/hanken-grotesk-400.woff2
+ *   /public/fonts/hanken-grotesk-600.woff2
+ *   /public/fonts/space-mono-700.woff2
+ *
+ * En l'absence de ces fichiers, le stack de repli défini dans tokens.css
+ * s'applique (Inter / ui-sans-serif / system-ui / ui-monospace).
+ */

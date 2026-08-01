@@ -7,7 +7,10 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "nuxt": "^4.5.1",
@@ -15,6 +18,12 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0"
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^15.11.6",
+    "typescript": "~5.9.0",
+    "vitest": "^3.0.0",
+    "vue-tsc": "^3.3.9"
   }
 }

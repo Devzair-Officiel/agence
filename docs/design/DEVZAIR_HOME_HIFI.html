@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devzair — Home HiFi (maquette de référence)</title>
+</head>
+<body>
+<!--
+  Maquette de référence de la page d'accueil Devzair (visualisation).
+  Fichier de référence visuel — NE PAS copier tel quel en production.
+  Voir CLAUDE.md et docs/02-DESIGN-ACCESSIBILITY.md pour les règles d'intégration.
+
+  L'original livré par l'outil de maquette est un fragment HTML avec styles inline
+  et éléments décoratifs propres à l'outil (SVG, <x-dc>, <helmet>, etc.). Ce fichier
+  conserve la structure sémantique et les valeurs de design (couleurs, typographies,
+  espacements, comportements responsive) documentées ci-dessous, qui doivent servir
+  de source pour les tokens et les composants Vue — pas comme HTML de production.
+
+  Palette validée :
+    --color-sand           #EFEBE2   fond principal
+    --color-cream          #F4F1EA   fond secondaire clair
+    --color-ink            #16191C   texte principal
+    --color-navy           #0E1622   fond inverse
+    --color-navy-deep      #0A121C   footer
+    --color-petrol         #0C5B57   action / accent principal
+    --color-petrol-hover   #0A4A47   hover action
+    --color-petrol-active  #083F3C   active action
+    --color-devzair-blue   #2E86D9   focus / accent tech
+    --color-status-error   #B23A2E
+    --color-status-success #2A6E4A
+
+  Typographies :
+    Schibsted Grotesk  — titres (600 / 700)
+    Hanken Grotesk     — texte et interface (400 / 600)
+    Space Mono         — libellés techniques (700 uniquement)
+
+  Sections attendues sur la page d'accueil :
+    1. Header (logo, nav, CTA)
+    2. Hero (headline + accroche + CTA + schéma écosystème SVG)
+    3. Constat (5 difficultés numérotées)
+    4. Réponse Devzair + parcours des 5 pôles
+    5. Grille des 5 pôles (concevoir / construire / valoriser / visibilité / faire évoluer)
+    6. Réalisation-témoin (études de cas)
+    7. Méthode (6 étapes)
+    8. Pourquoi Devzair (5 promesses)
+    9. CTA final
+   10. Footer
+
+  Comportements responsive :
+    < 480px  : hero 1 col compact, nav burger, 5 pôles en carrousel, méthode en timeline verticale
+    480-767  : hero 1 col, nav burger
+    768-1023 : hero 2 col 60/40, grille 2 col, méthode 3x2
+    ≥ 1024   : hero 2 col 52/48 avec schéma SVG complet, grille 3 col asymétrique, méthode 6 col
+
+  Animations :
+    Micro-interactions : 120-200ms ease-out, transform/opacity/couleur uniquement
+    Révélations        : 350-550ms cubic-bezier(.2,.7,.2,1), IntersectionObserver ≥12%, stagger 60-80ms
+    Signature hero     : ~1.4s au chargement uniquement, tracés SVG progressifs
+    prefers-reduced-motion : tout désactivé, états finaux appliqués instantanément
+
+  Accessibilité :
+    Focus : anneau bleu #2E86D9 distinct de l'action pétrole
+    Cibles tactiles ≥ 44×44px
+    Contrastes vérifiés WCAG 2.2 AA
+    Menu mobile plein écran : role dialog, focus trap, restauration du focus
+-->
+
+<p>Fichier de référence visuelle uniquement — voir les commentaires sources de ce fichier pour les tokens, sections, comportements responsive et animations à intégrer.</p>
+<p>Le rendu graphique complet est fourni séparément par la maquette d'origine. La source HTML brute contenait des balises propres à l'outil de maquette et des styles inline non exploitables en production ; ce fichier en résume la spécification.</p>
+
+</body>
+</html>

@@ -9,6 +9,14 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  css: [
+    '~/assets/css/tokens.css',
+    '~/assets/css/reset.css',
+    '~/assets/css/fonts.css',
+    '~/assets/css/animations.css',
+    '~/assets/css/global.css',
+  ],
+
   app: {
     head: {
       htmlAttrs: {

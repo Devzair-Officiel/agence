@@ -1,0 +1,48 @@
+/*
+ * Devzair — Primitives d'animation
+ *
+ * Trois niveaux, tous respectant prefers-reduced-motion :
+ *   - micro (120-200ms) : transitions d'états interactifs
+ *   - reveal (350-550ms) : apparition progressive de contenus
+ *   - signature : réservée au hero, définie plus tard
+ *
+ * Règles :
+ *   - transform / opacity / couleur / ombre uniquement (jamais de reflow)
+ *   - le contenu est visible par défaut ; JS ajoute une classe pour animer
+ */
+
+@keyframes dv-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Classe d'amélioration progressive.
+   Sans JS, le contenu reste visible car nous n'appliquons pas opacity:0 par défaut. */
+.dv-reveal {
+  animation: dv-reveal var(--duration-slow) var(--ease-out) both;
+}
+
+/* Réduction du mouvement — obligation d'accessibilité.
+   Annule toutes les animations et transitions non essentielles. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .dv-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
