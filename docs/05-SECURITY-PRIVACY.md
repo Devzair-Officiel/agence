@@ -1,0 +1,249 @@
+# Sécurité et protection des données
+
+> Sécurité applicative, secrets, formulaires, administration, sauvegardes, cookies et conformité.
+
+## 14. Sécurité
+
+### Référentiel
+
+- OWASP Top 10:2025 comme socle de sensibilisation ;
+- OWASP ASVS 5.0 :
+  - niveau 1 minimum pour le site public ;
+  - niveau 2 pour toute administration, authentification, API métier, espace client ou traitement sensible.
+
+## 14.1 Modèle de menace initial
+
+Identifier :
+
+- données collectées ;
+- rôles ;
+- surfaces publiques ;
+- formulaires ;
+- administration ;
+- stockage de fichiers ;
+- services externes ;
+- clés API ;
+- pipeline de déploiement ;
+- sauvegardes ;
+- accès hébergeur ;
+- scénarios d’abus ;
+- impact d’une indisponibilité ou fuite.
+
+Mettre à jour le modèle à chaque fonctionnalité importante.
+
+## 14.2 Secrets et configuration
+
+- aucun secret dans Git ;
+- `.env.example` sans valeur sensible ;
+- secrets distincts par environnement ;
+- rotation possible ;
+- droits minimaux ;
+- suppression des comptes et clés inutilisés ;
+- variables de production injectées par le gestionnaire de secrets ou l’hébergeur ;
+- préproduction séparée ;
+- désactivation du mode debug en production ;
+- messages d’erreur publics non détaillés.
+
+## 14.3 Dépendances et chaîne logicielle
+
+- fichiers de verrouillage versionnés ;
+- mises à jour contrôlées ;
+- analyse automatique des dépendances ;
+- revue des alertes ;
+- provenance des paquets ;
+- nombre de dépendances réduit ;
+- interdiction des paquets abandonnés sans justification ;
+- inventaire logiciel ou SBOM si l’architecture le justifie ;
+- intégrité des artefacts de build ;
+- branche principale protégée.
+
+## 14.4 Entrées et sorties
+
+- validation serveur par liste d’autorisation ;
+- limites de taille et format ;
+- requêtes paramétrées ;
+- encodage selon le contexte ;
+- échappement automatique conservé ;
+- HTML utilisateur interdit sauf besoin démontré et sanitisation robuste ;
+- protection contre injections SQL, commandes, modèles et en-têtes ;
+- validation des URL externes et prévention SSRF ;
+- aucune confiance accordée aux données client.
+
+## 14.5 Authentification et administration
+
+Si une administration existe :
+
+- URL non considérée comme protection ;
+- MFA pour les comptes privilégiés ;
+- mots de passe stockés avec algorithme moderne fourni par le framework ;
+- limitation des tentatives ;
+- réinitialisation sécurisée ;
+- vérification de l’adresse e-mail si nécessaire ;
+- sessions rotatives ;
+- cookies `Secure`, `HttpOnly`, `SameSite` adapté ;
+- expiration et révocation ;
+- réauthentification pour actions sensibles ;
+- journalisation des connexions et actions administratives ;
+- rôles et permissions explicites ;
+- contrôle d’accès côté serveur sur chaque action.
+
+## 14.6 CSRF, XSS et politiques navigateur
+
+- protection CSRF pour les actions basées sur session ;
+- aucune action d’écriture via GET ;
+- CSP déployée progressivement, d’abord en report-only si nécessaire ;
+- éviter `unsafe-inline` et `unsafe-eval` ;
+- nonces ou hashes pour les scripts nécessaires ;
+- politique de framing via `frame-ancestors` ;
+- contrôle strict des sources de scripts, images, connexions et formulaires.
+
+## 14.7 En-têtes de sécurité
+
+Configurer et tester selon l’architecture :
+
+- `Content-Security-Policy` ;
+- `Strict-Transport-Security` après validation HTTPS complète ;
+- `X-Content-Type-Options: nosniff` ;
+- `Referrer-Policy` ;
+- `Permissions-Policy` ;
+- `frame-ancestors` dans CSP ;
+- `X-Frame-Options` comme compatibilité si nécessaire ;
+- type de contenu correct et UTF-8 ;
+- suppression des en-têtes révélant inutilement la technologie.
+
+La politique exacte doit être générée à partir des ressources réellement utilisées.
+
+## 14.8 Téléversement de fichiers
+
+À éviter dans le MVP si non indispensable. Si présent :
+
+- extensions autorisées ;
+- vérification de signature/type réel ;
+- taille limitée ;
+- nom généré ;
+- stockage hors racine publique ou service dédié ;
+- téléchargement via contrôleur ;
+- contrôle d’accès ;
+- analyse antivirus ou sandbox lorsque disponible ;
+- suppression automatique selon rétention ;
+- protection CSRF ;
+- blocage des fichiers actifs ;
+- aucune exécution dans le répertoire de stockage.
+
+## 14.9 Formulaires et anti-abus
+
+- limitation par IP et autres signaux avec prudence ;
+- honeypot accessible ;
+- temporisation ;
+- validation de cohérence ;
+- blocage des volumes anormaux ;
+- CAPTCHA uniquement en dernier recours, avec solution accessible ;
+- protection contre l’envoi massif d’e-mails ;
+- destinataires imposés côté serveur ;
+- aucun en-tête e-mail construit directement depuis une entrée utilisateur.
+
+## 14.10 Transport, hébergement et réseau
+
+- HTTPS obligatoire ;
+- protocoles et suites modernes gérés par l’hébergeur ;
+- redirection HTTP vers HTTPS ;
+- accès d’administration restreints ;
+- base de données non exposée publiquement ;
+- pare-feu et règles minimales ;
+- CDN/WAF configuré sans bloquer les robots choisis ;
+- protection DDoS adaptée au risque ;
+- environnements isolés.
+
+## 14.11 Journaux, alertes et incidents
+
+Journaliser sans enregistrer inutilement les données personnelles :
+
+- échecs d’authentification ;
+- changements de privilèges ;
+- actions administratives ;
+- erreurs serveur ;
+- anomalies de formulaire ;
+- alertes de sécurité ;
+- déploiements ;
+- sauvegardes.
+
+Prévoir :
+
+- horodatage cohérent ;
+- accès restreint ;
+- durée de conservation ;
+- alertes exploitables ;
+- procédure d’incident ;
+- contact responsable ;
+- rotation des secrets ;
+- restauration ;
+- analyse post-incident.
+
+## 14.12 Sauvegardes
+
+- sauvegardes automatiques ;
+- chiffrement ;
+- emplacement séparé ;
+- rétention définie ;
+- contrôle des succès ;
+- test réel de restauration ;
+- documentation du RPO/RTO lorsque le service devient critique.
+
+---
+
+## 15. Protection des données et conformité
+
+Ce référentiel n’est pas un avis juridique. Les textes finaux doivent être validés selon la structure juridique, l’hébergement, les prestataires et les traitements réels.
+
+### Inventaire des traitements
+
+Pour chaque collecte :
+
+- finalité ;
+- données ;
+- base légale ;
+- destinataires ;
+- sous-traitants ;
+- transfert hors EEE ;
+- durée de conservation ;
+- mesures de sécurité ;
+- droits des personnes ;
+- preuve de consentement si requise.
+
+### Minimisation
+
+- ne collecter que le nécessaire ;
+- rendre facultatifs les champs non indispensables ;
+- ne pas demander de données sensibles par formulaire ;
+- supprimer ou anonymiser à échéance ;
+- séparer prospection et réponse à une demande.
+
+### Cookies et traceurs
+
+- aucun traceur non essentiel avant consentement lorsqu’il est requis ;
+- bouton accepter et refuser au même niveau ;
+- choix par finalité ;
+- preuve du choix ;
+- retrait aussi simple que l’acceptation ;
+- lien permanent de gestion des préférences ;
+- politique mise à jour ;
+- vérification des scripts tiers après chaque changement.
+
+Pour une mesure d’audience présentée comme exemptée de consentement, vérifier que la solution et sa configuration satisfont réellement toutes les conditions de la CNIL.
+
+### Formulaires
+
+- information courte à proximité ;
+- lien vers la politique complète ;
+- pas de case obligatoire de consentement si la base légale n’est pas le consentement ;
+- opt-in séparé, facultatif et non précoché pour la prospection ;
+- mécanisme de traitement des demandes d’accès, rectification, opposition et suppression.
+
+---
+
+---
+
+## Règle de maintenance
+
+Ce fichier doit être modifié uniquement lorsque les règles de son domaine évoluent.  
+Les tâches réalisées, décisions et blocages doivent être consignés dans `10-TRACKING.md`.
