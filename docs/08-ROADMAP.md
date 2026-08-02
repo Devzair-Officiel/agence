@@ -99,25 +99,29 @@ Le layout et les composants indispensables sont accessibles, typés et réutilis
 
 ## Phase 4 — Socle SEO Nuxt
 
-- [ ] Définir `siteUrl`.
-- [ ] Configurer la langue.
-- [ ] Configurer le title template.
-- [ ] Créer `usePageSeo`.
-- [ ] Créer l’image Open Graph par défaut.
-- [ ] Ajouter les canonicals.
-- [ ] Définir la politique d’indexation par environnement.
-- [ ] Configurer le pré-rendu des pages marketing.
-- [ ] Évaluer puis installer Nuxt SEO.
-- [ ] Générer robots.txt.
-- [ ] Générer sitemap.xml.
-- [ ] Ajouter `Organization` et `WebSite`.
-- [ ] Tester les métadonnées dans le HTML serveur.
-- [ ] Tester les codes HTTP et redirections.
-- [ ] Ajouter des tests SEO automatisés ciblés.
+### État actuel : TERMINÉE
+
+- [x] Définir `siteUrl` (`NUXT_PUBLIC_SITE_URL`, source unique de vérité, jamais dérivé du header Host).
+- [x] Configurer la langue (`site.language` = `fr`, `<html lang="fr">`).
+- [x] Configurer le title template (`%s | Devzair`).
+- [x] Créer `usePageSeo` (`app/composables/usePageSeo.ts`).
+- [x] Créer l’image Open Graph par défaut (emplacement `apps/web/public/og/` créé, image reportée — aucune image fictive publiée).
+- [x] Ajouter les canonicals (absolus, sans query/fragment, jamais sur une page noindex).
+- [x] Définir la politique d’indexation par environnement (`NUXT_PUBLIC_SITE_INDEXABLE`, défaut `false`).
+- [ ] Configurer le pré-rendu des pages marketing (reporté en Phase 5 — accueil actuelle est un placeholder).
+- [x] Évaluer puis installer Nuxt SEO (Option 2 « à la carte » retenue, cf. ADR-004).
+- [x] Générer robots.txt (`@nuxtjs/robots` v5.7, règles OAI-SearchBot / GPTBot).
+- [x] Générer sitemap.xml (`@nuxtjs/sitemap` v7.6, exclut `/design-preview`).
+- [x] Ajouter `Organization` et `WebSite` (`useSiteSchema` dans le layout par défaut, aucune donnée fictive).
+- [x] Tester les métadonnées dans le HTML serveur (`test/e2e/seo.spec.ts`, 10 cas).
+- [x] Tester les codes HTTP et redirections (`/robots.txt`, `/sitemap.xml`, `X-Robots-Tag`).
+- [x] Ajouter des tests SEO automatisés ciblés (unitaires : `site-url.spec.ts`, `canonical.spec.ts`, `usePageSeo.spec.ts` — E2E : `seo.spec.ts`).
 
 ### Critère de sortie
 
 Une page de démonstration contient toutes ses métadonnées dans le HTML initial et l’environnement de préproduction ne peut pas être indexé.
+
+**Statut : atteint.** Le HTML SSR de `/` et `/design-preview` expose `<title>`, `description`, `robots`, `og:*`, `twitter:*` et le JSON-LD Organization + WebSite avant hydratation. Avec les défauts (`NUXT_PUBLIC_SITE_INDEXABLE=false`) : `X-Robots-Tag: noindex, nofollow`, `robots.txt` bloque tous les user-agents, aucune page ne peut apparaître dans un index. La bascule vers un environnement indexable ne dépend que d'une seule variable.
 
 ---
 

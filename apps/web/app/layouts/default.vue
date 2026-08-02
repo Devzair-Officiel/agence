@@ -1,9 +1,15 @@
 <script setup lang="ts">
 // Layout par défaut : skip-link, header sticky, main, footer.
 // La navigation mobile est teleportée sur <body> et n'apparaît que sur mobile.
+//
+// useSiteSchema() injecte le graphe Schema.org global (Organization + WebSite)
+// dans le HTML SSR. À n'appeler qu'ici — appeler depuis une page produirait
+// des JSON-LD dupliqués.
 import SiteHeader from "~/components/layout/SiteHeader.vue"
 import MobileNavigation from "~/components/layout/MobileNavigation.vue"
 import SiteFooter from "~/components/layout/SiteFooter.vue"
+
+useSiteSchema()
 </script>
 
 <template>

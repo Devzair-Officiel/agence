@@ -1,0 +1,16 @@
+# Emplacement des images sociales par défaut (Open Graph).
+#
+# Contraintes attendues pour l'image par défaut :
+#   - fichier : devzair-default.png (ou .jpg)
+#   - dimensions : 1200 × 630 px
+#   - poids raisonnable (≤ 400 kB)
+#   - logo Devzair, nom, phrase de positionnement courte
+#   - contraste suffisant, aucun petit texte illisible
+#   - aucune donnée fictive (adresse, avis, contact)
+#
+# Tant qu'aucune image validée n'a été fournie par le client, `site.defaultOgImage`
+# reste `null` dans app/config/site.ts et `og:image` n'est pas émis. Le partage
+# social affichera alors l'aperçu automatique (title/description) sans image.
+#
+# Cet emplacement est stabilisé dès Phase 4 pour que la déclaration de
+# `defaultOgImage` ne demande qu'un fichier drop-in, sans changement de code.

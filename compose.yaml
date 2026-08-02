@@ -17,6 +17,9 @@ services:
       NODE_ENV: development
       # Ces valeurs sont surchargées par .env à la racine s'il existe.
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:3001}
+      # Défaut sécurisé : le site en dev n'est pas indexable. Passer à `true`
+      # uniquement pour tester le rendu SEO en mode production.
+      NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-false}
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
     env_file:
       - path: .env

@@ -76,6 +76,13 @@ l'image `mcr.microsoft.com/playwright:v1.62.1-noble`.
 préfixées `NUXT_PUBLIC_*` et surchargent automatiquement
 `runtimeConfig.public` dans `apps/web/nuxt.config.ts`.
 
+Trois variables gouvernent la politique SEO :
+
+- `NUXT_PUBLIC_SITE_URL` — base absolue pour canonicals, OG et sitemap.
+- `NUXT_PUBLIC_SITE_INDEXABLE` — bascule d'indexation (défaut : `false`).
+  La production doit forcer `true` ; la preprod reste bloquée par défaut.
+- `NUXT_PUBLIC_API_BASE_URL` — base d'appel API (par défaut `/api`).
+
 Aucun secret ne doit être commité, ni ajouté à `runtimeConfig.public`.
 
 ## Documentation projet

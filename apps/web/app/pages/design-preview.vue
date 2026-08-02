@@ -5,9 +5,12 @@
  * design system.
  */
 
-useSeoMeta({
+usePageSeo({
   title: "Design preview",
-  robots: "noindex, nofollow",
+  description:
+    "Page interne de vérification visuelle des fondations du design Devzair. Non destinée aux résultats de recherche.",
+  path: "/design-preview",
+  noindex: true,
 })
 </script>
 

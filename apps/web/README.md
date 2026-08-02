@@ -14,6 +14,48 @@ options de développement en dehors de Docker.
 - Tests E2E : Playwright 1.62 + @axe-core/playwright 4.12 (Chromium seul).
 - Lint : `@nuxt/eslint` (Flat Config).
 - Polices auto-hébergées : `@nuxt/fonts`.
+- SEO technique : `@nuxtjs/robots` v5.7 (indexation, robots.txt dynamique,
+  X-Robots-Tag) et `@nuxtjs/sitemap` v7.6 (sitemap.xml). Schema.org injecté
+  à la main par `useSiteSchema` (Organization + WebSite). Choix justifié
+  dans [docs/adr/ADR-004-modules-seo.md](../../docs/adr/ADR-004-modules-seo.md).
+
+## Variables d'environnement SEO
+
+| Variable                       | Défaut                  | Effet                                                                 |
+|--------------------------------|-------------------------|-----------------------------------------------------------------------|
+| `NUXT_PUBLIC_SITE_URL`         | `http://localhost:3001` | Base absolue des canonicals, OG et sitemap. Jamais dérivée du header Host. |
+| `NUXT_PUBLIC_SITE_INDEXABLE`   | `false` (safe)          | Bascule toute la politique d'indexation (robots, X-Robots-Tag, meta). |
+| `NUXT_PUBLIC_API_BASE_URL`     | `/api`                  | Base des appels API front (préparation Symfony).                      |
+
+Le défaut `false` garantit que la preprod ne peut pas devenir indexable
+par simple oubli. La production doit forcer `NUXT_PUBLIC_SITE_INDEXABLE=true`
+en même temps qu'un `NUXT_PUBLIC_SITE_URL` https public.
+
+## Contrat SEO par page
+
+Une page publie ses métadonnées via un unique composable :
+
+```ts
+usePageSeo({
+  title: 'Nos services',
+  description: 'Sites, applications et stratégie SEO/GEO.',
+  path: '/services',
+  // Optionnels
+  image: '/og/services.png',       // ou URL absolue https://cdn…/x.png
+  imageAlt: 'Illustration Devzair',
+  type: 'article',                  // défaut 'website'
+  noindex: true,                    // ou robots: 'noindex, nofollow'
+})
+```
+
+Règles importantes :
+
+- Une page `noindex` n'émet **pas** de canonical (éviter le signal ambigu).
+- Le canonical est calculé à partir de `NUXT_PUBLIC_SITE_URL` + `path`
+  (query et fragment retirés). Jamais depuis le header HTTP.
+- Le graphe Schema.org Organization + WebSite est injecté une seule fois
+  via `useSiteSchema()` dans `app/layouts/default.vue` — ne pas dupliquer
+  au niveau des pages.
 
 ## Installation locale (hors Docker)
 

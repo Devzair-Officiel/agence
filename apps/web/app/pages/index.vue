@@ -1,18 +1,23 @@
 <script setup lang="ts">
 /**
- * Page d'accueil temporaire (Phase 3).
+ * Page d'accueil temporaire (Phase 4 : SEO en place mais contenu placeholder).
  *
- * La vraie page d'accueil (hero + écosystème 5 pôles) sera implémentée dans le
- * prochain lot. En attendant, on donne un point d'entrée honnête vers la
- * preview du design system, sans contenu marketing inventé.
+ * La vraie page d'accueil (hero + écosystème 5 pôles) sera implémentée en
+ * Phase 5. En attendant, on annonce un chantier en cours sans marketing
+ * inventé, et on garde la page `noindex, nofollow` : rien de public ne doit
+ * apparaître dans les résultats de recherche tant que le contenu réel
+ * n'existe pas.
  */
 import BaseButton from "~/components/base/BaseButton.vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 
-useSeoMeta({
+usePageSeo({
   title: "Devzair — Chantier en cours",
-  robots: "noindex, nofollow",
+  description:
+    "Les fondations du site Devzair, agence digitale à taille humaine, sont posées. La page d'accueil publique sera livrée à l'étape suivante.",
+  path: "/",
+  noindex: true,
 })
 </script>
 

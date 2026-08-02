@@ -159,69 +159,46 @@ Le chargement client ne doit servir qu’à enrichir l’expérience, pas à ren
 
 ### Composable central `usePageSeo`
 
-Créer un seul composable pour les métadonnées communes afin d’éviter la répétition :
+Implémentation vivante : [`apps/web/app/composables/usePageSeo.ts`](../apps/web/app/composables/usePageSeo.ts).
+
+Chaque page appelle `usePageSeo()` une seule fois pour publier ses
+métadonnées :
 
 ```ts
-// apps/web/app/composables/usePageSeo.ts
 export interface PageSeoInput {
   title: string
   description: string
+  path: string
   image?: string
-  canonicalPath?: string
-  robots?: 'index, follow' | 'noindex, follow' | 'noindex, nofollow'
+  imageAlt?: string
   type?: 'website' | 'article'
-}
-
-export function usePageSeo(input: PageSeoInput) {
-  const route = useRoute()
-  const config = useRuntimeConfig()
-
-  const canonicalUrl = computed(() => {
-    const path = input.canonicalPath ?? route.path
-    return new URL(path, config.public.siteUrl).toString()
-  })
-
-  const imageUrl = computed(() => new URL(
-    input.image ?? '/images/og/default.jpg',
-    config.public.siteUrl,
-  ).toString())
-
-  useSeoMeta({
-    title: input.title,
-    description: input.description,
-    robots: input.robots ?? 'index, follow',
-    ogTitle: input.title,
-    ogDescription: input.description,
-    ogType: input.type ?? 'website',
-    ogUrl: () => canonicalUrl.value,
-    ogImage: () => imageUrl.value,
-    twitterCard: 'summary_large_image',
-    twitterTitle: input.title,
-    twitterDescription: input.description,
-    twitterImage: () => imageUrl.value,
-  })
-
-  useHead({
-    link: [
-      {
-        rel: 'canonical',
-        href: () => canonicalUrl.value,
-      },
-    ],
-  })
+  noindex?: boolean
+  robots?: 'index, follow' | 'noindex, follow' | 'noindex, nofollow' | 'index, nofollow'
 }
 ```
 
+Le composable s’appuie sur deux utilitaires purs (donc testables sans
+Nuxt) : [`app/utils/canonical.ts`](../apps/web/app/utils/canonical.ts) et
+[`app/utils/site-url.ts`](../apps/web/app/utils/site-url.ts).
+
 ### Règles du composable
 
-- `siteUrl` doit être une URL absolue définie dans `runtimeConfig.public`.
-- `route.path` est préféré à `route.fullPath` afin d’exclure les paramètres de tracking.
-- Les images sociales doivent être absolues.
-- Les titres, descriptions et images restent propres à chaque page.
-- Ne pas utiliser `useServerSeoMeta` dans le nouveau code : il est déprécié ; utiliser `useSeoMeta`, éventuellement dans `if (import.meta.server)` pour des métadonnées statiques.
+- `siteUrl` provient exclusivement de `NUXT_PUBLIC_SITE_URL` via
+  `runtimeConfig.public.siteUrl` : **jamais** dérivé du header HTTP Host.
+- Le canonical est absolu, sans query ni fragment (les paramètres UTM
+  sont retirés dans `normalizeCanonicalPath`).
+- Une page `noindex` n’émet **pas** de balise canonical (éviter le
+  signal ambigu à un moteur qui l’aurait crawlée par accident).
+- L’absence d’image bascule `twitter:card` de `summary_large_image` à
+  `summary`. Ne pas publier de `og:image` fictive.
+- `useSeoMeta` reste le point d’entrée, `useServerSeoMeta` est déprécié.
 - Ne pas appeler `usePageSeo` depuis plusieurs composants d’une même page.
-- Une page dynamique doit attendre ses données avec `useFetch` ou `useAsyncData` avant de définir ses métadonnées.
+- Une page dynamique doit attendre ses données avec `useFetch` ou
+  `useAsyncData` avant de définir ses métadonnées.
 - Une ressource absente doit générer une vraie erreur 404 avec `createError`.
+- Le graphe Schema.org global (Organization + WebSite) est injecté
+  automatiquement par [`useSiteSchema`](../apps/web/app/composables/useSiteSchema.ts)
+  dans le layout par défaut ; ne pas le dupliquer dans les pages.
 
 ### Exemple d’une page statique
 
@@ -230,7 +207,7 @@ export function usePageSeo(input: PageSeoInput) {
 usePageSeo({
   title: 'Agence digitale pour les entreprises',
   description: 'Devzair conçoit des sites, applications et stratégies de visibilité adaptés aux entreprises.',
-  canonicalPath: '/',
+  path: '/',
 })
 </script>
 
@@ -266,7 +243,7 @@ usePageSeo({
   title: article.value.seoTitle || article.value.title,
   description: article.value.metaDescription,
   image: article.value.ogImage,
-  canonicalPath: `/ressources/${article.value.slug}`,
+  path: `/ressources/${article.value.slug}`,
   type: 'article',
 })
 </script>
@@ -305,28 +282,31 @@ Règles :
 
 Ne pas ajouter de module avant que le socle Nuxt passe `build`, `typecheck` et `lint`.
 
-Après ce point de contrôle, la solution recommandée est d’évaluer puis d’installer le module consolidé **Nuxt SEO** :
+**État actuel (Phase 4 close, 2026-08-02).** Après évaluation du bundle
+`@nuxtjs/seo`, l’option retenue est l’installation « à la carte » (cf.
+[ADR-004](adr/ADR-004-modules-seo.md)) :
 
-```bash
-docker compose exec web npx nuxt module add seo
-```
+- `@nuxtjs/robots` v5.7 — X-Robots-Tag global, meta robots, robots.txt
+  dynamique, règles OAI-SearchBot / GPTBot ;
+- `@nuxtjs/sitemap` v7.6 — sitemap.xml généré à partir des routes Nuxt,
+  exclusion automatique des pages noindex ;
+- Schema.org (Organization + WebSite) injecté à la main par
+  `app/composables/useSiteSchema.ts`, appelé une seule fois dans le
+  layout par défaut.
 
-Il peut centraliser notamment :
+Modules **différés** (à réévaluer en Phase 9) : `nuxt-schema-org` (utile
+à partir de 3 types d’entités), `nuxt-link-checker` (bénéfice nul sur
+2 routes), `nuxt-seo-utils`, bundle `@nuxtjs/seo`, `nuxt-og-image`
+(préférence pour une image OG statique validée).
 
-- la configuration du site ;
-- le sitemap XML ;
-- robots.txt ;
-- Schema.org ;
-- les images Open Graph ;
-- les utilitaires SEO.
-
-Avant validation :
+Avant l’ajout d’un nouveau module SEO :
 
 - contrôler la compatibilité avec la version verrouillée de Nuxt ;
 - consulter les changements de version ;
 - vérifier le HTML réellement généré ;
 - ne pas accepter une configuration automatique sans test ;
-- ne pas ajouter d’autres modules couvrant le même besoin.
+- ne pas ajouter d’autres modules couvrant le même besoin ;
+- documenter la décision par un ADR dans `docs/adr/`.
 
 ### Checklist SEO pour chaque page
 

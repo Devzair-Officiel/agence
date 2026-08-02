@@ -49,6 +49,17 @@ config.global.stubs = {
 }
 
 // Stubs Nuxt : composables auto-importés non résolus par Vitest.
+// Les tests ciblant usePageSeo réinstallent des stubs plus riches à la volée
+// (cf. test/unit/composables/usePageSeo.spec.ts) ; ici on fournit des no-ops
+// suffisants pour que le montage d'un composant ne crashe pas.
 Object.assign(globalThis, {
   useSeoMeta: vi.fn(),
+  useHead: vi.fn(),
+  useRuntimeConfig: vi.fn(() => ({
+    public: {
+      siteUrl: "http://localhost:3001",
+      siteIndexable: false,
+      apiBaseUrl: "/api",
+    },
+  })),
 })
