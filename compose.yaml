@@ -44,6 +44,8 @@ services:
       # Base URL relative : le navigateur appelle /api/... et Caddy route
       # vers le conteneur api.
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+      # Clé publique Cloudflare Turnstile — vide en dev (widget dev-noop).
+      NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     env_file:
       - path: .env
         required: false

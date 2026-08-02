@@ -2,20 +2,22 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { openMobileNavigation } from './support/mobile-nav'
 
-// Contrôles E2E de la section finale « Parlons de votre projet » (Phase 5D).
+// Contrôles E2E de la section finale « Parlons de votre projet » (Phase 6B).
 //
+// Depuis la Phase 6B, la section héberge le vrai formulaire de contact
+// (ContactForm) : plus de mailto conditionnel, plus de notice preprod.
 // Cette suite couvre :
 //   - la présence SSR de l'ancre #contact, du titre et du paragraphe verbatim ;
+//   - la présence du <form> avec ses champs essentiels ;
 //   - la navigation d'ancrage depuis le CTA hero primaire, le CTA header (desktop
 //     et mobile via le dialog du menu), et le lien footer « Parler de votre projet » ;
-//   - l'absence totale de contact fictif : aucun mailto vide, aucun tel:
-//     avant validation client (site.contact.email == null par défaut) ;
+//   - l'absence de mailto/tel/href="#" (le contact passe désormais par le form) ;
 //   - le respect responsive (320/390/768/1440) sans débordement horizontal ;
 //   - une passe Axe WCAG 2.2 AA sans violation `serious` / `critical` ;
 //   - `prefers-reduced-motion` (contenu visible, aucune animation résiduelle).
 //
-// Toutes les assertions ciblent la page `/`. La section CTA final est la
-// huitième et dernière du flux éditorial.
+// La couverture fonctionnelle du formulaire (soumission, erreurs API, honeypot,
+// rate limit) est portée par `contact-form.spec.ts`.
 
 const CONTACT_SECTION = '#contact'
 const CTA_TITLE = 'Construisons une présence digitale à la hauteur de votre entreprise.'
@@ -55,36 +57,49 @@ test.describe('/ (home) — CTA final #contact', () => {
     expect(h2s).toEqual([CTA_TITLE])
   })
 
-  test('does not render any fake contact (no mailto, no tel, no href="#")', async ({
+  test('does not render any fake contact link (no mailto, no tel, no href="#")', async ({
     page,
   }) => {
     await page.goto('/')
     const contact = page.locator(CONTACT_SECTION)
+    // Le contact passe désormais par le formulaire — aucun lien de contact
+    // direct ne doit subsister dans la section (ni honeypot mail visible, etc.).
     await expect(contact.locator('a[href^="mailto:"]')).toHaveCount(0)
     await expect(contact.locator('a[href^="tel:"]')).toHaveCount(0)
     await expect(contact.locator('a[href="#"]')).toHaveCount(0)
     await expect(contact.locator('a[href=""]')).toHaveCount(0)
   })
 
-  test('does not mention Phase 6 or internal implementation details', async ({
+  test('does not leak internal implementation details in visible text', async ({
     page,
   }) => {
     await page.goto('/')
+    // Le titre sr-only « Formulaire de contact » n'est pas visible : on lit le
+    // texte perceptible seulement (`innerText`), qui exclut les nœuds sr-only.
     const text = (await page.locator(CONTACT_SECTION).innerText()).toLowerCase()
     expect(text).not.toMatch(/phase\s*6/)
-    expect(text).not.toMatch(/formulaire/)
     expect(text).not.toMatch(/todo/)
+    expect(text).not.toMatch(/lorem ipsum/)
   })
 
-  test('shows the preprod notice in non-indexable env (default test setup)', async ({
+  test('hosts a real <form> with name, email, message and consent fields', async ({
     page,
   }) => {
-    // L'environnement E2E démarre avec NUXT_PUBLIC_SITE_INDEXABLE=false par défaut ;
-    // site.contact.email reste null en Phase 5D. Le message d'attente doit apparaître.
     await page.goto('/')
-    await expect(page.locator(CONTACT_SECTION)).toContainText(
-      'Le moyen de contact en ligne sera activé avant la mise en production.',
-    )
+    const form = page.locator(`${CONTACT_SECTION} form.contact-form`)
+    await expect(form).toHaveCount(1)
+    await expect(form).toHaveAttribute('aria-labelledby', /.+/)
+    await expect(form.locator('input[name="name"]')).toHaveCount(1)
+    await expect(form.locator('input[name="email"]')).toHaveCount(1)
+    await expect(form.locator('textarea[name="message"]')).toHaveCount(1)
+    await expect(form.locator('input[name="consent"]')).toHaveCount(1)
+    // Le honeypot est présent, hors flux et hors tabulation.
+    const honeypot = form.locator('input[name="website"]')
+    await expect(honeypot).toHaveAttribute('tabindex', '-1')
+    // La RGPD note est présente et référencée par aria-describedby.
+    const describedBy = await form.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    await expect(form.locator(`#${describedBy!.split(' ')[0]}`)).toContainText('RGPD')
   })
 
   test('hero primary CTA scrolls to #contact (fragment updated, section visible)', async ({

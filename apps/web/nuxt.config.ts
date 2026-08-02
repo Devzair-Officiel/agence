@@ -83,6 +83,11 @@ export default defineNuxtConfig({
       siteUrl: 'http://localhost:3001',
       siteIndexable: false,
       apiBaseUrl: '/api',
+      // Clé publique Cloudflare Turnstile (site-key, non-secrète). Vide en
+      // dev : le widget émet automatiquement un token factice `dev-noop` et
+      // l'API Symfony l'accepte via `AlwaysAllowTurnstileVerifier`. En prod,
+      // NUXT_PUBLIC_TURNSTILE_SITE_KEY doit être défini — cf. ADR-007.
+      turnstileSiteKey: '',
     },
   },
 

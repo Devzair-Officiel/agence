@@ -323,17 +323,46 @@ l’endpoint à la livraison du widget navigateur.
       passed/flaky/failed.
 - [x] ADR-006 (runtime Symfony/Caddy), ADR-007 (sécurité endpoint contact).
 
-### Phase 6B — Front, page /contact et widget Turnstile (à venir)
+### Phase 6B — Front, formulaire ancré `#contact` et widget Turnstile (TERMINÉE)
 
-- [ ] Créer la page publique `/contact` (Nuxt, SSR).
-- [ ] Composant formulaire accessible (labels, erreurs annoncées,
-      focus management, `prefers-reduced-motion`).
-- [ ] Intégration widget Cloudflare Turnstile côté navigateur.
-- [ ] Messages d’état accessibles (succès, erreur, rate limit).
-- [ ] Notice de confidentialité (RGPD, base légale, durée).
-- [ ] Événements analytics après décision de consentement.
-- [ ] Tests E2E : parcours complet, erreurs de validation, honeypot,
-      rate limit visible côté UI.
+Le formulaire est intégré à la section finale `#contact` de l'accueil (pas de
+page `/contact` dédiée : le one-pager reste la surface publique). La stratégie
+de découplage (composable Vue pur, sans coupleur Nuxt) et le mode dev-noop
+Turnstile sont documentés dans les commentaires de tête des fichiers.
+
+- [x] Composant `ContactForm.vue` accessible orchestrateur (labels visibles,
+      erreurs par champ, focus management, `role="status"`/`role="alert"`,
+      `aria-live`, `prefers-reduced-motion` respecté).
+- [x] Primitives `ContactFormField.vue` (label + input/textarea + hint + error
+      relié via `aria-describedby`) et `ContactFormStatus.vue` (bandeau
+      focusable succès/erreur avec `request_id`).
+- [x] Composable `useContactForm` (état réactif, validation client miroir non
+      strict du DTO Symfony, mapping HTTP 200/202/400/403/413/429 → codes
+      ADR-007, protection double-clic, reset sur succès).
+- [x] Types partagés `types/contact.ts` (union discriminée
+      `ContactSubmitResponse`, énuméré `ProjectType`).
+- [x] Widget Cloudflare Turnstile `TurnstileWidget.vue` client-only avec
+      fallback `dev-noop` quand la site-key est vide (accepté côté API par
+      `AlwaysAllowTurnstileVerifier`).
+- [x] Honeypot `website` (position hors flux, `aria-hidden`, `tabindex=-1`,
+      transmis tel quel au serveur).
+- [x] Notice de confidentialité RGPD reliée au `<form>` via
+      `aria-describedby` (base légale, conservation, droits).
+- [x] Intégration dans `HomeCallToAction.vue` : suppression du mailto
+      conditionnel et de la notice preprod (placeholder Phase 5D).
+- [x] Runtime config `NUXT_PUBLIC_TURNSTILE_SITE_KEY` propagée depuis
+      `nuxt.config.ts`, `.env.example` et `compose.yaml`.
+- [x] Tests unitaires : 20 tests `useContactForm` (validation + mapping HTTP)
+      et 6 tests `ContactForm` (structure, honeypot, ARIA, submit disabled).
+- [x] Tests E2E `contact-form.spec.ts` : SSR, happy path avec Turnstile
+      dev-noop, HTTP 400 par champ, HTTP 429 avec `Retry-After`, honeypot
+      transmis, validation client bloque une soumission vide, Axe WCAG 2.2 AA
+      restreint au form, `prefers-reduced-motion`.
+- [x] Tests E2E `home-cta-final.spec.ts` réalignés (présence du `<form>` +
+      champs, suppression des assertions preprod/mailto obsolètes).
+- [x] Suite Playwright : 117 passed / 0 failed / 0 flaky.
+- [x] Poids build : 2.85 MB brut / 740 kB gzip (dans le budget +80 KB / +20 KB
+      par rapport à la baseline 2.10 de 2.8 MB / 728 kB).
 
 ### Critère de sortie (Phase 6 complète)
 
