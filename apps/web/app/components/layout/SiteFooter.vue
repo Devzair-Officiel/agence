@@ -140,7 +140,8 @@ const hasContact = computed(() =>
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5e6b78;
+  /* AA WCAG 4.5:1 sur --background-inverse-deep (contrast ≈ 6.0:1). */
+  color: var(--color-cream-subtle);
 }
 
 .site-footer__list {
@@ -176,7 +177,7 @@ const hasContact = computed(() =>
   justify-content: space-between;
   font-family: var(--font-family-body);
   font-size: 0.78125rem;
-  color: #5e6b78;
+  color: var(--color-cream-subtle);
 }
 
 .site-footer__legal-list {
@@ -189,7 +190,7 @@ const hasContact = computed(() =>
 }
 
 .site-footer__copyright {
-  color: #5e6b78;
+  color: var(--color-cream-subtle);
 }
 
 @media (min-width: 768px) {

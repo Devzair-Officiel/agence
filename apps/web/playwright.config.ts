@@ -2,25 +2,33 @@ import { defineConfig, devices } from '@playwright/test'
 
 // Configuration Playwright — Devzair, apps/web
 //
-// Périmètre volontairement minimal en Phase 2 : un unique smoke test qui
-// ouvre `/design-preview` et vérifie qu'aucun avertissement vue-router ou
-// erreur console n'apparaît. On étendra à d'autres pages quand elles
-// existeront réellement (roadmap Phase 3+).
+// Deux modes :
+//   - local : Nuxt dev suffit (reuseExistingServer si déjà démarré).
+//   - CI : Nuxt buildé puis servi via `.output/server/index.mjs` — plus
+//     rapide et plus proche du comportement de production que `nuxt dev`.
 //
-// Le webServer démarre `npm run dev` sur le port 3000 (celui du conteneur).
-// En local hors Docker, cela suffit ; en Docker Compose, il faut lancer les
-// tests depuis le service `web` (cf. README).
+// `baseURL` peut être surchargé par `PLAYWRIGHT_BASE_URL` (utile pour pointer
+// sur un service Docker déjà en écoute sur un autre port).
+
+const isCI = !!process.env.CI
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 
 export default defineConfig({
   testDir: './test/e2e',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  workers: isCI ? 1 : undefined,
+  timeout: 30_000,
+  expect: {
+    timeout: 5_000,
+  },
+  reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'off',
   },
   projects: [
     {
@@ -28,10 +36,19 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: isCI
+          ? 'npm run build && node .output/server/index.mjs'
+          : 'npm run dev',
+        url: baseURL,
+        reuseExistingServer: !isCI,
+        timeout: 180_000,
+        env: {
+          NUXT_PORT: '3000',
+          HOST: '0.0.0.0',
+          PORT: '3000',
+        },
+      },
 })

@@ -66,7 +66,7 @@ Le projet démarre uniquement avec Docker, le build passe et la base est version
 - [x] Créer `error.vue`.
 - [x] Créer la première page (`/` placeholder + `/design-preview`).
 - [x] Ajouter la configuration centralisée du site (`runtimeConfig` + `NUXT_PUBLIC_*`).
-- [ ] Documenter les conventions de nommage (à faire en tête de Phase 3).
+- [x] Documenter les conventions de nommage (fait en clôture Phase 3, cf. `06-ARCHITECTURE-CODE.md` §16.9).
 - [x] Ajouter une CI minimale (`.github/workflows/web-quality.yml`).
 - [x] Exécuter lint, typecheck, tests et build.
 
@@ -78,15 +78,17 @@ Les outils empêchent l’introduction de code non typé, mal structuré ou non 
 
 ## Phase 3 — Design system et accessibilité de base
 
+### État actuel : TERMINÉE
+
 - [x] Définir les tokens de couleur.
 - [x] Définir typographies et espacements.
 - [x] Définir conteneurs et grille.
 - [x] Créer les composants de base nécessaires seulement.
 - [x] Créer header, footer et navigation.
-- [ ] Tester clavier et focus.
-- [ ] Tester les contrastes.
-- [ ] Tester mobile et zoom.
-- [ ] Documenter les variantes.
+- [x] Tester clavier et focus (E2E `keyboard-navigation.spec.ts` + `mobile-navigation.spec.ts`).
+- [x] Tester les contrastes (Axe `serious`/`critical` bloquants, sur `/design-preview`).
+- [x] Tester mobile et zoom (E2E responsive 390 / 768 / 1440 ; contrôles manuels 320 / zoom 200 % documentés).
+- [x] Documenter les variantes (`docs/02-DESIGN-ACCESSIBILITY.md` + prop `variant`/`tone`).
 - [x] Éviter les composants universels surconfigurés.
 
 ### Critère de sortie

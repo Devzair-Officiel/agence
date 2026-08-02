@@ -53,8 +53,11 @@ useSeoMeta({
         >
           <span>Petrol<br ><code>#0C5B57</code></span>
         </div>
+        <!-- Devzair blue est notre teinte d'accent (focus, flèches).
+             Sur fond bleu clair, un texte gris foncé ne satisfait pas 4.5:1 ;
+             on force donc du noir pur pour cette swatch afin de rester AA. -->
         <div
-          class="preview__swatch preview__swatch--dark"
+          class="preview__swatch preview__swatch--accent"
           style="background-color: var(--color-devzair-blue)"
         >
           <span>Devzair blue<br ><code>#2E86D9</code></span>
@@ -64,11 +67,21 @@ useSeoMeta({
 
     <BaseContainer as="section" class="preview__section">
       <h2>Typographie</h2>
+      <!-- Démonstration de l'échelle : on ne réutilise pas <h1>/<h2>/<h3>
+           réels pour ne pas casser la hiérarchie sémantique de la page
+           (un seul H1, celui du hero de la preview). Les échantillons sont
+           donc rendus avec des classes visuellement identiques. -->
       <div class="preview__type">
         <BaseEyebrow>Eyebrow · Space Mono 700</BaseEyebrow>
-        <h1>Titre H1 · Schibsted Grotesk 700</h1>
-        <h2>Titre H2 · Schibsted Grotesk 700</h2>
-        <h3>Titre H3 · Schibsted Grotesk 600</h3>
+        <p class="preview__type-sample preview__type-sample--h1">
+          Titre H1 · Schibsted Grotesk 700
+        </p>
+        <p class="preview__type-sample preview__type-sample--h2">
+          Titre H2 · Schibsted Grotesk 700
+        </p>
+        <p class="preview__type-sample preview__type-sample--h3">
+          Titre H3 · Schibsted Grotesk 600
+        </p>
         <p>
           Paragraphe standard · Hanken Grotesk 400. Sites internet, applications
           métier, identité visuelle, contenus professionnels et référencement.
@@ -172,15 +185,50 @@ useSeoMeta({
   border-color: transparent;
 }
 
+.preview__swatch--accent {
+  /* Fond Devzair blue : le noir garantit un contraste ≥ 5.9:1 contre #2E86D9,
+     alors que la couleur d'encre standard n'atteint que 4.17:1 (WCAG AA échoué). */
+  color: #000;
+  border-color: transparent;
+}
+
 .preview__swatch code {
   font-size: 0.6875rem;
-  opacity: 0.85;
+  /* Opacité maintenue à 1 pour garantir un contraste ≥ 4.5:1 sur toutes
+     les swatches, y compris Devzair blue en fond clair. */
+  opacity: 1;
 }
 
 .preview__type {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.preview__type-sample {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-family-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.preview__type-sample--h1 {
+  font-size: clamp(2rem, 4.2vw, 3.25rem);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: -0.032em;
+  line-height: 1.05;
+}
+
+.preview__type-sample--h2 {
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: -0.03em;
+}
+
+.preview__type-sample--h3 {
+  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  font-weight: var(--font-weight-heading-medium);
 }
 
 .preview__row {

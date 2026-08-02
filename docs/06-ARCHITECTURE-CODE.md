@@ -391,7 +391,69 @@ Page Nuxt
 
 Aucun HTML fourni par un utilisateur ne doit être rendu sans assainissement.
 
-## 16.9 ADR obligatoires
+## 16.9 Conventions de nommage
+
+Les noms doivent être explicites, courts et sans ambiguïté. Un lecteur qui découvre un fichier doit deviner à quoi il sert avant de l'ouvrir.
+
+### Composants Vue
+
+- PascalCase, une extension `.vue`.
+- Préfixe `Base` pour les composants UI primitifs sans logique métier (`BaseButton.vue`, `BaseContainer.vue`, `BaseEyebrow.vue`, `BaseLink.vue`).
+- Préfixe `Site` pour les éléments de layout globaux (`SiteHeader.vue`, `SiteFooter.vue`).
+- Préfixe fonctionnel explicite pour les composants métier (`HomeHero.vue`, `MobileNavigation.vue`, `CaseStudyCard.vue`).
+- Interdits : `Card.vue`, `Section.vue`, `Component.vue`, `Utils.vue`, `Item.vue` sans préfixe de domaine.
+- Un composant qui grossit doit être découpé plutôt que renommé génériquement.
+
+### Composables
+
+- Préfixe `use`, camelCase, une extension `.ts`.
+- Responsabilité unique : `useMobileNavigation.ts`, `useReveal.ts`, `usePageSeo.ts`.
+- Interdits : composables « couteau suisse » (`useApp.ts`, `useHelpers.ts`, `useHooks.ts`).
+
+### Types et interfaces
+
+- PascalCase, sans préfixe `I` (`NavigationItem`, `ButtonVariant`, `SiteConfiguration`).
+- Types proches du domaine qu'ils représentent, pas des couches techniques.
+- Aucun `any` : préférer `unknown` puis restreindre. Cf. règle ESLint `@typescript-eslint/no-explicit-any: error`.
+- Types partagés app + serveur → `apps/web/shared/types/`.
+- Types propres au frontend → `apps/web/app/types/`.
+
+### CSS
+
+- **Variables (custom properties)** : kebab-case avec préfixe de rôle. Deux familles :
+  - tokens bruts : `--color-*`, `--space-*`, `--radius-*`, `--font-family-*`, `--duration-*` ;
+  - alias sémantiques : `--background-primary`, `--text-primary`, `--action-primary`, `--focus-ring`.
+  Un composant utilise **toujours** les alias sémantiques quand ils existent.
+- **Classes globales** : kebab-case, préfixe utilitaire explicite (`skip-link`, `is-scroll-locked`). Utiliser avec parcimonie.
+- **Classes de composants** : convention BEM allégée, préfixe du composant.
+  - bloc : `base-button`, `site-header` ;
+  - élément : `site-header__nav`, `mobile-navigation__link` ;
+  - variantes via `data-*` plutôt que modificateurs BEM : `data-variant="primary"`, `data-tone="inverse"` (plus lisible en template, ciblable en CSS).
+- **États** : préfixe `is-` ou `has-` sur `<html>` ou `<body>` pour les états globaux (`is-scroll-locked`). Sur composant, `data-state` ou `[aria-expanded="true"]` selon la sémantique ARIA disponible.
+- **Animations** : préfixe `dv-` pour les keyframes globales (`dv-reveal`) ; keyframes locales préfixées par le nom du composant (`base-button-spin`).
+- **Attributs `data-*`** : réservés aux variantes visuelles (`data-variant`, `data-tone`) et aux hooks E2E stables (`data-testid` uniquement quand aucun sélecteur ARIA ou rôle n'est adapté).
+
+Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tant que le besoin n'est pas démontré par la répétition sur 3 composants au minimum.
+
+### Tests
+
+- Unitaires (Vitest) : `<Sujet>.spec.ts` dans `test/unit/<domaine>/`.
+- E2E (Playwright) : `<parcours>.spec.ts` dans `test/e2e/`.
+- Un fichier de test = un sujet ; ne pas mélanger plusieurs composants dans un même fichier.
+- Nom du sujet en tête (`describe`), scénarios en `it` avec verbe descriptif (`it("closes when Escape is pressed", ...)`).
+
+### Configuration statique
+
+- Données stables du site (identité, navigation, coordonnées, feature flags de contenu) → `apps/web/app/config/`.
+- Aucun composant ne duplique un menu, une coordonnée, un slogan. Un changement de nom doit se faire dans un seul fichier.
+- Les types associés (`SiteConfig`, `NavigationItem`) sont co-localisés avec la donnée.
+
+### Fichiers non-code
+
+- Documents markdown : `NN-NOM-KEBAB.md` dans `docs/`.
+- ADR : `docs/adr/NNN-decision-kebab.md`.
+
+## 16.10 ADR obligatoires
 
 - `ADR-001` — Nuxt 4, Vue et TypeScript strict ;
 - `ADR-002` — Docker Compose et monorepo ;

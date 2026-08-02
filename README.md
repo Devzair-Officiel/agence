@@ -59,7 +59,16 @@ docker compose exec web npm run quality      # enchaîne les quatre au-dessus
 ```
 
 Le workflow GitHub Actions `.github/workflows/web-quality.yml` reproduit
-ces contrôles sur chaque push et pull request touchant `apps/web/`.
+ces contrôles sur chaque push et pull request touchant `apps/web/`. Il
+comprend en parallèle un second job **`e2e`** qui exécute la suite
+Playwright (Chromium) dans l'image officielle
+`mcr.microsoft.com/playwright:v1.62.1-noble`.
+
+Les tests E2E ne tournent pas dans le conteneur `web` (Alpine ne peut
+pas lancer les binaires Chromium fournis par Playwright). Pour les
+lancer localement, se référer à `apps/web/README.md` : soit sur la
+machine hôte après `npx playwright install`, soit via `docker run` sur
+l'image `mcr.microsoft.com/playwright:v1.62.1-noble`.
 
 ## Variables d'environnement
 
