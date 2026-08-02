@@ -10,6 +10,8 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     include: ["test/**/*.{spec,test}.ts"],
+    // Les tests Playwright (`test/e2e/**`) sont lancés via `npm run test:e2e`.
+    exclude: ["node_modules/**", "test/e2e/**"],
     setupFiles: ["test/setup.ts"],
     globals: true,
   },

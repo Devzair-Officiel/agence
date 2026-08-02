@@ -27,37 +27,37 @@ useSeoMeta({
       <h2>Couleurs</h2>
       <div class="preview__swatches">
         <div class="preview__swatch" style="background-color: var(--color-sand)">
-          <span>Sand<br /><code>#EFEBE2</code></span>
+          <span>Sand<br ><code>#EFEBE2</code></span>
         </div>
         <div
           class="preview__swatch"
           style="background-color: var(--color-cream)"
         >
-          <span>Cream<br /><code>#F4F1EA</code></span>
+          <span>Cream<br ><code>#F4F1EA</code></span>
         </div>
         <div
           class="preview__swatch preview__swatch--dark"
           style="background-color: var(--color-ink)"
         >
-          <span>Ink<br /><code>#16191C</code></span>
+          <span>Ink<br ><code>#16191C</code></span>
         </div>
         <div
           class="preview__swatch preview__swatch--dark"
           style="background-color: var(--color-navy)"
         >
-          <span>Navy<br /><code>#0E1622</code></span>
+          <span>Navy<br ><code>#0E1622</code></span>
         </div>
         <div
           class="preview__swatch preview__swatch--dark"
           style="background-color: var(--color-petrol)"
         >
-          <span>Petrol<br /><code>#0C5B57</code></span>
+          <span>Petrol<br ><code>#0C5B57</code></span>
         </div>
         <div
           class="preview__swatch preview__swatch--dark"
           style="background-color: var(--color-devzair-blue)"
         >
-          <span>Devzair blue<br /><code>#2E86D9</code></span>
+          <span>Devzair blue<br ><code>#2E86D9</code></span>
         </div>
       </div>
     </BaseContainer>

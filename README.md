@@ -1,6 +1,76 @@
-# Référentiel modulaire Devzair
+# Devzair — Monorepo
 
-Les fichiers `AGENTS.md` et `CLAUDE.md` servent d’entrée aux agents.  
-Le dossier `docs/` contient la documentation spécialisée.
+Site public de l'agence digitale Devzair. Monorepo Git unique organisant, à
+terme, un frontend Nuxt 4 et un backend Symfony 7.4. À ce jour, seul le
+frontend existe.
 
-L’ancien référentiel monolithique est conservé dans `docs/archive/` uniquement pour comparaison. Il ne doit pas être demandé aux agents de le lire.
+## Structure
+
+```
+apps/
+  web/                  Frontend Nuxt 4 + Vue 3 + TypeScript strict
+docs/                   Documentation projet (à lire de façon sélective, cf. AGENTS.md)
+.github/workflows/      Contrôles qualité CI (GitHub Actions)
+AGENTS.md               Règles communes aux agents (source de vérité)
+CLAUDE.md               Compléments propres à Claude Code
+compose.yaml            Orchestration Docker de développement
+```
+
+## Prérequis
+
+- Docker et Docker Compose (mode dev « officiel » du projet).
+- Alternative locale possible : Node 24 et npm.
+
+## Démarrer en 30 secondes (Docker Compose)
+
+```bash
+cp .env.example .env          # facultatif : personnaliser le port ou l'URL
+docker compose up -d          # build de l'image `apps/web/Dockerfile.dev` puis démarrage
+docker compose logs -f web    # suivi du serveur Nuxt
+```
+
+Nuxt est disponible sur http://localhost:3001 (le port hôte est mappé sur le
+port 3000 du conteneur).
+
+Pour arrêter :
+
+```bash
+docker compose down
+```
+
+Les dépendances sont installées **au build** (`npm ci` dans le Dockerfile).
+Elles ne sont pas réinstallées à chaque démarrage. Si `package-lock.json`
+change, rebuild explicite :
+
+```bash
+docker compose build web
+```
+
+## Contrôles qualité
+
+À exécuter dans le conteneur (ou en local si Node 24 est installé) :
+
+```bash
+docker compose exec web npm run lint         # ESLint (@nuxt/eslint)
+docker compose exec web npm run typecheck    # vue-tsc, TypeScript strict
+docker compose exec web npm run test         # Vitest (unitaires)
+docker compose exec web npm run build        # build Nuxt production
+docker compose exec web npm run quality      # enchaîne les quatre au-dessus
+```
+
+Le workflow GitHub Actions `.github/workflows/web-quality.yml` reproduit
+ces contrôles sur chaque push et pull request touchant `apps/web/`.
+
+## Variables d'environnement
+
+`.env.example` liste les variables publiques attendues. Elles sont
+préfixées `NUXT_PUBLIC_*` et surchargent automatiquement
+`runtimeConfig.public` dans `apps/web/nuxt.config.ts`.
+
+Aucun secret ne doit être commité, ni ajouté à `runtimeConfig.public`.
+
+## Documentation projet
+
+Voir `docs/README.md` pour l'index et la matrice de lecture sélective des
+documents (référentiel, contenu, SEO, sécurité, architecture, roadmap,
+tracking).

@@ -1,0 +1,27 @@
+# Dockerfile de développement — Nuxt 4 (Devzair, apps/web)
+#
+# Objectifs :
+#   - image Node identique à la version locale (Node 24 Alpine) ;
+#   - installation reproductible via `npm ci` ;
+#   - cache Docker exploitable (deps installées avant la copie du code) ;
+#   - port 3000 exposé ;
+#   - Nuxt écoute sur toutes les interfaces (accessible depuis l'hôte).
+#
+# Choix d'utilisateur : l'exécution reste en root pour rester compatible
+# avec le volume bind du code (`./apps/web:/app`). Un Dockerfile de
+# production séparé, à écrire à la Phase 12, utilisera USER node.
+
+FROM node:24-alpine
+
+WORKDIR /app
+
+# 1) Dépendances : couche cachable tant que package(-lock).json ne change pas.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# 2) Code applicatif.
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

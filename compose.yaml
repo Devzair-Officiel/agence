@@ -1,20 +1,28 @@
 services:
   web:
-    image: node:24-alpine
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
     working_dir: /app
-    command: >
-      sh -c "
-      npm install &&
-      npm run dev -- --host 0.0.0.0
-      "
     ports:
       - "3001:3000"
     volumes:
+      # Code monté pour le HMR.
       - ./apps/web:/app
+      # node_modules garde le contenu installé dans l'image (npm ci au build).
       - web_node_modules:/app/node_modules
+      # Cache Nuxt persistant pour éviter les recompilations à froid.
+      - web_nuxt_cache:/app/.nuxt
     environment:
       NODE_ENV: development
+      # Ces valeurs sont surchargées par .env à la racine s'il existe.
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:3001}
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+    env_file:
+      - path: .env
+        required: false
     restart: unless-stopped
 
 volumes:
   web_node_modules:
+  web_nuxt_cache:

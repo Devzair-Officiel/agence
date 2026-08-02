@@ -8,9 +8,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "quality": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "nuxt": "^4.5.1",
@@ -18,10 +22,14 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^1.16.0",
+    "@nuxt/fonts": "^0.14.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.0.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/test-utils": "^2.4.6",
-    "happy-dom": "^15.11.6",
+    "eslint": "^10.8.0",
+    "happy-dom": "^20.11.1",
     "typescript": "~5.9.0",
     "vitest": "^3.0.0",
     "vue-tsc": "^3.3.9"

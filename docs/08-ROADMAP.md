@@ -27,22 +27,22 @@ Les pages initiales, leurs objectifs et leurs contenus nécessaires sont connus.
 
 ## Phase 1 — Dépôt et Docker Nuxt
 
-### État actuel : EN COURS
+### État actuel : TERMINÉE
 
 - [x] Créer `apps/web` avec le template Nuxt `minimal`.
 - [x] Utiliser npm.
 - [x] Refuser le dépôt Git imbriqué.
 - [x] Refuser l’installation automatique de modules.
-- [ ] Initialiser Git à la racine du monorepo.
-- [ ] Ajouter `.gitignore` racine.
-- [ ] Ajouter `Dockerfile.dev`.
-- [ ] Ajouter `compose.yaml`.
-- [ ] Ajouter `.env.example`.
-- [ ] Ajouter un `README.md`.
-- [ ] Ajouter le présent référentiel.
-- [ ] Vérifier l’accès à `http://localhost:3000`.
-- [ ] Exécuter un premier `npm run build`.
-- [ ] Créer le premier commit propre.
+- [x] Initialiser Git à la racine du monorepo.
+- [x] Ajouter `.gitignore` racine.
+- [x] Ajouter `Dockerfile.dev`.
+- [x] Ajouter `compose.yaml`.
+- [x] Ajouter `.env.example`.
+- [x] Ajouter un `README.md`.
+- [x] Ajouter le présent référentiel.
+- [x] Vérifier l’accès à `http://localhost:3001` (mapping 3001→3000 conteneur).
+- [x] Exécuter un premier `npm run build`.
+- [ ] Créer le premier commit propre (à faire par l’humain).
 
 ### Critère de sortie
 
@@ -52,21 +52,23 @@ Le projet démarre uniquement avec Docker, le build passe et la base est version
 
 ## Phase 2 — Qualité et architecture Nuxt
 
-- [ ] Installer `@nuxt/eslint`.
-- [ ] Installer TypeScript et `vue-tsc`.
-- [ ] Activer le typecheck.
-- [ ] Installer Vitest et Nuxt Test Utils.
-- [ ] Préparer Playwright.
-- [ ] Ajouter les scripts npm.
-- [ ] Créer l’arborescence `app`, `server` et `shared`.
-- [ ] Créer `app.vue`.
-- [ ] Créer le layout par défaut.
-- [ ] Créer `error.vue`.
-- [ ] Créer la première page.
-- [ ] Ajouter la configuration centralisée du site.
-- [ ] Documenter les conventions de nommage.
-- [ ] Ajouter une CI minimale.
-- [ ] Exécuter lint, typecheck, tests et build.
+### État actuel : TERMINÉE
+
+- [x] Installer `@nuxt/eslint`.
+- [x] Installer TypeScript et `vue-tsc`.
+- [x] Activer le typecheck.
+- [x] Installer Vitest et Nuxt Test Utils.
+- [x] Préparer Playwright (smoke test unique sur `/design-preview`).
+- [x] Ajouter les scripts npm (`lint`, `lint:fix`, `typecheck`, `test`, `test:e2e`, `quality`).
+- [x] Créer l’arborescence `app` (server et shared seront créés Phase 8+).
+- [x] Créer `app.vue`.
+- [x] Créer le layout par défaut.
+- [x] Créer `error.vue`.
+- [x] Créer la première page (`/` placeholder + `/design-preview`).
+- [x] Ajouter la configuration centralisée du site (`runtimeConfig` + `NUXT_PUBLIC_*`).
+- [ ] Documenter les conventions de nommage (à faire en tête de Phase 3).
+- [x] Ajouter une CI minimale (`.github/workflows/web-quality.yml`).
+- [x] Exécuter lint, typecheck, tests et build.
 
 ### Critère de sortie
 

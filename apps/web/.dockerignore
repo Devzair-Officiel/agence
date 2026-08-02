@@ -1,0 +1,18 @@
+# Exclus du contexte de build Docker.
+node_modules
+.nuxt
+.output
+.data
+.nitro
+.cache
+coverage
+playwright-report
+test-results
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+Dockerfile*
+.dockerignore
+README.md

@@ -42,7 +42,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const isExternal = computed(() => Boolean(props.href))
 const isInternal = computed(() => Boolean(props.to))
-const isButton = computed(() => !isExternal.value && !isInternal.value)
 
 const isDisabled = computed(() => props.disabled || props.loading)
 </script>
