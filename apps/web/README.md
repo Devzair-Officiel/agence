@@ -86,15 +86,16 @@ npm run dev            # http://localhost:3000
 
 ## Tests E2E (Playwright)
 
-Neuf suites Playwright couvrent l’accueil `/` et la page interne
-`/design-preview` :
+Dix suites Playwright couvrent l'accueil `/` (page unique publique — la page
+interne `/design-preview` a été supprimée à la clôture de Phase 5D) :
 
 | Fichier                                       | Ce qui est vérifié                                              |
 |-----------------------------------------------|------------------------------------------------------------------|
 | `test/e2e/home-hero.spec.ts`                  | Accueil `/` : HTTP 200 sans erreurs console, un seul H1 avec la phrase complète, introduction et deux CTA `#contact` / `#realisations`, SVG des cinq pôles (`role="img"`, `<title>`, 5 nœuds), SEO complet (title, description, canonical, OG, Twitter, `lang="fr"`), respect de `prefers-reduced-motion` (état final visible), Axe WCAG 2.2 AA sans violation `serious`/`critical`, aucun débordement horizontal aux breakpoints 390 / 768 / 1440. |
 | `test/e2e/home-sections-primary.spec.ts`      | Ordre éditorial des 4 sections (hero → constat → réponse → expertises), un seul H1 + un H2 par section, 5 items dans chaque `<ol>` (problèmes, parcours) et 5 cartes pôles avec 3 services chacune, ancre `#expertises` atteignable, présence SSR des 5 libellés et longDescription, Axe WCAG 2.2 AA, `prefers-reduced-motion` (scroll-behavior `auto` sur le carrousel), responsive 320 / 390 / 768 / 1440 sans débordement horizontal. |
-| `test/e2e/home-sections-secondary.spec.ts`    | Ordre éditorial des 7 sections (ajout de `home-case`, `home-process`, `home-trust`), 3 nouveaux H2 verbatim, section `#realisations` en variante honest-state sans lien ni bouton, `<ol>` de 6 étapes de méthode dans l'ordre `Découverte`…`Évolution`, `<ul>` de 5 promesses dans l'ordre attendu, CTA hero « Découvrir nos réalisations » qui scrolle vers `#realisations`, lien header « Réalisations » → `/#realisations`, présence SSR de 18 signatures éditoriales exactes, Axe WCAG 2.2 AA, `prefers-reduced-motion`, responsive 320 / 390 / 768 / 1024 / 1440 sans débordement horizontal. |
-| `test/e2e/design-preview.spec.ts`             | H1 unique, `noindex, nofollow`, skip link, header + footer, absence de contact fictif, erreurs console. |
+| `test/e2e/home-sections-secondary.spec.ts`    | Ordre éditorial des 8 sections (ajout de `home-case`, `home-process`, `home-trust`, `home-cta`), 3 H2 secondaires verbatim, section `#realisations` en variante honest-state sans lien ni bouton, `<ol>` de 6 étapes de méthode dans l'ordre `Découverte`…`Évolution`, `<ul>` de 5 promesses dans l'ordre attendu, CTA hero « Découvrir nos réalisations » qui scrolle vers `#realisations`, lien header « Réalisations » → `/#realisations`, présence SSR de 18 signatures éditoriales exactes, Axe WCAG 2.2 AA, `prefers-reduced-motion`, responsive 320 / 390 / 768 / 1024 / 1440 sans débordement horizontal. |
+| `test/e2e/home-cta-final.spec.ts`             | Section finale `#contact` (Phase 5D) : SSR eyebrow / H2 / paragraphe verbatim, position last-child de `.home-page`, aucun mailto/tel/href="#" fictif, absence de « Phase 6 »/« formulaire »/« todo », notice de preprod visible en env non indexable, CTA hero + CTA header desktop + lien footer atteignent `/#contact`, ouverture du menu mobile 390 px → CTA → fermeture avec scroll restauré, pas de débordement horizontal aux breakpoints 320/390/768/1440, Axe WCAG 2.2 AA sur `#contact`, `prefers-reduced-motion` (H2 visible, opacity 1). |
+| `test/e2e/home-structure.spec.ts`             | Contrôles structurels globaux sur `/` : rend sans erreur console ni warning vue-router, un seul H1, skip link cible un vrai `<main id="main-content">`, header et footer présents, aucune coordonnée fictive (`@example`, `lorem ipsum`, `mailto:`, `tel:`) tant que `site.contact` reste null. |
 | `test/e2e/mobile-navigation.spec.ts`          | Cible tactile 44×44, `aria-expanded`, ouverture / focus / Escape / scroll-lock / focus trap Tab & Shift+Tab. |
 | `test/e2e/keyboard-navigation.spec.ts`        | Skip link atteint en premier Tab, liens accessibles clavier, absence de faux boutons, anneau de focus visible. |
 | `test/e2e/responsive.spec.ts`                 | Aucun débordement horizontal aux breakpoints 390 / 768 / 1440, header + main + footer visibles, texte ≥ 14 px. |
@@ -149,10 +150,10 @@ app/
   assets/css/          Tokens, reset, animations, styles globaux, polices
   components/
     base/              Composants présentiels (BaseButton, BaseContainer…)
-    home/              Sections de l'accueil (HomeHero, HomeEcosystemGraph, HomeProblems, HomeConnectedApproach, HomeExpertisePillars, HomeFeaturedCaseStudy, HomeProcess, HomeTrust)
+    home/              Sections de l'accueil (HomeHero, HomeEcosystemGraph, HomeProblems, HomeConnectedApproach, HomeExpertisePillars, HomeFeaturedCaseStudy, HomeProcess, HomeTrust, HomeCallToAction)
     layout/            En-tête, pied, navigation mobile
   config/              Sources de vérité typées (site, navigation, expertise-pillars, project-process, trust-promises…)
-  pages/               Routes Nuxt (index accueil + design-preview interne)
+  pages/               Routes Nuxt (accueil `/` uniquement — one-pager complet)
 public/                Fichiers servis tels quels (dont favicon)
 test/                  Tests unitaires Vitest
   e2e/                 Tests Playwright (exclus de Vitest)

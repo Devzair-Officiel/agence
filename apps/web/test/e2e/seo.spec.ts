@@ -10,7 +10,7 @@ import { expect, test } from '@playwright/test'
 //   - la présence des métadonnées communes dans le HTML rendu par le serveur ;
 //   - la politique globale (X-Robots-Tag + meta robots) ;
 //   - le sitemap et robots.txt générés par @nuxtjs/sitemap et @nuxtjs/robots ;
-//   - l'exclusion de /design-preview du sitemap.
+//   - l'absence de la page interne `/design-preview` (supprimée Phase 5D).
 //
 // La couverture du mode indexable est faite en tests unitaires
 // (usePageSeo.spec.ts), pour éviter de lancer deux serveurs distincts.
@@ -76,17 +76,13 @@ test.describe('SEO SSR — HTML initial', () => {
     expect(organization).not.toHaveProperty('address')
   })
 
-  test('/design-preview reste noindex, nofollow et sans canonical', async ({
+  test('/design-preview n\'est plus servi (supprimée Phase 5D)', async ({
     request,
   }) => {
-    const { body } = await fetchSSR(request, '/design-preview')
-    expect(body).toMatch(
-      /<meta[^>]+name="robots"[^>]+content="[^"]*noindex[^"]*nofollow/i,
-    )
-    // Aucune balise canonical ne doit être présente pour cette page interne.
-    expect(body).not.toMatch(
-      /<link[^>]+rel="canonical"[^>]+href="[^"]*\/design-preview/i,
-    )
+    // La page interne de vérification visuelle a été retirée à la clôture
+    // du lot design system. Elle doit répondre 404, jamais un HTML de page.
+    const response = await request.get('/design-preview')
+    expect(response.status()).toBe(404)
   })
 })
 

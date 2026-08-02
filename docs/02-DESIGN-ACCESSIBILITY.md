@@ -188,6 +188,31 @@ globale.
 
 ---
 
+### Stratégie de contact conditionnelle
+
+La section CTA final `HomeCallToAction.vue` illustre le pattern à suivre
+pour tout composant qui doit publier un moyen de contact avant la
+livraison du formulaire dédié (Phase 6) :
+
+- Un composant présent ne signifie pas qu'un moyen de contact fictif
+  doit apparaître. Tant que `site.contact.email` est `null`, aucun
+  bouton, aucun lien mailto, aucun `href="#"` ne doit être rendu (règle
+  AGENTS.md #1 « ne jamais inventer »).
+- La bascule s'appuie sur les deux sources uniques : `~/config/site` et
+  `useRuntimeConfig().public.siteIndexable`. Ne jamais lire
+  `process.env` depuis un composant.
+- En preprod (`siteIndexable === false`) **et** en l'absence de
+  coordonnée, publier une notice discrète en pied de section pour
+  rassurer un lecteur interne (ex. `Le moyen de contact en ligne sera
+  activé avant la mise en production.`). Cette notice ne doit **jamais**
+  s'afficher en production, même si `site.contact.email` reste null
+  transitoirement.
+- Lorsque `site.contact.email` sera défini, un `BaseButton` en variante
+  primaire suffit. Aucune modification de la section n'est nécessaire :
+  le composant lit la config et bascule seul.
+
+---
+
 ---
 
 ## Règle de maintenance

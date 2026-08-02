@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import HomeCallToAction from "~/components/home/HomeCallToAction.vue"
 import HomeConnectedApproach from "~/components/home/HomeConnectedApproach.vue"
 import HomeExpertisePillars from "~/components/home/HomeExpertisePillars.vue"
 import HomeFeaturedCaseStudy from "~/components/home/HomeFeaturedCaseStudy.vue"
@@ -21,9 +22,10 @@ import HomeTrust from "~/components/home/HomeTrust.vue"
  *   5. Réalisations       (HomeFeaturedCaseStudy, ancre `#realisations`)
  *   6. Méthode            (HomeProcess)
  *   7. Pourquoi Devzair   (HomeTrust)
+ *   8. CTA final          (HomeCallToAction, ancre `#contact`)
  *
- * Sections différées : FAQ éditoriale, CTA final, ancre `#contact`. Le CTA
- * hero primaire (`#contact`) restera inactif jusqu'à la Phase 5D.
+ * Sections différées : FAQ éditoriale (Phase 6+), formulaire de contact
+ * dédié (Phase 6).
  */
 
 usePageSeo({
@@ -44,5 +46,6 @@ usePageSeo({
     <HomeFeaturedCaseStudy />
     <HomeProcess />
     <HomeTrust />
+    <HomeCallToAction />
   </div>
 </template>

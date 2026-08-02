@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-// Contrôle `prefers-reduced-motion` sur `/design-preview`.
+// Contrôle `prefers-reduced-motion` sur `/`.
 //
 // La règle est déclarée globalement dans `animations.css` :
 //   * réduit à 0.01ms toutes les animations et transitions ;
@@ -20,7 +20,7 @@ test.describe('prefers-reduced-motion', () => {
     // Certains contextes de test.use ne propagent pas toujours l'option
     // reducedMotion au bon moment ; on force l'émulation ici pour rester sûr.
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/design-preview')
+    await page.goto('/')
     await page.waitForLoadState('networkidle')
   })
 
@@ -37,7 +37,8 @@ test.describe('prefers-reduced-motion', () => {
   test('transitions are neutralised on interactive elements', async ({ page }) => {
     // On mesure la durée de transition sur un BaseButton visible sur mobile
     // (le CTA du header est masqué en dessous de 1024 px). La règle globale
-    // force `transition-duration: 0.01ms` en reduced-motion.
+    // force `transition-duration: 0.01ms` en reduced-motion. Sur l'accueil,
+    // le hero rend deux BaseButton dans le premier viewport mobile.
     const button = page.locator('main .base-button').first()
     await expect(button).toBeVisible()
     const duration = await button.evaluate((el) =>

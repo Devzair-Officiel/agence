@@ -115,11 +115,6 @@ export default defineNuxtConfig({
   },
 
   sitemap: {
-    // Exclure les pages internes noindex : elles ne doivent pas apparaître
-    // dans le sitemap public, même en mode indexable.
-    exclude: [
-      '/design-preview',
-    ],
     // Ne pas inventer de lastmod pour les routes statiques : mieux vaut
     // omettre la valeur que fournir une date fabriquée.
     autoLastmod: false,
@@ -127,10 +122,11 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Pré-rendu limité aux pages marketing réellement existantes.
-    // L'accueil est stable depuis Phase 5A (hero + graphe des cinq pôles),
-    // 100 % rendue côté serveur à partir de données typées locales : elle
-    // peut être servie en HTML statique. /design-preview reste en SSR
-    // (page de dev interne, noindex).
+    // L'accueil couvre huit sections stables (hero, constat, réponse, cinq
+    // pôles, réalisations, méthode, promesses, CTA final), 100 % rendue côté
+    // serveur à partir de données typées locales : elle peut être servie en
+    // HTML statique. Les autres routes marketing seront ajoutées au fil des
+    // Phases 6+.
     '/': { prerender: true },
   },
 })

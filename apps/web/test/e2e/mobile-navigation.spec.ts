@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-// Contrôles E2E du menu mobile sur `/design-preview`.
+// Contrôles E2E du menu mobile sur `/`.
 //
 // Le composant est un dialog modal teleporté sur `<body>`. On vérifie ici
 // les comportements les plus sensibles à une régression :
@@ -15,7 +15,7 @@ test.describe('Mobile navigation', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/design-preview')
+    await page.goto('/')
     // Attend l'hydratation Vue avant de simuler des interactions.
     await page.waitForLoadState('networkidle')
   })

@@ -58,13 +58,13 @@ Le projet démarre uniquement avec Docker, le build passe et la base est version
 - [x] Installer TypeScript et `vue-tsc`.
 - [x] Activer le typecheck.
 - [x] Installer Vitest et Nuxt Test Utils.
-- [x] Préparer Playwright (smoke test unique sur `/design-preview`).
+- [x] Préparer Playwright (smoke test unique sur la page interne d'alors, retirée en 5D).
 - [x] Ajouter les scripts npm (`lint`, `lint:fix`, `typecheck`, `test`, `test:e2e`, `quality`).
 - [x] Créer l’arborescence `app` (server et shared seront créés Phase 8+).
 - [x] Créer `app.vue`.
 - [x] Créer le layout par défaut.
 - [x] Créer `error.vue`.
-- [x] Créer la première page (`/` placeholder + `/design-preview`).
+- [x] Créer la première page (`/` placeholder + page interne temporaire, retirée en 5D).
 - [x] Ajouter la configuration centralisée du site (`runtimeConfig` + `NUXT_PUBLIC_*`).
 - [x] Documenter les conventions de nommage (fait en clôture Phase 3, cf. `06-ARCHITECTURE-CODE.md` §16.9).
 - [x] Ajouter une CI minimale (`.github/workflows/web-quality.yml`).
@@ -86,7 +86,7 @@ Les outils empêchent l’introduction de code non typé, mal structuré ou non 
 - [x] Créer les composants de base nécessaires seulement.
 - [x] Créer header, footer et navigation.
 - [x] Tester clavier et focus (E2E `keyboard-navigation.spec.ts` + `mobile-navigation.spec.ts`).
-- [x] Tester les contrastes (Axe `serious`/`critical` bloquants, sur `/design-preview`).
+- [x] Tester les contrastes (Axe `serious`/`critical` bloquants ; suite déplacée sur `/` à la clôture Phase 5D).
 - [x] Tester mobile et zoom (E2E responsive 390 / 768 / 1440 ; contrôles manuels 320 / zoom 200 % documentés).
 - [x] Documenter les variantes (`docs/02-DESIGN-ACCESSIBILITY.md` + prop `variant`/`tone`).
 - [x] Éviter les composants universels surconfigurés.
@@ -111,7 +111,7 @@ Le layout et les composants indispensables sont accessibles, typés et réutilis
 - [ ] Configurer le pré-rendu des pages marketing (reporté en Phase 5 — accueil actuelle est un placeholder).
 - [x] Évaluer puis installer Nuxt SEO (Option 2 « à la carte » retenue, cf. ADR-004).
 - [x] Générer robots.txt (`@nuxtjs/robots` v5.7, règles OAI-SearchBot / GPTBot).
-- [x] Générer sitemap.xml (`@nuxtjs/sitemap` v7.6, exclut `/design-preview`).
+- [x] Générer sitemap.xml (`@nuxtjs/sitemap` v7.6, une seule route `/` depuis la clôture Phase 5D).
 - [x] Ajouter `Organization` et `WebSite` (`useSiteSchema` dans le layout par défaut, aucune donnée fictive).
 - [x] Tester les métadonnées dans le HTML serveur (`test/e2e/seo.spec.ts`, 10 cas).
 - [x] Tester les codes HTTP et redirections (`/robots.txt`, `/sitemap.xml`, `X-Robots-Tag`).
@@ -121,7 +121,7 @@ Le layout et les composants indispensables sont accessibles, typés et réutilis
 
 Une page de démonstration contient toutes ses métadonnées dans le HTML initial et l’environnement de préproduction ne peut pas être indexé.
 
-**Statut : atteint.** Le HTML SSR de `/` et `/design-preview` expose `<title>`, `description`, `robots`, `og:*`, `twitter:*` et le JSON-LD Organization + WebSite avant hydratation. Avec les défauts (`NUXT_PUBLIC_SITE_INDEXABLE=false`) : `X-Robots-Tag: noindex, nofollow`, `robots.txt` bloque tous les user-agents, aucune page ne peut apparaître dans un index. La bascule vers un environnement indexable ne dépend que d'une seule variable.
+**Statut : atteint.** Le HTML SSR de `/` expose `<title>`, `description`, `robots`, `og:*`, `twitter:*` et le JSON-LD Organization + WebSite avant hydratation. Avec les défauts (`NUXT_PUBLIC_SITE_INDEXABLE=false`) : `X-Robots-Tag: noindex, nofollow`, `robots.txt` bloque tous les user-agents, aucune page ne peut apparaître dans un index. La bascule vers un environnement indexable ne dépend que d'une seule variable.
 
 ---
 
@@ -226,10 +226,55 @@ suivantes (FAQ éditoriale, CTA final, ancre `#contact`) traitées en 5D/6+.
 - [x] Tests unitaires : 120 verts (+30 vs 5B : projectProcess×5, trustPromises×6, HomeFeaturedCaseStudy×7, HomeProcess×6, HomeTrust×6).
 - [x] Tests E2E : 97 verts (+25 : `home-sections-secondary.spec.ts` — ordre édito 7 sections, honest-state SSR, 6 étapes / 5 promesses, ancre CTA + header nav vers `#realisations`, Axe, reduced-motion, responsive 320/390/768/1024/1440).
 - [x] Build production : 2.83 MB / 733 kB gzip (+45 KB brut / +8 KB gzip vs Phase 5B 2.79 MB / 725 kB). Toujours pré-rendue (`routeRules['/'] = { prerender: true }`).
-- [ ] Sections différées explicites : FAQ éditoriale, CTA final, ancre `#contact` (Phase 5D et Phase 6).
+- [x] Sections différées explicites levées : CTA final + ancre `#contact` livrés en Phase 5D ; FAQ éditoriale déplacée en Phase 6+ (attachée au parcours de contact réel).
 
 Critère de sortie Phase 5C : atteint (lint, typecheck, 120 tests unitaires,
 97 E2E, build de production, tous verts).
+
+### Phase 5D — Accueil : CTA final, ancre `#contact` et clôture Phase 5
+
+État actuel : TERMINÉE.
+
+Livrée : la huitième et dernière section de l'accueil, avec harmonisation
+éditoriale, suppression de la page interne `/design-preview` et migration
+de sa couverture E2E utile vers `/`.
+
+- [x] `HomeCallToAction.vue` — section ancrée `#contact`, dernière du flux
+  éditorial. Verbatim eyebrow `Parlons de votre projet`, H2
+  `Construisons une présence digitale à la hauteur de votre entreprise.`,
+  paragraphe explicatif. Stratégie de contact conditionnelle : mailto
+  `BaseButton` si `site.contact.email` est défini, sinon rien.
+- [x] Notice de preprod discrète : `Le moyen de contact en ligne sera
+  activé avant la mise en production.` publiée uniquement si
+  `!site.contact.email && runtimeConfig.public.siteIndexable === false`.
+  Aucun accès à `process.env` depuis le composant (règle DEC-022).
+- [x] `pages/index.vue` orchestre les 8 sections (hero → constat →
+  réponse → 5 pôles → réalisations → méthode → pourquoi → CTA final).
+- [x] Ancrage `#contact` recâblé partout : `primaryCta.to = "/#contact"`
+  (une seule source pour header desktop, footer, menu mobile), CTA hero
+  principal conservé sur `#contact`. Header nav « Expertises » recablé
+  de `/expertises` (route absente) vers `/#expertises` (ancre active).
+- [x] Suppression de `apps/web/app/pages/design-preview.vue` et de
+  `test/e2e/design-preview.spec.ts`. Coverage utile migrée dans
+  `test/e2e/home-structure.spec.ts` (console/router, single H1, skip
+  link, header/footer, no fake contact). Sitemap : plus d'exclusion
+  explicite requise (la route n'existe plus). `/design-preview` renvoie
+  désormais 404, vérifié par `test/e2e/seo.spec.ts`.
+- [x] Tests unitaires : 130 verts (+10 : `HomeCallToAction.spec.ts` avec
+  `vi.mock('~/config/site')` pour piloter email null/set × indexable
+  true/false).
+- [x] Tests E2E : `home-cta-final.spec.ts` (+13 : SSR, ancre depuis hero
+  / header desktop / footer / menu mobile 390px, notice preprod
+  visible, no fake contact, responsive 320/390/768/1440, Axe WCAG 2.2
+  AA sur `#contact`, `prefers-reduced-motion`) et `home-structure.spec.ts`
+  (+5). Suite `home-sections-secondary.spec.ts` mise à jour pour 8
+  sections. Retrait de `design-preview.spec.ts` (-9).
+- [x] `npm run quality` vert (lint, typecheck, tests unitaires 130/130,
+  build production).
+
+Critère de sortie Phase 5D : atteint. Phase 5 close dans son ensemble
+(accueil publique complète, une seule page publique, aucun placeholder
+éditorial, aucune coordonnée fictive, ancrage `#contact` fonctionnel).
 
 ---
 

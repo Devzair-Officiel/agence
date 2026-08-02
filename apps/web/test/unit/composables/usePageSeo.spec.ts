@@ -117,9 +117,9 @@ describe("usePageSeo — page noindex", () => {
 
   it("force robots noindex, nofollow et n'émet PAS de canonical", () => {
     usePageSeo({
-      title: "Design preview",
+      title: "Interne",
       description: "Page interne",
-      path: "/design-preview",
+      path: "/interne-fixture",
       noindex: true,
     })
     expect(captures.seo).toMatchObject({

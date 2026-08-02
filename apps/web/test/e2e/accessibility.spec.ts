@@ -1,22 +1,23 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Contrôle d'accessibilité léger (Axe) sur `/design-preview`.
+// Contrôle d'accessibilité léger (Axe) sur `/`.
 //
 // Portée volontairement étroite :
-//   - on cible la page interne de vérification visuelle, qui expose
-//     l'ensemble des composants du design system ;
+//   - on cible l'accueil publique, seule page réellement rendue en Phase 5 ;
 //   - on n'échoue **que** sur les violations sérieuses ou critiques ;
 //   - on n'utilise aucun `disableRules` : si une violation apparaît, elle
 //     doit être corrigée dans le composant.
 //
 // Ce test ne remplace pas un audit WCAG complet. Il vise à protéger
 // contre les régressions les plus courantes (contraste, ARIA cassé,
-// éléments non focusables, labels manquants).
+// éléments non focusables, labels manquants). Les suites `home-*.spec.ts`
+// exécutent aussi des scans Axe locaux ; cette suite fait office de
+// garde-fou global sur le HTML final.
 
 test.describe('Axe (accessibility scan)', () => {
-  test('no serious or critical violation on /design-preview', async ({ page }) => {
-    await page.goto('/design-preview')
+  test('no serious or critical violation on /', async ({ page }) => {
+    await page.goto('/')
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])

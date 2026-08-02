@@ -13,7 +13,7 @@ import { expect, test } from '@playwright/test'
 // `prefers-reduced-motion`. Aucune route inexistante n'est atteinte.
 
 test.describe('/ (home) — sections secondaires Phase 5C', () => {
-  test('renders the seven sections in the expected editorial order', async ({
+  test('renders the eight sections in the expected editorial order', async ({
     page,
   }) => {
     await page.goto('/')
@@ -23,6 +23,9 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       ) as HTMLElement[]
       return nodes.map((section) => section.className.split(/\s+/)[0])
     })
+    // Ordre éditorial complet — la 8e section CTA final est ajoutée en
+    // Phase 5D (ancre `#contact`). Toute nouvelle section devra être posée
+    // AVANT `home-cta` (celui-ci ferme la page).
     expect(orderedSections).toEqual([
       'home-hero',
       'home-problems',
@@ -31,6 +34,7 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       'home-case',
       'home-process',
       'home-trust',
+      'home-cta',
     ])
   })
 

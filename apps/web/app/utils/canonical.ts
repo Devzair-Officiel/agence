@@ -8,8 +8,8 @@
  *   - il ne dépend jamais du header Host de la requête entrante ;
  *   - la racine `/` reste `/` (pas de canonical `https://devzair.fr` sans slash).
  *
- * Pour /design-preview (noindex, nofollow) : on ne génère PAS de canonical,
- * c'est la responsabilité de l'appelant (usePageSeo).
+ * Pour une page marquée `noindex` : on ne génère PAS de canonical, c'est
+ * la responsabilité de l'appelant (usePageSeo).
  */
 
 import { normalizeSiteUrl } from "./site-url"

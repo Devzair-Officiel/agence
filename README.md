@@ -4,6 +4,11 @@ Site public de l'agence digitale Devzair. Monorepo Git unique organisant, à
 terme, un frontend Nuxt 4 et un backend Symfony 7.4. À ce jour, seul le
 frontend existe.
 
+L'accueil publique une home d'agence one-pager : 8 sections éditoriales
+(hero → constat → réponse → 5 pôles → réalisations → méthode → pourquoi
+Devzair → CTA final `#contact`), sans page interne clonée, sans placeholder,
+sans coordonnée fictive. Phase 5 (accueil complète) est close.
+
 ## Structure
 
 ```

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-// Contrôles de navigation clavier sur `/design-preview`.
+// Contrôles de navigation clavier sur `/`.
 //
 // Objectif : garantir que les éléments interactifs principaux sont
 // atteignables au Tab, que le focus visible est effectif et que le
@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Keyboard navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/design-preview')
+    await page.goto('/')
     await page.waitForLoadState('networkidle')
   })
 
@@ -48,7 +48,7 @@ test.describe('Keyboard navigation', () => {
     // On force le focus sur le bouton menu ou, à défaut, sur le premier lien
     // de nav du header (visible en desktop).
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto('/design-preview')
+    await page.goto('/')
     await page.waitForLoadState('networkidle')
     const firstNavLink = page.locator('header.site-header a').first()
     await firstNavLink.focus()

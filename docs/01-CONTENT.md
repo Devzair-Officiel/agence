@@ -103,9 +103,26 @@ Faire comprendre en quelques secondes :
    - réponses courtes puis approfondissement ;
    - ne pas ajouter de balisage FAQ dans le seul but d’obtenir un résultat enrichi Google.
 
-9. **CTA final**
-   - formulaire court ou lien vers contact ;
-   - explication de la prochaine étape.
+9. **CTA final** — livré par `HomeCallToAction.vue` (Phase 5D)
+   Section ancrée `#contact`, huitième et dernière de l'accueil. Verbatim :
+   eyebrow `Parlons de votre projet`, H2 `Construisons une présence
+   digitale à la hauteur de votre entreprise.`, paragraphe `Un premier
+   échange nous permettra de comprendre votre besoin, de clarifier les
+   priorités et de définir une direction adaptée à votre activité.`
+
+   Stratégie de contact conditionnelle :
+
+   - `site.contact.email` défini → un bouton `Nous écrire` (mailto) est
+     rendu ;
+   - `site.contact.email` null (défaut Phase 5D) → aucun bouton, aucun
+     lien mailto, aucun href="#" fictif ;
+   - `site.contact.email` null **et** `runtimeConfig.public.siteIndexable`
+     à `false` → une notice discrète `Le moyen de contact en ligne sera
+     activé avant la mise en production.` s'affiche pour rassurer les
+     lecteurs de preprod. Cette notice ne fuit jamais en production.
+
+   Le formulaire de contact complet (validation serveur, anti-spam,
+   e-mail transactionnel) est traité en Phase 6.
 
 ### H1 de travail
 
