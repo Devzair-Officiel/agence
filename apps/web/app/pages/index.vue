@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import HomeConnectedApproach from "~/components/home/HomeConnectedApproach.vue"
 import HomeExpertisePillars from "~/components/home/HomeExpertisePillars.vue"
+import HomeFeaturedCaseStudy from "~/components/home/HomeFeaturedCaseStudy.vue"
 import HomeHero from "~/components/home/HomeHero.vue"
 import HomeProblems from "~/components/home/HomeProblems.vue"
+import HomeProcess from "~/components/home/HomeProcess.vue"
+import HomeTrust from "~/components/home/HomeTrust.vue"
 
 /**
  * Page d'accueil publique — orchestration uniquement.
@@ -12,13 +15,15 @@ import HomeProblems from "~/components/home/HomeProblems.vue"
  *
  * Ordre éditorial (source `docs/01-CONTENT.md §7.1`) :
  *   1. Hero
- *   2. Constat  (HomeProblems)
- *   3. Réponse  (HomeConnectedApproach)
- *   4. Cinq pôles détaillés  (HomeExpertisePillars, ancre `#expertises`)
+ *   2. Constat            (HomeProblems)
+ *   3. Réponse            (HomeConnectedApproach)
+ *   4. Cinq pôles         (HomeExpertisePillars, ancre `#expertises`)
+ *   5. Réalisations       (HomeFeaturedCaseStudy, ancre `#realisations`)
+ *   6. Méthode            (HomeProcess)
+ *   7. Pourquoi Devzair   (HomeTrust)
  *
- * Sections différées : réalisations, méthode, pourquoi Devzair, FAQ, CTA final.
- * Les CTA hero (`#contact`, `#realisations`) restent des ancres inactives tant
- * que ces sections n'existent pas — remplaçables en une ligne.
+ * Sections différées : FAQ éditoriale, CTA final, ancre `#contact`. Le CTA
+ * hero primaire (`#contact`) restera inactif jusqu'à la Phase 5D.
  */
 
 usePageSeo({
@@ -36,5 +41,8 @@ usePageSeo({
     <HomeProblems />
     <HomeConnectedApproach />
     <HomeExpertisePillars />
+    <HomeFeaturedCaseStudy />
+    <HomeProcess />
+    <HomeTrust />
   </div>
 </template>

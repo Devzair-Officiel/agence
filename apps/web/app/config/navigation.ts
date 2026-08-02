@@ -19,7 +19,7 @@ export interface NavigationGroup {
 
 export const primaryNavigation: readonly NavigationItem[] = [
   { label: "Expertises", to: "/expertises" },
-  { label: "Réalisations", to: "/realisations" },
+  { label: "Réalisations", to: "/#realisations" },
   { label: "Méthode", to: "/methode" },
   { label: "Agence", to: "/agence" },
 ]

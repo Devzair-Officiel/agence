@@ -140,6 +140,33 @@ ne justifie une bibliothèque JS :
 - `scroll-behavior: smooth` explicitement remis à `auto` en
   `prefers-reduced-motion` — défense en profondeur.
 
+### Timeline verticale via pseudo-éléments
+
+Une timeline de type méthode (ex. `HomeProcess` mobile) doit rester
+purement décorative et n'ajouter aucun élément au DOM :
+
+- point + trait vertical dessinés via `::before` (trait) et `::after`
+  (point) sur chaque `<li>` ;
+- traits ajustés au premier et au dernier item pour ne pas dépasser
+  visuellement le premier point ni le dernier ;
+- décor totalement escamoté dès le premier breakpoint où la grille prend
+  le relais (`content: none;` sur les pseudo-éléments) — pas de
+  superposition ambiguë en 2 colonnes ;
+- aucune couleur porteuse d'information (le texte reste explicite sans
+  le point).
+
+### Grille desktop asymétrique 3+2 centrée
+
+Pour une liste de 5 items sur desktop qui ne veut ni 5 colonnes trop
+serrées ni 4+1 orphelines, préférer une grille `repeat(6, 1fr)` avec
+`grid-column: span 2` par défaut, puis centrer les items 4 et 5 :
+
+- item 4 : `grid-column: 2 / span 2` ;
+- item 5 : `grid-column: 4 / span 2`.
+
+Pattern utilisé par `HomeTrust`. Il évite d'introduire une colonne fantôme
+ou d'aligner à gauche une rangée incomplète, et reste 100 % CSS.
+
 ### Animations et `prefers-reduced-motion`
 
 Les animations doivent :

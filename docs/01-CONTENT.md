@@ -57,26 +57,46 @@ Faire comprendre en quelques secondes :
    ≥1024px : grille asymétrique 3×2 (Concevoir spans 2 rows, Faire
    évoluer reçoit un fond petrol pour marquer la clôture du parcours).
 
-5. **Réalisations ou preuves**
+5. **Réalisations ou preuves** — livré par `HomeFeaturedCaseStudy.vue` (Phase 5C)
    - uniquement projets réels ;
    - contexte, intervention, résultat démontrable ;
    - pas de chiffres sans méthode de mesure.
 
-6. **Méthode**
-   - découverte ;
-   - cadrage ;
-   - conception ;
-   - développement ;
-   - validation ;
-   - lancement ;
-   - amélioration.
+   Tant qu'aucun projet n'est publiable (DEV-003 « À faire »), la section
+   publie la variante « état honnête » : eyebrow `Études de cas en
+   préparation` et titre `Nos réalisations détaillées seront bientôt
+   disponibles.`. Aucun faux client, aucun logo, aucun bouton vers route
+   absente. L'ancre `#realisations` reste active pour le CTA hero et la
+   nav header (cf. DEC-035).
 
-7. **Pourquoi Devzair**
-   - agence à taille humaine ;
-   - interlocution claire ;
-   - approche sur mesure ;
-   - qualité technique ;
-   - continuité après la mise en ligne.
+6. **Méthode** — livré par `HomeProcess.vue` (Phase 5C)
+   Six étapes verbatim rendues comme `<ol>` sémantique (l'ordre importe),
+   source unique `app/config/project-process.ts` :
+   - Découverte ;
+   - Cadrage ;
+   - Conception ;
+   - Développement ;
+   - Lancement ;
+   - Évolution.
+
+   Mobile : timeline verticale (point + trait via pseudo-éléments décoratifs).
+   Tablette ≥640px : grille 2 colonnes. Desktop ≥1024px : grille 3×2 (six
+   colonnes écartées pour la lisibilité, cf. DEC-037). Aucune interaction :
+   pas d'accordion, pas de tab, pas de bouton.
+
+7. **Pourquoi Devzair** — livré par `HomeTrust.vue` (Phase 5C)
+   Cinq promesses verbatim rendues comme `<ul>` (l'ordre n'est pas
+   significatif), source unique `app/config/trust-promises.ts` :
+   - Approche personnalisée ;
+   - Vision globale ;
+   - Qualité technique ;
+   - Transparence ;
+   - Accompagnement durable.
+
+   Aucun superlatif absolu (« meilleur », « unique »). Cartes non
+   interactives. Mobile : liste verticale. Tablette ≥640px : 2 colonnes
+   avec 5ᵉ carte pleine largeur pour éviter l'orpheline. Desktop ≥1024px :
+   grille asymétrique 3+2 centrée.
 
 8. **FAQ éditoriale**
    - questions réellement utiles ;

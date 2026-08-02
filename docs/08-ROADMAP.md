@@ -206,6 +206,31 @@ traitées dans les phases 5C+ / 6+.
 Critère de sortie Phase 5B : atteint (lint, typecheck, 90 tests unitaires,
 72 E2E, build de production, tous verts).
 
+### Phase 5C — Accueil : réalisations, méthode et pourquoi Devzair
+
+État actuel : TERMINÉE.
+
+Trois sections livrées sous `HomeExpertisePillars`, dans l'ordre éditorial
+de `docs/01-CONTENT.md §7.1` (Réalisations → Méthode → Pourquoi). Sections
+suivantes (FAQ éditoriale, CTA final, ancre `#contact`) traitées en 5D/6+.
+
+- [x] Configurations typées : `app/config/project-process.ts` (6 étapes) et `app/config/trust-promises.ts` (5 promesses), sources uniques verbatim du brief 5C.
+- [x] `HomeFeaturedCaseStudy.vue` — section ancrée `#realisations`. Variante « état honnête » : eyebrow `Études de cas en préparation`, titre `Nos réalisations détaillées seront bientôt disponibles.`, paragraphe explicatif. Aucun faux client, aucun faux screenshot, aucun bouton vers route inexistante (AGENTS.md rule 1 + DEV-003 « À faire »).
+- [x] `HomeProcess.vue` — section « Notre méthode », H2 unique, `<ol>` de 6 étapes verbatim (`Découverte`, `Cadrage`, `Conception`, `Développement`, `Lancement`, `Évolution`). Mobile : timeline verticale décorative (point + trait via `::before`/`::after`). Tablette 640+ : grille 2 colonnes. Desktop ≥1024px : grille 3×2 (6 colonnes serrées écartées pour la lisibilité).
+- [x] `HomeTrust.vue` — section « Pourquoi Devzair », H2 unique, `<ul>` de 5 promesses verbatim (`Approche personnalisée`, `Vision globale`, `Qualité technique`, `Transparence`, `Accompagnement durable`). Aucune interaction. Mobile : liste verticale. Tablette : 2 colonnes + 5ᵉ carte pleine largeur. Desktop ≥1024px : grille asymétrique 3+2 centré.
+- [x] `pages/index.vue` orchestre les 7 sections (hero + 3 primaires + 3 secondaires). Ordre édito conforme à §7.1.
+- [x] `app/config/navigation.ts` : lien header `Réalisations` recablé de `/realisations` (route inexistante) vers `/#realisations` (ancre active).
+- [x] CTA hero « Découvrir nos réalisations » (`#realisations`) : commence à fonctionner sans modification (le composant préexistant pointait déjà sur l'ancre, désormais réellement présente).
+- [x] Sémantique WCAG 2.2 AA : un seul H1, un H2 par section, H3 pour les items. Aucune carte focusable, aucun `tabindex`, aucun faux bouton, `<ol>` pour la méthode (ordre significatif), `<ul>` pour les promesses.
+- [x] `prefers-reduced-motion` : aucune animation introduite ; sections visibles et exploitables en mode réduit.
+- [x] Tests unitaires : 120 verts (+30 vs 5B : projectProcess×5, trustPromises×6, HomeFeaturedCaseStudy×7, HomeProcess×6, HomeTrust×6).
+- [x] Tests E2E : 97 verts (+25 : `home-sections-secondary.spec.ts` — ordre édito 7 sections, honest-state SSR, 6 étapes / 5 promesses, ancre CTA + header nav vers `#realisations`, Axe, reduced-motion, responsive 320/390/768/1024/1440).
+- [x] Build production : 2.83 MB / 733 kB gzip (+45 KB brut / +8 KB gzip vs Phase 5B 2.79 MB / 725 kB). Toujours pré-rendue (`routeRules['/'] = { prerender: true }`).
+- [ ] Sections différées explicites : FAQ éditoriale, CTA final, ancre `#contact` (Phase 5D et Phase 6).
+
+Critère de sortie Phase 5C : atteint (lint, typecheck, 120 tests unitaires,
+97 E2E, build de production, tous verts).
+
 ---
 
 ## Phase 6 — Formulaire de contact
