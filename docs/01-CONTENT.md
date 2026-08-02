@@ -28,24 +28,34 @@ Faire comprendre en quelques secondes :
    - CTA secondaire vers les réalisations ou services ;
    - visuel professionnel cohérent.
 
-2. **Problèmes clients**
-   - manque de visibilité ;
-   - image peu professionnelle ;
-   - site lent ou peu convaincant ;
-   - outils internes désorganisés ;
-   - absence de stratégie SEO ou de suivi.
+2. **Problèmes clients** — livré par `HomeProblems.vue` (Phase 5B)
+   - manque de visibilité sur les recherches qui comptent ;
+   - image en ligne qui ne reflète pas le niveau réel ;
+   - site lent, peu fluide, peu convaincant ;
+   - outils internes désorganisés ou vieillissants ;
+   - absence de stratégie durable et de suivi.
 
-3. **Solutions**
-   - aperçu des grandes familles de services ;
-   - lien vers chaque page dédiée.
+   Ton descriptif, jamais anxiogène ; aucun chiffre, aucun témoignage,
+   aucun client nommé. La liste est un `<ol>` sémantique (ordre = du plus
+   visible au plus structurel). La numérotation Space Mono duplique
+   l'ordre logique et reste `aria-hidden`.
 
-4. **Approche globale**
-   - stratégie ;
-   - design ;
-   - développement ;
-   - contenu ;
-   - visibilité ;
-   - suivi.
+3. **Réponse Devzair** — livré par `HomeConnectedApproach.vue` (Phase 5B)
+   fusion des points « Solutions » et « Approche globale » du plan éditorial.
+   Un parcours en 5 étapes reprend les cinq pôles de
+   `app/config/expertise-pillars.ts` (source unique — aucun label dupliqué).
+   Rendu sur fond navy, `<ol>` sémantique, flèches ↓ (mobile) / → (≥768px)
+   décoratives et `aria-hidden`. La `longDescription` de chaque pôle est
+   publiée en `sr-only` pour les lecteurs d'écran, sans surcharger le
+   rendu visuel dense.
+
+4. **Cinq pôles détaillés** — livré par `HomeExpertisePillars.vue` (Phase 5B)
+   Ancre `#expertises`. Chaque carte publie : label, description courte,
+   `longDescription` narrative, 3 `services` (source unique
+   `expertise-pillars.ts`). Mobile : carrousel scroll-snap CSS-natif
+   (aucun JS, aucun bouton, 5 cartes toujours dans le DOM). Desktop
+   ≥1024px : grille asymétrique 3×2 (Concevoir spans 2 rows, Faire
+   évoluer reçoit un fond petrol pour marquer la clôture du parcours).
 
 5. **Réalisations ou preuves**
    - uniquement projets réels ;

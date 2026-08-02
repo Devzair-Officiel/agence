@@ -157,6 +157,55 @@ Pour chaque page :
 
 Les pages ne contiennent ni faux contenu, ni placeholder, ni duplication structurelle inutile.
 
+### Phase 5A — Accueil : hero et graphe des cinq pôles
+
+État actuel : TERMINÉE.
+
+Voir aussi Phase 5B ci-dessous pour les trois sections suivantes.
+
+Périmètre volontairement restreint au premier écran de l'accueil. Les
+sections suivantes (« Le constat », « Réponse globale », « Cinq pôles
+détaillés », etc.) sont traitées en Phase 5B.
+
+- [x] Configuration typée des cinq pôles d'expertise (`app/config/expertise-pillars.ts`).
+- [x] Composant `HomeHero.vue` (eyebrow, H1, introduction, deux CTA vers `#contact` et `#realisations`, réassurance).
+- [x] Composant `HomeEcosystemGraph.vue` — SVG accessible (`role="img"`, `<title>`, `<desc>`, `aria-labelledby` via `useId()`, sous-groupes `aria-hidden`).
+- [x] Animation signature CSS pure (~1,4 s, non bouclée, désactivée en `prefers-reduced-motion` par une règle locale de défense en profondeur).
+- [x] Contenu éditorial validé, aucun chiffre, témoignage ni preuve fictifs.
+- [x] `usePageSeo` réel sur `/` (title, description, canonical, OG, Twitter).
+- [x] Pré-rendu de `/` (`routeRules: { '/': { prerender: true } }`).
+- [x] Tests unitaires : `expertise-pillars`, `HomeHero`, `HomeEcosystemGraph`.
+- [x] Tests E2E : `home-hero.spec.ts` (SEO, un seul H1, CTA, graphe SVG, `prefers-reduced-motion`, Axe, responsive 390/768/1440).
+- [ ] Image OG statique `og/devzair-home.png` — **reportée** : aucun logo Devzair n'est disponible dans le dépôt. `defaultOgImage` reste `null`, aucune image fictive n'est publiée, `usePageSeo` retombe automatiquement sur `twitter:card=summary` (cf. DEV-025 dans `10-TRACKING.md`).
+
+Critère de sortie : atteint (lint, typecheck, 69 tests unitaires, 51 E2E,
+build de production, tous verts).
+
+### Phase 5B — Accueil : constat, réponse Devzair et cinq pôles détaillés
+
+État actuel : TERMINÉE.
+
+Trois sections livrées sous le hero, dans l'ordre éditorial de
+`docs/01-CONTENT.md §7.1` (Constat → Réponse → Cinq pôles). Les sections
+suivantes (réalisations, méthode, pourquoi Devzair, FAQ, CTA final) sont
+traitées dans les phases 5C+ / 6+.
+
+- [x] Extension de `expertise-pillars.ts` : ajout de `longDescription` (phrase narrative) et `services` (3 par pôle), ajout de la variante `accent` (Faire évoluer). Aucun refactor de `HomeEcosystemGraph.vue` (le champ `description` court reste consommé par le SVG).
+- [x] `HomeProblems.vue` — section « Le constat », H2 unique, `<ol>` de 5 items numérotés en Space Mono, layout 2 colonnes ≥768px (bloc éditorial sticky à gauche / liste à droite), 1 colonne <768px. Aucun élément interactif.
+- [x] `HomeConnectedApproach.vue` — section « La réponse Devzair » sur fond navy, parcours en 5 étapes en `<ol>` sémantique, source unique `expertisePillars` (aucun label dupliqué). Flèches décoratives `aria-hidden` (verticales <768px, horizontales →768px). Description longue publiée en `sr-only` sur chaque étape pour les lecteurs d'écran, sans surcharger le rendu visuel.
+- [x] `HomeExpertisePillars.vue` — grille détaillée, ancre `#expertises`. Mobile : carrousel scroll-snap CSS-natif (aucun JS, aucun bouton, 5 cartes toujours dans le DOM). Tablette : grille 2 colonnes. Desktop ≥1024px : grille asymétrique 3×2 (Concevoir spans 2 rows, Faire évoluer avec fond petrol). Hint « Faites défiler horizontalement » masqué ≥768px, doublé en sr-only.
+- [x] `pages/index.vue` orchestre les 4 sections (hero + 3 nouvelles). Ordre édito conforme à §7.1.
+- [x] Sémantique WCAG 2.2 AA : un seul H1, un H2 par section, H3 pour les items. Aucune carte focusable, aucun `tabindex`, aucun faux bouton, listes réelles (`<ol>`/`<ul>`).
+- [x] Contraste AA vérifié (Axe) : corrections appliquées — `HomeConnectedApproach` step-index en cream (Devzair blue échouait à 4.41:1 sur navy-elevated), `HomeExpertisePillars` accent-card index/tag/puces en cream/cream-muted (Devzair blue échouait à 2.08:1 sur petrol).
+- [x] `prefers-reduced-motion` : aucune animation nouvelle, `scroll-behavior: auto` forcé sur le carrousel — défense en profondeur.
+- [x] Tests unitaires : 90 verts (+21 : expertise-pillars étendu, HomeProblems×6, HomeConnectedApproach×6, HomeExpertisePillars×8).
+- [x] Tests E2E : 72 verts (+21 : `home-sections-primary.spec.ts` — ordre édito, un H2 par section, 5 items par section, ancre #expertises, SSR HTML, Axe, reduced-motion, responsive 320/390/768/1440).
+- [x] Build production : 2.79 MB / 725 kB gzip (+40 KB brut / +11 KB gzip vs Phase 5A 2.75 MB / 714 kB). Toujours pré-rendue (`routeRules['/'] = { prerender: true }`).
+- [ ] Sections différées explicites : `#realisations` (Phase 5C/7), `#contact` (Phase 6). Les CTA hero pointent toujours vers ces ancres (no-op) — remplaçables en une ligne. Le lien header « Expertises » (nav) conserve `/expertises` (route future) plutôt que d'être détourné vers `/#expertises`.
+
+Critère de sortie Phase 5B : atteint (lint, typecheck, 90 tests unitaires,
+72 E2E, build de production, tous verts).
+
 ---
 
 ## Phase 6 — Formulaire de contact

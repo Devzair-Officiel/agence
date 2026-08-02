@@ -127,8 +127,10 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Pré-rendu limité aux pages marketing réellement existantes.
-    // L'accueil actuelle est une page temporaire ; elle sera remplacée
-    // en Phase 5. On la garde en SSR pour ne pas figer un placeholder.
-    // /design-preview reste en SSR (page de dev interne).
+    // L'accueil est stable depuis Phase 5A (hero + graphe des cinq pôles),
+    // 100 % rendue côté serveur à partir de données typées locales : elle
+    // peut être servie en HTML statique. /design-preview reste en SSR
+    // (page de dev interne, noindex).
+    '/': { prerender: true },
   },
 })

@@ -278,6 +278,13 @@ Règles :
 - ne jamais mettre en cache une réponse personnalisée ou privée ;
 - toutes les pages pré-rendues doivent être accessibles par de vrais liens HTML ou déclarées explicitement.
 
+**État actuel (Phase 5A, 2026-08-02).** Seule `/` est pré-rendue :
+elle n’a aucune donnée dynamique (le hero et le graphe des cinq pôles
+proviennent d’une config typée locale). `/design-preview` reste en SSR
+(noindex, page de dev interne). Les autres routes marketing seront
+ajoutées à `routeRules` au fil des Phases 5B et suivantes, lorsqu’elles
+existeront réellement.
+
 ### Modules SEO
 
 Ne pas ajouter de module avant que le socle Nuxt passe `build`, `typecheck` et `lint`.

@@ -1,56 +1,40 @@
 <script setup lang="ts">
+import HomeConnectedApproach from "~/components/home/HomeConnectedApproach.vue"
+import HomeExpertisePillars from "~/components/home/HomeExpertisePillars.vue"
+import HomeHero from "~/components/home/HomeHero.vue"
+import HomeProblems from "~/components/home/HomeProblems.vue"
+
 /**
- * Page d'accueil temporaire (Phase 4 : SEO en place mais contenu placeholder).
+ * Page d'accueil publique — orchestration uniquement.
+ * Le contenu vit dans les composants `Home*` ; la page se contente de composer
+ * les sections dans l'ordre attendu et de déclarer le SEO via le composable
+ * dédié.
  *
- * La vraie page d'accueil (hero + écosystème 5 pôles) sera implémentée en
- * Phase 5. En attendant, on annonce un chantier en cours sans marketing
- * inventé, et on garde la page `noindex, nofollow` : rien de public ne doit
- * apparaître dans les résultats de recherche tant que le contenu réel
- * n'existe pas.
+ * Ordre éditorial (source `docs/01-CONTENT.md §7.1`) :
+ *   1. Hero
+ *   2. Constat  (HomeProblems)
+ *   3. Réponse  (HomeConnectedApproach)
+ *   4. Cinq pôles détaillés  (HomeExpertisePillars, ancre `#expertises`)
+ *
+ * Sections différées : réalisations, méthode, pourquoi Devzair, FAQ, CTA final.
+ * Les CTA hero (`#contact`, `#realisations`) restent des ancres inactives tant
+ * que ces sections n'existent pas — remplaçables en une ligne.
  */
-import BaseButton from "~/components/base/BaseButton.vue"
-import BaseContainer from "~/components/base/BaseContainer.vue"
-import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 
 usePageSeo({
-  title: "Devzair — Chantier en cours",
+  title: "Agence digitale pour sites web, applications et visibilité",
   description:
-    "Les fondations du site Devzair, agence digitale à taille humaine, sont posées. La page d'accueil publique sera livrée à l'étape suivante.",
+    "Devzair accompagne les entreprises dans la création de sites internet, applications métier, identités visuelles, contenus professionnels et stratégies SEO sur mesure.",
   path: "/",
-  noindex: true,
+  type: "website",
 })
 </script>
 
 <template>
-  <BaseContainer as="section" class="index">
-    <BaseEyebrow>Chantier en cours</BaseEyebrow>
-    <h1 class="index__title">Le site Devzair est en construction.</h1>
-    <p class="index__lead">
-      Les fondations du design system sont posées. La page d'accueil publique
-      sera livrée à l'étape suivante.
-    </p>
-    <BaseButton to="/design-preview" variant="primary">
-      Voir la preview du design system
-      <template #icon>→</template>
-    </BaseButton>
-  </BaseContainer>
+  <div class="home-page">
+    <HomeHero />
+    <HomeProblems />
+    <HomeConnectedApproach />
+    <HomeExpertisePillars />
+  </div>
 </template>
-
-<style scoped>
-.index {
-  padding-block: var(--space-16);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: flex-start;
-}
-
-.index__title {
-  max-width: 22ch;
-}
-
-.index__lead {
-  max-width: 55ch;
-  color: var(--text-secondary);
-}
-</style>
