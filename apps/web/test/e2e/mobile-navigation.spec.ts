@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openMobileNavigation } from './support/mobile-nav'
 
 // Contrôles E2E du menu mobile sur `/`.
 //
@@ -15,9 +16,12 @@ test.describe('Mobile navigation', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    // Attend l'hydratation Vue avant de simuler des interactions.
-    await page.waitForLoadState('networkidle')
+    // `load` (fin d'événement window.onload) est plus fiable que
+    // `domcontentloaded` pour attendre le SSR sans les faux blocages de
+    // `networkidle` (fonts, HMR). L'ouverture du menu (helper dédié) gère
+    // ensuite la race d'hydratation en se basant sur `aria-expanded`.
+    await page.goto('/', { waitUntil: 'load' })
+    await page.locator('button[aria-controls="mobile-navigation"]').waitFor({ state: 'visible' })
   })
 
   const menuButton = 'button[aria-controls="mobile-navigation"]'
@@ -39,7 +43,7 @@ test.describe('Mobile navigation', () => {
   test('opens, moves focus into the dialog, then closes via Escape and restores focus', async ({ page }) => {
     const button = page.locator(menuButton)
 
-    await button.click()
+    await openMobileNavigation(page)
 
     await expect(page.locator(dialog)).toBeVisible()
     await expect(button).toHaveAttribute('aria-expanded', 'true')
@@ -60,7 +64,7 @@ test.describe('Mobile navigation', () => {
   })
 
   test('closes when a navigation link is clicked', async ({ page }) => {
-    await page.locator(menuButton).click()
+    await openMobileNavigation(page)
     await expect(page.locator(dialog)).toBeVisible()
 
     // On clique sur le premier lien de nav. Comme la cible est encore
@@ -72,7 +76,7 @@ test.describe('Mobile navigation', () => {
   })
 
   test('Tab and Shift+Tab stay within the dialog', async ({ page }) => {
-    await page.locator(menuButton).click()
+    await openMobileNavigation(page)
     await expect(page.locator(dialog)).toBeVisible()
 
     // Compte les éléments focusables déclarés par le composant.

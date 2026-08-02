@@ -1,0 +1,42 @@
+# Devzair — reverse proxy Caddy en frontal (dev).
+#
+# Un seul domaine public (localhost:3001 en dev, devzair.fr en prod). Toutes
+# les URL qui commencent par /api/ sont routées vers le conteneur Symfony ;
+# tout le reste va vers Nuxt/Nitro. Le chemin /api/ est **retiré** avant
+# forwarding : Symfony expose ses routes sous /contact, /health, etc.
+
+{
+    admin off
+    auto_https off
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+:80 {
+    encode zstd gzip
+
+    @api path /api/*
+    handle @api {
+        # Strip /api prefix avant de forwarder à Symfony.
+        uri strip_prefix /api
+        reverse_proxy api:8000 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    handle {
+        reverse_proxy web:3000 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+
+    log {
+        output stderr
+        format console
+    }
+}

@@ -1,0 +1,5 @@
+framework:
+    validation:
+        email_validation_mode: html5
+        # Les contraintes sont déclarées via attributs PHP sur le DTO.
+        enable_attributes: true

@@ -1,24 +1,32 @@
 # Devzair — Monorepo
 
-Site public de l'agence digitale Devzair. Monorepo Git unique organisant, à
-terme, un frontend Nuxt 4 et un backend Symfony 7.4. À ce jour, seul le
-frontend existe.
+Site public de l'agence digitale Devzair. Monorepo Git unique organisant un
+frontend Nuxt 4 et, depuis la Phase 6A, un backend Symfony 7.4 LTS derrière
+un reverse proxy Caddy.
 
 L'accueil publique une home d'agence one-pager : 8 sections éditoriales
 (hero → constat → réponse → 5 pôles → réalisations → méthode → pourquoi
 Devzair → CTA final `#contact`), sans page interne clonée, sans placeholder,
 sans coordonnée fictive. Phase 5 (accueil complète) est close.
 
+La Phase 6A ajoute un endpoint sécurisé `POST /api/contact` (Symfony) et un
+health check `GET /api/health`. Le formulaire côté navigateur, la
+persistance et le back-office restent différés — voir `docs/08-ROADMAP.md`.
+
 ## Structure
 
 ```
 apps/
   web/                  Frontend Nuxt 4 + Vue 3 + TypeScript strict
+  api/                  Backend Symfony 7.4 LTS (endpoint /api/contact)
+infra/
+  caddy/                Reverse proxy Caddy (Caddyfile + Dockerfile)
 docs/                   Documentation projet (à lire de façon sélective, cf. AGENTS.md)
+docs/adr/               Décisions d'architecture consignées (ADR)
 .github/workflows/      Contrôles qualité CI (GitHub Actions)
 AGENTS.md               Règles communes aux agents (source de vérité)
 CLAUDE.md               Compléments propres à Claude Code
-compose.yaml            Orchestration Docker de développement
+compose.yaml            Orchestration Docker de développement (caddy + web + api)
 ```
 
 ## Prérequis
@@ -30,12 +38,20 @@ compose.yaml            Orchestration Docker de développement
 
 ```bash
 cp .env.example .env          # facultatif : personnaliser le port ou l'URL
-docker compose up -d          # build de l'image `apps/web/Dockerfile.dev` puis démarrage
-docker compose logs -f web    # suivi du serveur Nuxt
+docker compose up -d --build  # build des trois images (caddy, web, api)
+docker compose logs -f caddy  # suivi du reverse proxy public
 ```
 
-Nuxt est disponible sur http://localhost:3001 (le port hôte est mappé sur le
-port 3000 du conteneur).
+Le site est disponible sur http://localhost:3001. Caddy route :
+
+- `http://localhost:3001/`         → Nuxt (conteneur `web`)
+- `http://localhost:3001/api/*`    → Symfony (conteneur `api`, préfixe `/api` strippé)
+
+Vérification rapide de l'API :
+
+```bash
+curl -s http://localhost:3001/api/health   # → {"status":"ok"}
+```
 
 Pour arrêter :
 
@@ -43,12 +59,13 @@ Pour arrêter :
 docker compose down
 ```
 
-Les dépendances sont installées **au build** (`npm ci` dans le Dockerfile).
-Elles ne sont pas réinstallées à chaque démarrage. Si `package-lock.json`
-change, rebuild explicite :
+Les dépendances Node sont installées **au build** de l'image `web`, les
+dépendances Composer au build de l'image `api`. Si un `package-lock.json`
+ou un `composer.json` change, rebuild explicite :
 
 ```bash
-docker compose build web
+docker compose build web    # front
+docker compose build api    # back
 ```
 
 ## Contrôles qualité
@@ -77,9 +94,9 @@ l'image `mcr.microsoft.com/playwright:v1.62.1-noble`.
 
 ## Variables d'environnement
 
-`.env.example` liste les variables publiques attendues. Elles sont
-préfixées `NUXT_PUBLIC_*` et surchargent automatiquement
-`runtimeConfig.public` dans `apps/web/nuxt.config.ts`.
+`.env.example` liste **toutes** les variables — publiques (Nuxt) et
+backend (Symfony). Les variables `NUXT_PUBLIC_*` alimentent
+`runtimeConfig.public` ; les autres alimentent la config Symfony.
 
 Trois variables gouvernent la politique SEO :
 
@@ -88,7 +105,18 @@ Trois variables gouvernent la politique SEO :
   La production doit forcer `true` ; la preprod reste bloquée par défaut.
 - `NUXT_PUBLIC_API_BASE_URL` — base d'appel API (par défaut `/api`).
 
+Côté API, la Phase 6A introduit :
+
+- `MAILER_DSN` — défaut sûr `null://null` (aucun email envoyé) ;
+- `CONTACT_FROM_EMAIL` / `CONTACT_FROM_NAME` — identité expéditeur ;
+- `CONTACT_RECIPIENT` — destinataire du formulaire (obligatoire en prod) ;
+- `TURNSTILE_ENABLED` / `TURNSTILE_SECRET` — vérification anti-bot ;
+- `CONTACT_RATE_LIMIT` / `CONTACT_RATE_INTERVAL` — rate limit par IP ;
+- `CONTACT_ORIGIN_ALLOWLIST` — CSRF stateless (voir ADR-007).
+
 Aucun secret ne doit être commité, ni ajouté à `runtimeConfig.public`.
+Les vraies valeurs de production passent par un secret manager, jamais
+par Git.
 
 ## Documentation projet
 

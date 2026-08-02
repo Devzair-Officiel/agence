@@ -23,7 +23,12 @@ export default defineConfig({
   expect: {
     timeout: 5_000,
   },
-  reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  // `line` en CI produit une synthèse stdout distinguant passed / flaky /
+  // failed en fin d'exécution — visible directement dans les logs GitHub
+  // Actions sans dépendre de l'artefact HTML.
+  reporter: isCI
+    ? [['line'], ['github'], ['html', { open: 'never' }]]
+    : 'list',
   use: {
     baseURL,
     trace: 'on-first-retry',

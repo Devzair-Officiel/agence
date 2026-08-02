@@ -1,0 +1,74 @@
+# Contrôles qualité du backend Symfony (apps/api) — Phase 6A.
+#
+# Un seul job :
+#   - `composer validate --strict`     : cohérence du manifeste ;
+#   - `bin/console lint:container`      : injection et paramètres résolvables ;
+#   - `bin/console lint:yaml config`    : YAML syntaxiquement corrects ;
+#   - `phpunit`                         : DTO, endpoint, mailer, logs, sécurité.
+#
+# Aucune dépendance externe : Turnstile et Mailer sont désactivés en test
+# (voir apps/api/.env.test et services_test.yaml).
+
+name: api-quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-quality.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-quality.yml'
+
+concurrency:
+  group: api-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: composer validate + lint + phpunit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, mbstring, ctype, iconv, opcache
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('apps/api/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Lint YAML config
+        run: php bin/console lint:yaml config --parse-tags
+
+      - name: Lint DI container
+        run: php bin/console lint:container --env=test
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit --colors=never

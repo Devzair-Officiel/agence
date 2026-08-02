@@ -134,6 +134,19 @@ Documenter toute incompatibilité acceptée.
 13. smoke tests production ;
 14. possibilité de rollback.
 
+### Jobs GitHub Actions actifs
+
+| Workflow                              | Déclencheur (paths)                | Contrôles                                                        |
+|---------------------------------------|------------------------------------|------------------------------------------------------------------|
+| `.github/workflows/web-quality.yml`   | `apps/web/**`                      | Node 24 — lint + typecheck + vitest + build + Playwright (Chromium) |
+| `.github/workflows/api-quality.yml`   | `apps/api/**`                      | PHP 8.4 — `composer validate --strict` + `lint:yaml config` + `lint:container` + PHPUnit |
+
+Playwright en CI : `workers: 1`, `retries: 1`, build Nitro préalable
+(`npm run build && node .output/server/index.mjs`), reporter `line`
+distinguant `passed / flaky / failed` en stdout, plus `github` et `html`
+(artefact uploadé sur échec). Aucun test ne s’appuie sur `networkidle`
+(remplacé par des attentes déterministes sur des éléments hydratés).
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

@@ -1,0 +1,10 @@
+framework:
+    router:
+        # Génération d'URL absolues jamais nécessaire côté API stateless.
+        utf8: true
+        default_uri: 'http://localhost/'
+
+when@prod:
+    framework:
+        router:
+            strict_requirements: null

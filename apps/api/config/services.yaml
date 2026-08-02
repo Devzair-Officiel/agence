@@ -1,0 +1,66 @@
+# Configuration des services de l'application.
+#
+# Convention (voir AGENTS.md §6) :
+# - controller : reçoit la requête, délègue à un service, formatte la réponse ;
+# - service    : porte le cas d'usage ;
+# - interface  : contrat stable, remplacé par un fake en test.
+
+parameters:
+    app.contact.rate_limit: '%env(int:CONTACT_RATE_LIMIT)%'
+    app.contact.rate_interval: '%env(CONTACT_RATE_INTERVAL)%'
+    app.contact.from_email: '%env(CONTACT_FROM_EMAIL)%'
+    app.contact.from_name: '%env(CONTACT_FROM_NAME)%'
+    app.contact.recipient: '%env(default::CONTACT_RECIPIENT)%'
+    app.contact.origin_allowlist: '%env(csv:CONTACT_ORIGIN_ALLOWLIST)%'
+    app.turnstile.enabled: '%env(bool:TURNSTILE_ENABLED)%'
+    app.turnstile.secret: '%env(default::TURNSTILE_SECRET)%'
+    app.site.indexable: '%env(bool:default::NUXT_PUBLIC_SITE_INDEXABLE)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            # Force l'injection du canal Monolog "contact" à chaque service
+            # qui demande un $contactLogger.
+            Psr\Log\LoggerInterface $contactLogger: '@monolog.logger.contact'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Kernel.php'
+
+    # Sélection explicite de l'implémentation Turnstile selon la config.
+    # En dev/test (TURNSTILE_ENABLED=false), on autorise systématiquement ;
+    # en prod, on branche le vrai vérificateur Cloudflare.
+    App\Contact\Security\TurnstileVerifierInterface:
+        factory: ['@App\Contact\Security\TurnstileVerifierFactory', 'create']
+
+    App\Contact\Security\TurnstileVerifierFactory:
+        arguments:
+            $enabled: '%app.turnstile.enabled%'
+            $secret: '%app.turnstile.secret%'
+            $httpClient: '@Symfony\Contracts\HttpClient\HttpClientInterface'
+            $logger: '@logger'
+
+    App\Contact\Service\ContactMessageSenderInterface:
+        alias: App\Contact\Service\SymfonyContactMessageSender
+
+    App\Contact\Service\SymfonyContactMessageSender:
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName: '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
+
+    App\Contact\Security\OriginAllowlist:
+        arguments:
+            $allowlist: '%app.contact.origin_allowlist%'
+
+    App\Contact\Security\ContactRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.contact_ip'
+
+    App\EventListener\ApiExceptionListener:
+        arguments:
+            $debug: '%kernel.debug%'

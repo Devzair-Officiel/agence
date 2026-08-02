@@ -1,0 +1,13 @@
+# Routes exposées par l'API. Toutes les URL sont *déjà* préfixées par /api
+# côté Caddy (rewrite → strip /api → forward au conteneur). Ici on décrit
+# donc les chemins sans /api.
+
+contact_submission:
+    path: /contact
+    controller: App\Contact\Controller\ContactSubmissionController::__invoke
+    methods: [POST]
+
+health_check:
+    path: /health
+    controller: App\Contact\Controller\HealthController::__invoke
+    methods: [GET]

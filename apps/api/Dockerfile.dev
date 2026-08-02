@@ -1,0 +1,43 @@
+# Devzair — API Symfony 7.4 LTS (Phase 6A)
+#
+# Image de développement uniquement. Utilise le serveur intégré PHP (php -S)
+# car la Phase 6A ne comporte ni base de données, ni worker asynchrone, ni
+# assets statiques : un serveur single-thread suffit derrière Caddy. La mise
+# en production migrera vers FrankenPHP ou PHP-FPM + nginx (voir ADR-006).
+
+FROM php:8.4-cli-alpine
+
+RUN apk add --no-cache \
+        git \
+        icu-dev \
+        oniguruma-dev \
+        libzip-dev \
+        unzip \
+    && docker-php-ext-install \
+        intl \
+        opcache \
+        zip
+
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Copie manifeste seul pour profiter du cache Docker.
+COPY composer.json ./
+RUN composer install \
+        --no-interaction \
+        --no-scripts \
+        --prefer-dist \
+        --no-progress \
+    || true
+
+COPY . .
+
+# Cache warmup optionnel : ignoré si l'application n'est pas encore prête.
+RUN php bin/console cache:warmup --env=dev --no-debug || true
+
+EXPOSE 8000
+
+# Serveur PHP intégré, écoute sur 8000, sert public/index.php pour toutes les
+# routes non fichiers. Le front controller Symfony gère le routing.
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public/", "public/index.php"]

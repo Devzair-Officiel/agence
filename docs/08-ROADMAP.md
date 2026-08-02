@@ -280,22 +280,65 @@ Critère de sortie Phase 5D : atteint. Phase 5 close dans son ensemble
 
 ## Phase 6 — Formulaire de contact
 
-- [ ] Définir les champs minimaux.
-- [ ] Créer un schéma de validation.
-- [ ] Valider côté serveur.
-- [ ] Ajouter CSRF si le mécanisme choisi l’exige.
-- [ ] Ajouter limitation de débit.
-- [ ] Ajouter protection anti-spam progressive.
-- [ ] Ajouter e-mail transactionnel.
-- [ ] Ajouter messages accessibles.
-- [ ] Ajouter notice de confidentialité.
-- [ ] Tester erreurs et succès.
-- [ ] Ne pas exposer de clé d’e-mail au navigateur.
-- [ ] Ajouter les événements analytics après décision de consentement.
+La phase est découpée en deux jalons — **6A backend** (livré) et
+**6B frontend** (à venir) — pour ne pas coupler le durcissement de
+l’endpoint à la livraison du widget navigateur.
 
-### Critère de sortie
+### Phase 6A — Backend et transport (TERMINÉE)
 
-Une demande réelle est transmise de façon sûre, traçable et conforme.
+- [x] Créer `apps/api` (Symfony 7.4 LTS, PHP 8.4, sans DB ni Doctrine).
+- [x] Créer `infra/caddy/` : reverse proxy en frontal, port hôte unique
+      `3001:80`, `/api/*` → `api:8000`, reste → `web:3000`.
+- [x] Ajouter le service `api` à `compose.yaml`, retirer le port hôte
+      direct de `web` (accessible uniquement via Caddy).
+- [x] DTO `App\Contact\Dto\ContactRequest` avec contraintes Symfony
+      Validator (nom, email, société, téléphone, type projet, message,
+      consentement, honeypot `website`, `turnstileToken`).
+- [x] Contrôleur `ContactSubmissionController` → service
+      `SubmitContactMessage` → interface `ContactMessageSenderInterface`
+      (implémentation Symfony Mailer + fake mémoire pour tests).
+- [x] Honeypot silencieux (202 générique, aucun email).
+- [x] Cloudflare Turnstile côté serveur via `TurnstileVerifierInterface`
+      (impl `AlwaysAllow` en dev/test, `Cloudflare` en prod) — factory
+      fail-closed si `TURNSTILE_ENABLED=true` sans secret.
+- [x] Symfony RateLimiter (token bucket) par IP + `Retry-After` sur 429.
+- [x] CSRF Option B (Origin allowlist stricte, aucune session ni cookie).
+- [x] Payload > 10 KB → 413.
+- [x] `MAILER_DSN=null://null` par défaut ; `From` app-controlled,
+      `Reply-To` visiteur, corps texte brut.
+- [x] Aucun PII loggué (canal Monolog `contact`) — vérifié par test.
+- [x] `Request-Id` UUID v7 dans la réponse JSON, l’en-tête HTTP et tous
+      les logs.
+- [x] `GET /api/health` → `{"status":"ok"}`.
+- [x] Suite PHPUnit : DTO, endpoint (happy path + honeypot + validation +
+      Origin + rate limit + payload trop grand), mailer, logs sans PII,
+      factory Turnstile, verifier Cloudflare (via `MockHttpClient`).
+- [x] Job CI dédié `.github/workflows/api-quality.yml`
+      (`composer validate --strict`, `lint:yaml config`, `lint:container`,
+      `phpunit`).
+- [x] Stabilisation Playwright : suppression des cinq
+      `page.waitForLoadState('networkidle')` (remplacés par des attentes
+      déterministes sur des éléments hydratés). CI conserve
+      `workers: 1`, `retries: 1`, reporter `line` distinguant
+      passed/flaky/failed.
+- [x] ADR-006 (runtime Symfony/Caddy), ADR-007 (sécurité endpoint contact).
+
+### Phase 6B — Front, page /contact et widget Turnstile (à venir)
+
+- [ ] Créer la page publique `/contact` (Nuxt, SSR).
+- [ ] Composant formulaire accessible (labels, erreurs annoncées,
+      focus management, `prefers-reduced-motion`).
+- [ ] Intégration widget Cloudflare Turnstile côté navigateur.
+- [ ] Messages d’état accessibles (succès, erreur, rate limit).
+- [ ] Notice de confidentialité (RGPD, base légale, durée).
+- [ ] Événements analytics après décision de consentement.
+- [ ] Tests E2E : parcours complet, erreurs de validation, honeypot,
+      rate limit visible côté UI.
+
+### Critère de sortie (Phase 6 complète)
+
+Une demande réelle est transmise de façon sûre, traçable et conforme,
+depuis le formulaire jusqu’à la boîte de réception.
 
 ---
 
@@ -316,10 +359,14 @@ Chaque preuve publiée est vérifiable et contextualisée.
 
 ---
 
-## Phase 8 — Création de l’API Symfony
+## Phase 8 — Extension du backend (données et persistance)
 
-- [ ] Créer `apps/api` avec Symfony 7.4 LTS.
-- [ ] Ajouter Docker PHP.
+Le squelette `apps/api` et l’image Docker PHP ont été introduits en
+Phase 6A. La Phase 8 se concentre sur l’ajout de la persistance et des
+domaines métier.
+
+- [x] ~~Créer `apps/api` avec Symfony 7.4 LTS.~~ (livré Phase 6A)
+- [x] ~~Ajouter Docker PHP.~~ (livré Phase 6A)
 - [ ] Ajouter PostgreSQL.
 - [ ] Configurer migrations.
 - [ ] Définir Article, Catégorie et Auteur.

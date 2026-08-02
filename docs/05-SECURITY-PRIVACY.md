@@ -142,6 +142,29 @@ La politique exacte doit être générée à partir des ressources réellement u
 - destinataires imposés côté serveur ;
 - aucun en-tête e-mail construit directement depuis une entrée utilisateur.
 
+### Endpoint `POST /api/contact` (Phase 6A)
+
+Politique consignée dans `docs/adr/ADR-007-endpoint-contact-securite.md`.
+Résumé — six filtres indépendants :
+
+1. **CSRF stateless (Option B)** : allowlist stricte de l’en-tête `Origin`
+   (`CONTACT_ORIGIN_ALLOWLIST`). Aucune session, aucun cookie. Une requête
+   sans `Origin` correspondant est rejetée en 403.
+2. **Honeypot** : champ invisible `website`. S’il est rempli, l’endpoint
+   répond 202 générique et **n’envoie aucun email**.
+3. **Cloudflare Turnstile** : vérification serveur obligatoire quand
+   `TURNSTILE_ENABLED=true`. Un secret manquant en mode activé fait
+   échouer le boot (fail-closed).
+4. **Rate limit** : Symfony RateLimiter (token bucket) par IP réelle
+   (`CONTACT_RATE_LIMIT` / `CONTACT_RATE_INTERVAL`). Dépassement → 429
+   avec `Retry-After`.
+5. **Validation stricte** : DTO `App\Contact\Dto\ContactRequest` avec
+   contraintes Symfony (email, longueurs, choix). Payload > 10 KB → 413.
+6. **Mailer contrôlé** : `From` app (jamais le visiteur), `Reply-To` =
+   visiteur, corps texte brut (pas d’HTML → pas d’injection). Défaut
+   `MAILER_DSN=null://null` : aucun email tant que la boîte réelle n’est
+   pas branchée.
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;
@@ -166,6 +189,13 @@ Journaliser sans enregistrer inutilement les données personnelles :
 - alertes de sécurité ;
 - déploiements ;
 - sauvegardes.
+
+Règle appliquée en Phase 6A pour `/api/contact` (canal Monolog `contact`) :
+chaque événement porte un `request_id` (UUID v7) exposé aussi dans la
+réponse et l’en-tête `X-Request-Id`. **Aucun PII** n’est loggué (ni
+message visiteur, ni email, ni téléphone, ni token Turnstile, ni secret).
+Un test PHPUnit (`ContactLoggingTest`) échoue si ces valeurs apparaissent
+dans les logs sur le happy path.
 
 Prévoir :
 

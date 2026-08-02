@@ -10,15 +10,20 @@
 Internet
    |
    v
-Caddy / reverse proxy
+Caddy / reverse proxy  (seul port hôte publié)
    |
-   +--> /, /services/**, /ressources/**  --> Nuxt 4 / Nitro
+   +--> /, /services/**, /ressources/**  --> Nuxt 4 / Nitro    (conteneur `web`)
    |
-   +--> /api/**                         --> Symfony 7.4 LTS
+   +--> /api/**                         --> Symfony 7.4 LTS   (conteneur `api`)
                                                 |
                                                 v
-                                           PostgreSQL
+                                           PostgreSQL (à partir de la Phase 8)
 ```
+
+État Phase 6A : le triplet `caddy` + `web` + `api` est en place, mais
+Symfony n’a qu’un seul endpoint métier (`POST /api/contact`) et un
+health check (`GET /api/health`). PostgreSQL n’est pas encore introduit
+(voir ADR-006 §PostgreSQL / Doctrine).
 
 ### Principes
 
@@ -67,9 +72,19 @@ devzair/
 │   │   ├── Dockerfile.dev
 │   │   ├── nuxt.config.ts
 │   │   └── package.json
-│   └── api/                         # ajouté à la phase Symfony
+│   └── api/                         # Symfony 7.4 LTS (Phase 6A : /api/contact)
+│       ├── bin/
+│       ├── config/
+│       ├── public/
+│       ├── src/
+│       │   ├── Contact/{Controller,Dto,Service,Security}
+│       │   ├── EventListener/
+│       │   └── Kernel.php
+│       ├── tests/
+│       ├── Dockerfile.dev
+│       └── composer.json
 ├── infra/
-│   └── caddy/
+│   └── caddy/                       # Caddyfile + Dockerfile (frontal public)
 ├── docs/
 │   └── adr/
 ├── compose.yaml
@@ -460,11 +475,15 @@ Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tan
 - `ADR-003` — stratégie SSR/pré-rendu ;
 - `ADR-004` — module SEO retenu ;
 - `ADR-005` — design system ;
-- `ADR-006` — Symfony 7.4 LTS et PostgreSQL ;
-- `ADR-007` — contrat API du blog ;
-- `ADR-008` — authentification de l’administration ;
-- `ADR-009` — stratégie de cache et invalidation ;
-- `ADR-010` — analytics et consentement.
+- `ADR-006` — runtime backend Symfony 7.4 LTS et reverse proxy Caddy
+  (PostgreSQL différé — voir ADR-008 futur) ;
+- `ADR-007` — sécurité de l’endpoint `POST /api/contact` (CSRF stateless,
+  Turnstile, rate limit, logging sans PII) ;
+- `ADR-008` — introduction de PostgreSQL et Doctrine (à rédiger lors de la
+  première persistance) ;
+- `ADR-009` — authentification de l’administration ;
+- `ADR-010` — stratégie de cache et invalidation ;
+- `ADR-011` — analytics et consentement.
 
 ---
 

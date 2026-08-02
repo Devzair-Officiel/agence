@@ -8,8 +8,12 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Keyboard navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    // `load` (fin d'événement window.onload) est plus fiable que
+    // `domcontentloaded` pour attendre l'hydratation Vue et l'attachement
+    // des listeners clavier, sans le faux blocage de `networkidle`
+    // (fonts, HMR).
+    await page.goto('/', { waitUntil: 'load' })
+    await page.locator('header.site-header').waitFor({ state: 'visible' })
   })
 
   test('skip link is the first focusable element and reveals on focus', async ({ page }) => {
@@ -48,8 +52,8 @@ test.describe('Keyboard navigation', () => {
     // On force le focus sur le bouton menu ou, à défaut, sur le premier lien
     // de nav du header (visible en desktop).
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.goto('/', { waitUntil: 'load' })
+    await page.locator('header.site-header a').first().waitFor({ state: 'visible' })
     const firstNavLink = page.locator('header.site-header a').first()
     await firstNavLink.focus()
     const outlineWidth = await firstNavLink.evaluate((el) =>

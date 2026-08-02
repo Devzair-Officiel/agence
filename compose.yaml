@@ -1,11 +1,31 @@
+# Devzair — stack Docker Compose (Phase 6A).
+#
+# Architecture cible (voir docs/06-ARCHITECTURE-CODE.md §16.1) :
+# - `caddy`  : seul service exposé publiquement (port hôte 3001). Route
+#              /api/** vers Symfony et tout le reste vers Nuxt/Nitro.
+# - `web`    : Nuxt en mode dev (HMR), accessible uniquement par le réseau
+#              interne. Ne publie plus de port hôte.
+# - `api`    : Symfony 7.4 (serveur intégré PHP), accessible uniquement par
+#              le réseau interne. La Phase 6A n'utilise ni DB ni worker.
+
 services:
+  caddy:
+    build:
+      context: ./infra/caddy
+    ports:
+      - "3001:80"
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
   web:
     build:
       context: ./apps/web
       dockerfile: Dockerfile.dev
     working_dir: /app
-    ports:
-      - "3001:3000"
+    expose:
+      - "3000"
     volumes:
       # Code monté pour le HMR.
       - ./apps/web:/app
@@ -15,12 +35,47 @@ services:
       - web_nuxt_cache:/app/.nuxt
     environment:
       NODE_ENV: development
-      # Ces valeurs sont surchargées par .env à la racine s'il existe.
+      # Le SITE_URL utilisé pour les URL absolues (sitemap, canonical) reste
+      # celui du point d'entrée public — Caddy.
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-http://localhost:3001}
       # Défaut sécurisé : le site en dev n'est pas indexable. Passer à `true`
       # uniquement pour tester le rendu SEO en mode production.
       NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-false}
+      # Base URL relative : le navigateur appelle /api/... et Caddy route
+      # vers le conteneur api.
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    expose:
+      - "8000"
+    volumes:
+      # Code monté pour l'itération, vendor géré par l'image.
+      - ./apps/api:/app
+      - api_vendor:/app/vendor
+      - api_var:/app/var
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_DEBUG: ${APP_DEBUG:-1}
+      APP_SECRET: ${APP_SECRET:-changeme_local_dev_only_never_used_for_signing}
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-no-reply@devzair.example}
+      CONTACT_FROM_NAME: ${CONTACT_FROM_NAME:-Devzair — Site}
+      CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
+      TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-false}
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      CONTACT_RATE_LIMIT: ${CONTACT_RATE_LIMIT:-5}
+      CONTACT_RATE_INTERVAL: ${CONTACT_RATE_INTERVAL:-10 minutes}
+      CONTACT_ORIGIN_ALLOWLIST: ${CONTACT_ORIGIN_ALLOWLIST:-http://localhost:3001}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,REMOTE_ADDR}
+      TRUSTED_HEADERS: ${TRUSTED_HEADERS:-x-forwarded-for,x-forwarded-proto,x-forwarded-host}
     env_file:
       - path: .env
         required: false
@@ -29,3 +84,5 @@ services:
 volumes:
   web_node_modules:
   web_nuxt_cache:
+  api_vendor:
+  api_var:

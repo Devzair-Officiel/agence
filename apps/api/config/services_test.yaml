@@ -1,0 +1,33 @@
+# Overrides pour l'environnement de test.
+# Remplace le sender réel par un fake en mémoire, et publie les services
+# du package Contact avec visibilité publique pour que les tests puissent
+# les récupérer depuis le container.
+
+services:
+    _defaults:
+        public: true
+
+    App\Contact\Service\InMemoryContactMessageSender:
+        public: true
+
+    App\Contact\Service\ContactMessageSenderInterface:
+        alias: App\Contact\Service\InMemoryContactMessageSender
+        public: true
+
+    # Force le rate limiter à utiliser un cache en mémoire, isolé par kernel :
+    # chaque `createClient()` reboot le kernel, chaque test repart d'un bucket
+    # neuf. Sans cette override, le cache par défaut est persistant et l'ordre
+    # aléatoire des tests fait exhauster la limite pour les tests suivants.
+    limiter.storage.contact_ip:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.contact_ip:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'contact_ip'
+              limit: '%app.contact.rate_limit%'
+              rate: { interval: '%app.contact.rate_interval%', amount: '%app.contact.rate_limit%' }
+            - '@limiter.storage.contact_ip'
+        public: true

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openMobileNavigation } from './support/mobile-nav'
 
 // Contrôle `prefers-reduced-motion` sur `/`.
 //
@@ -20,8 +21,12 @@ test.describe('prefers-reduced-motion', () => {
     // Certains contextes de test.use ne propagent pas toujours l'option
     // reducedMotion au bon moment ; on force l'émulation ici pour rester sûr.
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    // `load` (fin de window.onload) sert de proxy fiable au rendu SSR sans
+    // le faux blocage de `networkidle` (fonts, HMR). Les tests qui déclenchent
+    // une interaction utilisent `openMobileNavigation` pour gérer la race
+    // d'hydratation de manière déterministe.
+    await page.goto('/', { waitUntil: 'load' })
+    await page.locator('main h1').first().waitFor({ state: 'visible' })
   })
 
   test('main content stays visible', async ({ page }) => {
@@ -59,8 +64,7 @@ test.describe('prefers-reduced-motion', () => {
   })
 
   test('mobile navigation still opens and closes without motion', async ({ page }) => {
-    const button = page.locator('button[aria-controls="mobile-navigation"]')
-    await button.click()
+    await openMobileNavigation(page)
     await expect(page.locator('#mobile-navigation')).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.locator('#mobile-navigation')).toHaveCount(0)

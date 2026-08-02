@@ -1,0 +1,27 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    # HttpFoundation + trusted proxies : Caddy est en frontal.
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix']
+    http_method_override: false
+    handle_all_throwables: true
+
+    # Pas de session : l'endpoint /api/contact est stateless (voir ADR-007).
+    session:
+        enabled: false
+
+    php_errors:
+        log: true
+
+    rate_limiter:
+        contact_ip:
+            policy: 'token_bucket'
+            limit: '%app.contact.rate_limit%'
+            rate: { interval: '%app.contact.rate_interval%', amount: '%app.contact.rate_limit%' }
+
+    serializer:
+        enabled: true
+
+when@test:
+    framework:
+        test: true

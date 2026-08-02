@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
+import { openMobileNavigation } from './support/mobile-nav'
 
 // Contrôles E2E de la section finale « Parlons de votre projet » (Phase 5D).
 //
@@ -128,13 +129,21 @@ test.describe('/ (home) — CTA final #contact', () => {
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
 
+    // Capture toute erreur console liée à la navigation (hydration mismatch,
+    // routeur, teleport). Le scénario doit se dérouler sans en produire.
+    const consoleErrors: string[] = []
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text())
+    })
+
+    await page.goto('/', { waitUntil: 'load' })
+
+    // Ouverture retentable : couvre la course éventuelle entre l'attachement
+    // du handler Vue et le premier clic (cf. support/mobile-nav.ts).
+    const dialog = await openMobileNavigation(page)
     const menuButton = page.locator('button[aria-controls="mobile-navigation"]')
-    await menuButton.click()
-    const dialog = page.locator('#mobile-navigation')
-    await expect(dialog).toBeVisible()
+    await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
 
     // Le CTA du menu mobile est un lien vers /#contact, positionné en pied de dialog.
     const dialogCta = dialog
@@ -145,10 +154,17 @@ test.describe('/ (home) — CTA final #contact', () => {
 
     // Le menu se ferme, l'URL porte le fragment, la section cible est en vue.
     await expect(dialog).toHaveCount(0)
+    await expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await expect(page).toHaveURL(/#contact$/)
     await expect(page.locator(CONTACT_SECTION)).toBeInViewport({ ratio: 0.1 })
     // Scroll restauré (pas de scroll-lock résiduel).
     await expect(page.locator('html')).not.toHaveClass(/is-scroll-locked/)
+
+    // Aucune erreur console durant l'ouverture, la navigation et la fermeture.
+    const navigationErrors = consoleErrors.filter((line) =>
+      /navigat|hydrat|router|teleport|vue|nuxt/i.test(line),
+    )
+    expect(navigationErrors, `unexpected console errors: ${navigationErrors.join('\n')}`).toEqual([])
   })
 
   test('no horizontal overflow at 320 / 390 / 768 / 1440', async ({ page }) => {

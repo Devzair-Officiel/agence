@@ -1,0 +1,13 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile*
+README.md
+var/cache/*
+var/log/*
+vendor/
+.env.local
+.env.*.local
+.phpunit.cache/
+.phpunit.result.cache
+tests/
