@@ -88,6 +88,14 @@ export default defineNuxtConfig({
       // l'API Symfony l'accepte via `AlwaysAllowTurnstileVerifier`. En prod,
       // NUXT_PUBLIC_TURNSTILE_SITE_KEY doit être défini — cf. ADR-007.
       turnstileSiteKey: '',
+      // Interrupteur explicite Turnstile côté front. Doit être aligné avec
+      // TURNSTILE_ENABLED côté API. Quand `false` :
+      //   - aucun script Cloudflare n'est chargé (aucune requête réseau
+      //     vers challenges.cloudflare.com) ;
+      //   - le widget émet immédiatement le token `dev-noop` accepté par
+      //     l'API. Voir ADR-008.
+      // Défaut sûr : désactivé.
+      turnstileEnabled: false,
     },
   },
 

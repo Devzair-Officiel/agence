@@ -10,6 +10,15 @@ ADR-002-docker-compose.md
 ADR-003-strategie-seo.md
 ```
 
+## ADR acceptés
+
+- `ADR-004` — Modules SEO retenus (Option 2 « à la carte »).
+- `ADR-006` — Runtime backend Symfony 7.4 LTS + reverse proxy Caddy.
+- `ADR-007` — Sécurité de l'endpoint `POST /api/contact` (CSRF stateless,
+  Turnstile, rate limit, logging sans PII).
+- `ADR-008` — Transport mail OVHcloud via `MAILER_DSN`, Turnstile facultatif
+  (deux flags alignés), réponse HTTP 503 `temporary_error` sur échec SMTP.
+
 ## Modèle
 
 ```md

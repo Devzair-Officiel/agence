@@ -1,13 +1,21 @@
-# apps/api — Backend Symfony 7.4 LTS (Phase 6A)
+# apps/api — Backend Symfony 7.4 LTS (Phases 6A / 6C)
 
-API HTTP de l'agence Devzair. La Phase 6A ne comporte **qu'un seul
-endpoint métier** : `POST /api/contact` (soumission du formulaire de
-contact). Un endpoint de santé `GET /api/health` est également exposé.
+API HTTP de l'agence Devzair. Un seul endpoint métier — `POST /api/contact`
+(soumission du formulaire de contact) — et un endpoint de santé
+`GET /api/health`. La Phase 6C ajoute un outillage de mise en production
+(commande de diagnostic + validateur de configuration) sans introduire
+de nouvel endpoint HTTP.
 
 Voir les décisions consignées :
 
 - `docs/adr/ADR-006-runtime-symfony-caddy.md` — runtime PHP + reverse proxy.
 - `docs/adr/ADR-007-endpoint-contact-securite.md` — sécurité endpoint.
+- `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md` — transport
+  SMTP OVHcloud, Turnstile facultatif (deux flags alignés) et
+  réponse HTTP 503 `temporary_error` sur échec Mailer.
+- `docs/checklists/PRODUCTION-CONTACT.md` — séquence opérationnelle de
+  mise en prod du formulaire (SPF/DKIM/DMARC, pré-déploiement,
+  test réel maîtrisé, dégradation contrôlée, rollback).
 
 ## Stack
 
@@ -38,9 +46,11 @@ src/
     Service/
       SubmitContactMessage.php           ← cas d'usage
       ContactMessageSenderInterface.php  ← contrat stable
-      SymfonyContactMessageSender.php    ← implémentation Mailer
-      InMemoryContactMessageSender.php   ← fake pour tests
-      ContactSubmissionResult.php
+      SymfonyContactMessageSender.php    ← implémentation Mailer, mappe
+                                            TransportExceptionInterface →
+                                            ContactTemporarilyUnavailableException
+      InMemoryContactMessageSender.php   ← fake pour tests (failNextTemporarily)
+      ContactSubmissionResult.php        ← + STATUS_TEMPORARY_ERROR (503)
     Security/
       OriginAllowlist.php                ← CSRF Option B (Origin allowlist)
       ContactRateLimiter.php             ← RateLimiter token bucket
@@ -49,6 +59,14 @@ src/
       AlwaysAllowTurnstileVerifier.php   ← dev/test
       CloudflareTurnstileVerifier.php    ← prod (Siteverify)
       TurnstileVerdict.php
+    Configuration/                       ← Phase 6C
+      ContactConfigurationIssue.php      ← VO readonly (error / warning)
+      ContactConfigurationReport.php     ← liste d'issues + isValid()
+      ContactConfigurationValidator.php  ← service pur, aucune I/O
+    Command/                             ← Phase 6C
+      ContactCheckCommand.php            ← bin/console app:contact:check
+    Exception/                           ← Phase 6C
+      ContactTemporarilyUnavailableException.php  ← marker de domaine
   EventListener/
     ApiExceptionListener.php             ← toute exception → JSON
 ```
@@ -110,6 +128,29 @@ docker compose exec api vendor/bin/phpunit
 En CI, le workflow `.github/workflows/api-quality.yml` exécute la même
 séquence sur chaque push et pull request touchant `apps/api/`.
 
+## Diagnostic de configuration (Phase 6C)
+
+Avant toute mise en production du formulaire, exécuter dans
+l'environnement cible :
+
+```bash
+docker compose exec api php bin/console app:contact:check --env=prod
+```
+
+La commande invoque le service pur `ContactConfigurationValidator`
+(aucune I/O, aucun envoi email, aucune requête réseau) et retourne :
+
+- `0` — configuration valide (peut afficher des avertissements assumés) ;
+- `1` — erreurs bloquantes listées (`mailer_dsn_null_in_prod`,
+  `mailer_dsn_plaintext_in_prod`, `recipient_missing`,
+  `recipient_invalid`, `from_email_*`, `turnstile_secret_missing`,
+  `origin_allowlist_empty`…).
+
+La sortie **ne divulgue jamais** le DSN complet, le secret Turnstile ni
+les emails en clair — elle peut être collée dans un ticket d'ops.
+Séquence complète de mise en production dans
+`docs/checklists/PRODUCTION-CONTACT.md`.
+
 ## Environnement
 
 Toutes les variables sont documentées dans `.env.example` à la racine du
@@ -121,7 +162,7 @@ monorepo. Défauts sûrs :
 | `APP_SECRET`                | valeur factice       | Signature cookies internes (non utilisé)   |
 | `MAILER_DSN`                | `null://null`        | Aucun envoi email par défaut               |
 | `CONTACT_RECIPIENT`         | *vide*               | Destinataire (obligatoire en prod)         |
-| `TURNSTILE_ENABLED`         | `false`              | Turnstile désactivé en dev/test            |
+| `TURNSTILE_ENABLED`         | `false`              | Turnstile désactivé en dev/test (côté API — cf. ADR-008) |
 | `TURNSTILE_SECRET`          | *vide*               | Requis si `TURNSTILE_ENABLED=true`         |
 | `CONTACT_RATE_LIMIT`        | `5`                  | Jetons/fenêtre                             |
 | `CONTACT_RATE_INTERVAL`     | `10 minutes`         | Fenêtre du bucket                          |
@@ -131,13 +172,17 @@ monorepo. Défauts sûrs :
 **Fail-safe** : `TURNSTILE_ENABLED=true` sans `TURNSTILE_SECRET` → boot
 en exception. Documenté dans ADR-007.
 
-## Ce qui n'est pas dans la Phase 6A
+**Deux flags Turnstile alignés** : `TURNSTILE_ENABLED` (API, ici) et
+`NUXT_PUBLIC_TURNSTILE_ENABLED` (front, dans `apps/web`) doivent être
+identiques — voir ADR-008. Une divergence produit un rejet systématique
+ou charge un script Cloudflare pour rien.
 
-- Formulaire côté navigateur (Nuxt) et widget Turnstile.
-- Page publique `/contact`.
+## Ce qui n'est pas dans les Phases 6A / 6C
+
 - Persistance PostgreSQL et Doctrine.
 - Back-office ou CRM.
-- Queue asynchrone / worker.
+- Queue asynchrone / worker Messenger (envoi Mailer resté synchrone —
+  ré-évaluer si `contact.mailer_unavailable` devient régulier).
 - Image Open Graph dynamique.
 
-Ces sujets sont différés aux phases 6B et suivantes.
+Ces sujets sont différés aux phases suivantes.

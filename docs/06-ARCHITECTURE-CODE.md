@@ -77,7 +77,7 @@ devzair/
 │       ├── config/
 │       ├── public/
 │       ├── src/
-│       │   ├── Contact/{Controller,Dto,Service,Security}
+│       │   ├── Contact/{Controller,Dto,Service,Security,Configuration,Command,Exception}
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
@@ -476,14 +476,15 @@ Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tan
 - `ADR-004` — module SEO retenu ;
 - `ADR-005` — design system ;
 - `ADR-006` — runtime backend Symfony 7.4 LTS et reverse proxy Caddy
-  (PostgreSQL différé — voir ADR-008 futur) ;
+  (PostgreSQL différé — voir ADR futur dédié à la persistance) ;
 - `ADR-007` — sécurité de l’endpoint `POST /api/contact` (CSRF stateless,
   Turnstile, rate limit, logging sans PII) ;
-- `ADR-008` — introduction de PostgreSQL et Doctrine (à rédiger lors de la
-  première persistance) ;
-- `ADR-009` — authentification de l’administration ;
-- `ADR-010` — stratégie de cache et invalidation ;
-- `ADR-011` — analytics et consentement.
+- `ADR-008` — transport mail OVHcloud via `MAILER_DSN`, Turnstile facultatif
+  (deux flags alignés `TURNSTILE_ENABLED` / `NUXT_PUBLIC_TURNSTILE_ENABLED`),
+  réponse HTTP 503 `temporary_error` sur échec SMTP ;
+- ADR à rédiger lorsque le besoin apparaît : introduction de PostgreSQL et
+  Doctrine, authentification de l’administration, stratégie de cache et
+  d’invalidation, analytics et consentement.
 
 ---
 

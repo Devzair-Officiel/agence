@@ -46,6 +46,9 @@ services:
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
       # Clé publique Cloudflare Turnstile — vide en dev (widget dev-noop).
       NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+      # Interrupteur front Turnstile. Doit rester `false` tant que la prod
+      # n'active pas explicitement (aligné avec TURNSTILE_ENABLED côté API).
+      NUXT_PUBLIC_TURNSTILE_ENABLED: ${NUXT_PUBLIC_TURNSTILE_ENABLED:-false}
     env_file:
       - path: .env
         required: false

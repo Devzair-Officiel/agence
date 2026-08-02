@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Contact\Service;
 
 use App\Contact\Dto\ContactRequest;
+use App\Contact\Exception\ContactTemporarilyUnavailableException;
 use App\Contact\Security\TurnstileVerifierInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,9 +58,17 @@ final class SubmitContactMessage
             return ContactSubmissionResult::turnstileRejected();
         }
 
-        $this->sender->send($request, $requestId);
+        try {
+            $this->sender->send($request, $requestId);
+        } catch (ContactTemporarilyUnavailableException) {
+            $this->contactLogger->warning('contact.mailer_unavailable', [
+                'request_id' => $requestId,
+            ]);
 
-        $this->contactLogger->info('contact.submitted', [
+            return ContactSubmissionResult::temporaryError();
+        }
+
+        $this->contactLogger->info('contact.accepted', [
             'request_id' => $requestId,
             'project_type' => $request->projectType,
         ]);

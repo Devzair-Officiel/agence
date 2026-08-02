@@ -15,6 +15,8 @@ parameters:
     app.turnstile.enabled: '%env(bool:TURNSTILE_ENABLED)%'
     app.turnstile.secret: '%env(default::TURNSTILE_SECRET)%'
     app.site.indexable: '%env(bool:default::NUXT_PUBLIC_SITE_INDEXABLE)%'
+    app.mailer.dsn: '%env(MAILER_DSN)%'
+    app.trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
 
 services:
     _defaults:
@@ -56,6 +58,18 @@ services:
     App\Contact\Security\OriginAllowlist:
         arguments:
             $allowlist: '%app.contact.origin_allowlist%'
+
+    App\Contact\Configuration\ContactConfigurationValidator:
+        arguments:
+            $appEnv: '%kernel.environment%'
+            $mailerDsn: '%app.mailer.dsn%'
+            $fromEmail: '%app.contact.from_email%'
+            $fromName: '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
+            $turnstileEnabled: '%app.turnstile.enabled%'
+            $turnstileSecret: '%app.turnstile.secret%'
+            $originAllowlist: '%app.contact.origin_allowlist%'
+            $trustedProxies: '%app.trusted_proxies%'
 
     App\Contact\Security\ContactRateLimiter:
         arguments:

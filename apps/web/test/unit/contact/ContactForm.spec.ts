@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
-import { mount } from "@vue/test-utils"
+import { flushPromises, mount } from "@vue/test-utils"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import ContactForm from "~/components/contact/ContactForm.vue"
 
@@ -80,5 +80,69 @@ describe("ContactForm", () => {
     const privacyNode = wrapper.find(`#${describedBy.split(" ")[0]}`)
     expect(privacyNode.text()).toContain("Base légale")
     expect(privacyNode.text()).toContain("RGPD")
+  })
+
+  describe("global error banner on HTTP 503", () => {
+    let originalFetch: typeof globalThis.fetch | undefined
+
+    beforeEach(() => {
+      originalFetch = globalThis.fetch
+    })
+
+    afterEach(() => {
+      if (originalFetch) {
+        globalThis.fetch = originalFetch
+      }
+    })
+
+    it("shows the verbatim temporary_error message and keeps values intact", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            status: "error",
+            code: "temporary_error",
+            request_id: "req-503-verbatim",
+          }),
+          { status: 503, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch
+
+      const wrapper = mountForm()
+
+      // Injecte des valeurs valides + un token Turnstile pour débloquer submit.
+      await wrapper.get('input[name="name"]').setValue("Alice Dupont")
+      await wrapper.get('input[name="email"]').setValue("alice@example.com")
+      await wrapper
+        .get('textarea[name="message"]')
+        .setValue(
+          "Nous souhaitons refondre notre site vitrine pour clarifier notre offre.",
+        )
+      await wrapper.get('input[name="consent"]').setValue(true)
+      await wrapper
+        .get('input[value="refonte"]')
+        .setValue()
+      wrapper.findComponent({ name: "TurnstileWidget" }).vm.$emit("success", "cf-token-xyz")
+      await flushPromises()
+
+      await wrapper.get("form").trigger("submit")
+      await flushPromises()
+
+      const banner = wrapper.find(".contact-form__status")
+      expect(banner.exists()).toBe(true)
+      expect(banner.text()).toContain("Service momentanément indisponible")
+      expect(banner.text()).toContain(
+        "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard.",
+      )
+      expect(banner.text()).toContain("req-503-verbatim")
+
+      // Contrat ADR-008 §7 : les valeurs ne doivent pas être effacées.
+      expect(
+        (wrapper.get('input[name="email"]').element as HTMLInputElement).value,
+      ).toBe("alice@example.com")
+      expect(
+        (wrapper.get('textarea[name="message"]').element as HTMLTextAreaElement).value,
+      ).toContain("refondre notre site vitrine")
+    })
   })
 })

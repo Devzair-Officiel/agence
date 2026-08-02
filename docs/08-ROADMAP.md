@@ -280,9 +280,10 @@ Critère de sortie Phase 5D : atteint. Phase 5 close dans son ensemble
 
 ## Phase 6 — Formulaire de contact
 
-La phase est découpée en deux jalons — **6A backend** (livré) et
-**6B frontend** (à venir) — pour ne pas coupler le durcissement de
-l’endpoint à la livraison du widget navigateur.
+La phase est découpée en trois jalons — **6A backend** (livré),
+**6B frontend** (livré) et **6C mise en production du transport SMTP**
+(livré) — pour ne pas coupler le durcissement de l’endpoint à la
+livraison du widget navigateur ni au branchement d’OVHcloud.
 
 ### Phase 6A — Backend et transport (TERMINÉE)
 
@@ -364,10 +365,70 @@ Turnstile sont documentés dans les commentaires de tête des fichiers.
 - [x] Poids build : 2.85 MB brut / 740 kB gzip (dans le budget +80 KB / +20 KB
       par rapport à la baseline 2.10 de 2.8 MB / 728 kB).
 
+### Phase 6C — Configuration OVHcloud, Turnstile facultatif et 503 sur échec SMTP (TERMINÉE)
+
+Phase 6C prépare l’activation réelle du formulaire chez OVHcloud sans
+mettre en production de secret, sans envoyer un vrai email en CI, et
+sans imposer Turnstile tant que le trafic ne le justifie pas. Décisions
+consignées dans `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md` ;
+séquence opérationnelle dans `docs/checklists/PRODUCTION-CONTACT.md`.
+
+- [x] Transport SMTP piloté par `MAILER_DSN` uniquement (aucun nom
+      d’hôte dans le code, aucun secret en Git). Formes admises :
+      `null://null` (dev/test), `smtps://…:465` (prod recommandée),
+      `smtp://…:587` (STARTTLS hors prod).
+- [x] Turnstile facultatif via **deux flags alignés**
+      `TURNSTILE_ENABLED` (API) et `NUXT_PUBLIC_TURNSTILE_ENABLED`
+      (front). Défaut sûr `false` des deux côtés : aucun script
+      Cloudflare n’est injecté, le widget émet immédiatement le token
+      `dev-noop`, bannière visible « Mode dev » sur le composant.
+- [x] Réponse HTTP `503 temporary_error` (jamais 202/200 fictif) sur
+      toute `TransportExceptionInterface` ou `CONTACT_RECIPIENT` absent.
+      Front : bandeau verbatim « Le service est momentanément
+      indisponible. […] », valeurs saisies conservées, aucun retry
+      automatique navigateur.
+- [x] Marker de domaine `ContactTemporarilyUnavailableException` +
+      `SymfonyContactMessageSender` qui chaîne l’exception d’origine
+      pour le debug interne uniquement.
+- [x] Log Monolog `contact.mailer_unavailable` (canal `contact`, niveau
+      warning), aucun PII — mêmes garanties que le happy path.
+- [x] Service pur `ContactConfigurationValidator` (aucune I/O) inspectant
+      `MAILER_DSN`, `CONTACT_RECIPIENT`, `CONTACT_FROM_EMAIL`,
+      `CONTACT_FROM_NAME`, Turnstile activé ⇒ secret présent,
+      `CONTACT_ORIGIN_ALLOWLIST`, `TRUSTED_PROXIES`. Émet errors +
+      warnings sans révéler DSN complet, secret ni email en clair.
+- [x] Commande CLI `bin/console app:contact:check` (SymfonyStyle,
+      exit `0`/`1`) exposant le rapport pour dev, CI et image de prod.
+- [x] Suite PHPUnit étendue : `ContactConfigurationValidatorTest`
+      (14 règles + assertion non-fuite de secret),
+      `ContactCheckCommandTest` (3 cas pure `TestCase`, sans KernelTestCase :
+      valeurs valides → exit 0, erreurs → exit 1 avec codes listés,
+      aucune fuite de DSN/secret),
+      `SymfonyContactMessageSenderTest::testSendConvertsTransportException…`,
+      `ContactSubmissionControllerTest::testMailerFailureReturns503…`,
+      `ContactLoggingTest::testMailerFailureLogsWarningWithoutPii`.
+      `InMemoryContactMessageSender` étendu (`failNextTemporarily`) —
+      seam explicite pour simuler l’échec SMTP sans réseau.
+- [x] Suite Vitest étendue : `useContactForm.spec.ts` (nouveau cas
+      HTTP 503 → code `temporary_error` + valeurs préservées) et
+      `ContactForm.spec.ts` (bandeau verbatim + valeurs préservées).
+- [x] Suite Playwright étendue : `contact-form.spec.ts` — scénario 503
+      (backend mocké 503 → bandeau + valeurs préservées) et scénario
+      « Turnstile désactivé (défaut) : aucun script Cloudflare chargé »
+      (zéro requête vers `challenges.cloudflare.com`, dev-notice visible).
+- [x] Documentation opérationnelle : ADR-008,
+      `docs/checklists/PRODUCTION-CONTACT.md` (10 sections dont
+      pré-déploiement, test réel maîtrisé, dégradation contrôlée,
+      revue sécurité, rollback), READMEs (racine, `apps/api`,
+      `apps/web`), `.env.example`, `compose.yaml`.
+
 ### Critère de sortie (Phase 6 complète)
 
 Une demande réelle est transmise de façon sûre, traçable et conforme,
-depuis le formulaire jusqu’à la boîte de réception.
+depuis le formulaire jusqu’à la boîte de réception. Toute défaillance
+SMTP transitoire est signalée honnêtement à l’utilisateur (bandeau 503
+verbatim + valeurs préservées) et à l’opérateur (log
+`contact.mailer_unavailable`, aucun message perdu silencieusement).
 
 ---
 

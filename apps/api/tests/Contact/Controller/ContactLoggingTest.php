@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Contact\Controller;
 
 use App\Contact\Controller\ContactSubmissionController;
+use App\Contact\Service\InMemoryContactMessageSender;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -56,6 +57,53 @@ final class ContactLoggingTest extends WebTestCase
         self::assertStringNotContainsString(self::SECRET_EMAIL, $flat, 'L\'email visiteur ne doit jamais être loggué.');
         self::assertStringNotContainsString(self::SECRET_PHONE, $flat, 'Le téléphone ne doit jamais être loggué.');
         self::assertStringNotContainsString(self::SECRET_TOKEN, $flat, 'Le token Turnstile ne doit jamais être loggué.');
+    }
+
+    public function testMailerFailureLogsWarningWithoutPii(): void
+    {
+        $client = self::createClient();
+
+        /** @var InMemoryContactMessageSender $sender */
+        $sender = $client->getContainer()->get(InMemoryContactMessageSender::class);
+        $sender->reset();
+        $sender->failNextTemporarily();
+
+        $payload = json_encode([
+            'name' => 'Alice Dupont',
+            'email' => self::SECRET_EMAIL,
+            'company' => 'Acme',
+            'telephone' => self::SECRET_PHONE,
+            'projectType' => 'refonte',
+            'message' => self::SECRET_MESSAGE.' '.str_repeat('x', 20),
+            'consent' => true,
+            'website' => '',
+            'turnstileToken' => self::SECRET_TOKEN,
+        ], \JSON_THROW_ON_ERROR);
+
+        $client->request(
+            'POST',
+            '/contact',
+            server: [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ORIGIN' => self::ALLOWED_ORIGIN,
+            ],
+            content: $payload,
+        );
+
+        self::assertResponseStatusCodeSame(503);
+
+        $handler = self::getTestLogHandler($client);
+
+        self::assertTrue(
+            $handler->hasWarningThatContains('contact.mailer_unavailable'),
+            'L\'échec du sender doit produire un warning canal contact avec le libellé contact.mailer_unavailable.',
+        );
+
+        $flat = json_encode($handler->getRecords(), \JSON_THROW_ON_ERROR);
+        self::assertStringNotContainsString(self::SECRET_MESSAGE, $flat);
+        self::assertStringNotContainsString(self::SECRET_EMAIL, $flat);
+        self::assertStringNotContainsString(self::SECRET_PHONE, $flat);
+        self::assertStringNotContainsString(self::SECRET_TOKEN, $flat);
     }
 
     private static function getTestLogHandler(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client): \Symfony\Bridge\Monolog\Handler\ConsoleHandler|\Monolog\Handler\TestHandler

@@ -147,6 +147,33 @@ distinguant `passed / flaky / failed` en stdout, plus `github` et `html`
 (artefact uploadé sur échec). Aucun test ne s’appuie sur `networkidle`
 (remplacé par des attentes déterministes sur des éléments hydratés).
 
+### Diagnostic pré-déploiement (Phase 6C)
+
+La commande `bin/console app:contact:check` (voir
+`docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`) invoque le
+service pur `ContactConfigurationValidator` et retourne un code de sortie
+`0` (succès ou avertissements seuls) ou `1` (erreurs bloquantes).
+Aucune I/O réseau, aucun envoi email, aucun secret ni DSN complet en
+sortie. Rôle : vérification reproductible en dev, CI et sur l’image de
+production avant qu’un formulaire réel n’atteigne SMTP.
+
+Contrôles unitaires associés (PHPUnit, sans stack Symfony réelle) :
+`ContactConfigurationValidatorTest` (14 règles), `ContactCheckCommandTest`
+(exit codes + non-fuite de secrets), `SymfonyContactMessageSenderTest`
+(mapping `TransportExceptionInterface` → `ContactTemporarilyUnavailableException`),
+`ContactSubmissionControllerTest::testMailerFailureReturns503TemporaryError…`
+(échec SMTP → 503 sans perte du payload), `ContactLoggingTest`
+(warning `contact.mailer_unavailable` sans PII).
+
+Contrôles E2E associés (Playwright, backend mocké via `page.route`) :
+scénario 503 `temporary_error` (bandeau verbatim + valeurs préservées) et
+scénario « Turnstile désactivé → aucun script Cloudflare chargé, aucune
+requête vers `challenges.cloudflare.com` », qui verrouille le contrat
+`NUXT_PUBLIC_TURNSTILE_ENABLED=false` par défaut. La checklist de mise
+en production `docs/checklists/PRODUCTION-CONTACT.md` complète ces
+contrôles automatisés par une séquence manuelle contrôlée (un envoi
+test unique sur OVHcloud).
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

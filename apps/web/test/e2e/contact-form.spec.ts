@@ -143,6 +143,73 @@ test.describe('/ (home) — formulaire de contact', () => {
     ).toBeVisible()
   })
 
+  test('503 temporary_error → bandeau global, valeurs saisies préservées', async ({
+    page,
+  }) => {
+    // Contrat ADR-008 §7 : sur échec SMTP, l'API renvoie 503 temporary_error.
+    // Le front doit afficher un bandeau explicite ET conserver toutes les
+    // valeurs pour permettre une nouvelle tentative manuelle.
+    await page.route(API_URL, async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'error',
+          code: 'temporary_error',
+          request_id: 'req-e2e-503',
+        }),
+      })
+    })
+
+    await page.goto('/')
+    await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
+    await fillValidForm(page)
+    await page.locator(`${FORM} button[type="submit"]`).click()
+
+    const errorBanner = page.locator(`${FORM} .contact-form__status [role="alert"]`)
+    await expect(errorBanner).toBeVisible()
+    await expect(errorBanner).toContainText('Service momentanément indisponible')
+    await expect(errorBanner).toContainText(
+      "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard.",
+    )
+    await expect(errorBanner).toContainText('req-e2e-503')
+
+    // Les valeurs ne sont *pas* effacées — l'utilisateur peut ré-essayer.
+    await expect(page.locator('input[name="name"]')).toHaveValue('Alice Dupont')
+    await expect(page.locator('input[name="email"]')).toHaveValue('alice@example.com')
+    await expect(page.locator('textarea[name="message"]')).toHaveValue(VALID_MESSAGE)
+    await expect(page.locator('input[name="consent"]')).toBeChecked()
+  })
+
+  test('Turnstile désactivé (défaut) : aucun script Cloudflare chargé', async ({
+    page,
+  }) => {
+    // ADR-008 §3 : quand `NUXT_PUBLIC_TURNSTILE_ENABLED=false` (défaut sûr),
+    // aucune requête vers challenges.cloudflare.com ne doit être émise, et
+    // aucun <script src="…cloudflare…"> ne doit être injecté dans le DOM.
+    // Toute régression de ce contrat exposerait les visiteurs à un tracker
+    // tiers sans consentement.
+    const cloudflareRequests: string[] = []
+    page.on('request', (request) => {
+      if (request.url().includes('challenges.cloudflare.com')) {
+        cloudflareRequests.push(request.url())
+      }
+    })
+
+    await page.goto('/')
+    await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
+
+    // Un widget rendu → le bouton devrait être enabled car token dev-noop émis.
+    const cfScripts = await page.locator('script[src*="challenges.cloudflare.com"]').count()
+    expect(cfScripts).toBe(0)
+    expect(cloudflareRequests).toEqual([])
+
+    // Notice dev visible côté DOM : témoigne du mode noop.
+    await expect(
+      page.locator(`${FORM} .turnstile-widget__dev-notice`),
+    ).toBeVisible()
+  })
+
   test('rate limit 429 → bandeau global avec Retry-After affiché', async ({ page }) => {
     await page.route(API_URL, async (route) => {
       await route.fulfill({

@@ -13,6 +13,7 @@ final readonly class ContactSubmissionResult
     public const STATUS_ACCEPTED = 'accepted';
     public const STATUS_VALIDATION_ERROR = 'validation_error';
     public const STATUS_TURNSTILE_REJECTED = 'turnstile_rejected';
+    public const STATUS_TEMPORARY_ERROR = 'temporary_error';
 
     /**
      * @param array<string, list<string>> $errors
@@ -39,5 +40,10 @@ final readonly class ContactSubmissionResult
     public static function turnstileRejected(): self
     {
         return new self(self::STATUS_TURNSTILE_REJECTED);
+    }
+
+    public static function temporaryError(): self
+    {
+        return new self(self::STATUS_TEMPORARY_ERROR);
     }
 }

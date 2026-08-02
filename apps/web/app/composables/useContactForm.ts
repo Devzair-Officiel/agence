@@ -159,6 +159,7 @@ function mapErrorCode(httpStatus: number, code: string | undefined): ContactErro
     "payload_too_large",
     "rate_limited",
     "invalid_json",
+    "temporary_error",
   ]
   if (typeof code === "string" && (knownCodes as readonly string[]).includes(code)) {
     return code as ContactErrorCode
@@ -167,6 +168,7 @@ function mapErrorCode(httpStatus: number, code: string | undefined): ContactErro
   if (httpStatus === 413) return "payload_too_large"
   if (httpStatus === 429) return "rate_limited"
   if (httpStatus === 403) return "origin_not_allowed"
+  if (httpStatus === 503) return "temporary_error"
   return "validation_failed"
 }
 

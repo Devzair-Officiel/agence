@@ -165,6 +165,41 @@ Résumé — six filtres indépendants :
    `MAILER_DSN=null://null` : aucun email tant que la boîte réelle n’est
    pas branchée.
 
+### Transport mail et échec SMTP (Phase 6C)
+
+Politique consignée dans `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`.
+Compléments opérationnels Phase 6C :
+
+- **`MAILER_DSN` seule variable d’entrée du transport** : jamais de nom
+  d’hôte SMTP dans le code. Formes admises : `null://null` (dev/test),
+  `smtps://user:pass@host:465` (TLS implicite, recommandé prod),
+  `smtp://user:pass@host:587` (STARTTLS, hors prod). Le secret vit dans
+  le gestionnaire de secrets, jamais dans Git.
+- **Turnstile facultatif, deux flags alignés** : `TURNSTILE_ENABLED` (API)
+  et `NUXT_PUBLIC_TURNSTILE_ENABLED` (front) doivent être identiques.
+  Divergence = rejet systématique côté API ou script Cloudflare chargé
+  pour rien. Le défaut sûr est `false` des deux côtés — aucun script
+  tiers n’est injecté, le widget émet le token `dev-noop` accepté par
+  `AlwaysAllowTurnstileVerifier`. Une bannière visible « Mode dev »
+  signale l’état pour éviter toute confusion.
+- **Échec SMTP → HTTP 503 `temporary_error`** : toute
+  `TransportExceptionInterface` remonte via
+  `ContactTemporarilyUnavailableException` et devient un 503 stable. Le
+  front affiche un bandeau verbatim « Le service est momentanément
+  indisponible. Votre message n’a pas été envoyé. Merci de réessayer
+  plus tard. » et **conserve les valeurs saisies**. Aucun 200/202
+  « acquitté » n’est renvoyé sur échec. `CONTACT_RECIPIENT` absent est
+  traité identiquement (503 avant même l’envoi).
+- **Diagnostic reproductible** : `bin/console app:contact:check` invoque
+  `ContactConfigurationValidator` (service pur, aucune I/O), retourne
+  code `0` (succès) ou `1` (erreurs bloquantes). La sortie ne révèle
+  jamais le DSN complet, le secret Turnstile ni les emails en clair —
+  peut être collée dans un ticket d’ops sans précaution. La checklist
+  `docs/checklists/PRODUCTION-CONTACT.md` détaille la séquence complète
+  de mise en production OVHcloud.
+- **Log `contact.mailer_unavailable`** : canal Monolog `contact`, niveau
+  warning, aucun PII (mêmes garanties que le happy path — cf. §14.11).
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;

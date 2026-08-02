@@ -10,8 +10,15 @@ Devzair → CTA final `#contact`), sans page interne clonée, sans placeholder,
 sans coordonnée fictive. Phase 5 (accueil complète) est close.
 
 La Phase 6A ajoute un endpoint sécurisé `POST /api/contact` (Symfony) et un
-health check `GET /api/health`. Le formulaire côté navigateur, la
-persistance et le back-office restent différés — voir `docs/08-ROADMAP.md`.
+health check `GET /api/health`. La Phase 6B branche le formulaire côté
+navigateur dans la section `#contact`. La Phase 6C prépare l'activation
+réelle du transport SMTP OVHcloud (`MAILER_DSN` seule variable d'entrée,
+Turnstile facultatif via deux flags alignés `TURNSTILE_ENABLED` +
+`NUXT_PUBLIC_TURNSTILE_ENABLED`, réponse HTTP 503 `temporary_error` sur
+échec SMTP, commande de diagnostic `bin/console app:contact:check`). La
+persistance et le back-office restent différés — voir
+`docs/08-ROADMAP.md`, `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`
+et `docs/checklists/PRODUCTION-CONTACT.md`.
 
 ## Structure
 
@@ -113,6 +120,21 @@ Côté API, la Phase 6A introduit :
 - `TURNSTILE_ENABLED` / `TURNSTILE_SECRET` — vérification anti-bot ;
 - `CONTACT_RATE_LIMIT` / `CONTACT_RATE_INTERVAL` — rate limit par IP ;
 - `CONTACT_ORIGIN_ALLOWLIST` — CSRF stateless (voir ADR-007).
+
+La Phase 6C ajoute un jumeau front à `TURNSTILE_ENABLED` :
+`NUXT_PUBLIC_TURNSTILE_ENABLED` (défaut `false`). Les deux flags
+**doivent** rester alignés — voir ADR-008. Avant tout déploiement du
+formulaire réel, exécuter dans l'environnement cible :
+
+```bash
+docker compose exec api php bin/console app:contact:check --env=prod
+# → Configuration OK  (ou liste explicite d'erreurs bloquantes)
+```
+
+La sortie ne divulgue jamais le DSN complet, le secret Turnstile ni les
+emails en clair : elle peut être collée dans un ticket d'ops. Séquence
+complète de mise en production dans
+`docs/checklists/PRODUCTION-CONTACT.md`.
 
 Aucun secret ne doit être commité, ni ajouté à `runtimeConfig.public`.
 Les vraies valeurs de production passent par un secret manager, jamais

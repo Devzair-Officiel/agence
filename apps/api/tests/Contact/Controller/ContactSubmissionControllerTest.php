@@ -160,6 +160,28 @@ final class ContactSubmissionControllerTest extends WebTestCase
         self::assertCount(0, $sender->all());
     }
 
+    public function testMailerFailureReturns503TemporaryErrorWithoutLosingUserPayload(): void
+    {
+        $client = self::createClient();
+        $sender = self::getInMemorySender($client);
+        $sender->failNextTemporarily();
+
+        $client->request(
+            'POST',
+            '/contact',
+            server: $this->serverHeaders(),
+            content: $this->validPayload(),
+        );
+
+        self::assertResponseStatusCodeSame(503);
+        self::assertCount(0, $sender->all(), 'Aucun message n\'a été « accepté » : le sender a levé.');
+
+        $data = $this->decode($client);
+        self::assertSame('error', $data['status'], 'Le client doit voir un status "error", pas "accepted".');
+        self::assertSame('temporary_error', $data['code']);
+        self::assertNotEmpty($data['request_id']);
+    }
+
     public function testResponseHeadersIncludeRequestIdAndNoStore(): void
     {
         $client = self::createClient();

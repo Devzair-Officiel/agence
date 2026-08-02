@@ -46,10 +46,18 @@ declare global {
 
 interface Props {
   siteKey: string
+  /**
+   * Interrupteur explicite Turnstile. Doit être aligné avec `TURNSTILE_ENABLED`
+   * côté API. Quand `false`, aucun script Cloudflare n'est chargé et le
+   * widget émet immédiatement le token `dev-noop`. Défaut : `false`
+   * (sûr : rien n'est chargé tant que la prod n'active pas explicitement).
+   */
+  enabled?: boolean
   theme?: "auto" | "light" | "dark"
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  enabled: false,
   theme: "auto",
 })
 
@@ -62,7 +70,11 @@ const emit = defineEmits<{
 
 const container = ref<HTMLElement | null>(null)
 const widgetId = ref<string | null>(null)
-const isDevNoop = !props.siteKey
+// Le mode "dev-noop" s'active dès que Turnstile est explicitement désactivé
+// OU que la site-key est vide. Ceci évite tout appel réseau vers
+// challenges.cloudflare.com en dev/test et permet de garantir en E2E qu'aucun
+// script tiers n'est chargé quand le flag est off.
+const isDevNoop = !props.enabled || !props.siteKey
 
 const SCRIPT_ID = "cf-turnstile-script"
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js"

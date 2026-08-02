@@ -233,6 +233,31 @@ describe("useContactForm.submit", () => {
     if (result.status === "error") expect(result.code).toBe("payload_too_large")
   })
 
+  it("maps HTTP 503 temporary_error → dedicated code and preserves user values", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      makeFetchResponse(503, {
+        status: "error",
+        code: "temporary_error",
+        request_id: "req-503",
+      }),
+    )
+    const form = useContactForm({ endpoint: "/api/contact", fetcher })
+    Object.assign(form.values, validValues())
+    const result = await form.submit()
+
+    expect(result.status).toBe("error")
+    if (result.status === "error") {
+      expect(result.code).toBe("temporary_error")
+      expect(result.requestId).toBe("req-503")
+    }
+    expect(form.globalError.value?.code).toBe("temporary_error")
+    // Contrat ADR-008 §7 : les valeurs saisies ne sont *jamais* purgées sur
+    // une erreur temporaire — l'utilisateur doit pouvoir retenter directement.
+    expect(form.values.email).toBe("alice@example.com")
+    expect(form.values.message).toContain("refondre notre site vitrine")
+    expect(form.values.turnstileToken).toBe("cf-token-xyz")
+  })
+
   it("maps a network exception → network_error", async () => {
     const fetcher = vi.fn().mockRejectedValue(new Error("connection refused"))
     const form = useContactForm({ endpoint: "/api/contact", fetcher })

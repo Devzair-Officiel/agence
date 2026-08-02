@@ -34,7 +34,7 @@ export interface ContactFormValues {
   turnstileToken: string | null
 }
 
-/** Codes retournés par l'API (cf. ADR-007). */
+/** Codes retournés par l'API (cf. ADR-007, complétés par ADR-008). */
 export type ContactErrorCode =
   | "validation_failed"
   | "origin_not_allowed"
@@ -42,6 +42,7 @@ export type ContactErrorCode =
   | "payload_too_large"
   | "rate_limited"
   | "invalid_json"
+  | "temporary_error"
 
 /** Réponse JSON typée normalisée par le composable. */
 export type ContactSubmitResponse =

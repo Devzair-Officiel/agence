@@ -148,6 +148,11 @@ final class ContactSubmissionController
                 Response::HTTP_FORBIDDEN,
                 ['status' => 'error', 'code' => 'turnstile_rejected'],
             ),
+            ContactSubmissionResult::STATUS_TEMPORARY_ERROR => $this->respond(
+                $requestId,
+                Response::HTTP_SERVICE_UNAVAILABLE,
+                ['status' => 'error', 'code' => 'temporary_error'],
+            ),
         };
     }
 

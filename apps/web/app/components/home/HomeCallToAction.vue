@@ -30,6 +30,7 @@ const turnstileSiteKey =
   typeof runtime.public.turnstileSiteKey === "string"
     ? runtime.public.turnstileSiteKey
     : ""
+const turnstileEnabled = runtime.public.turnstileEnabled === true
 const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
 </script>
 
@@ -58,6 +59,7 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
         <ContactForm
           :endpoint="contactEndpoint"
           :turnstile-site-key="turnstileSiteKey"
+          :turnstile-enabled="turnstileEnabled"
         />
       </div>
     </BaseContainer>

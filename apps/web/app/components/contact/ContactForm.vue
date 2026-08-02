@@ -30,10 +30,18 @@ import type { PROJECT_TYPES } from "~/types/contact"
 interface Props {
   endpoint: string
   turnstileSiteKey: string
+  /**
+   * Aligné avec `TURNSTILE_ENABLED` côté API. Quand `false`, le widget
+   * n'appelle jamais challenges.cloudflare.com et émet un token factice.
+   * Défaut : `false` (aucun script tiers tant que la prod n'active pas
+   * explicitement).
+   */
+  turnstileEnabled?: boolean
   privacyNoteId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  turnstileEnabled: false,
   privacyNoteId: undefined,
 })
 
@@ -69,6 +77,8 @@ const globalErrorTitle = computed(() => {
       return "Requête refusée"
     case "network_error":
       return "Connexion impossible"
+    case "temporary_error":
+      return "Service momentanément indisponible"
     default:
       return "Envoi impossible"
   }
@@ -92,6 +102,8 @@ const globalErrorMessage = computed(() => {
       return "Aucune réponse du serveur. Vérifiez votre connexion et réessayez."
     case "validation_failed":
       return "Certaines informations sont incorrectes ou manquantes. Corrigez les champs signalés ci-dessous."
+    case "temporary_error":
+      return "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard."
     default:
       return "Une erreur inattendue est survenue. Merci de réessayer dans un instant."
   }
@@ -322,6 +334,7 @@ async function onSubmit(): Promise<void> {
       <TurnstileWidget
         ref="turnstileRef"
         :site-key="turnstileSiteKey"
+        :enabled="turnstileEnabled"
         theme="auto"
         @success="onTurnstileSuccess"
         @error="onTurnstileFailure"
