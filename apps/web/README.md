@@ -88,9 +88,10 @@ npm run dev            # http://localhost:3000
 
 ## Tests E2E (Playwright)
 
-Douze suites Playwright couvrent l'accueil `/` et les deux pages
-institutionnelles `/agence` et `/expertises` livrées en Phase 7A (la page
-interne `/design-preview` a été supprimée à la clôture de Phase 5D) :
+Treize suites Playwright couvrent l'accueil `/`, les deux pages
+institutionnelles `/agence` et `/expertises` (Phase 7A) et les cinq
+pages d'expertise détaillées `/expertises/{slug}` (Phase 7B). La page
+interne `/design-preview` a été supprimée à la clôture de Phase 5D.
 
 | Fichier                                       | Ce qui est vérifié                                              |
 |-----------------------------------------------|------------------------------------------------------------------|
@@ -105,7 +106,8 @@ interne `/design-preview` a été supprimée à la clôture de Phase 5D) :
 | `test/e2e/responsive.spec.ts`                 | Aucun débordement horizontal aux breakpoints 390 / 768 / 1440, header + main + footer visibles, texte ≥ 14 px. |
 | `test/e2e/reduced-motion.spec.ts`             | `prefers-reduced-motion` neutralise les transitions et la nav mobile reste utilisable. |
 | `test/e2e/accessibility.spec.ts`              | Scan Axe (WCAG 2.0/2.1/2.2 A + AA) — échoue sur toute violation `serious` ou `critical`. |
-| `test/e2e/institutional-pages.spec.ts`        | Pages `/agence` et `/expertises` (Phase 7A) : HTTP 200 sans erreur console, un unique H1 verbatim par page, eyebrow et introduction présents en SSR, SEO complet (title, description, canonical *ou* noindex, `og:url`), lien réel `/#contact` + lien réciproque `/agence` ↔ `/expertises`, absence de tout lien vers `/expertises/{slug}` (Phase 7B), cinq cartes `.expertise-overview-card` sans aucun `<a>` interne, navigation principale expose `Agence`, `Expertises`, `Réalisations` + CTA `/#contact`, responsive 390 / 768 / 1440 sans débordement horizontal, Axe WCAG 2.2 AA sans violation `serious`/`critical`, `prefers-reduced-motion` (H1 visible). |
+| `test/e2e/institutional-pages.spec.ts`        | Pages `/agence` et `/expertises` (Phase 7A, actualisée Phase 7B) : HTTP 200 sans erreur console, un unique H1 verbatim par page, eyebrow et introduction présents en SSR, SEO complet (title, description, canonical *ou* noindex, `og:url`), lien réel `/#contact` + lien réciproque `/agence` ↔ `/expertises`, cinq cartes `.expertise-overview-card` exposent chacune un lien vers `/expertises/{slug}` (Phase 7B), navigation principale expose `Agence`, `Expertises`, `Réalisations` + CTA `/#contact`, responsive 390 / 768 / 1440 sans débordement horizontal, Axe WCAG 2.2 AA sans violation `serious`/`critical`, `prefers-reduced-motion` (H1 visible). |
+| `test/e2e/expertise-pages.spec.ts`            | Pages d'expertise détaillées `/expertises/{concevoir,construire,valoriser,visibilite,faire-evoluer}` (Phase 7B) : SSR 200 par slug, HTTP 404 explicite sur slug inconnu (jamais de fallback silencieux), sitemap XML contient les 5 nouvelles routes, JSON-LD `@type":"Service"` présent avec `provider: {"@id": "…/#organization"}` (référence l'Organization globale), fil d'Ariane accessible (`<nav aria-label="Fil d'Ariane">`, `aria-current="page"`), absence de contenu placeholder/lorem/TODO, 2 liens vers les pôles connexes, navigation mobile opérationnelle sur la page slug, responsive 320/390/768/1024/1440 sans débordement horizontal, Axe WCAG 2.2 AA sans violation `serious`/`critical`, `prefers-reduced-motion` (H1 visible). |
 
 ### Stratégie d'exécution
 
@@ -157,13 +159,13 @@ app/
     base/              Composants présentiels (BaseButton, BaseContainer…)
     contact/           Domaine formulaire (ContactForm, ContactFormField, ContactFormStatus, TurnstileWidget)
     editorial/         Blocs éditoriaux réutilisables (EditorialHero, EditorialSection, EditorialCallout)
-    expertise/         Cartes des pôles d'expertise (ExpertiseOverviewCard)
+    expertise/         Composants des pages d'expertise (ExpertiseOverviewCard, ExpertisePageHero, ExpertiseDeliverables, ExpertiseBenefits, ExpertiseRelatedPillars)
     home/              Sections de l'accueil (HomeHero, HomeEcosystemGraph, HomeProblems, HomeConnectedApproach, HomeExpertisePillars, HomeFeaturedCaseStudy, HomeProcess, HomeTrust, HomeCallToAction)
     layout/            En-tête, pied, navigation mobile
   composables/         useContactForm, useMobileNavigation, useSiteSchema, usePageSeo…
   config/              Sources de vérité typées (site, navigation, expertise-pillars, expertise-pages, project-process, trust-promises…)
   types/               Contrats de domaine partagés (contact.ts…)
-  pages/               Routes Nuxt (accueil `/`, `/agence`, `/expertises` — Phase 7A)
+  pages/               Routes Nuxt (accueil `/`, `/agence`, `/expertises`, `/expertises/[slug].vue` dynamique — 5 slugs publiés en Phase 7B)
 public/                Fichiers servis tels quels (dont favicon)
 test/                  Tests unitaires Vitest
   e2e/                 Tests Playwright (exclus de Vitest)

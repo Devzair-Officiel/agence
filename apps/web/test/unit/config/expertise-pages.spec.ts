@@ -58,9 +58,77 @@ describe("expertisePages", () => {
     }
   })
 
-  it("marks every Phase 7A definition as `planned`", () => {
+  it("marks every Phase 7B definition as `published`", () => {
     for (const page of expertisePages) {
-      expect(page.status).toBe("planned")
+      expect(page.status).toBe("published")
+    }
+  })
+
+  it("never self-references in relatedPillarIds", () => {
+    for (const page of expertisePages) {
+      expect(page.relatedPillarIds).not.toContain(page.pillarId)
+    }
+  })
+
+  it("exposes exactly two related pillars per page", () => {
+    for (const page of expertisePages) {
+      expect(page.relatedPillarIds).toHaveLength(2)
+    }
+  })
+
+  it("points relatedPillarIds only at existing pillars", () => {
+    const pillarIds = new Set(expertisePillars.map((p) => p.id))
+    for (const page of expertisePages) {
+      for (const relatedId of page.relatedPillarIds) {
+        expect(pillarIds.has(relatedId)).toBe(true)
+      }
+    }
+  })
+
+  it("uses unique relatedPillarIds within a single page", () => {
+    for (const page of expertisePages) {
+      const unique = new Set(page.relatedPillarIds)
+      expect(unique.size).toBe(page.relatedPillarIds.length)
+    }
+  })
+
+  it("carries a non-empty introduction, eyebrow, seoTitle and seoDescription", () => {
+    for (const page of expertisePages) {
+      expect(page.eyebrow.trim().length).toBeGreaterThan(0)
+      expect(page.introduction.trim().length).toBeGreaterThan(40)
+      expect(page.seoTitle.trim().length).toBeGreaterThan(0)
+      expect(page.seoDescription.trim().length).toBeGreaterThanOrEqual(120)
+      expect(page.seoDescription.trim().length).toBeLessThanOrEqual(180)
+    }
+  })
+
+  it("carries non-empty need and approach sections", () => {
+    for (const page of expertisePages) {
+      expect(page.needTitle.trim().length).toBeGreaterThan(0)
+      expect(page.needDescription.trim().length).toBeGreaterThan(60)
+      expect(page.approachTitle.trim().length).toBeGreaterThan(0)
+      expect(page.approachDescription.trim().length).toBeGreaterThan(60)
+    }
+  })
+
+  it("declares between three and six deliverables per page, all non-empty", () => {
+    for (const page of expertisePages) {
+      expect(page.deliverables.length).toBeGreaterThanOrEqual(3)
+      expect(page.deliverables.length).toBeLessThanOrEqual(6)
+      for (const deliverable of page.deliverables) {
+        expect(deliverable.trim().length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it("declares between three and five benefits per page with title and description", () => {
+    for (const page of expertisePages) {
+      expect(page.benefits.length).toBeGreaterThanOrEqual(3)
+      expect(page.benefits.length).toBeLessThanOrEqual(5)
+      for (const benefit of page.benefits) {
+        expect(benefit.title.trim().length).toBeGreaterThan(0)
+        expect(benefit.description.trim().length).toBeGreaterThan(20)
+      }
     }
   })
 

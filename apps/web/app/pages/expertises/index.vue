@@ -1,12 +1,14 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
 import EditorialHero from "~/components/editorial/EditorialHero.vue"
 import EditorialSection from "~/components/editorial/EditorialSection.vue"
 import ExpertiseOverviewCard from "~/components/expertise/ExpertiseOverviewCard.vue"
+import { expertisePages } from "~/config/expertise-pages"
 import { expertisePillars } from "~/config/expertise-pillars"
 
 /**
- * Page `/expertises` — vue d'ensemble des cinq pôles d'expertise (Phase 7A).
+ * Page `/expertises` — vue d'ensemble des cinq pôles d'expertise.
  *
  * Rôle d'orchestration :
  *   - un H1 unique porté par EditorialHero ;
@@ -14,16 +16,22 @@ import { expertisePillars } from "~/config/expertise-pillars"
  *     duplication de HomeConnectedApproach : on ne réutilise pas la mise en
  *     page « parcours numéroté » de l'accueil, on cadre le sujet avec un
  *     texte court avant la grille) ;
- *   - une grille de cinq ExpertiseOverviewCard alimentée par la source de
- *     vérité `expertisePillars`. Aucun lien vers `/expertises/{slug}` tant
- *     que la Phase 7B n'a pas livré les pages filles (voir
- *     `app/config/expertise-pages.ts` — toutes les entrées ont
- *     `status: "planned"`).
+ *   - une grille de cinq ExpertiseOverviewCard alimentée par
+ *     `expertisePillars` (contenu éditorial) enrichi de `expertisePages`
+ *     (routage). Depuis la Phase 7B, chaque carte devient un lien vers
+ *     `/expertises/{slug}` dès que la définition correspondante a
+ *     `status === "published"` ;
  *   - un EditorialCallout de pont vers `/agence` + CTA `/#contact`.
  *
  * SEO : `usePageSeo` seul, canonical absolu dérivé de siteUrl + `/expertises`.
  * Prerender : la page est marquée `prerender: true` dans `nuxt.config.ts`.
  */
+
+const pagesByPillarId = computed(() => {
+  const map = new Map<string, (typeof expertisePages)[number]>()
+  for (const page of expertisePages) map.set(page.pillarId, page)
+  return map
+})
 
 usePageSeo({
   title: "Expertises web, design, contenu et SEO",
@@ -67,7 +75,10 @@ usePageSeo({
           :key="pillar.id"
           class="expertises-page__grid-item"
         >
-          <ExpertiseOverviewCard :pillar="pillar" />
+          <ExpertiseOverviewCard
+            :pillar="pillar"
+            :page="pagesByPillarId.get(pillar.id)"
+          />
         </li>
       </ul>
     </EditorialSection>

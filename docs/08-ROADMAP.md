@@ -495,16 +495,92 @@ réutilisable prête pour 7B (pages `/expertises/{slug}` — 5 pages
 détaillées, contenu à valider avec le client) et 7C (études de cas
 réelles).
 
-### Phase 7B — Pages d'expertise détaillées (À VENIR)
+### Phase 7B — Pages d'expertise détaillées (TERMINÉE)
 
-- [ ] Contenu éditorial des 5 pages d'expertise validé (`/expertises/{slug}`).
-- [ ] Routes `/expertises/[slug].vue` s'appuyant sur `expertise-pages.ts`.
-- [ ] Basculement `status: "planned"` → `status: "live"` uniquement à la
-      publication réelle.
-- [ ] Cartes `ExpertiseOverviewCard` deviennent liens (H3 → `NuxtLink`).
-- [ ] Maillage entre pôles + retour vers `/expertises`.
-- [ ] Métadonnées et Schema.org `Service` par page.
-- [ ] Tests unitaires + E2E par page.
+Cinq pages publiques `/expertises/{slug}` livrées via une route dynamique
+unique `pages/expertises/[slug].vue`, adossées à une extension typée du
+contrat `expertise-pages.ts` (11 champs éditoriaux supplémentaires, tous
+`readonly`, aucune valeur inventée). Contenu verbatim par pôle
+(introduction, `À qui cela s'adresse`, `Notre approche`, livrables, bénéfices,
+maillage vers 2 pôles connexes) ; SEO complet (title, description,
+canonical, `og:*`, Schema.org `Service`) ; fil d'Ariane accessible ;
+HTTP 404 explicite pour un slug inconnu (aucun fallback silencieux).
+
+- [x] Extension du contrat `app/config/expertise-pages.ts` : passage à
+      `status: "published"` pour les 5 entrées + 11 champs verbatim
+      (`eyebrow`, `introduction`, `seoTitle`, `seoDescription`,
+      `needTitle`, `needDescription`, `approachTitle`,
+      `approachDescription`, `deliverables`, `benefits`,
+      `relatedPillarIds`). Nouveau type `ExpertiseBenefit`. Tous les
+      champs `readonly` (immuabilité du contrat).
+- [x] Route dynamique `app/pages/expertises/[slug].vue` : lit
+      `useRoute().params.slug`, résout via
+      `expertisePages.find(p => p.slug === slug && p.status === "published")`,
+      lance `createError({ statusCode: 404, fatal: true })` sinon.
+      Orchestre `SiteBreadcrumb` + `ExpertisePageHero` + 4
+      `EditorialSection` + `EditorialCallout` (retour vers `/expertises`).
+- [x] Composable `app/composables/useExpertiseServiceSchema.ts` : émet un
+      JSON-LD Schema.org `Service` avec `@id = ${url}#service` et
+      `provider: { "@id": ${origin}/#organization }` — référence
+      l'`@id` de l'Organization global (`useSiteSchema`), aucun
+      `offers`/`price`/`aggregateRating`/`review` fictif.
+- [x] Composants livrés : `SiteBreadcrumb.vue`
+      (`<nav aria-label="Fil d'Ariane">`, `<ol role="list">`,
+      `aria-current="page"` sur le dernier item, séparateur `›`
+      `aria-hidden`), `ExpertisePageHero.vue` (H1 unique par page,
+      eyebrow + titre + introduction), `ExpertiseDeliverables.vue`
+      (`<ul role="list">` de pastilles, marqueurs `aria-hidden`),
+      `ExpertiseBenefits.vue` (grille responsive de bénéfices H3+p),
+      `ExpertiseRelatedPillars.vue` (2 cartes-liens vers les pôles
+      connexes, filtrage `status === "published"` — dégradation
+      silencieuse).
+- [x] `ExpertiseOverviewCard.vue` refactorée en carte cliquable
+      conditionnelle : `<NuxtLink v-if="isPublished()">` +
+      `<article v-else>` (pas de `<component :is>` — casserait
+      l'hydratation NuxtLink). CTA `Découvrir ce pôle →` en
+      `--color-petrol` (contraste ≥ 6:1 sur cream/sand, vs 3.19:1 avec
+      `--color-devzair-blue`).
+- [x] `pages/expertises/index.vue` joint chaque `pillar` à sa
+      `ExpertisePageDefinition` via `pagesByPillarId` (Map computed) :
+      passage de `:page="pagesByPillarId.get(pillar.id)"` à chaque
+      carte pour activer le lien lorsque la page est publiée.
+- [x] Pré-rendu ajouté (`nuxt.config.ts routeRules`) sur les 5 nouvelles
+      routes : `/expertises/{concevoir,construire,valoriser,visibilite,faire-evoluer}`.
+      Vérifié sur `.output/public/expertises/{slug}/index.html`.
+- [x] Sitemap XML : les 5 nouvelles routes apparaissent automatiquement
+      (chaînage `@nuxtjs/sitemap` sur les `routeRules.prerender`).
+      Aucune configuration supplémentaire.
+- [x] Tests unitaires : 258/258 verts (+45 sur 213 Phase 7A) —
+      `expertise-pages` étendu (+9 assertions groupées : 11 champs
+      requis, `status === "published"` universel, 2 `relatedPillarIds`
+      par entrée, pas d'auto-référence, cible existante et publiée…),
+      `SiteBreadcrumb` ×6, `ExpertisePageHero` ×5, `ExpertiseDeliverables`
+      ×4, `ExpertiseBenefits` ×5, `ExpertiseRelatedPillars` ×5,
+      `useExpertiseServiceSchema` ×5, `pages/expertise-slug` ×7 (mount
+      dynamique par slug via `vi.resetModules()` + `await import`).
+- [x] Tests E2E : 200/200 verts (+22 sur 178 Phase 7A) — nouvelle suite
+      `test/e2e/expertise-pages.spec.ts` (SSR 200 par slug, HTTP 404
+      slug inconnu, présence sitemap XML, JSON-LD `@type":"Service"`
+      dans le HTML pré-rendu, fil d'Ariane accessible, absence de
+      contenu placeholder/lorem/TODO, 2 liens de pôles connexes,
+      navigation mobile fonctionnelle, responsive 320/390/768/1024/1440,
+      Axe WCAG 2.2 AA sans violation `serious`/`critical`,
+      `prefers-reduced-motion`). Régex tolérante à l'encodage
+      HTML des apostrophes (`'` ⇔ `&#39;` ⇔ `&#x27;`) en SSR.
+      Playwright `--workers=1 --retries=0` → 200 passed, 0 flaky,
+      0 failed.
+- [x] Test E2E `institutional-pages.spec.ts` réaligné : l'assertion
+      « ne rend aucune carte comme lien tant que Phase 7B n'est pas
+      livrée » inversée — la page `/expertises` doit désormais
+      exposer 5 liens vers les pages détaillées.
+- [x] Build production : 3.00 MB brut / 782 kB gzip (+80 KB / +23 KB
+      vs Phase 7A 2.92 MB / 759 kB). 8 pages publiques pré-rendues
+      (`/`, `/agence`, `/expertises`, 5 × `/expertises/{slug}`).
+
+Critère de sortie Phase 7B : atteint. 5 pages publiques cohérentes
+avec l'architecture éditoriale posée en 7A, aucune route morte, HTTP 404
+strict sur slug inconnu, Schema.org `Service` réel adossé à
+l'Organization globale, navigation croisée entre pôles opérationnelle.
 
 ### Phase 7C — Réalisations et autorité éditoriale (À VENIR)
 

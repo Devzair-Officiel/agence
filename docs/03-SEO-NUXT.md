@@ -278,27 +278,38 @@ Règles :
 - ne jamais mettre en cache une réponse personnalisée ou privée ;
 - toutes les pages pré-rendues doivent être accessibles par de vrais liens HTML ou déclarées explicitement.
 
-**État actuel (Phase 7A close, 2026-08-02).** Trois pages publiques
-sont pré-rendues : `/`, `/agence` et `/expertises`. Aucune ne consomme
-de donnée dynamique — les contenus proviennent tous de configs typées
-locales (`expertise-pillars.ts`, `expertise-pages.ts`,
+**État actuel (Phase 7B close, 2026-08-03).** Huit pages publiques sont
+pré-rendues : `/`, `/agence`, `/expertises` et les cinq pages
+d'expertise détaillées `/expertises/{concevoir,construire,valoriser,visibilite,faire-evoluer}`
+livrées via la route dynamique unique `pages/expertises/[slug].vue`.
+Aucune ne consomme de donnée dynamique — les contenus proviennent tous
+de configs typées locales (`expertise-pillars.ts`, `expertise-pages.ts`,
 `project-process.ts`, `trust-promises.ts`). La page interne
-`/design-preview` a été supprimée à la clôture de Phase 5D. Les cinq
-routes `/expertises/{slug}` seront ajoutées à `routeRules` en Phase 7B
-lorsque les pages détaillées existeront réellement.
+`/design-preview` a été supprimée à la clôture de Phase 5D.
 
-**Matrice SEO des pages publiques (Phase 7A).**
+**Matrice SEO des pages publiques (Phase 7B).**
 
-| Route | Title (avant template) | Meta description | Canonical / robots | OG type |
-|---|---|---|---|---|
-| `/` | `Agence digitale pour sites web, applications et visibilité` | verbatim `usePageSeo` — cf. `pages/index.vue` | `siteUrl/` en prod indexable, `noindex` sinon | `website` |
-| `/agence` | `Agence digitale à taille humaine` | `Découvrez l'approche Devzair : une agence digitale à taille humaine qui réunit stratégie, design, développement, contenus et SEO autour de votre projet.` | `siteUrl/agence` en prod indexable, `noindex` sinon | `website` |
-| `/expertises` | `Expertises web, design, contenu et SEO` | `Découvrez les cinq pôles d'expertise Devzair : stratégie et design, développement web, contenus, visibilité SEO, maintenance et évolution.` | `siteUrl/expertises` en prod indexable, `noindex` sinon | `website` |
+| Route | Title (avant template) | Meta description | Canonical / robots | OG type | Schema.org |
+|---|---|---|---|---|---|
+| `/` | `Agence digitale pour sites web, applications et visibilité` | verbatim `usePageSeo` — cf. `pages/index.vue` | `siteUrl/` en prod indexable, `noindex` sinon | `website` | Organization + WebSite (layout) |
+| `/agence` | `Agence digitale à taille humaine` | `Découvrez l'approche Devzair : une agence digitale à taille humaine qui réunit stratégie, design, développement, contenus et SEO autour de votre projet.` | `siteUrl/agence` en prod indexable, `noindex` sinon | `website` | Organization + WebSite (layout) |
+| `/expertises` | `Expertises web, design, contenu et SEO` | `Découvrez les cinq pôles d'expertise Devzair : stratégie et design, développement web, contenus, visibilité SEO, maintenance et évolution.` | `siteUrl/expertises` en prod indexable, `noindex` sinon | `website` | Organization + WebSite (layout) |
+| `/expertises/concevoir` | `expertise-pages.ts::seoTitle` (verbatim) | `expertise-pages.ts::seoDescription` (verbatim) | `siteUrl/expertises/concevoir` en prod indexable, `noindex` sinon | `website` | + `Service` avec `provider: {"@id": "…/#organization"}` |
+| `/expertises/construire` | idem | idem | idem | idem | idem |
+| `/expertises/valoriser` | idem | idem | idem | idem | idem |
+| `/expertises/visibilite` | idem | idem | idem | idem | idem |
+| `/expertises/faire-evoluer` | idem | idem | idem | idem | idem |
 
 Le template global `%s | Devzair` transforme le title en
 `Agence digitale à taille humaine | Devzair`, etc. La logique
 canonical / robots est portée uniquement par `usePageSeo` — cf. `04.6`
 pour le comportement `noindex` sans canonical (DEC-023).
+
+**Chaînage Schema.org (Phase 7B).** Le nœud `Service` émis par
+`useExpertiseServiceSchema` sur chaque page `/expertises/{slug}` référence
+l'`Organization` globale par son `@id` (`${origin}/#organization`) —
+jamais par duplication de champs (`name`, `url`, `logo`). Voir DEC-065
+pour la justification et le contrat.
 
 ### Modules SEO
 

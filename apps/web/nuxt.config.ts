@@ -139,9 +139,19 @@ export default defineNuxtConfig({
     // locales). Phase 7A : ajout de `/agence` (positionnement + valeurs) et
     // `/expertises` (vue d'ensemble des cinq pôles) — même contrat : contenu
     // 100 % local, aucune donnée dynamique, HTML statique livrable.
-    // Les pages filles `/expertises/{slug}` seront ajoutées en Phase 7B.
+    // Phase 7B : ajout des cinq pages filles `/expertises/{slug}` — servies
+    // par une route dynamique Nuxt (`pages/expertises/[slug].vue`) qui
+    // résout le slug via `expertise-pages.ts` et retourne un 404 explicite
+    // (`createError`) pour toute autre valeur. Les slugs sont énumérés ci-
+    // dessous pour que Nitro pré-rende chaque page à la construction et les
+    // inclue dans le sitemap.
     '/': { prerender: true },
     '/agence': { prerender: true },
     '/expertises': { prerender: true },
+    '/expertises/concevoir': { prerender: true },
+    '/expertises/construire': { prerender: true },
+    '/expertises/valoriser': { prerender: true },
+    '/expertises/visibilite': { prerender: true },
+    '/expertises/faire-evoluer': { prerender: true },
   },
 })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ExpertisePillar } from "~/config/expertise-pillars"
+import type { ExpertisePageDefinition } from "~/config/expertise-pages"
 
 /**
  * Carte d'aperçu pour la page `/expertises` — présentation « fiche » d'un
@@ -10,27 +11,67 @@ import type { ExpertisePillar } from "~/config/expertise-pillars"
  *   - `ExpertiseOverviewCard` construit une **fiche uniforme** en 5 cartes
  *     alignées, orientée lisibilité et cadrage éditorial.
  *
- * Aucun lien sortant : Phase 7A ne livre pas les pages `/expertises/{slug}`.
- * Le composant expose donc uniquement du contenu narratif, sans zone
- * interactive. Il deviendra un lien vers la page fille en Phase 7B, sous
- * condition que la définition correspondante dans `expertise-pages.ts` ait
- * `status === "published"`.
+ * Comportement de lien (Phase 7B) :
+ *   - si une définition `page` est fournie et que `page.status === "published"`,
+ *     la carte est rendue comme un `<NuxtLink>` cliquable pointant vers
+ *     `page.route` — l'article devient interactif dans son intégralité ;
+ *   - sinon, la carte reste un `<article>` narratif sans zone interactive
+ *     (comportement Phase 7A, préservé pour tout pôle qui n'aurait pas
+ *     encore de page dédiée publiée).
  *
  * Accessibilité :
- *   - la carte porte un H3 (la page `/expertises` porte le H2 unique de la
- *     section « Cinq pôles complémentaires… ») ;
- *   - le badge d'ordre (« 01 »…« 05 ») est décoratif (`aria-hidden`).
+ *   - le titre est rendu en H3 (le page `/expertises` porte le H2 unique
+ *     de la section « Cinq pôles complémentaires… ») ;
+ *   - le badge d'ordre (« 01 »…« 05 ») est décoratif (`aria-hidden`) ;
+ *   - quand la carte est un lien, le contenu textuel du H3 sert de nom
+ *     accessible — pas d'`aria-label` redondant.
  */
 
 interface Props {
   pillar: ExpertisePillar
+  /** Définition de page correspondante ; rend la carte cliquable si publiée. */
+  page?: ExpertisePageDefinition
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const isPublished = (): boolean =>
+  Boolean(props.page && props.page.status === "published")
 </script>
 
 <template>
-  <article class="expertise-overview-card" :data-variant="pillar.variant">
+  <NuxtLink
+    v-if="isPublished()"
+    :to="page!.route"
+    class="expertise-overview-card expertise-overview-card--interactive"
+    :data-variant="pillar.variant"
+  >
+    <p class="expertise-overview-card__order" aria-hidden="true">
+      {{ String(pillar.order).padStart(2, "0") }}
+    </p>
+    <h3 class="expertise-overview-card__title">{{ pillar.label }}</h3>
+    <p class="expertise-overview-card__description">
+      {{ pillar.longDescription }}
+    </p>
+    <p class="expertise-overview-card__services-label">Prestations associées</p>
+    <ul class="expertise-overview-card__services" role="list">
+      <li
+        v-for="service in pillar.services"
+        :key="service"
+        class="expertise-overview-card__service"
+      >
+        {{ service }}
+      </li>
+    </ul>
+    <p class="expertise-overview-card__cta" aria-hidden="true">
+      Découvrir ce pôle →
+    </p>
+  </NuxtLink>
+  <article
+    v-else
+    class="expertise-overview-card"
+    :data-variant="pillar.variant"
+  >
     <p class="expertise-overview-card__order" aria-hidden="true">
       {{ String(pillar.order).padStart(2, "0") }}
     </p>
@@ -62,6 +103,17 @@ defineProps<Props>()
   background-color: var(--background-primary);
   color: var(--text-primary);
   height: 100%;
+  text-decoration: none;
+}
+
+.expertise-overview-card--interactive {
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.expertise-overview-card--interactive:hover,
+.expertise-overview-card--interactive:focus-visible {
+  border-color: var(--color-devzair-blue);
+  transform: translateY(-2px);
 }
 
 .expertise-overview-card[data-variant="primary"] {
@@ -154,5 +206,30 @@ defineProps<Props>()
 
 .expertise-overview-card[data-variant="accent"] .expertise-overview-card__service::before {
   background-color: var(--color-cream);
+}
+
+.expertise-overview-card__cta {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  /* Petrol garantit un contraste ≥ 6:1 sur cream et sur sand (WCAG AA
+     texte normal). Le devzair-blue tomberait sous 4.5:1 sur ces fonds. */
+  color: var(--color-petrol);
+}
+
+.expertise-overview-card[data-variant="accent"] .expertise-overview-card__cta {
+  color: var(--color-cream);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expertise-overview-card--interactive {
+    transition: none;
+  }
+
+  .expertise-overview-card--interactive:hover,
+  .expertise-overview-card--interactive:focus-visible {
+    transform: none;
+  }
 }
 </style>

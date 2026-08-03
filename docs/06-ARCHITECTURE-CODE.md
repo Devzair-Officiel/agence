@@ -48,7 +48,7 @@ devzair/
 │   │   │   │   ├── base/
 │   │   │   │   ├── contact/
 │   │   │   │   ├── editorial/         # Phase 7A : blocs éditoriaux réutilisables (Hero, Section, Callout)
-│   │   │   │   ├── expertise/         # Phase 7A : ExpertiseOverviewCard (non interactive en 7A)
+│   │   │   │   ├── expertise/         # Phase 7A/7B : ExpertiseOverviewCard (cliquable en 7B), ExpertisePageHero, ExpertiseDeliverables, ExpertiseBenefits, ExpertiseRelatedPillars
 │   │   │   │   ├── home/
 │   │   │   │   ├── layout/
 │   │   │   │   ├── sections/
@@ -108,7 +108,7 @@ devzair/
 | `app/components/base` | Composants élémentaires du design system |
 | `app/components/contact` | Domaine formulaire de contact (Phase 6B/C) |
 | `app/components/editorial` | Blocs éditoriaux réutilisables (`EditorialHero`, `EditorialSection`, `EditorialCallout`) — Phase 7A |
-| `app/components/expertise` | Cartes de pôles d'expertise (`ExpertiseOverviewCard`) — Phase 7A, extensible en 7B |
+| `app/components/expertise` | Composants des pôles d'expertise : `ExpertiseOverviewCard` (7A, rendu cliquable en 7B), `ExpertisePageHero`, `ExpertiseDeliverables`, `ExpertiseBenefits`, `ExpertiseRelatedPillars` — Phase 7B |
 | `app/components/home` | Sections spécifiques à l'accueil (Phases 5A→5D) |
 | `app/components/layout` | Header, footer, navigation et structures globales |
 | `app/components/sections` | Sections éditoriales réutilisables (à créer si un besoin transversal apparaît) |

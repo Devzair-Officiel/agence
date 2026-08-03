@@ -204,16 +204,23 @@ test.describe("/expertises — SSR et contenu éditorial", () => {
     expect(cards).toBe(5)
   })
 
-  test("ne rend aucune carte comme lien tant que Phase 7B n'est pas livrée", async ({
+  test("rend chaque carte comme un lien vers `/expertises/{slug}` publié", async ({
     page,
   }) => {
     await page.goto("/expertises")
-    const cardLinks = await page
-      .locator(".expertise-overview-card a")
-      .count()
-    expect(cardLinks).toBe(0)
-    const deadLinks = await page.locator('a[href^="/expertises/"]').count()
-    expect(deadLinks).toBe(0)
+    // Depuis la Phase 7B, chaque carte est un `<NuxtLink>` (rendu <a>) qui
+    // pointe vers sa page fille dédiée.
+    const cardLinks = await page.locator(".expertise-overview-card").count()
+    expect(cardLinks).toBe(5)
+    for (const slug of [
+      "concevoir",
+      "construire",
+      "valoriser",
+      "visibilite",
+      "faire-evoluer",
+    ]) {
+      await expect(page.locator(`a[href="/expertises/${slug}"]`).first()).toBeVisible()
+    }
   })
 
   test("propose un lien réel vers /agence et vers /#contact", async ({ page }) => {

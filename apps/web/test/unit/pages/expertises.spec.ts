@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { mount } from "@vue/test-utils"
 import ExpertisesPage from "~/pages/expertises/index.vue"
+import { expertisePages } from "~/config/expertise-pages"
 import { expertisePillars } from "~/config/expertise-pillars"
 
 interface SeoCall {
@@ -70,11 +71,25 @@ describe("/expertises page", () => {
     expect(hrefs).toContain("/#contact")
   })
 
-  it("does not link to individual expertise pages while Phase 7B is not delivered", () => {
+  it("links every published expertise card to its own `/expertises/{slug}` route", () => {
     const wrapper = mount(ExpertisesPage)
     const hrefs = wrapper.findAll("a").map((a) => a.attributes("href") ?? "")
+    const publishedRoutes = expertisePages
+      .filter((p) => p.status === "published")
+      .map((p) => p.route)
+    for (const route of publishedRoutes) {
+      expect(hrefs).toContain(route)
+    }
+  })
+
+  it("never links to a route absent from expertise-pages.ts", () => {
+    const wrapper = mount(ExpertisesPage)
+    const hrefs = wrapper.findAll("a").map((a) => a.attributes("href") ?? "")
+    const knownRoutes = new Set(expertisePages.map((p) => p.route))
     for (const href of hrefs) {
-      expect(href).not.toMatch(/^\/expertises\/[a-z]/)
+      if (href.startsWith("/expertises/")) {
+        expect(knownRoutes.has(href)).toBe(true)
+      }
     }
   })
 

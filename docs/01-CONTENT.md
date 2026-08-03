@@ -167,7 +167,7 @@ chaque projet ». Test unitaire garde-fou :
 
 ## 7.2 bis Page `/expertises` (vue d'ensemble)
 
-### État actuel : livrée (Phase 7A)
+### État actuel : livrée (Phase 7A, cartes rendues cliquables en Phase 7B)
 
 Route SSR pré-rendue (`nuxt.config.ts::routeRules['/expertises']={prerender:true}`),
 implémentation `apps/web/app/pages/expertises/index.vue`, suite unitaire
@@ -176,11 +176,12 @@ implémentation `apps/web/app/pages/expertises/index.vue`, suite unitaire
 
 ### Rôle
 
-Page d'entrée vers les cinq pôles d'expertise Devzair. En Phase 7A, elle
-présente **cinq cartes non interactives** (informatives) alimentées par
-`app/config/expertise-pillars.ts`. La bascule en cartes-liens vers
-`/expertises/{slug}` interviendra en Phase 7B, à la publication des
-pages détaillées.
+Page d'entrée vers les cinq pôles d'expertise Devzair. Depuis la
+Phase 7B, les cinq cartes exposent un `<NuxtLink>` vers
+`/expertises/{slug}` grâce au patron `v-if="isPublished()"` / `v-else`
+d'`ExpertiseOverviewCard` (cf. DEC-062). Aucun lien mort : si la config
+d'une entrée bascule un jour à `status !== "published"`, la carte
+revient automatiquement en `<article>` non interactif.
 
 ### Contenu livré
 
@@ -191,19 +192,68 @@ pages détaillées.
   différents. Nous réunissons les expertises adaptées pour concevoir,
   construire, valoriser, rendre visible et faire évoluer votre projet. »
 - Section « Notre approche » (`EditorialSection`).
-- Grille de cinq `ExpertiseOverviewCard` (`<article>`, H3 non lié,
-  description longue verbatim, 3 services par pôle).
+- Grille de cinq `ExpertiseOverviewCard` cliquables (CTA « Découvrir ce
+  pôle → » en `--color-petrol`, contraste 6:1 sur crème/sable, cf.
+  DEC-063), H3 non lié, description longue verbatim, 3 services par pôle.
 - Callout final vers `/agence` (secondaire vers `/#contact`).
 
 ### Vigilance appliquée
 
 Aucun chiffre inventé (nombre de projets, nombre de clients, ancienneté),
-aucun logo tiers, aucun témoignage. Les cartes ne portent **aucun lien**
-tant que les pages `/expertises/{slug}` n'existent pas — évite tout
-`href="#"` ou lien mort. Sources de vérité : la config typée
-`app/config/expertise-pages.ts` (5 entrées `status: "planned"`, routing
-futur) et `app/config/expertise-pillars.ts` (contenu narratif partagé
-avec l'accueil).
+aucun logo tiers, aucun témoignage. Sources de vérité : la config typée
+`app/config/expertise-pages.ts` (5 entrées `status: "published"` depuis
+la Phase 7B) et `app/config/expertise-pillars.ts` (contenu narratif
+partagé avec l'accueil).
+
+---
+
+## 7.2 ter Pages `/expertises/{slug}` (cinq pages détaillées)
+
+### État actuel : livrées (Phase 7B)
+
+Route dynamique `apps/web/app/pages/expertises/[slug].vue` avec
+`createError({ statusCode: 404, fatal: true })` pour tout slug inconnu
+(cf. DEC-064 — jamais de fallback silencieux). Cinq entrées
+pré-rendues (`nuxt.config.ts::routeRules['/expertises/{slug}']={prerender:true}`
+pour chaque slug listé dans `app/config/expertise-pages.ts`) et
+`sitemap.ts` alignée. Suites de tests : `test/unit/pages/expertise-slug.spec.ts`,
+`test/unit/expertise/*.spec.ts`, `test/unit/config/expertise-pages.spec.ts`,
+`test/e2e/expertise-pages.spec.ts`.
+
+### Rôle
+
+Détailler chaque pôle avec un contenu utile à la décision, sans jamais
+inventer de client, de chiffre ni de résultat. Les cinq pages partagent
+le même patron :
+
+1. `ExpertisePageHero` — eyebrow, H1 verbatim (issu de la config),
+   introduction narrative.
+2. `EditorialSection` × 2 — approche du pôle, méthodologie.
+3. `ExpertiseDeliverables` — liste `<ul>` des livrables concrets.
+4. `ExpertiseBenefits` — bénéfices attendus formulés sans superlatif
+   (`ExpertiseBenefit[]` typé, `readonly`).
+5. `ExpertiseRelatedPillars` — exactement 2 pôles reliés (jamais le pôle
+   courant, cf. DEC-066) pour tisser le maillage interne.
+6. Fil d'ariane sémantique (`<nav aria-label="Fil d'ariane">`) rendu par
+   le composable `useBreadcrumb`.
+7. Callout final vers `/#contact`.
+
+### Données structurées
+
+Chaque page émet un JSON-LD `Service` via `useExpertiseServiceSchema`
+avec `provider: { "@id": "${origin}/#organization" }` (référence à
+l'`Organization` globale posée par `useSiteSchema` au niveau layout,
+jamais de duplication — cf. DEC-065).
+
+### Vigilance appliquée
+
+Aucun placeholder, aucun `lorem ipsum`, aucun chiffre inventé, aucun
+témoignage anonyme. Le test unitaire
+`test/unit/pages/expertise-slug.spec.ts` bloque tout contenu fictif et
+toute route inconnue rendue autrement qu'en 404. Le patron
+`v-if="isPublished()"` + `<article v-else>` remplace la tentation
+d'utiliser `<component :is="...">` pour NuxtLink (impossible : NuxtLink
+n'est pas une balise HTML, cf. DEC-062).
 
 ---
 
