@@ -83,7 +83,14 @@ watch(isOpen, async (opened) => {
         <div class="mobile-navigation__inner">
           <div class="mobile-navigation__header">
             <div class="mobile-navigation__brand">
-              <span class="mobile-navigation__logo" aria-hidden="true">D</span>
+              <img
+                class="mobile-navigation__logo"
+                src="/brand/logo.png"
+                alt=""
+                width="40"
+                height="40"
+                decoding="async"
+              />
               <span class="mobile-navigation__brand-name">{{ site.name }}</span>
             </div>
             <button
@@ -164,16 +171,13 @@ watch(isOpen, async (opened) => {
 }
 
 .mobile-navigation__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 10px;
   background-color: var(--color-navy-deep);
-  color: var(--color-cream);
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
+  padding: 4px;
 }
 
 .mobile-navigation__brand-name {

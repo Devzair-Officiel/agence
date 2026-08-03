@@ -69,7 +69,7 @@ test.describe('/ (home) — contrôles structurels', () => {
     expect(bodyText).not.toMatch(/john doe/)
     // Aucun mailto/tel tant que site.contact.email / site.contact.phone
     // ne sont pas renseignés (site.ts). Le seul lien de contact autorisé
-    // est l'ancre `/#contact` (via primaryCta).
+    // est la route `/contact` (via primaryCta).
     await expect(page.locator('a[href^="mailto:"]')).toHaveCount(0)
     await expect(page.locator('a[href^="tel:"]')).toHaveCount(0)
   })

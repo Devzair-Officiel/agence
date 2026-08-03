@@ -150,7 +150,7 @@ useExpertiseServiceSchema({
       eyebrow="Parler de votre projet"
       title="Un besoin sur ce pôle ? Racontez-nous votre contexte."
       description="Un échange court suffit pour cadrer si ce pôle correspond à votre situation et quelles étapes seraient utiles."
-      :primary="{ label: 'Nous contacter', to: '/#contact', external: true }"
+      :primary="{ label: 'Nous contacter', to: '/contact' }"
       :secondary="{ label: 'Voir tous les pôles', to: '/expertises' }"
     />
   </div>

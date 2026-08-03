@@ -1,7 +1,12 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Contrôles E2E du formulaire de contact (Phase 6B).
+// Contrôles E2E du formulaire de contact.
+//
+// Depuis le split de Phase 7C, le formulaire n'est plus embarqué dans la
+// section CTA de la home mais servi sur la page dédiée `/contact` (routage
+// SSR, pré-rendu, canonique propre). Tous les tests visent donc directement
+// `/contact` — la home ne contient plus qu'un bouton pointant vers cette page.
 //
 // Périmètre :
 //   - présence SSR : le <form> et ses champs essentiels rendent côté serveur ;
@@ -17,8 +22,8 @@ import { expect, test } from '@playwright/test'
 // Les appels API sont interceptés via `page.route` : la suite ne dépend pas du
 // backend Symfony et reste stable en CI même sans stack complète.
 
-const CONTACT_SECTION = '#contact'
-const FORM = `${CONTACT_SECTION} form.contact-form`
+const CONTACT_PATH = '/contact'
+const FORM = 'form.contact-form'
 const API_URL = '**/api/contact'
 
 // Contenu minimum valide côté client (miroir du DTO Symfony).
@@ -35,9 +40,9 @@ async function fillValidForm(page: import('@playwright/test').Page): Promise<voi
   await page.locator('input[name="consent"]').check()
 }
 
-test.describe('/ (home) — formulaire de contact', () => {
+test.describe('/contact — formulaire de contact', () => {
   test('renders the <form> and its main fields (SSR)', async ({ request }) => {
-    const response = await request.get('/')
+    const response = await request.get(CONTACT_PATH)
     expect(response.status()).toBe(200)
     const body = await response.text()
     expect(body).toContain('class="contact-form')
@@ -64,7 +69,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     // Attend que le TurnstileWidget émette son token dev-noop et libère le bouton.
     const submit = page.locator(`${FORM} button[type="submit"]`)
     await expect(submit).toBeEnabled()
@@ -97,7 +102,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     await fillValidForm(page)
     await page.locator(`${FORM} button[type="submit"]`).click()
@@ -126,7 +131,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     await fillValidForm(page)
     // On force la valeur du honeypot (bots réels : autofill navigateur).
@@ -161,7 +166,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     await fillValidForm(page)
     await page.locator(`${FORM} button[type="submit"]`).click()
@@ -196,7 +201,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       }
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
 
     // Un widget rendu → le bouton devrait être enabled car token dev-noop émis.
@@ -224,7 +229,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     await fillValidForm(page)
     await page.locator(`${FORM} button[type="submit"]`).click()
@@ -245,7 +250,7 @@ test.describe('/ (home) — formulaire de contact', () => {
       await route.fulfill({ status: 200, body: '{}' })
     })
 
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     // On coche uniquement le consentement pour dépasser le blocage côté widget,
     // les autres champs restent vides → validation client refuse l'envoi.
@@ -259,8 +264,79 @@ test.describe('/ (home) — formulaire de contact', () => {
     )
   })
 
+  test('keeps the expected keyboard order across the four short fields', async ({
+    page,
+  }) => {
+    await page.goto(CONTACT_PATH)
+    const names = ['name', 'email', 'company', 'telephone'] as const
+    await page.locator(`input[name="${names[0]}"]`).focus()
+
+    for (let index = 0; index < names.length; index += 1) {
+      await expect(page.locator(`input[name="${names[index]}"]`)).toBeFocused()
+      if (index < names.length - 1) await page.keyboard.press('Tab')
+    }
+  })
+
+  test('uses a predictable responsive grid from 320 to 1920 px', async ({ page }) => {
+    const viewports = [
+      { width: 320, height: 800 },
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1024, height: 768 },
+      { width: 1440, height: 900 },
+      { width: 1920, height: 1080 },
+    ]
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport)
+      await page.goto(CONTACT_PATH)
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      )
+      expect(overflow, `horizontal overflow at ${viewport.width}px`).toBeLessThanOrEqual(1)
+
+      const shortFields = ['name', 'email', 'company', 'telephone'] as const
+      const boxes = await Promise.all(
+        shortFields.map((name) => page.locator(`input[name="${name}"]`).boundingBox()),
+      )
+      expect(boxes.every(Boolean)).toBe(true)
+
+      if (viewport.width < 720) {
+        for (let index = 1; index < boxes.length; index += 1) {
+          expect(Math.abs(boxes[index]!.x - boxes[0]!.x)).toBeLessThanOrEqual(1)
+          expect(boxes[index]!.y).toBeGreaterThan(boxes[index - 1]!.y)
+        }
+      } else {
+        expect(Math.abs(boxes[0]!.y - boxes[1]!.y)).toBeLessThanOrEqual(1)
+        expect(Math.abs(boxes[2]!.y - boxes[3]!.y)).toBeLessThanOrEqual(1)
+        expect(boxes[1]!.x).toBeGreaterThan(boxes[0]!.x + boxes[0]!.width)
+        expect(boxes[3]!.x).toBeGreaterThan(boxes[2]!.x + boxes[2]!.width)
+      }
+
+      const project = await page.locator('.contact-form__project').boundingBox()
+      const message = await page.locator('textarea[name="message"]').boundingBox()
+      expect(project).not.toBeNull()
+      expect(message).not.toBeNull()
+      expect(Math.abs(project!.x - boxes[0]!.x)).toBeLessThanOrEqual(1)
+      expect(Math.abs(message!.x - boxes[0]!.x)).toBeLessThanOrEqual(1)
+
+      // Composition verticale (hero → timeline → form-card) : chaque
+      // bloc doit être strictement en-dessous du précédent, et le form
+      // card reste centré dans la largeur du container (max 780 px).
+      const hero = await page.locator('.contact-page__hero').boundingBox()
+      const timeline = await page.locator('.contact-page__timeline').boundingBox()
+      const formCard = await page.locator('.contact-page__form-card').boundingBox()
+      expect(hero).not.toBeNull()
+      expect(timeline).not.toBeNull()
+      expect(formCard).not.toBeNull()
+      expect(timeline!.y).toBeGreaterThan(hero!.y + hero!.height - 1)
+      expect(formCard!.y).toBeGreaterThan(timeline!.y + timeline!.height - 1)
+    }
+  })
+
   test('Axe — aucune violation serious/critical sur le form', async ({ page }) => {
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
     const results = await new AxeBuilder({ page })
       .include(FORM)
@@ -288,7 +364,7 @@ test.describe('/ (home) — formulaire de contact', () => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.goto('/')
+    await page.goto(CONTACT_PATH)
     const name = page.locator('input[name="name"]')
     await name.focus()
     await expect(name).toBeFocused()

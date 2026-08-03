@@ -54,6 +54,21 @@ describe("HomeConnectedApproach", () => {
     expect(hidden.map((h) => h.text().trim())).toEqual(expected)
   })
 
+  it("renders four dedicated decorative connectors between the five cards", () => {
+    const wrapper = mount(HomeConnectedApproach)
+    const connectors = wrapper.findAll(".home-approach__connector")
+    expect(connectors).toHaveLength(4)
+    for (const connector of connectors) {
+      expect(connector.attributes("aria-hidden")).toBe("true")
+      expect(connector.find(".home-approach__connector-glyph--vertical").text()).toBe(
+        "↓",
+      )
+      expect(connector.find(".home-approach__connector-glyph--horizontal").text()).toBe(
+        "→",
+      )
+    }
+  })
+
   it("has no interactive control", () => {
     const wrapper = mount(HomeConnectedApproach)
     expect(wrapper.findAll("button")).toHaveLength(0)

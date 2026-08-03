@@ -147,6 +147,7 @@ export default defineNuxtConfig({
     // inclue dans le sitemap.
     '/': { prerender: true },
     '/agence': { prerender: true },
+    '/contact': { prerender: true },
     '/expertises': { prerender: true },
     '/expertises/concevoir': { prerender: true },
     '/expertises/construire': { prerender: true },

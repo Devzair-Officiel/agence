@@ -41,7 +41,7 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
     class="home-pillars"
     aria-labelledby="home-pillars-title"
   >
-    <BaseContainer class="home-pillars__container">
+    <BaseContainer width="wide" class="home-pillars__container">
       <header class="home-pillars__intro">
         <BaseEyebrow class="home-pillars__eyebrow">
           Nos expertises · 5 pôles

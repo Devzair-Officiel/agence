@@ -73,7 +73,7 @@ const problems: readonly HomeProblem[] = [
     class="home-problems"
     aria-labelledby="home-problems-title"
   >
-    <BaseContainer class="home-problems__container">
+    <BaseContainer width="wide" class="home-problems__container">
       <header class="home-problems__intro">
         <BaseEyebrow class="home-problems__eyebrow">Le constat</BaseEyebrow>
         <h2 id="home-problems-title" class="home-problems__title">

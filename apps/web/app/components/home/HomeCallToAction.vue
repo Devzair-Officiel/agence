@@ -1,37 +1,26 @@
 <script setup lang="ts">
+import BaseButton from "~/components/base/BaseButton.vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
-import ContactForm from "~/components/contact/ContactForm.vue"
 
 /**
  * Section finale « Parlons de votre projet » — CTA de clôture de l'accueil.
  *
- * Ancre : `id="contact"`. Cible du CTA hero primaire, du CTA header/mobile
- * (via `primaryCta.to = "/#contact"`) et du footer. Depuis la Phase 6B, cette
- * section héberge le vrai formulaire de contact (validation client + Turnstile
- * + POST /api/contact) : plus de mailto conditionnel, plus de notice preprod.
+ * Depuis le déplacement du formulaire vers la page dédiée `/contact`, cette
+ * section joue le rôle d'un panneau CTA compact : eyebrow, H2, paragraphe,
+ * bouton qui pointe explicitement sur `/contact`. Elle conserve son ancre
+ * `id="contact"` pour que les anciens liens (`/#contact` en cache moteur,
+ * signets, partages) atterrissent quand même sur la bonne section — Nuxt
+ * ne se plaint pas d'une ancre qui ne correspond à aucune cible interne.
  *
- * L'eyebrow, le H2 et le paragraphe éditoriaux restent verbatim (source unique
- * `docs/01-CONTENT.md §7.1`). Le formulaire consomme les valeurs runtime
- * (`apiBaseUrl`, `turnstileSiteKey`) via `useRuntimeConfig().public`.
+ * L'eyebrow, le H2 et le paragraphe éditoriaux restent verbatim (source
+ * unique `docs/01-CONTENT.md §7.1`).
  *
  * Accessibilité :
  *   - un H2 unique pour la section, ancre `id="contact"` sur `<section>` ;
- *   - le formulaire est titré par un H3 en `sr-only` — la hiérarchie visuelle
- *     reste eyebrow → H2 → paragraphe → form ;
- *   - contraste garanti sur fond navy : champs cream + focus ring devzair-blue.
+ *   - un seul CTA visible, libellé identique au CTA header/mobile pour
+ *     renforcer la mémorisation.
  */
-
-const runtime = useRuntimeConfig()
-
-const apiBaseUrl =
-  typeof runtime.public.apiBaseUrl === "string" ? runtime.public.apiBaseUrl : "/api"
-const turnstileSiteKey =
-  typeof runtime.public.turnstileSiteKey === "string"
-    ? runtime.public.turnstileSiteKey
-    : ""
-const turnstileEnabled = runtime.public.turnstileEnabled === true
-const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
 </script>
 
 <template>
@@ -40,7 +29,32 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
     class="home-cta"
     aria-labelledby="home-cta-title"
   >
-    <BaseContainer class="home-cta__container">
+    <!--
+      Décor de fond « circuit-trace » — clin d'œil aux tracés bleus qui
+      partent du Z dans le logo Devzair. Purement visuel donc aria-hidden
+      et pointer-events: none via la feuille de style.
+    -->
+    <svg
+      class="home-cta__circuit"
+      viewBox="0 0 260 140"
+      aria-hidden="true"
+      focusable="false"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g fill="none" stroke="var(--color-devzair-blue)" stroke-width="1.5">
+        <path d="M0 20 H160 L200 60 H260" />
+        <path d="M0 60 H120 L160 100 H260" />
+        <path d="M0 100 H80 L120 140" />
+      </g>
+      <g fill="var(--color-devzair-blue)">
+        <circle cx="0" cy="20" r="4" />
+        <circle cx="0" cy="60" r="4" />
+        <circle cx="0" cy="100" r="4" />
+        <circle cx="200" cy="60" r="3" />
+        <circle cx="160" cy="100" r="3" />
+      </g>
+    </svg>
+    <BaseContainer width="full" class="home-cta__container">
       <div class="home-cta__intro">
         <BaseEyebrow tone="inverse" class="home-cta__eyebrow">
           Parlons de votre projet
@@ -55,12 +69,11 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
         </p>
       </div>
 
-      <div class="home-cta__form">
-        <ContactForm
-          :endpoint="contactEndpoint"
-          :turnstile-site-key="turnstileSiteKey"
-          :turnstile-enabled="turnstileEnabled"
-        />
+      <div class="home-cta__actions">
+        <BaseButton to="/contact" variant="primary" class="home-cta__button">
+          Parler de votre projet
+          <template #icon>→</template>
+        </BaseButton>
       </div>
     </BaseContainer>
   </section>
@@ -68,23 +81,54 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
 
 <style scoped>
 .home-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background-color: var(--background-inverse);
   color: var(--text-inverse);
   padding-block: var(--space-16) var(--space-20);
 }
 
+/*
+ * Décor circuit-trace inspiré du logo (traces bleues qui partent du Z).
+ * Placé en haut à gauche, sous la couche éditoriale, invisible aux tests
+ * d'interaction et aux lecteurs d'écran.
+ */
+.home-cta__circuit {
+  position: absolute;
+  top: var(--space-6);
+  left: 0;
+  width: min(220px, 28vw);
+  height: auto;
+  z-index: 0;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .home-cta__circuit {
+    top: var(--space-10);
+    width: 260px;
+  }
+}
+
 .home-cta__container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-10);
-  max-width: 68rem;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: center;
+  text-align: center;
 }
 
 .home-cta__intro {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-4);
-  max-width: 44rem;
+  max-width: 55rem;
+  margin-inline: auto;
 }
 
 .home-cta__eyebrow {
@@ -94,12 +138,13 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
 .home-cta__title {
   font-family: var(--font-family-heading);
   font-weight: var(--font-weight-heading);
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-size: clamp(2.25rem, 5.2vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
   color: var(--text-inverse);
   margin: 0;
-  max-width: 24ch;
+  max-width: 28ch;
+  text-wrap: balance;
 }
 
 .home-cta__lead {
@@ -109,16 +154,20 @@ const contactEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/contact`
   color: var(--text-inverse-muted);
   margin: 0;
   max-width: 56ch;
+  text-wrap: pretty;
 }
 
-@media (min-width: 960px) {
+.home-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 1024px) {
   .home-cta {
     padding-block: var(--space-20) var(--space-24);
-  }
-  .home-cta__container {
-    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
-    gap: var(--space-12);
-    align-items: start;
   }
 }
 </style>

@@ -37,13 +37,13 @@ export const primaryNavigation: readonly NavigationItem[] = [
   { label: "Réalisations", to: "/#realisations", isRoute: true },
 ]
 
-// La cible `#contact` est une ancre locale à `/` : le composant
-// NuxtLink doit forcer `external` pour éviter un warning quand la
-// page en cours n'est pas `/`.
+// Depuis le split du formulaire vers `/contact` (page dédiée), le CTA
+// principal pointe directement sur cette route Nuxt réelle.
+// `isRoute: true` → NuxtLink SPA classique (pas de fallback `external`).
 export const primaryCta: NavigationItem = {
   label: "Parler de votre projet",
-  to: "/#contact",
-  isRoute: false,
+  to: "/contact",
+  isRoute: true,
 }
 
 export const footerNavigation: readonly NavigationGroup[] = [

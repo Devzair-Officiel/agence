@@ -11,7 +11,7 @@ import EditorialSection from "~/components/editorial/EditorialSection.vue"
  *   - trois EditorialSection narratives : positionnement, fonctionnement,
  *     valeurs — sans faux organigramme, sans chiffre ni témoignage inventés
  *     (règle AGENTS.md §1, précisé par `docs/01-CONTENT.md §7.2`) ;
- *   - un EditorialCallout de pont vers `/expertises` + un CTA `/#contact`.
+ *   - un EditorialCallout de pont vers `/expertises` + un CTA `/contact`.
  *
  * SEO : `usePageSeo` seul, canonical absolu dérivé de siteUrl + path. Aucune
  * duplication de `useSeoMeta` ou de canonical à la main.
@@ -134,7 +134,7 @@ usePageSeo({
       title="Découvrez nos cinq pôles d'expertise."
       description="Stratégie et design, développement, contenus, visibilité, maintenance : cinq domaines connectés qui portent chaque projet Devzair."
       :primary="{ label: 'Voir nos expertises', to: '/expertises' }"
-      :secondary="{ label: 'Parler de votre projet', to: '/#contact', external: true }"
+      :secondary="{ label: 'Parler de votre projet', to: '/contact' }"
     />
   </div>
 </template>

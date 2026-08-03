@@ -15,10 +15,11 @@ import { expertisePillars } from "~/config/expertise-pillars"
  *
  * Responsive :
  *   - <768px : parcours vertical, chaque étape empilée, flèche verticale
- *     entre deux items (via un pseudo-élément décoratif) ;
- *   - ≥768px : parcours horizontal en cinq colonnes égales, flèches → entre
- *     items via pseudo-élément ;
- *   - ≥1024px : espacements amples, typographie légèrement montée.
+ *     dans une ligne de connexion dédiée ;
+ *   - 768–1099px : même lecture verticale, plus robuste que cinq cartes
+ *     excessivement comprimées ;
+ *   - ≥1100px : parcours horizontal alternant cinq colonnes de cartes et
+ *     quatre colonnes de connexion dédiées.
  *
  * Fond : navy (contraste inversé), eyebrow en Devzair blue, corps cream.
  *
@@ -39,7 +40,59 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
     class="home-approach"
     aria-labelledby="home-approach-title"
   >
-    <BaseContainer class="home-approach__container">
+    <!--
+      Décor de fond « circuit imprimé » — traces à angles droits, pads de
+      soudure et vias, en écho au logo Devzair. Purement décoratif :
+      `aria-hidden`, `pointer-events: none`, `preserveAspectRatio` calé pour
+      que le motif s'étende sur toute la largeur de la section sans se
+      déformer verticalement.
+    -->
+    <svg
+      class="home-approach__pcb"
+      viewBox="0 0 800 400"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+      focusable="false"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <!-- Traces principales : horizontales avec des ruptures à 90°. -->
+      <g
+        fill="none"
+        stroke="var(--color-devzair-blue)"
+        stroke-width="1.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M0 60 H200 L260 120 H420 L480 60 H620 L680 120 H800" />
+        <path d="M0 240 H120 L180 300 H360 L420 240 H560 L620 300 H800" />
+        <path d="M300 180 H500" />
+        <path d="M120 240 V180 H240" />
+        <path d="M620 300 V340 H720" />
+      </g>
+      <!-- Pads de soudure (composants raccordés). -->
+      <g fill="var(--color-devzair-blue)">
+        <circle cx="200" cy="60" r="4" />
+        <circle cx="420" cy="60" r="4" />
+        <circle cx="620" cy="60" r="4" />
+        <circle cx="120" cy="240" r="4" />
+        <circle cx="360" cy="240" r="4" />
+        <circle cx="560" cy="240" r="4" />
+        <circle cx="300" cy="180" r="3" />
+        <circle cx="500" cy="180" r="3" />
+        <circle cx="240" cy="180" r="3" />
+        <circle cx="720" cy="340" r="3" />
+      </g>
+      <!-- Vias (traversées de plan) : anneaux creux. -->
+      <g fill="none" stroke="var(--color-devzair-blue)" stroke-width="1">
+        <circle cx="260" cy="120" r="5" />
+        <circle cx="480" cy="60" r="5" />
+        <circle cx="680" cy="120" r="5" />
+        <circle cx="180" cy="300" r="5" />
+        <circle cx="420" cy="240" r="5" />
+        <circle cx="620" cy="300" r="5" />
+      </g>
+    </svg>
+    <BaseContainer width="wide" class="home-approach__container">
       <header class="home-approach__intro">
         <BaseEyebrow tone="inverse" class="home-approach__eyebrow">
           La réponse Devzair
@@ -62,12 +115,22 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
           class="home-approach__step"
           :data-order="step.order"
         >
-          <span class="home-approach__step-index" aria-hidden="true">
-            {{ String(step.order).padStart(2, "0") }}
+          <div class="home-approach__step-card">
+            <span class="home-approach__step-index" aria-hidden="true">
+              {{ String(step.order).padStart(2, "0") }}
+            </span>
+            <h3 class="home-approach__step-title">{{ step.label }}</h3>
+            <p class="home-approach__step-tag">{{ step.description }}</p>
+            <span class="sr-only">{{ step.longDescription }}</span>
+          </div>
+          <span
+            v-if="step.order < steps.length"
+            class="home-approach__connector"
+            aria-hidden="true"
+          >
+            <span class="home-approach__connector-glyph home-approach__connector-glyph--vertical">↓</span>
+            <span class="home-approach__connector-glyph home-approach__connector-glyph--horizontal">→</span>
           </span>
-          <h3 class="home-approach__step-title">{{ step.label }}</h3>
-          <p class="home-approach__step-tag">{{ step.description }}</p>
-          <span class="sr-only">{{ step.longDescription }}</span>
         </li>
       </ol>
     </BaseContainer>
@@ -76,12 +139,49 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
 
 <style scoped>
 .home-approach {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background-color: var(--background-inverse);
   color: var(--text-inverse);
   padding-block: var(--space-16) var(--space-20);
 }
 
+/*
+ * Décor PCB en arrière-plan : couvre toute la section, très basse opacité
+ * pour rester une note graphique et non un motif dominant. `preserveAspect
+ * -Ratio` slice (défini côté SVG) recadre le motif sans le déformer.
+ */
+.home-approach__pcb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.09;
+  pointer-events: none;
+}
+
+/*
+ * Voile radial pour concentrer la lisibilité du contenu au centre et
+ * laisser le décor PCB respirer sur les bords sans venir mordre le texte.
+ */
+.home-approach::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at center,
+    var(--background-inverse) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
 .home-approach__container {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
@@ -122,13 +222,21 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .home-approach__step {
-  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, auto) var(--space-8);
+  min-width: 0;
+}
+
+.home-approach__step:last-child {
+  grid-template-rows: minmax(0, auto);
+}
+
+.home-approach__step-card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -138,19 +246,20 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
   border: 1px solid var(--border-inverse);
 }
 
-/* Flèche décorative verticale entre deux étapes (mobile). */
-.home-approach__step:not(:last-child)::after {
-  content: "↓";
-  position: absolute;
-  left: 50%;
-  bottom: calc(-1 * var(--space-6));
-  transform: translateX(-50%);
+.home-approach__connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-family-mono);
   font-size: 1.125rem;
   line-height: 1;
   color: var(--color-devzair-blue);
   opacity: 0.7;
   pointer-events: none;
+}
+
+.home-approach__connector-glyph--horizontal {
+  display: none;
 }
 
 /*
@@ -204,36 +313,40 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
   .home-approach {
     padding-block: var(--space-20) var(--space-24);
   }
-
-  .home-approach__journey {
-    flex-direction: row;
-    align-items: stretch;
-    gap: var(--space-4);
-  }
-
-  .home-approach__step {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  /* Flèche horizontale entre deux étapes (tablette/desktop). */
-  .home-approach__step:not(:last-child)::after {
-    content: "→";
-    left: auto;
-    right: calc(-1 * var(--space-4));
-    bottom: auto;
-    top: 50%;
-    transform: translate(50%, -50%);
-    font-size: 1rem;
-  }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1100px) {
   .home-approach__journey {
-    gap: var(--space-5);
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr) var(--space-8))
+      minmax(0, 1fr);
+    align-items: stretch;
   }
 
   .home-approach__step {
+    grid-column: span 2;
+    grid-template-columns: minmax(0, 1fr) var(--space-8);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .home-approach__step:last-child {
+    grid-column: span 1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-approach__connector {
+    font-size: 1rem;
+  }
+
+  .home-approach__connector-glyph--vertical {
+    display: none;
+  }
+
+  .home-approach__connector-glyph--horizontal {
+    display: inline;
+  }
+
+  .home-approach__step-card {
     padding: var(--space-6) var(--space-6) var(--space-8);
   }
 

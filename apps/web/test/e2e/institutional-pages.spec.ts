@@ -11,7 +11,7 @@ import { expect, test } from "@playwright/test"
 //   - eyebrow et introduction verbatim présents dans le HTML initial ;
 //   - SEO minimal (title spécifique, canonical, og:url, meta description) ;
 //   - politique globale d'indexation respectée (noindex en preprod) ;
-//   - lien réel vers /#contact et vers la page sœur ;
+//   - lien réel vers /contact et vers la page sœur ;
 //   - absence de liens morts vers `/expertises/{slug}`.
 //
 // On vérifie côté rendu/interaction :
@@ -93,10 +93,10 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     expect(body).toMatch(/<meta[^>]+property="og:url"[^>]+content="https?:\/\/[^"]+"/i)
   })
 
-  test("propose un lien réel vers /expertises et vers /#contact", async ({ page }) => {
+  test("propose un lien réel vers /expertises et vers /contact", async ({ page }) => {
     await page.goto("/agence")
     await expect(page.locator('a[href="/expertises"]').first()).toBeVisible()
-    await expect(page.locator('a[href="/#contact"]').first()).toBeVisible()
+    await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
   })
 
   test("ne contient aucun lien vers `/expertises/{slug}` (Phase 7B)", async ({ page }) => {
@@ -223,10 +223,10 @@ test.describe("/expertises — SSR et contenu éditorial", () => {
     }
   })
 
-  test("propose un lien réel vers /agence et vers /#contact", async ({ page }) => {
+  test("propose un lien réel vers /agence et vers /contact", async ({ page }) => {
     await page.goto("/expertises")
     await expect(page.locator('a[href="/agence"]').first()).toBeVisible()
-    await expect(page.locator('a[href="/#contact"]').first()).toBeVisible()
+    await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
   })
 
   test("respecte la responsivité 390 / 768 / 1440 sans débordement", async ({ page }) => {
@@ -294,9 +294,9 @@ test.describe("Maillage inter-pages institutionnelles", () => {
     await expect(nav.locator('a[href="/agence"]').first()).toBeVisible()
     await expect(nav.locator('a[href="/expertises"]').first()).toBeVisible()
     await expect(nav.locator('a[href="/#realisations"]').first()).toBeVisible()
-    // Le CTA « Parler de votre projet » reste présent et pointe sur /#contact.
+    // Le CTA « Parler de votre projet » reste présent et pointe sur /contact.
     await expect(
-      nav.locator('a.base-button[href="/#contact"]').first(),
+      nav.locator('a.base-button[href="/contact"]').first(),
     ).toBeVisible()
   })
 })

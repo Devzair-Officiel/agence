@@ -13,7 +13,9 @@ import type { PROJECT_TYPES } from "~/types/contact"
  *
  * Structure sémantique :
  *   - <form aria-labelledby> avec un titre invisible pour lecteur d'écran ;
- *   - un fieldset radiogroup pour le type de projet (labels visibles) ;
+ *   - un fieldset radiogroup pour le type de projet (radio-cards visuelles
+ *     mais `<input type="radio">` réels : la case native est masquée
+ *     visuellement, un dot dessiné en CSS reflète l'état `:checked`) ;
  *   - un honeypot `website` (name obligatoire, positionné hors flux, aria-hidden) ;
  *   - un widget Turnstile rendu client-only avec fallback dev automatique ;
  *   - une seule zone d'état (`ContactFormStatus`) qui bascule succès/erreur.
@@ -56,13 +58,31 @@ const messageFieldRef = ref<InstanceType<typeof ContactFormField> | null>(null)
 const consentInputRef = ref<HTMLInputElement | null>(null)
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 
-const projectOptions: readonly { value: (typeof PROJECT_TYPES)[number]; label: string }[] = [
+const projectOptions: readonly {
+  value: (typeof PROJECT_TYPES)[number]
+  label: string
+  full?: boolean
+}[] = [
   { value: "refonte", label: "Refonte d'un site existant" },
   { value: "creation", label: "Création d'un nouveau site" },
   { value: "seo", label: "SEO / visibilité" },
   { value: "audit", label: "Audit ou conseil" },
-  { value: "autre", label: "Autre / je ne sais pas encore" },
+  { value: "autre", label: "Autre / je ne sais pas encore", full: true },
 ]
+
+const MESSAGE_MIN = 20
+
+// Compteur de caractères — reproduit le pattern du mock : « N / 20 min. »
+// tant que le seuil n'est pas atteint, puis « N caractères » en vert quand
+// le message devient soumettable. Purement affichage : la validation reste
+// dans le composable.
+const messageLength = computed(() => form.values.message.length)
+const messageReached = computed(() => messageLength.value >= MESSAGE_MIN)
+const messageCountLabel = computed(() =>
+  messageReached.value
+    ? `${messageLength.value} caractères`
+    : `${messageLength.value} / ${MESSAGE_MIN} min.`,
+)
 
 const globalErrorTitle = computed(() => {
   const code = form.globalError.value?.code
@@ -208,11 +228,13 @@ async function onSubmit(): Promise<void> {
       <ContactFormField
         ref="nameFieldRef"
         v-model="form.values.name"
+        class="contact-form__field contact-form__field--name"
         label="Votre nom"
         name="name"
         type="text"
         autocomplete="name"
         required
+        placeholder="Jean Dupont"
         :maxlength="120"
         :minlength="2"
         :error="form.fieldErrors.value.name"
@@ -221,11 +243,13 @@ async function onSubmit(): Promise<void> {
       <ContactFormField
         ref="emailFieldRef"
         v-model="form.values.email"
+        class="contact-form__field contact-form__field--email"
         label="Votre adresse email"
         name="email"
         type="email"
         autocomplete="email"
         required
+        placeholder="vous@entreprise.fr"
         :maxlength="254"
         hint="Nous répondons à cette adresse — jamais partagée."
         :error="form.fieldErrors.value.email"
@@ -233,20 +257,26 @@ async function onSubmit(): Promise<void> {
 
       <ContactFormField
         v-model="form.values.company"
-        label="Société (optionnel)"
+        class="contact-form__field contact-form__field--company"
+        label="Société"
         name="company"
         type="text"
         autocomplete="organization"
+        placeholder="Nom de votre entreprise"
+        optional-label
         :maxlength="160"
         :error="form.fieldErrors.value.company"
       />
 
       <ContactFormField
         v-model="form.values.telephone"
-        label="Téléphone (optionnel)"
+        class="contact-form__field contact-form__field--telephone"
+        label="Téléphone"
         name="telephone"
         type="tel"
         autocomplete="tel"
+        placeholder="06 12 34 56 78"
+        optional-label
         :maxlength="40"
         pattern="[0-9 +().\-]{4,40}"
         hint="Chiffres, espaces et + ( ) . - uniquement."
@@ -263,14 +293,18 @@ async function onSubmit(): Promise<void> {
             v-for="option in projectOptions"
             :key="option.value"
             class="contact-form__project-option"
+            :class="{ 'contact-form__project-option--full': option.full }"
+            :data-checked="form.values.projectType === option.value || undefined"
           >
             <input
               v-model="form.values.projectType"
               type="radio"
               name="projectType"
+              class="contact-form__project-input"
               :value="option.value"
             >
-            <span>{{ option.label }}</span>
+            <span class="contact-form__project-dot" aria-hidden="true" />
+            <span class="contact-form__project-label">{{ option.label }}</span>
           </label>
         </div>
         <p
@@ -285,16 +319,26 @@ async function onSubmit(): Promise<void> {
       <ContactFormField
         ref="messageFieldRef"
         v-model="form.values.message"
+        class="contact-form__field contact-form__field--message"
         label="Votre message"
         name="message"
         type="textarea"
         required
         :maxlength="4000"
-        :minlength="20"
+        :minlength="MESSAGE_MIN"
         :rows="6"
-        hint="Décrivez votre besoin, contexte ou objectif — 20 caractères minimum."
+        placeholder="Décrivez votre besoin, votre contexte ou votre objectif…"
+        hint="20 caractères minimum."
         :error="form.fieldErrors.value.message"
-      />
+      >
+        <template #label-append>
+          <span
+            class="contact-form__counter"
+            :data-reached="messageReached || undefined"
+            aria-hidden="true"
+          >{{ messageCountLabel }}</span>
+        </template>
+      </ContactFormField>
 
       <div class="contact-form__consent" :data-invalid="Boolean(form.fieldErrors.value.consent) || undefined">
         <label class="contact-form__consent-label">
@@ -303,10 +347,12 @@ async function onSubmit(): Promise<void> {
             v-model="form.values.consent"
             type="checkbox"
             name="consent"
+            class="contact-form__consent-input"
             required
             :aria-invalid="Boolean(form.fieldErrors.value.consent) || undefined"
           >
-          <span>
+          <span class="contact-form__consent-box" aria-hidden="true" />
+          <span class="contact-form__consent-text">
             J'accepte que Devzair utilise ces informations pour répondre à ma
             demande. Aucune donnée n'est transmise à un tiers.
           </span>
@@ -351,7 +397,11 @@ async function onSubmit(): Promise<void> {
         :loading="form.isSubmitting.value"
       >
         {{ form.isSubmitting.value ? "Envoi en cours…" : "Envoyer le message" }}
+        <template #icon>→</template>
       </BaseButton>
+      <span class="contact-form__actions-hint">
+        Un premier échange sans engagement.
+      </span>
     </div>
 
     <p :id="privacyId" class="contact-form__privacy">
@@ -400,31 +450,39 @@ async function onSubmit(): Promise<void> {
 
 @media (min-width: 720px) {
   .contact-form__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-5);
   }
-  .contact-form__grid > :nth-child(5),
-  .contact-form__grid > :nth-child(6),
-  .contact-form__grid > :nth-child(7) {
+
+  .contact-form__project,
+  .contact-form__field--message,
+  .contact-form__consent,
+  .contact-form__honeypot {
     grid-column: 1 / -1;
   }
 }
 
+/*
+ * Fieldset « type de projet » — cadre allégé, radio-cards visuelles ;
+ * la case radio native est masquée pour l'affichage mais reste dans
+ * l'accessibility tree (checkable au clavier, focusable, exposée à AT).
+ */
 .contact-form__project {
-  border: 1px solid var(--border-inverse);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border: 0;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  margin: 0;
 }
 
 .contact-form__project-legend {
   font-family: var(--font-family-body);
   font-weight: var(--font-weight-body-strong);
-  font-size: 0.9375rem;
-  color: var(--text-inverse);
-  padding: 0 var(--space-2);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0;
+  margin-bottom: var(--space-2);
 }
 
 .contact-form__project-options {
@@ -437,32 +495,75 @@ async function onSubmit(): Promise<void> {
   .contact-form__project-options {
     grid-template-columns: 1fr 1fr;
   }
+
+  .contact-form__project-option--full {
+    grid-column: 1 / -1;
+  }
 }
 
 .contact-form__project-option {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 0.6875rem;
+  padding: 0.875rem var(--space-4);
+  background: #fcfbf8;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-body);
   font-size: 0.9375rem;
-  color: var(--text-inverse);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
+  color: var(--text-primary);
   cursor: pointer;
   min-height: var(--touch-target-min);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .contact-form__project-option:hover {
-  background-color: var(--border-inverse);
+  border-color: var(--color-petrol);
 }
 
-.contact-form__project-option input[type="radio"] {
-  margin-top: 0.2rem;
-  accent-color: var(--color-devzair-blue);
+.contact-form__project-option[data-checked] {
+  border-color: var(--color-petrol);
+  background: #f1f5f3;
+  box-shadow: 0 0 0 3px rgba(12, 91, 87, 0.12);
 }
 
-.contact-form__project-option input[type="radio"]:focus-visible {
-  outline: 2px solid var(--color-devzair-blue);
-  outline-offset: 3px;
+/*
+ * Radio native masquée visuellement mais présente : elle porte encore le
+ * focus, la sélection clavier et la sémantique ARIA du groupe.
+ */
+.contact-form__project-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.contact-form__project-input:focus-visible + .contact-form__project-dot {
+  box-shadow: 0 0 0 3px rgba(46, 134, 217, 0.35);
+}
+
+.contact-form__project-dot {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  border: 2px solid rgba(22, 25, 28, 0.28);
+  transition:
+    border var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.contact-form__project-option[data-checked] .contact-form__project-dot {
+  border: 5px solid var(--color-petrol);
+}
+
+.contact-form__project-label {
+  line-height: 1.4;
 }
 
 .contact-form__project-error {
@@ -475,6 +576,30 @@ async function onSubmit(): Promise<void> {
   border-radius: var(--radius-sm);
 }
 
+/*
+ * Compteur de caractères — affiché aligné à droite du label du message
+ * via le slot `#label-append` de ContactFormField. `aria-hidden` car le
+ * hint textuel du champ (« 20 caractères minimum. ») porte déjà la même
+ * information pour l'accessibilité.
+ */
+.contact-form__counter {
+  font-family: var(--font-family-mono, ui-monospace, "Space Mono", monospace);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-body-strong);
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.contact-form__counter[data-reached] {
+  color: var(--color-petrol);
+}
+
+/*
+ * Consentement — checkbox stylisée façon carte, sans jamais casser
+ * l'input natif (garde `input[name=consent][type=checkbox]` pour les
+ * tests unitaires et les lecteurs d'écran).
+ */
 .contact-form__consent {
   display: flex;
   flex-direction: column;
@@ -485,22 +610,62 @@ async function onSubmit(): Promise<void> {
   display: flex;
   gap: var(--space-3);
   align-items: flex-start;
-  font-size: 0.9375rem;
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--text-inverse);
+  color: var(--text-secondary);
   cursor: pointer;
+  min-height: var(--touch-target-min);
+  padding-block: 0.125rem;
 }
 
-.contact-form__consent-label input[type="checkbox"] {
-  margin-top: 0.25rem;
-  accent-color: var(--color-devzair-blue);
-  min-width: 1.125rem;
-  min-height: 1.125rem;
+.contact-form__consent-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
 }
 
-.contact-form__consent-label input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--color-devzair-blue);
-  outline-offset: 3px;
+.contact-form__consent-box {
+  flex: none;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0.0625rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(22, 25, 28, 0.3);
+  background: #fcfbf8;
+  color: var(--color-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.contact-form__consent-input:checked + .contact-form__consent-box {
+  background: var(--color-petrol);
+  border-color: var(--color-petrol);
+}
+
+.contact-form__consent-input:checked + .contact-form__consent-box::after {
+  content: "✓";
+}
+
+.contact-form__consent-input:focus-visible + .contact-form__consent-box {
+  box-shadow: 0 0 0 3px rgba(46, 134, 217, 0.35);
+  outline: none;
+}
+
+.contact-form__consent[data-invalid] .contact-form__consent-box {
+  border-color: var(--color-status-error);
+  box-shadow: 0 0 0 3px rgba(178, 58, 46, 0.2);
+}
+
+.contact-form__consent-text {
+  flex: 1;
 }
 
 .contact-form__consent-error {
@@ -529,14 +694,37 @@ async function onSubmit(): Promise<void> {
 .contact-form__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.contact-form__actions-hint {
+  font-family: var(--font-family-body);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 559px) {
+  .contact-form__actions {
+    gap: var(--space-3);
+  }
+  .contact-form__actions :deep(.base-button) {
+    width: 100%;
+    justify-content: center;
+  }
+  .contact-form__actions-hint {
+    width: 100%;
+  }
 }
 
 .contact-form__privacy {
   margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--text-inverse-muted);
-  max-width: 60ch;
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(22, 25, 28, 0.1);
+  font-family: var(--font-family-body);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 68ch;
 }
 </style>

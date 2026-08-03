@@ -2,25 +2,37 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { openMobileNavigation } from './support/mobile-nav'
 
-// Contrôles E2E de la section finale « Parlons de votre projet » (Phase 6B).
+// Contrôles E2E de la section finale « Parlons de votre projet » sur la home.
 //
-// Depuis la Phase 6B, la section héberge le vrai formulaire de contact
-// (ContactForm) : plus de mailto conditionnel, plus de notice preprod.
+// Depuis la Phase 7C, le formulaire de contact vit sur la page dédiée
+// `/contact` : la section finale n'est plus qu'un panneau CTA compact
+// (eyebrow, H2, paragraphe, bouton). Le bouton et tous les CTA de layout
+// (hero, header desktop, menu mobile, footer) pointent désormais sur la
+// route Nuxt `/contact` — plus aucun fragment `#contact` n'est visé par
+// la navigation principale.
+//
+// L'ancre `id="contact"` reste posée sur `<section>` pour ne pas casser
+// d'anciens liens (`/#contact` en cache moteur, signets, partages). Elle
+// n'est plus la cible de la navigation principale, donc elle n'est pas
+// testée ici comme destination.
+//
 // Cette suite couvre :
-//   - la présence SSR de l'ancre #contact, du titre et du paragraphe verbatim ;
-//   - la présence du <form> avec ses champs essentiels ;
-//   - la navigation d'ancrage depuis le CTA hero primaire, le CTA header (desktop
-//     et mobile via le dialog du menu), et le lien footer « Parler de votre projet » ;
-//   - l'absence de mailto/tel/href="#" (le contact passe désormais par le form) ;
-//   - le respect responsive (320/390/768/1440) sans débordement horizontal ;
-//   - une passe Axe WCAG 2.2 AA sans violation `serious` / `critical` ;
-//   - `prefers-reduced-motion` (contenu visible, aucune animation résiduelle).
+//   - SSR : ancre, eyebrow, H2, paragraphe verbatim ;
+//   - position : la section reste la dernière fille directe de `.home-page` ;
+//   - absence de tout formulaire embarqué (il vit sur `/contact`) ;
+//   - un unique CTA visible dans la section, pointant sur `/contact` ;
+//   - CTA hero primaire, header desktop, footer et menu mobile → `/contact` ;
+//   - responsive (320/390/768/1440) sans débordement horizontal ;
+//   - Axe WCAG 2.2 AA sans violation `serious` / `critical` ;
+//   - `prefers-reduced-motion` : contenu visible, aucune animation résiduelle.
 //
-// La couverture fonctionnelle du formulaire (soumission, erreurs API, honeypot,
-// rate limit) est portée par `contact-form.spec.ts`.
+// La couverture fonctionnelle du formulaire (soumission, erreurs API,
+// honeypot, rate limit) est portée par `contact-form.spec.ts` qui vise
+// directement `/contact`.
 
 const CONTACT_SECTION = '#contact'
 const CTA_TITLE = 'Construisons une présence digitale à la hauteur de votre entreprise.'
+const CTA_HREF = '/contact'
 
 test.describe('/ (home) — CTA final #contact', () => {
   test('renders the #contact section with eyebrow, H2 and paragraph verbatim (SSR)', async ({
@@ -62,8 +74,8 @@ test.describe('/ (home) — CTA final #contact', () => {
   }) => {
     await page.goto('/')
     const contact = page.locator(CONTACT_SECTION)
-    // Le contact passe désormais par le formulaire — aucun lien de contact
-    // direct ne doit subsister dans la section (ni honeypot mail visible, etc.).
+    // Le contact passe désormais par le bouton vers `/contact` — aucun lien
+    // direct mail/tél ne doit subsister dans la section.
     await expect(contact.locator('a[href^="mailto:"]')).toHaveCount(0)
     await expect(contact.locator('a[href^="tel:"]')).toHaveCount(0)
     await expect(contact.locator('a[href="#"]')).toHaveCount(0)
@@ -74,73 +86,67 @@ test.describe('/ (home) — CTA final #contact', () => {
     page,
   }) => {
     await page.goto('/')
-    // Le titre sr-only « Formulaire de contact » n'est pas visible : on lit le
-    // texte perceptible seulement (`innerText`), qui exclut les nœuds sr-only.
     const text = (await page.locator(CONTACT_SECTION).innerText()).toLowerCase()
     expect(text).not.toMatch(/phase\s*6/)
     expect(text).not.toMatch(/todo/)
     expect(text).not.toMatch(/lorem ipsum/)
   })
 
-  test('hosts a real <form> with name, email, message and consent fields', async ({
+  test('no <form> is embedded on the home anymore (form lives on /contact)', async ({
     page,
   }) => {
     await page.goto('/')
-    const form = page.locator(`${CONTACT_SECTION} form.contact-form`)
-    await expect(form).toHaveCount(1)
-    await expect(form).toHaveAttribute('aria-labelledby', /.+/)
-    await expect(form.locator('input[name="name"]')).toHaveCount(1)
-    await expect(form.locator('input[name="email"]')).toHaveCount(1)
-    await expect(form.locator('textarea[name="message"]')).toHaveCount(1)
-    await expect(form.locator('input[name="consent"]')).toHaveCount(1)
-    // Le honeypot est présent, hors flux et hors tabulation.
-    const honeypot = form.locator('input[name="website"]')
-    await expect(honeypot).toHaveAttribute('tabindex', '-1')
-    // La RGPD note est présente et référencée par aria-describedby.
-    const describedBy = await form.getAttribute('aria-describedby')
-    expect(describedBy).toBeTruthy()
-    await expect(form.locator(`#${describedBy!.split(' ')[0]}`)).toContainText('RGPD')
+    // Contrat Phase 7C : plus aucun formulaire sur la home. Le formulaire
+    // vit exclusivement sur `/contact` (voir `contact-form.spec.ts`).
+    await expect(page.locator('form.contact-form')).toHaveCount(0)
   })
 
-  test('hero primary CTA scrolls to #contact (fragment updated, section visible)', async ({
+  test('renders a single CTA in the section pointing to /contact', async ({
     page,
   }) => {
+    await page.goto('/')
+    const contact = page.locator(CONTACT_SECTION)
+    const buttons = contact.locator('.home-cta__actions a.base-button')
+    await expect(buttons).toHaveCount(1)
+    await expect(buttons.first()).toHaveAttribute('href', CTA_HREF)
+    await expect(buttons.first()).toContainText('Parler de votre projet')
+  })
+
+  test('hero primary CTA navigates to /contact', async ({ page }) => {
     await page.goto('/')
     const heroCta = page
       .locator('.home-hero__ctas a', { hasText: 'Parler de votre projet' })
       .first()
     await expect(heroCta).toBeVisible()
+    await expect(heroCta).toHaveAttribute('href', CTA_HREF)
     await heroCta.click()
-    await expect(page).toHaveURL(/#contact$/)
-    const contact = page.locator(CONTACT_SECTION)
-    await expect(contact).toBeInViewport({ ratio: 0.1 })
+    await expect(page).toHaveURL(/\/contact$/)
+    await expect(page.locator('h1')).toContainText('présence digitale')
   })
 
-  test('desktop header CTA reaches #contact via fragment', async ({ page }) => {
+  test('desktop header CTA navigates to /contact', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     const headerCta = page.locator('header.site-header .site-header__cta')
     await expect(headerCta).toBeVisible()
-    // Le lien header porte NuxtLink[to="/#contact"] → rendu <a href="/#contact">.
-    const href = await headerCta.getAttribute('href')
-    expect(href).toMatch(/#contact$/)
+    // Le lien header porte NuxtLink[to="/contact"] → rendu <a href="/contact">.
+    await expect(headerCta).toHaveAttribute('href', CTA_HREF)
     await headerCta.click()
-    await expect(page).toHaveURL(/#contact$/)
-    await expect(page.locator(CONTACT_SECTION)).toBeInViewport({ ratio: 0.1 })
+    await expect(page).toHaveURL(/\/contact$/)
+    await expect(page.locator('h1')).toContainText('présence digitale')
   })
 
-  test('footer link « Parler de votre projet » points to /#contact', async ({
+  test('footer link « Parler de votre projet » points to /contact', async ({
     page,
   }) => {
     await page.goto('/')
     const footerLink = page
       .locator('footer.site-footer a', { hasText: 'Parler de votre projet' })
       .first()
-    const href = await footerLink.getAttribute('href')
-    expect(href).toMatch(/#contact$/)
+    await expect(footerLink).toHaveAttribute('href', CTA_HREF)
   })
 
-  test('mobile menu opens, activates the CTA, closes, and lands on #contact', async ({
+  test('mobile menu opens, activates the CTA, closes, and lands on /contact', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -160,18 +166,19 @@ test.describe('/ (home) — CTA final #contact', () => {
     const menuButton = page.locator('button[aria-controls="mobile-navigation"]')
     await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
 
-    // Le CTA du menu mobile est un lien vers /#contact, positionné en pied de dialog.
+    // Le CTA du menu mobile est un lien vers /contact, positionné en pied de dialog.
     const dialogCta = dialog
       .locator('a', { hasText: 'Parler de votre projet' })
       .first()
     await expect(dialogCta).toBeVisible()
+    await expect(dialogCta).toHaveAttribute('href', CTA_HREF)
     await dialogCta.click()
 
-    // Le menu se ferme, l'URL porte le fragment, la section cible est en vue.
+    // Le menu se ferme, l'URL cible /contact.
     await expect(dialog).toHaveCount(0)
     await expect(menuButton).toHaveAttribute('aria-expanded', 'false')
-    await expect(page).toHaveURL(/#contact$/)
-    await expect(page.locator(CONTACT_SECTION)).toBeInViewport({ ratio: 0.1 })
+    await expect(page).toHaveURL(/\/contact$/)
+    await expect(page.locator('h1')).toContainText('présence digitale')
     // Scroll restauré (pas de scroll-lock résiduel).
     await expect(page.locator('html')).not.toHaveClass(/is-scroll-locked/)
 

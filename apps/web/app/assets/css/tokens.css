@@ -104,10 +104,13 @@
   --shadow-lg: 0 20px 40px -20px rgba(22, 25, 28, 0.35);
 
   /* Conteneur */
-  --container-max: 1200px;
+  --container-max: 1280px; /* lecture éditoriale */
+  --container-max-wide: 1440px; /* sections orchestr\u00e9es (hero, grilles) */
+  --container-max-full: 1600px; /* full-bleed limit\u00e9 (marquees, m\u00e9dia) */
   --container-gutter-mobile: 1.125rem; /* 18px */
   --container-gutter-tablet: 1.5rem; /* 24px */
   --container-gutter-desktop: 3rem; /* 48px */
+  --container-gutter-wide: 4rem; /* 64px \u2014 respire davantage sur \u2265 1440 */
 
   /* Animation */
   --duration-instant: 120ms;
@@ -126,4 +129,7 @@
 
   /* Cible tactile minimale WCAG 2.2 */
   --touch-target-min: 44px;
+
+  /* Layout — hauteur du header sticky (padding-block \u00d72 + touch target + 1px border) */
+  --site-header-height: 4.8125rem; /* 77px */
 }

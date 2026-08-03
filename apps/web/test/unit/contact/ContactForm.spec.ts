@@ -73,6 +73,15 @@ describe("ContactForm", () => {
     expect(values).toEqual(["refonte", "creation", "seo", "audit", "autre"])
   })
 
+  it("exposes explicit grid hooks for each short field and both full-width groups", () => {
+    const wrapper = mountForm()
+    for (const field of ["name", "email", "company", "telephone", "message"]) {
+      expect(wrapper.find(`.contact-form__field--${field}`).exists()).toBe(true)
+    }
+    expect(wrapper.find(".contact-form__project").exists()).toBe(true)
+    expect(wrapper.find(".contact-form__consent").exists()).toBe(true)
+  })
+
   it("carries the RGPD privacy note in the aria-describedby chain", () => {
     const wrapper = mountForm()
     const describedBy = wrapper.get("form").attributes("aria-describedby")!

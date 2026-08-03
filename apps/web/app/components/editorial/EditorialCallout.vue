@@ -6,7 +6,7 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 
 /**
  * Encart d'appel (« callout ») — pont éditorial entre deux pages ou
- * relance vers `/#contact` sans dupliquer la section CTA finale de
+ * relance vers `/contact` sans dupliquer la section CTA finale de
  * l'accueil.
  *
  * Rôle strict :

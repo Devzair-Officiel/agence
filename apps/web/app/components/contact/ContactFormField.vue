@@ -33,6 +33,8 @@ interface Props {
   minlength?: number
   rows?: number
   pattern?: string
+  placeholder?: string
+  optionalLabel?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -45,6 +47,8 @@ const props = withDefaults(defineProps<Props>(), {
   minlength: undefined,
   rows: 5,
   pattern: undefined,
+  placeholder: undefined,
+  optionalLabel: false,
 })
 
 const emit = defineEmits<{
@@ -71,10 +75,14 @@ function onInput(event: Event): void {
 
 <template>
   <div class="contact-field" :data-invalid="Boolean(error) || undefined">
-    <label :for="inputId" class="contact-field__label">
-      {{ label }}
-      <span v-if="required" class="contact-field__required" aria-hidden="true">*</span>
-    </label>
+    <div class="contact-field__label-row">
+      <label :for="inputId" class="contact-field__label">
+        {{ label }}
+        <span v-if="required" class="contact-field__required" aria-hidden="true">*</span>
+        <span v-else-if="optionalLabel" class="contact-field__optional">(optionnel)</span>
+      </label>
+      <slot name="label-append" />
+    </div>
 
     <textarea
       v-if="type === 'textarea'"
@@ -87,6 +95,7 @@ function onInput(event: Event): void {
       :minlength="minlength"
       :rows="rows"
       :autocomplete="autocomplete"
+      :placeholder="placeholder"
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error) || undefined"
       :aria-describedby="describedBy"
@@ -104,6 +113,7 @@ function onInput(event: Event): void {
       :minlength="minlength"
       :autocomplete="autocomplete"
       :pattern="pattern"
+      :placeholder="placeholder"
       :aria-required="required || undefined"
       :aria-invalid="Boolean(error) || undefined"
       :aria-describedby="describedBy"
@@ -122,53 +132,71 @@ function onInput(event: Event): void {
   gap: var(--space-2);
 }
 
+.contact-field__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
 .contact-field__label {
   font-family: var(--font-family-body);
   font-weight: var(--font-weight-body-strong);
-  font-size: 0.9375rem;
-  color: var(--text-inverse);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 .contact-field__required {
-  color: var(--color-cream-muted);
+  color: var(--color-status-error);
   margin-left: 0.15rem;
+}
+
+.contact-field__optional {
+  margin-left: 0.35rem;
+  font-weight: var(--font-weight-body);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 .contact-field__control {
   font: inherit;
   font-family: var(--font-family-body);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--text-primary);
-  background-color: var(--color-cream);
-  border: 1px solid var(--border-strong);
+  background-color: #fcfbf8;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-3);
+  padding: 0.8125rem var(--space-4);
   min-height: var(--touch-target-min);
   transition: border-color var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out);
 }
 
+.contact-field__control::placeholder {
+  color: #a29d93;
+}
+
 textarea.contact-field__control {
-  min-height: 8rem;
+  min-height: 8.5rem;
   resize: vertical;
 }
 
 .contact-field__control:focus-visible {
-  outline: 2px solid var(--color-devzair-blue);
-  outline-offset: 2px;
-  border-color: var(--color-devzair-blue);
+  outline: none;
+  border-color: var(--color-petrol);
+  box-shadow: 0 0 0 3px rgba(46, 134, 217, 0.28);
 }
 
 .contact-field[data-invalid="true"] .contact-field__control {
   border-color: var(--color-status-error);
-  box-shadow: inset 0 0 0 1px var(--color-status-error);
+  box-shadow: 0 0 0 3px rgba(178, 58, 46, 0.2);
 }
 
 .contact-field__hint {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--color-cream-muted);
+  color: var(--text-muted);
 }
 
 .contact-field__error {

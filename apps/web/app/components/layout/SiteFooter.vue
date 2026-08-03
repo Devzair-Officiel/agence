@@ -16,10 +16,18 @@ const hasContact = computed(() =>
 
 <template>
   <footer class="site-footer">
-    <BaseContainer as="div" class="site-footer__inner">
+    <BaseContainer as="div" width="wide" class="site-footer__inner">
       <div class="site-footer__brand">
         <div class="site-footer__identity">
-          <span class="site-footer__logo" aria-hidden="true">D</span>
+          <img
+            class="site-footer__logo"
+            src="/brand/logo.png"
+            alt=""
+            width="40"
+            height="40"
+            loading="lazy"
+            decoding="async"
+          />
           <span class="site-footer__brand-name">{{ site.name }}</span>
         </div>
         <p class="site-footer__description">{{ site.description }}</p>
@@ -122,16 +130,13 @@ const hasContact = computed(() =>
 }
 
 .site-footer__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 10px;
   background-color: var(--color-navy);
-  color: var(--color-cream);
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
+  padding: 4px;
 }
 
 .site-footer__brand-name {

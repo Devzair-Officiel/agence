@@ -29,7 +29,7 @@ const promises = [...trustPromises].sort((a, b) => a.order - b.order)
     class="home-trust"
     aria-labelledby="home-trust-title"
   >
-    <BaseContainer class="home-trust__container">
+    <BaseContainer width="wide" class="home-trust__container">
       <header class="home-trust__intro">
         <BaseEyebrow class="home-trust__eyebrow">Pourquoi Devzair</BaseEyebrow>
         <h2 id="home-trust-title" class="home-trust__title">

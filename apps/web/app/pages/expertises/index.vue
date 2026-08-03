@@ -21,7 +21,7 @@ import { expertisePillars } from "~/config/expertise-pillars"
  *     (routage). Depuis la Phase 7B, chaque carte devient un lien vers
  *     `/expertises/{slug}` dès que la définition correspondante a
  *     `status === "published"` ;
- *   - un EditorialCallout de pont vers `/agence` + CTA `/#contact`.
+ *   - un EditorialCallout de pont vers `/agence` + CTA `/contact`.
  *
  * SEO : `usePageSeo` seul, canonical absolu dérivé de siteUrl + `/expertises`.
  * Prerender : la page est marquée `prerender: true` dans `nuxt.config.ts`.
@@ -88,7 +88,7 @@ usePageSeo({
       title="Découvrez comment nous travaillons."
       description="La page Agence présente notre positionnement, notre fonctionnement et les valeurs qui orientent chaque projet."
       :primary="{ label: 'Découvrir l’agence', to: '/agence' }"
-      :secondary="{ label: 'Parler de votre projet', to: '/#contact', external: true }"
+      :secondary="{ label: 'Parler de votre projet', to: '/contact' }"
     />
   </div>
 </template>

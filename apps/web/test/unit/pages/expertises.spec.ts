@@ -64,11 +64,11 @@ describe("/expertises page", () => {
     expect(labels).toEqual(expertisePillars.map((p) => p.label))
   })
 
-  it("links to `/agence` and to the `/#contact` anchor", () => {
+  it("links to `/agence` and to the `/contact` route", () => {
     const wrapper = mount(ExpertisesPage)
     const hrefs = wrapper.findAll("a").map((a) => a.attributes("href"))
     expect(hrefs).toContain("/agence")
-    expect(hrefs).toContain("/#contact")
+    expect(hrefs).toContain("/contact")
   })
 
   it("links every published expertise card to its own `/expertises/{slug}` route", () => {

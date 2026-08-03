@@ -212,10 +212,10 @@ for (const p of PAGES) {
       }
     })
 
-    test("propose un lien vers /expertises et vers /#contact", async ({ page }) => {
+    test("propose un lien vers /expertises et vers /contact", async ({ page }) => {
       await page.goto(p.route)
       await expect(page.locator('a[href="/expertises"]').first()).toBeVisible()
-      await expect(page.locator('a[href="/#contact"]').first()).toBeVisible()
+      await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
     })
 
     test("respecte la responsivité 320 / 390 / 768 / 1024 / 1440 sans débordement", async ({

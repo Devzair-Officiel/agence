@@ -81,6 +81,11 @@ test.describe('/ (home) — sections primaires Phase 5B', () => {
       'Développer la visibilité',
       'Faire évoluer',
     ])
+    const connectors = page.locator('.home-approach__connector')
+    await expect(connectors).toHaveCount(4)
+    for (const connector of await connectors.all()) {
+      await expect(connector).toHaveAttribute('aria-hidden', 'true')
+    }
   })
 
   test('renders the five expertise cards under the #expertises anchor with three services each', async ({
@@ -179,10 +184,12 @@ test.describe('/ (home) — sections primaires Phase 5B', () => {
 })
 
 const viewports = [
-  { name: 'small mobile 320x780', width: 320, height: 780 },
+  { name: 'small mobile 320x800', width: 320, height: 800 },
   { name: 'mobile 390x844', width: 390, height: 844 },
   { name: 'tablet 768x1024', width: 768, height: 1024 },
-  { name: 'desktop 1440x1000', width: 1440, height: 1000 },
+  { name: 'laptop 1024x768', width: 1024, height: 768 },
+  { name: 'desktop 1440x900', width: 1440, height: 900 },
+  { name: 'wide desktop 1920x1080', width: 1920, height: 1080 },
 ]
 
 for (const viewport of viewports) {
@@ -210,6 +217,59 @@ for (const viewport of viewports) {
     }) => {
       await page.goto('/')
       await expect(page.locator('.home-pillars__card')).toHaveCount(5)
+    })
+
+    test('centers each connector between adjacent approach cards without overlap', async ({
+      page,
+    }) => {
+      await page.goto('/')
+      const cards = page.locator('.home-approach__step-card')
+      const connectors = page.locator('.home-approach__connector')
+      await expect(cards).toHaveCount(5)
+      await expect(connectors).toHaveCount(4)
+
+      const verticalGlyph = connectors
+        .first()
+        .locator('.home-approach__connector-glyph--vertical')
+      const horizontalGlyph = connectors
+        .first()
+        .locator('.home-approach__connector-glyph--horizontal')
+      if (viewport.width < 1100) {
+        await expect(verticalGlyph).toBeVisible()
+        await expect(horizontalGlyph).toBeHidden()
+      } else {
+        await expect(verticalGlyph).toBeHidden()
+        await expect(horizontalGlyph).toBeVisible()
+      }
+
+      const cardBoxes = await Promise.all(
+        (await cards.all()).map((card) => card.boundingBox()),
+      )
+      const connectorBoxes = await Promise.all(
+        (await connectors.all()).map((connector) => connector.boundingBox()),
+      )
+      expect(cardBoxes.every(Boolean)).toBe(true)
+      expect(connectorBoxes.every(Boolean)).toBe(true)
+
+      for (let index = 0; index < 4; index += 1) {
+        const current = cardBoxes[index]!
+        const next = cardBoxes[index + 1]!
+        const connector = connectorBoxes[index]!
+        const connectorCenterX = connector.x + connector.width / 2
+        const connectorCenterY = connector.y + connector.height / 2
+
+        if (viewport.width < 1100) {
+          expect(connector.y).toBeGreaterThanOrEqual(current.y + current.height - 1)
+          expect(connector.y + connector.height).toBeLessThanOrEqual(next.y + 1)
+          expect(Math.abs(connectorCenterX - (current.x + current.width / 2))).toBeLessThanOrEqual(2)
+        } else {
+          expect(connector.x).toBeGreaterThanOrEqual(current.x + current.width - 1)
+          expect(connector.x + connector.width).toBeLessThanOrEqual(next.x + 1)
+          const cardsCenterY =
+            (current.y + current.height / 2 + next.y + next.height / 2) / 2
+          expect(Math.abs(connectorCenterY - cardsCenterY)).toBeLessThanOrEqual(2)
+        }
+      }
     })
   })
 }

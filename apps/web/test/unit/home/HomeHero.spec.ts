@@ -38,7 +38,7 @@ describe("HomeHero", () => {
 
     const primary = links[0]!
     expect(primary.text()).toContain("Parler de votre projet")
-    expect(primary.attributes("href")).toBe("#contact")
+    expect(primary.attributes("href")).toBe("/contact")
     expect(primary.attributes("data-variant")).toBe("primary")
 
     const secondary = links[1]!

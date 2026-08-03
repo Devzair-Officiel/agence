@@ -58,11 +58,11 @@ describe("/agence page", () => {
     })
   })
 
-  it("links to `/expertises` and to the `/#contact` anchor", () => {
+  it("links to `/expertises` and to the `/contact` route", () => {
     const wrapper = mount(AgencePage)
     const hrefs = wrapper.findAll("a").map((a) => a.attributes("href"))
     expect(hrefs).toContain("/expertises")
-    expect(hrefs).toContain("/#contact")
+    expect(hrefs).toContain("/contact")
   })
 
   it("never publishes fictional data (org chart, fake testimonials, invented numbers)", () => {

@@ -22,10 +22,10 @@ import HomeTrust from "~/components/home/HomeTrust.vue"
  *   5. Réalisations       (HomeFeaturedCaseStudy, ancre `#realisations`)
  *   6. Méthode            (HomeProcess)
  *   7. Pourquoi Devzair   (HomeTrust)
- *   8. CTA final          (HomeCallToAction, ancre `#contact`)
+ *   8. CTA final          (HomeCallToAction, ancre `#contact` → renvoie sur
+ *                        la page dédiée `/contact` où vit le formulaire)
  *
- * Sections différées : FAQ éditoriale (Phase 6+), formulaire de contact
- * dédié (Phase 6).
+ * Sections différées : FAQ éditoriale (Phase 6+).
  */
 
 usePageSeo({

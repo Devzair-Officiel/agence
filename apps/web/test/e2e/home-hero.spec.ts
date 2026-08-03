@@ -55,7 +55,7 @@ test.describe('/ (home)', () => {
       'Sites internet, applications métier',
     )
 
-    const primary = page.locator('.home-hero__ctas a[href="#contact"]')
+    const primary = page.locator('.home-hero__ctas a[href="/contact"]')
     const secondary = page.locator('.home-hero__ctas a[href="#realisations"]')
     await expect(primary).toBeVisible()
     await expect(primary).toContainText('Parler de votre projet')
@@ -72,8 +72,12 @@ test.describe('/ (home)', () => {
     await expect(svg).toHaveCount(1)
     await expect(svg).toHaveAttribute('role', 'img')
 
-    await expect(svg.locator('title')).toContainText('cinq pôles')
+    // Nom accessible via aria-label (plus de <title> interne, qui déclenchait
+    // le tooltip natif du navigateur au survol).
+    await expect(svg).toHaveAttribute('aria-label', /cinq pôles/)
+    await expect(svg.locator('title')).toHaveCount(0)
     await expect(svg.locator('.home-ecosystem-graph__pillar')).toHaveCount(5)
+    await expect(svg.locator('.home-ecosystem-graph__pillar-link')).toHaveCount(5)
 
     for (const label of [
       'Concevoir',
@@ -175,9 +179,12 @@ test.describe('/ (home)', () => {
 })
 
 const viewports = [
+  { name: 'small mobile 320x800', width: 320, height: 800 },
   { name: 'mobile 390x844', width: 390, height: 844 },
   { name: 'tablet 768x1024', width: 768, height: 1024 },
-  { name: 'desktop 1440x1000', width: 1440, height: 1000 },
+  { name: 'laptop 1024x768', width: 1024, height: 768 },
+  { name: 'desktop 1440x900', width: 1440, height: 900 },
+  { name: 'wide desktop 1920x1080', width: 1920, height: 1080 },
 ]
 
 for (const viewport of viewports) {
@@ -197,12 +204,61 @@ for (const viewport of viewports) {
       await page.goto('/')
       await expect(page.locator('h1')).toBeVisible()
       await expect(
-        page.locator('.home-hero__ctas a[href="#contact"]'),
+        page.locator('.home-hero__ctas a[href="/contact"]'),
       ).toBeVisible()
       await expect(
         page.locator('.home-hero__ctas a[href="#realisations"]'),
       ).toBeVisible()
       await expect(page.locator('svg.home-ecosystem-graph')).toBeVisible()
     })
+
+    test('keeps every graph label and description inside the visible SVG', async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await page.goto('/')
+      const svg = page.locator('svg.home-ecosystem-graph')
+      await expect(svg.locator('.home-ecosystem-graph__pillar').first()).toBeVisible()
+
+      const svgBox = await svg.boundingBox()
+      expect(svgBox).not.toBeNull()
+      const texts = svg.locator(
+        '.home-ecosystem-graph__pillar-label, .home-ecosystem-graph__pillar-description',
+      )
+      await expect(texts).toHaveCount(10)
+
+      for (const textNode of await texts.all()) {
+        const box = await textNode.boundingBox()
+        expect(box).not.toBeNull()
+        expect(box!.x).toBeGreaterThanOrEqual(svgBox!.x - 1)
+        expect(box!.y).toBeGreaterThanOrEqual(svgBox!.y - 1)
+        expect(box!.x + box!.width).toBeLessThanOrEqual(
+          svgBox!.x + svgBox!.width + 1,
+        )
+        expect(box!.y + box!.height).toBeLessThanOrEqual(
+          svgBox!.y + svgBox!.height + 1,
+        )
+      }
+    })
   })
 }
+
+test('reflows the hero without overlap at a 200% desktop-zoom equivalent', async ({
+  page,
+}) => {
+  // À 200 % sur un viewport desktop de 1440 px, la largeur de mise en page
+  // disponible est équivalente à 720 CSS px.
+  await page.setViewportSize({ width: 720, height: 900 })
+  await page.goto('/')
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  expect(overflow).toBeLessThanOrEqual(1)
+
+  const content = await page.locator('.home-hero__content').boundingBox()
+  const visual = await page.locator('.home-hero__visual').boundingBox()
+  expect(content).not.toBeNull()
+  expect(visual).not.toBeNull()
+  expect(visual!.y).toBeGreaterThanOrEqual(content!.y + content!.height - 1)
+})

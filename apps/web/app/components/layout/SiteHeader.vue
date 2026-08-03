@@ -15,9 +15,17 @@ const onToggleMenu = () => {
 
 <template>
   <header class="site-header">
-    <BaseContainer as="div" class="site-header__inner">
+    <BaseContainer as="div" width="wide" class="site-header__inner">
       <NuxtLink to="/" class="site-header__brand" :aria-label="`${site.name} — Accueil`">
-        <span class="site-header__logo" aria-hidden="true">D</span>
+        <img
+          class="site-header__logo"
+          src="/brand/logo.png"
+          alt=""
+          width="40"
+          height="40"
+          decoding="async"
+          fetchpriority="high"
+        />
         <span class="site-header__brand-name">{{ site.name }}</span>
       </NuxtLink>
 
@@ -101,18 +109,14 @@ const onToggleMenu = () => {
 }
 
 .site-header__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  /* Cadre subtil pour asseoir le logo sur le fond cream du header. */
+  border-radius: 10px;
   background-color: var(--color-navy);
-  color: var(--color-cream);
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
-  font-size: 1.125rem;
-  line-height: 1;
+  padding: 4px;
 }
 
 .site-header__brand-name {

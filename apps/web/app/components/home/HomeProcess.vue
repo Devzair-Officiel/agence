@@ -32,7 +32,7 @@ const steps = [...projectProcess].sort((a, b) => a.order - b.order)
     class="home-process"
     aria-labelledby="home-process-title"
   >
-    <BaseContainer class="home-process__container">
+    <BaseContainer width="wide" class="home-process__container">
       <header class="home-process__intro">
         <BaseEyebrow class="home-process__eyebrow">Notre méthode</BaseEyebrow>
         <h2 id="home-process-title" class="home-process__title">
