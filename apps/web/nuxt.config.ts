@@ -135,11 +135,13 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Pré-rendu limité aux pages marketing réellement existantes.
-    // L'accueil couvre huit sections stables (hero, constat, réponse, cinq
-    // pôles, réalisations, méthode, promesses, CTA final), 100 % rendue côté
-    // serveur à partir de données typées locales : elle peut être servie en
-    // HTML statique. Les autres routes marketing seront ajoutées au fil des
-    // Phases 6+.
+    // Phase 5D : accueil `/` (8 sections stables, 100 % SSR, données typées
+    // locales). Phase 7A : ajout de `/agence` (positionnement + valeurs) et
+    // `/expertises` (vue d'ensemble des cinq pôles) — même contrat : contenu
+    // 100 % local, aucune donnée dynamique, HTML statique livrable.
+    // Les pages filles `/expertises/{slug}` seront ajoutées en Phase 7B.
     '/': { prerender: true },
+    '/agence': { prerender: true },
+    '/expertises': { prerender: true },
   },
 })

@@ -32,9 +32,13 @@ const hasContact = computed(() =>
       >
         <p class="site-footer__column-title">{{ group.title }}</p>
         <ul class="site-footer__list" role="list">
-          <!-- external : routes pas encore livrées, à retirer au fil de la Phase 5. -->
+          <!-- `external` uniquement quand la cible n'est pas une route Nuxt réelle. -->
           <li v-for="item in group.items" :key="item.to">
-            <NuxtLink :to="item.to" external class="site-footer__link">
+            <NuxtLink
+              :to="item.to"
+              :external="item.isRoute ? undefined : true"
+              class="site-footer__link"
+            >
               {{ item.label }}
             </NuxtLink>
           </li>
@@ -45,7 +49,11 @@ const hasContact = computed(() =>
         <p class="site-footer__column-title">Contact</p>
         <ul class="site-footer__list" role="list">
           <li>
-            <NuxtLink :to="primaryCta.to" external class="site-footer__link">
+            <NuxtLink
+              :to="primaryCta.to"
+              :external="primaryCta.isRoute ? undefined : true"
+              class="site-footer__link"
+            >
               {{ primaryCta.label }}
             </NuxtLink>
           </li>
@@ -73,9 +81,17 @@ const hasContact = computed(() =>
       <span class="site-footer__copyright"
         >© {{ new Date().getFullYear() }} {{ site.name }}</span
       >
-      <ul class="site-footer__legal-list" role="list">
+      <ul
+        v-if="legalNavigation.length > 0"
+        class="site-footer__legal-list"
+        role="list"
+      >
         <li v-for="item in legalNavigation" :key="item.to">
-          <NuxtLink :to="item.to" external class="site-footer__link">
+          <NuxtLink
+            :to="item.to"
+            :external="item.isRoute ? undefined : true"
+            class="site-footer__link"
+          >
             {{ item.label }}
           </NuxtLink>
         </li>

@@ -106,7 +106,7 @@ watch(isOpen, async (opened) => {
               >
                 <NuxtLink
                   :to="item.to"
-                  external
+                  :external="item.isRoute ? undefined : true"
                   class="mobile-navigation__link"
                   @click="onNavigate"
                 >
@@ -119,7 +119,7 @@ watch(isOpen, async (opened) => {
 
           <BaseButton
             :to="primaryCta.to"
-            external
+            :external="primaryCta.isRoute ? undefined : true"
             variant="primary"
             class="mobile-navigation__cta"
             @click="onNavigate"

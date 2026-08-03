@@ -134,22 +134,76 @@ Faire comprendre en quelques secondes :
 
 ## 7.2 Page `/agence`
 
-### Contenu
+### État actuel : livrée (Phase 7A)
 
-- mission ;
-- positionnement ;
-- type d’entreprises accompagnées ;
-- manière de constituer l’équipe projet ;
-- expertises disponibles ;
-- valeurs de travail ;
-- transparence sur le fonctionnement ;
-- zone d’intervention réelle ;
-- éléments de preuve vérifiables ;
-- CTA.
+Route SSR pré-rendue (`nuxt.config.ts::routeRules['/agence']={prerender:true}`),
+implémentation `apps/web/app/pages/agence.vue`, suite unitaire
+`test/unit/pages/agence.spec.ts` et suite E2E `test/e2e/institutional-pages.spec.ts`.
 
-### Vigilance
+### Contenu livré
 
-Ne pas présenter de faux organigramme. Si Devzair s’appuie sur un réseau de spécialistes, employer une formulation exacte et vérifiable, par exemple : `Nous réunissons les compétences adaptées à chaque projet`.
+- **H1 verbatim** : « Une agence digitale à taille humaine, pensée pour
+  accompagner les entreprises dans leur globalité. »
+- **Eyebrow** : `L'agence`.
+- **Introduction verbatim** : « Devzair réunit stratégie, design,
+  développement, contenus et visibilité afin de construire des solutions
+  digitales cohérentes, utiles et évolutives. »
+- Trois sections `EditorialSection` : Positionnement, Fonctionnement,
+  Valeurs.
+- Callout final `EditorialCallout` vers `/expertises` (secondaire vers
+  `/#contact`).
+
+### Vigilance appliquée
+
+Aucun organigramme fictif, aucun effectif chiffré, aucune date de
+fondation, aucun témoignage anonyme, aucune adresse. Formulation
+retenue pour l'équipe : « Nous réunissons les compétences adaptées à
+chaque projet ». Test unitaire garde-fou :
+`test/unit/pages/agence.spec.ts::"never publishes fictional data"` bloque
+`lorem ipsum`, `john doe`, `@example.`, `fondée en \d{4}`,
+`plus de \d+ (clients|projets|années)`.
+
+---
+
+## 7.2 bis Page `/expertises` (vue d'ensemble)
+
+### État actuel : livrée (Phase 7A)
+
+Route SSR pré-rendue (`nuxt.config.ts::routeRules['/expertises']={prerender:true}`),
+implémentation `apps/web/app/pages/expertises/index.vue`, suite unitaire
+`test/unit/pages/expertises.spec.ts` et suite E2E
+`test/e2e/institutional-pages.spec.ts`.
+
+### Rôle
+
+Page d'entrée vers les cinq pôles d'expertise Devzair. En Phase 7A, elle
+présente **cinq cartes non interactives** (informatives) alimentées par
+`app/config/expertise-pillars.ts`. La bascule en cartes-liens vers
+`/expertises/{slug}` interviendra en Phase 7B, à la publication des
+pages détaillées.
+
+### Contenu livré
+
+- **H1 verbatim** : « Cinq pôles complémentaires pour construire une
+  présence digitale cohérente. »
+- **Eyebrow** : `Nos expertises`.
+- **Introduction verbatim** : « Chaque entreprise possède des besoins
+  différents. Nous réunissons les expertises adaptées pour concevoir,
+  construire, valoriser, rendre visible et faire évoluer votre projet. »
+- Section « Notre approche » (`EditorialSection`).
+- Grille de cinq `ExpertiseOverviewCard` (`<article>`, H3 non lié,
+  description longue verbatim, 3 services par pôle).
+- Callout final vers `/agence` (secondaire vers `/#contact`).
+
+### Vigilance appliquée
+
+Aucun chiffre inventé (nombre de projets, nombre de clients, ancienneté),
+aucun logo tiers, aucun témoignage. Les cartes ne portent **aucun lien**
+tant que les pages `/expertises/{slug}` n'existent pas — évite tout
+`href="#"` ou lien mort. Sources de vérité : la config typée
+`app/config/expertise-pages.ts` (5 entrées `status: "planned"`, routing
+futur) et `app/config/expertise-pillars.ts` (contenu narratif partagé
+avec l'accueil).
 
 ---
 

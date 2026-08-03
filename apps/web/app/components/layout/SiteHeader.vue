@@ -23,16 +23,20 @@ const onToggleMenu = () => {
 
       <nav class="site-header__nav" aria-label="Navigation principale">
         <ul class="site-header__list" role="list">
-          <!-- external: cibles pas encore livrées ; à retirer quand chaque route existera. -->
+          <!-- `external` uniquement quand la cible n'est pas une route Nuxt réelle. -->
           <li v-for="item in primaryNavigation" :key="item.to">
-            <NuxtLink :to="item.to" external class="site-header__link">
+            <NuxtLink
+              :to="item.to"
+              :external="item.isRoute ? undefined : true"
+              class="site-header__link"
+            >
               {{ item.label }}
             </NuxtLink>
           </li>
         </ul>
         <BaseButton
           :to="primaryCta.to"
-          external
+          :external="primaryCta.isRoute ? undefined : true"
           variant="primary"
           class="site-header__cta"
         >

@@ -2,14 +2,28 @@
  * Navigation Devzair — source de vérité unique consommée par le header,
  * le menu mobile et le footer.
  *
- * Les URLs pointent vers des routes qui seront livrées dans les prochains lots.
- * Un lien listé ici n'implique pas que la page existe déjà : le composant
- * NuxtLink gère naturellement la navigation quand la page apparaîtra.
+ * Chaque item déclare explicitement si sa cible est déjà une route
+ * (`isRoute: true`) ou non (`isRoute: false`). Les composants de layout se
+ * servent de ce drapeau pour décider s'ils appliquent l'attribut
+ * `external` à `NuxtLink` — sans lui, vue-router émet un warning R0004
+ * pour les cibles inconnues.
+ *
+ * Règle éditoriale (AGENTS.md §11 + brief Phase 7A) : cette configuration
+ * ne doit jamais contenir de lien mort. Si une route est prévue mais pas
+ * encore livrée, on l'omet ou on la remplace par une ancre équivalente
+ * (typiquement `/#realisations` tant que `/realisations` n'existe pas).
  */
 
 export interface NavigationItem {
   readonly label: string
   readonly to: string
+  /**
+   * `true` quand `to` pointe sur une route Nuxt réellement livrée (ou une
+   * ancre locale à une page réelle). `false` quand la cible est une route
+   * non encore créée : le rendu bascule alors sur un `<a href>` plat pour
+   * éviter le warning vue-router.
+   */
+  readonly isRoute: boolean
 }
 
 export interface NavigationGroup {
@@ -18,43 +32,32 @@ export interface NavigationGroup {
 }
 
 export const primaryNavigation: readonly NavigationItem[] = [
-  { label: "Expertises", to: "/#expertises" },
-  { label: "Réalisations", to: "/#realisations" },
-  { label: "Méthode", to: "/methode" },
-  { label: "Agence", to: "/agence" },
+  { label: "Expertises", to: "/expertises", isRoute: true },
+  { label: "Agence", to: "/agence", isRoute: true },
+  { label: "Réalisations", to: "/#realisations", isRoute: true },
 ]
 
-// La cible `#contact` est une ancre locale à `/` tant que la Phase 6
-// (formulaire dédié) n'est pas livrée. Un seul point de vérité pour
-// header, footer, menu mobile et CTA hero.
+// La cible `#contact` est une ancre locale à `/` : le composant
+// NuxtLink doit forcer `external` pour éviter un warning quand la
+// page en cours n'est pas `/`.
 export const primaryCta: NavigationItem = {
   label: "Parler de votre projet",
   to: "/#contact",
+  isRoute: false,
 }
 
 export const footerNavigation: readonly NavigationGroup[] = [
   {
-    title: "Expertises",
+    title: "Découvrir",
     items: [
-      { label: "Concevoir", to: "/expertises/concevoir" },
-      { label: "Construire", to: "/expertises/construire" },
-      { label: "Valoriser", to: "/expertises/valoriser" },
-      { label: "Visibilité", to: "/expertises/visibilite" },
-      { label: "Faire évoluer", to: "/expertises/faire-evoluer" },
-    ],
-  },
-  {
-    title: "Agence",
-    items: [
-      { label: "Réalisations", to: "/realisations" },
-      { label: "Méthode", to: "/methode" },
-      { label: "À propos", to: "/agence" },
-      { label: "Ressources", to: "/ressources" },
+      { label: "L'agence", to: "/agence", isRoute: true },
+      { label: "Nos expertises", to: "/expertises", isRoute: true },
+      { label: "Réalisations", to: "/#realisations", isRoute: false },
     ],
   },
 ]
 
-export const legalNavigation: readonly NavigationItem[] = [
-  { label: "Mentions légales", to: "/mentions-legales" },
-  { label: "Confidentialité", to: "/confidentialite" },
-]
+// Les mentions légales et la politique de confidentialité seront ajoutées
+// quand les pages correspondantes seront livrées (phase à venir).
+// Aucune entrée listée ici tant que la route n'existe pas — cf. AGENTS.md §11.
+export const legalNavigation: readonly NavigationItem[] = []

@@ -432,7 +432,81 @@ verbatim + valeurs préservées) et à l’opérateur (log
 
 ---
 
-## Phase 7 — Réalisations et autorité éditoriale
+## Phase 7 — Architecture éditoriale, expertises et réalisations
+
+La phase est découpée en trois jalons — **7A architecture éditoriale et
+pages institutionnelles** (livré), **7B pages d'expertise détaillées**
+(à venir) et **7C réalisations et autorité éditoriale** (à venir) — pour
+livrer d'abord une base éditoriale saine, réutilisable et sans lien mort
+avant de multiplier les pages profondes.
+
+### Phase 7A — Architecture éditoriale et pages `/agence` + `/expertises` (TERMINÉE)
+
+- [x] Configuration typée `app/config/expertise-pages.ts` (5 pages
+      planifiées, `status: "planned"` unique valeur autorisée en 7A,
+      slug/route/title/shortTitle/summary/services miroirs de
+      `expertise-pillars.ts`). Aucune route `/expertises/{slug}` créée.
+- [x] Composants éditoriaux réutilisables : `EditorialHero.vue`
+      (eyebrow + H1 + lead + slot actions),
+      `EditorialSection.vue` (H2 obligatoire, eyebrow/intro/slot
+      optionnels, variantes `default` / `subtle` / `inverse`,
+      `aria-labelledby` via `useId`),
+      `EditorialCallout.vue` (bandeau CTA H2 + primaryCta + secondaryCta
+      facultatif, variantes `inverse` / `accent`),
+      `ExpertiseOverviewCard.vue` (`<article>`, H3 non lié, description
+      longue, 3 services `<ul>`, badge d'ordre `aria-hidden`, **aucun
+      lien en 7A**).
+- [x] `pages/agence.vue` — H1 verbatim, eyebrow `L'agence`, introduction
+      verbatim, sections Positionnement / Fonctionnement / Valeurs,
+      callout final vers `/expertises`. `usePageSeo` avec title
+      `Agence digitale à taille humaine`.
+- [x] `pages/expertises/index.vue` — H1 verbatim, eyebrow
+      `Nos expertises`, introduction verbatim, section « Notre approche »,
+      grille de 5 `ExpertiseOverviewCard`, callout final vers `/agence`.
+      `usePageSeo` avec title `Expertises web, design, contenu et SEO`.
+- [x] Pré-rendu `/agence` et `/expertises` (`routeRules`) — SSR vérifié
+      sur `.output/public/{agence,expertises}/index.html`.
+- [x] Navigation principale recablée : `Expertises` (`/expertises`),
+      `Agence` (`/agence`), `Réalisations` (`/#realisations`), CTA
+      `/#contact`. Liens morts supprimés (`Méthode`, `Ressources`).
+      Footer réduit au groupe `Découvrir` (3 entrées vivantes).
+      `legalNavigation = []` (aucune page légale publiée). Ajout d'un
+      champ `isRoute: boolean` sur `NavigationItem` pour piloter
+      `NuxtLink :external` proprement (fin des warnings vue-router R0004
+      sur les ancres).
+- [x] Tests unitaires : +51 tests (config `expertise-pages` ×11,
+      `EditorialHero` ×7, `EditorialSection` ×9, `EditorialCallout` ×7,
+      `ExpertiseOverviewCard` ×6, page `/agence` ×6, page `/expertises`
+      ×7). Total Vitest 213/213 verts.
+- [x] Tests E2E `institutional-pages.spec.ts` (18 cas) : SSR HTML,
+      unique H1 verbatim, eyebrow + introduction en SSR, SEO complet
+      (title, description, canonical *ou* noindex, `og:url`), lien réel
+      vers `/#contact`, absence de lien vers `/expertises/{slug}`, 5
+      cartes sans `<a>`, navigation principale exposant les 3 entrées +
+      CTA, maillage `/agence` ↔ `/expertises`, responsive 390/768/1440,
+      Axe WCAG 2.2 AA, `prefers-reduced-motion`.
+- [x] Build production : 2.92 MB brut / 759 kB gzip (+70 KB / +18 KB vs
+      Phase 6C 2.85 MB / 741 kB). Toujours pré-rendu pour les 3 pages
+      publiques (`/`, `/agence`, `/expertises`).
+
+Critère de sortie Phase 7A : atteint. Trois pages publiques cohérentes,
+un maillage inter-pages sans lien mort, une architecture éditoriale
+réutilisable prête pour 7B (pages `/expertises/{slug}` — 5 pages
+détaillées, contenu à valider avec le client) et 7C (études de cas
+réelles).
+
+### Phase 7B — Pages d'expertise détaillées (À VENIR)
+
+- [ ] Contenu éditorial des 5 pages d'expertise validé (`/expertises/{slug}`).
+- [ ] Routes `/expertises/[slug].vue` s'appuyant sur `expertise-pages.ts`.
+- [ ] Basculement `status: "planned"` → `status: "live"` uniquement à la
+      publication réelle.
+- [ ] Cartes `ExpertiseOverviewCard` deviennent liens (H3 → `NuxtLink`).
+- [ ] Maillage entre pôles + retour vers `/expertises`.
+- [ ] Métadonnées et Schema.org `Service` par page.
+- [ ] Tests unitaires + E2E par page.
+
+### Phase 7C — Réalisations et autorité éditoriale (À VENIR)
 
 - [ ] Modèle d’étude de cas.
 - [ ] Preuves et autorisations.
@@ -443,9 +517,12 @@ verbatim + valeurs préservées) et à l’opérateur (log
 - [ ] Pages auteurs réels si utiles.
 - [ ] Politique de mise à jour.
 
-### Critère de sortie
+### Critère de sortie (Phase 7 complète)
 
-Chaque preuve publiée est vérifiable et contextualisée.
+Chaque expertise dispose d'une page publique cohérente, chaque preuve
+publiée est vérifiable et contextualisée, et le maillage `/agence` ↔
+`/expertises` ↔ `/expertises/{slug}` ↔ `/#realisations` est complet
+sans lien mort.
 
 ---
 
