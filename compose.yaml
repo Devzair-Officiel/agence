@@ -1,12 +1,15 @@
-# Devzair — stack Docker Compose (Phase 6A).
+# Devzair — stack Docker Compose (Phases 6A + 8A).
 #
 # Architecture cible (voir docs/06-ARCHITECTURE-CODE.md §16.1) :
-# - `caddy`  : seul service exposé publiquement (port hôte 3001). Route
-#              /api/** vers Symfony et tout le reste vers Nuxt/Nitro.
-# - `web`    : Nuxt en mode dev (HMR), accessible uniquement par le réseau
-#              interne. Ne publie plus de port hôte.
-# - `api`    : Symfony 7.4 (serveur intégré PHP), accessible uniquement par
-#              le réseau interne. La Phase 6A n'utilise ni DB ni worker.
+# - `caddy`    : seul service exposé publiquement (port hôte 3001). Route
+#                /api/** vers Symfony et tout le reste vers Nuxt/Nitro.
+# - `web`      : Nuxt en mode dev (HMR), accessible uniquement par le réseau
+#                interne. Ne publie plus de port hôte.
+# - `api`      : Symfony 7.4 (serveur intégré PHP), accessible uniquement par
+#                le réseau interne.
+# - `postgres` : PostgreSQL 17-alpine (Phase 8A, voir ADR-009). Version
+#                verrouillée, accessible uniquement depuis le réseau interne
+#                Compose — jamais publié sur l'hôte.
 
 services:
   caddy:
@@ -61,6 +64,9 @@ services:
     working_dir: /app
     expose:
       - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       # Code monté pour l'itération, vendor géré par l'image.
       - ./apps/api:/app
@@ -70,6 +76,9 @@ services:
       APP_ENV: ${APP_ENV:-dev}
       APP_DEBUG: ${APP_DEBUG:-1}
       APP_SECRET: ${APP_SECRET:-changeme_local_dev_only_never_used_for_signing}
+      # Connexion PostgreSQL — le service `postgres` du réseau interne Compose.
+      # `serverVersion=17` évite un ping runtime à Doctrine (voir ADR-009).
+      DATABASE_URL: ${DATABASE_URL:-postgresql://devzair:devzair_local_password@postgres:5432/devzair?serverVersion=17&charset=utf8}
       MAILER_DSN: ${MAILER_DSN:-null://null}
       CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL:-no-reply@devzair.example}
       CONTACT_FROM_NAME: ${CONTACT_FROM_NAME:-Devzair — Site}
@@ -86,8 +95,31 @@ services:
         required: false
     restart: unless-stopped
 
+  postgres:
+    # Version verrouillée sur 17-alpine (voir ADR-009). Toute évolution majeure
+    # doit passer par une nouvelle ADR — un `latest` masquerait une régression
+    # de compatibilité Doctrine ORM 3.
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-devzair}
+      POSTGRES_USER: ${POSTGRES_USER:-devzair}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devzair_local_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` évite les faux départs où l'API tente de se connecter
+      # avant que Postgres ait fini d'initialiser sa base.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devzair} -d ${POSTGRES_DB:-devzair}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Jamais publié sur l'hôte : accessible uniquement depuis le réseau interne
+    # Compose, comme les services `web` et `api`.
+    restart: unless-stopped
+
 volumes:
   web_node_modules:
   web_nuxt_cache:
   api_vendor:
   api_var:
+  postgres_data:

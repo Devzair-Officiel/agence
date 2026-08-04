@@ -11,3 +11,17 @@ health_check:
     path: /health
     controller: App\Contact\Controller\HealthController::__invoke
     methods: [GET]
+
+editorial_list:
+    path: /resources
+    controller: App\Editorial\Presentation\Http\ListPublishedArticlesController::__invoke
+    methods: [GET]
+
+editorial_detail:
+    path: /resources/{slug}
+    controller: App\Editorial\Presentation\Http\GetPublishedArticleController::__invoke
+    methods: [GET]
+    # Contrainte simple pour éviter que la table de routage attrape des slugs
+    # avec slash. La validation stricte est faite dans le VO ArticleSlug.
+    requirements:
+        slug: '[a-z0-9\-]+'

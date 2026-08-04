@@ -17,13 +17,18 @@ Caddy / reverse proxy  (seul port hôte publié)
    +--> /api/**                         --> Symfony 7.4 LTS   (conteneur `api`)
                                                 |
                                                 v
-                                           PostgreSQL (à partir de la Phase 8)
+                                           PostgreSQL 17-alpine (conteneur `postgres`,
+                                           interne uniquement — ADR-009)
 ```
 
-État Phase 6A : le triplet `caddy` + `web` + `api` est en place, mais
-Symfony n’a qu’un seul endpoint métier (`POST /api/contact`) et un
-health check (`GET /api/health`). PostgreSQL n’est pas encore introduit
-(voir ADR-006 §PostgreSQL / Doctrine).
+État Phase 8A : le quatuor `caddy` + `web` + `api` + `postgres` est en
+place. Symfony expose désormais trois endpoints métier — `POST /api/contact`
+(Phase 6A/6C), `GET /api/resources` et `GET /api/resources/{slug}`
+(Phase 8A, lecture publique paginée + détail par slug) — plus le
+health check `GET /api/health`. Le service `postgres` (image
+`postgres:17-alpine`) n'est jamais publié sur l'hôte ; l'accès se fait
+uniquement via le réseau interne Compose (voir ADR-009 pour la
+justification du choix de version).
 
 ### Principes
 
@@ -76,12 +81,18 @@ devzair/
 │   │   ├── Dockerfile.dev
 │   │   ├── nuxt.config.ts
 │   │   └── package.json
-│   └── api/                         # Symfony 7.4 LTS (Phase 6A : /api/contact)
+│   └── api/                         # Symfony 7.4 LTS (Phase 6A/6C : /api/contact ; Phase 8A : /api/resources)
 │       ├── bin/
 │       ├── config/
+│       ├── migrations/               # Doctrine Migrations (Phase 8A, namespace App\Migrations)
 │       ├── public/
 │       ├── src/
 │       │   ├── Contact/{Controller,Dto,Service,Security,Configuration,Command,Exception}
+│       │   ├── Editorial/            # Phase 8A : domaine éditorial (lecture publique)
+│       │   │   ├── Domain/           # Article, ArticleSlug, Author, SeoMetadata, enums, port, Clock, Exception
+│       │   │   ├── Application/      # Query + Handler + View DTOs (lecture)
+│       │   │   ├── Infrastructure/   # DoctrineArticleRepository
+│       │   │   └── Presentation/     # Controllers HTTP (GET /resources, GET /resources/{slug})
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
@@ -490,8 +501,13 @@ Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tan
 - `ADR-008` — transport mail OVHcloud via `MAILER_DSN`, Turnstile facultatif
   (deux flags alignés `TURNSTILE_ENABLED` / `NUXT_PUBLIC_TURNSTILE_ENABLED`),
   réponse HTTP 503 `temporary_error` sur échec SMTP ;
-- ADR à rédiger lorsque le besoin apparaît : introduction de PostgreSQL et
-  Doctrine, authentification de l’administration, stratégie de cache et
+- `ADR-009` — persistance PostgreSQL 17-alpine du domaine éditorial
+  (Doctrine ORM 3 par attributs sur l'entité `Article`, UUID v7 direct,
+  `expertise_ids` en `jsonb`, markdown stocké brut, cache HTTP à
+  60/300 s) ;
+- ADR à rédiger lorsque le besoin apparaît : authentification de
+  l’administration, endpoint d'écriture Phase 8B, renderer markdown +
+  sanitizer HTML, stratégie de cache fin (ETag/Last-Modified) et
   d’invalidation, analytics et consentement.
 
 ---

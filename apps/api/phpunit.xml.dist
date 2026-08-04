@@ -1,35 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         colors="true"
-         bootstrap="tests/bootstrap.php"
-         cacheDirectory=".phpunit.cache"
-         executionOrder="random"
-         failOnWarning="true"
-         failOnRisky="true"
-         beStrictAboutOutputDuringTests="true"
-         beStrictAboutChangesToGlobalState="true"
-         requireCoverageMetadata="false">
-    <php>
-        <ini name="display_errors" value="1"/>
-        <ini name="error_reporting" value="-1"/>
-        <env name="APP_ENV" value="test" force="true"/>
-        <env name="APP_DEBUG" value="0" force="true"/>
-        <server name="APP_ENV" value="test" force="true"/>
-        <server name="APP_DEBUG" value="0" force="true"/>
-        <server name="SHELL_VERBOSITY" value="-1"/>
-        <server name="KERNEL_CLASS" value="App\Kernel"/>
-    </php>
-
-    <testsuites>
-        <testsuite name="Contact API test suite">
-            <directory>tests</directory>
-        </testsuite>
-    </testsuites>
-
-    <source restrictDeprecations="true" restrictNotices="true" restrictWarnings="true">
-        <include>
-            <directory>src</directory>
-        </include>
-    </source>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd" colors="true" bootstrap="tests/bootstrap.php" cacheDirectory=".phpunit.cache" executionOrder="random" failOnWarning="true" failOnRisky="true" beStrictAboutOutputDuringTests="true" beStrictAboutChangesToGlobalState="true" requireCoverageMetadata="false">
+  <php>
+    <ini name="display_errors" value="1"/>
+    <ini name="error_reporting" value="-1"/>
+    <env name="APP_ENV" value="test" force="true"/>
+    <env name="APP_DEBUG" value="0" force="true"/>
+    <server name="APP_ENV" value="test" force="true"/>
+    <server name="APP_DEBUG" value="0" force="true"/>
+    <server name="SHELL_VERBOSITY" value="-1"/>
+    <server name="KERNEL_CLASS" value="App\Kernel"/>
+  </php>
+  <testsuites>
+    <testsuite name="Devzair API test suite">
+      <directory>tests</directory>
+    </testsuite>
+  </testsuites>
+  <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
 </phpunit>

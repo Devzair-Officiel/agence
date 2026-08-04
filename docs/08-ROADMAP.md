@@ -605,27 +605,87 @@ sans lien mort.
 ## Phase 8 — Extension du backend (données et persistance)
 
 Le squelette `apps/api` et l’image Docker PHP ont été introduits en
-Phase 6A. La Phase 8 se concentre sur l’ajout de la persistance et des
-domaines métier.
+Phase 6A. La Phase 8 est découpée en trois jalons — **8A domaine
+éditorial + persistance + API publique de lecture** (livré),
+**8B écriture et rendu markdown** (à venir), **8C administration
+authentifiée** (à venir).
+
+### Phase 8A — Domaine éditorial, PostgreSQL et lecture publique (TERMINÉE)
 
 - [x] ~~Créer `apps/api` avec Symfony 7.4 LTS.~~ (livré Phase 6A)
 - [x] ~~Ajouter Docker PHP.~~ (livré Phase 6A)
-- [ ] Ajouter PostgreSQL.
-- [ ] Configurer migrations.
-- [ ] Définir Article, Catégorie et Auteur.
-- [ ] Définir DTO publics.
-- [ ] Définir validation.
-- [ ] Définir statuts éditoriaux.
-- [ ] Définir permissions.
-- [ ] Créer endpoints publics.
-- [ ] Créer administration protégée.
-- [ ] Ajouter tests Symfony.
-- [ ] Documenter OpenAPI si retenu.
-- [ ] Définir la sanitisation du contenu.
+- [x] Ajouter PostgreSQL 17-alpine (version verrouillée, ADR-009). Service
+      Compose interne uniquement, healthcheck `pg_isready`, jamais publié
+      sur l'hôte.
+- [x] Installer Doctrine ORM 3 (`^3.3`) + DoctrineBundle (`^2.13`) +
+      MigrationsBundle (`^3.4`). Extension `pdo_pgsql` ajoutée au
+      Dockerfile.dev.
+- [x] Mapping Doctrine par attributs PHP sur `App\Editorial\Domain` uniquement
+      (le reste de l'API reste sans ORM). Racine migrations `App\Migrations`.
+- [x] Domaine `Editorial` : agrégat `Article`, VO `ArticleSlug`, `Author`,
+      `SeoMetadata`, enums `ArticleStatus` (Draft/Published/Archived),
+      `AuthorType` (organization/person), `ExpertiseIdentifier` (5 piliers
+      alignés sur `expertise-pillars.ts` côté Nuxt).
+      Invariants : Published ⇔ publishedAt non nul, dédoublonnage des piliers,
+      transitions `publish()` / `archive()` idempotentes, ClockInterface
+      injecté (SystemClock en prod, FixedClock en test).
+- [x] Migration `Version20260803120000` : table `editorial_article` avec
+      UUID natif, slug unique, `expertise_ids` en `jsonb`, timestamps `timestamptz`,
+      index composite `(status, published_at)`.
+- [x] Port `ArticleRepositoryInterface` + implémentation Doctrine
+      (`DoctrineArticleRepository`) + double en mémoire pour les tests
+      unitaires (`InMemoryArticleRepository`).
+- [x] Couche Application : `ListPublishedArticles(Handler)` + `GetPublishedArticle(Handler)`,
+      DTO de vue `ArticleSummaryView` / `ArticleDetailView` / `PaginationView`.
+- [x] API publique de lecture (Caddy strippe `/api`) :
+      - `GET /api/resources?page=1&per_page=10` → 200 avec `{items, pagination, request_id}`.
+        Bornes : `page ≥ 1`, `per_page ∈ [1, 50]`, invalide → 400 `validation_error`.
+      - `GET /api/resources/{slug}` → 200 (article publié), 404 (draft/archivé/inconnu),
+        400 (slug malformé).
+      - Contrat `X-Request-Id` (UUID v7) + `Cache-Control: public, max-age=60, s-maxage=300`
+        sur les 200 ; `no-store` sur les 4xx.
+      - Payload markdown brut ; le rendu HTML (renderer + sanitizer) est
+        repoussé en Phase 8B.
+- [x] Canal Monolog `editorial` dédié aux lectures publiques. Aucun PII n'est
+      pertinent ici mais on garde le pattern Request-Id + corrélation logs.
+- [x] Suite PHPUnit étendue : tests Domain (Article, ArticleSlug, Author,
+      SeoMetadata, ExpertiseIdentifier), Application (List/Get handlers via
+      InMemory repo), Infrastructure (DoctrineArticleRepositoryTest sur
+      `devzair_test` avec transaction rollback), Presentation (WebTestCase
+      couvrant contrat JSON, cache headers, pagination, 400/404).
+- [x] Workflow CI `.github/workflows/api-quality.yml` étendu : service
+      `postgres:17-alpine` (5432 exposé), extension `pdo_pgsql`, étapes
+      `doctrine:migrations:migrate` puis `doctrine:schema:validate` avant PHPUnit.
+- [x] Documentation : ADR-009 (persistance PostgreSQL + Doctrine ORM 3 +
+      choix UUID / JSONB / markdown brut), READMEs racine + `apps/api` mis à
+      jour, `docs/03-SEO-NUXT.md` (Phase 8B introduira SEO côté Nuxt),
+      `docs/05-SECURITY-PRIVACY.md` (Postgres jamais exposé), `docs/06-ARCHITECTURE-CODE.md`
+      (arborescence Editorial), `docs/07-QUALITY-DELIVERY.md` (nouveaux jeux de tests).
 
-### Critère de sortie
+Critère de sortie Phase 8A : atteint. L'API publique lit un article publié
+sous URL stable, retourne un contrat JSON versionnable, garantit qu'aucun
+brouillon ni archive ne fuit, et permet à la Phase 8B de brancher un flux
+d'écriture sans modifier ni le domaine ni le contrat public.
 
-L’API retourne des contrats stables, validés, documentés et testés.
+### Phase 8B — Écriture, rendu markdown et validation avancée (À VENIR)
+
+- [ ] Command handler `CreateArticle` + validation.
+- [ ] Choix du renderer markdown (CommonMark) + sanitizer HTML.
+- [ ] Endpoint interne d'écriture (protégé, à définir).
+- [ ] Import CLI depuis fichiers markdown (fixtures dev).
+- [ ] Cache HTTP fin (ETag/Last-Modified) sur les lectures.
+
+### Phase 8C — Administration authentifiée (À VENIR)
+
+- [ ] Auth admin (mode et provider à décider).
+- [ ] UI d'édition (Nuxt route protégée ou Symfony admin dédiée).
+- [ ] Journal éditorial (qui a publié/archivé, quand).
+- [ ] Rôles fins si besoin (multi-auteurs).
+
+### Critère de sortie (Phase 8 complète)
+
+L’API retourne des contrats stables, validés, documentés et testés,
+depuis la persistance jusqu'à l'administration protégée.
 
 ---
 

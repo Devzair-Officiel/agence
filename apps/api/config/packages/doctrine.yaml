@@ -1,0 +1,66 @@
+# Devzair — Doctrine ORM 3 (Phase 8A, voir ADR-009).
+#
+# Une seule connexion Postgres. Le mapping est déclaré uniquement pour le
+# namespace `App\Editorial\Domain` : le reste de l'application (Contact,
+# EventListener…) reste sans persistance.
+#
+# `enable_lazy_ghost_objects: true` (défaut ORM 3) et `report_fields_where_declared`
+# sont activés implicitement — pas besoin de les répéter ici.
+
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        # `server_version` est déjà porté par la query string du DSN ; on
+        # laisse Doctrine le lire là-bas pour éviter les divergences entre
+        # `.env` et cette config.
+        use_savepoints: true
+        # Type Postgres natif jsonb pour les listes de piliers.
+        types:
+            json: Doctrine\DBAL\Types\JsonType
+
+    orm:
+        auto_generate_proxy_classes: '%kernel.debug%'
+        controller_resolver:
+            auto_mapping: false
+        enable_lazy_ghost_objects: true
+        report_fields_where_declared: true
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: false
+        mappings:
+            Editorial:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Editorial/Domain'
+                prefix: 'App\Editorial\Domain'
+                alias: Editorial
+
+when@test:
+    doctrine:
+        dbal:
+            # Isolation des tests intégration : quel que soit `DATABASE_URL`
+            # injecté par Docker Compose (dev → `devzair`), l'env `test`
+            # ajoute `_test` au nom de la base — la suite PHPUnit cible
+            # toujours `devzair_test`. Pattern Symfony documenté :
+            # https://symfony.com/doc/current/testing.html#configuring-a-different-environment
+            dbname_suffix: '_test'
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

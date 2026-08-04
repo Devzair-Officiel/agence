@@ -5,6 +5,12 @@
 
 services:
     _defaults:
+        # Ré-active autowire/autoconfigure : sans cela, chaque service publié
+        # ci-dessous perd l'injection des arguments qu'il tenait du groupe
+        # `App\` déclaré dans services.yaml (Symfony ne cascade pas les
+        # `_defaults` entre fichiers de config).
+        autowire: true
+        autoconfigure: true
         public: true
 
     App\Contact\Service\InMemoryContactMessageSender:
@@ -30,4 +36,28 @@ services:
               limit: '%app.contact.rate_limit%'
               rate: { interval: '%app.contact.rate_interval%', amount: '%app.contact.rate_limit%' }
             - '@limiter.storage.contact_ip'
+        public: true
+
+    # ------------------------------------------------------------------
+    # Domaine éditorial (Phase 8A)
+    # ------------------------------------------------------------------
+    # Les tests d'intégration Doctrine (repository) et les tests HTTP
+    # (controllers) laissent l'implémentation réelle branchée sur la base
+    # `devzair_test`. Les tests unitaires Application/Domain n'utilisent pas
+    # le container Symfony : ils construisent handler + `InMemoryArticleRepository`
+    # à la main. Rien à surcharger ici.
+    App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository:
+        public: true
+
+    App\Editorial\Application\Query\ListPublishedArticlesHandler:
+        public: true
+
+    App\Editorial\Application\Query\GetPublishedArticleHandler:
+        public: true
+
+    # Rendu public pour permettre aux tests d'intégration Doctrine et aux
+    # tests HTTP d'accéder à l'EntityManager (flush après insertion via
+    # ArticleBuilder, nettoyage entre cas).
+    Doctrine\ORM\EntityManagerInterface:
+        alias: doctrine.orm.default_entity_manager
         public: true

@@ -2,7 +2,9 @@
 
 Site public de l'agence digitale Devzair. Monorepo Git unique organisant un
 frontend Nuxt 4 et, depuis la Phase 6A, un backend Symfony 7.4 LTS derrière
-un reverse proxy Caddy.
+un reverse proxy Caddy. Depuis la Phase 8A, une base PostgreSQL 17-alpine
+sert de persistance au domaine éditorial (interne, jamais publiée sur
+l'hôte).
 
 L'accueil publique une home d'agence one-pager : 8 sections éditoriales
 (hero → constat → réponse → 5 pôles → réalisations → méthode → pourquoi
@@ -15,9 +17,16 @@ navigateur dans la section `#contact`. La Phase 6C prépare l'activation
 réelle du transport SMTP OVHcloud (`MAILER_DSN` seule variable d'entrée,
 Turnstile facultatif via deux flags alignés `TURNSTILE_ENABLED` +
 `NUXT_PUBLIC_TURNSTILE_ENABLED`, réponse HTTP 503 `temporary_error` sur
-échec SMTP, commande de diagnostic `bin/console app:contact:check`). La
-persistance et le back-office restent différés — voir
-`docs/08-ROADMAP.md`, `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`
+échec SMTP, commande de diagnostic `bin/console app:contact:check`).
+
+La Phase 8A introduit le domaine éditorial `Article` (Symfony + Doctrine
+ORM 3 + PostgreSQL 17-alpine) et l'API publique de lecture :
+`GET /api/resources?page=…&per_page=…` (paginée) et
+`GET /api/resources/{slug}` (détail). L'écriture, le rendu markdown et le
+back-office restent différés — voir
+`docs/08-ROADMAP.md`,
+`docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`,
+`docs/adr/ADR-009-persistance-postgresql-editorial.md`
 et `docs/checklists/PRODUCTION-CONTACT.md`.
 
 ## Structure
@@ -25,7 +34,7 @@ et `docs/checklists/PRODUCTION-CONTACT.md`.
 ```
 apps/
   web/                  Frontend Nuxt 4 + Vue 3 + TypeScript strict
-  api/                  Backend Symfony 7.4 LTS (endpoint /api/contact)
+  api/                  Backend Symfony 7.4 LTS (endpoints /api/contact, /api/resources)
 infra/
   caddy/                Reverse proxy Caddy (Caddyfile + Dockerfile)
 docs/                   Documentation projet (à lire de façon sélective, cf. AGENTS.md)
@@ -33,7 +42,7 @@ docs/adr/               Décisions d'architecture consignées (ADR)
 .github/workflows/      Contrôles qualité CI (GitHub Actions)
 AGENTS.md               Règles communes aux agents (source de vérité)
 CLAUDE.md               Compléments propres à Claude Code
-compose.yaml            Orchestration Docker de développement (caddy + web + api)
+compose.yaml            Orchestration Docker de développement (caddy + web + api + postgres)
 ```
 
 ## Prérequis
@@ -45,7 +54,7 @@ compose.yaml            Orchestration Docker de développement (caddy + web + ap
 
 ```bash
 cp .env.example .env          # facultatif : personnaliser le port ou l'URL
-docker compose up -d --build  # build des trois images (caddy, web, api)
+docker compose up -d --build  # build des quatre services (caddy, web, api, postgres)
 docker compose logs -f caddy  # suivi du reverse proxy public
 ```
 
@@ -54,10 +63,20 @@ Le site est disponible sur http://localhost:3001. Caddy route :
 - `http://localhost:3001/`         → Nuxt (conteneur `web`)
 - `http://localhost:3001/api/*`    → Symfony (conteneur `api`, préfixe `/api` strippé)
 
+Le service `postgres` (PostgreSQL 17-alpine) n'est jamais exposé sur
+l'hôte : Symfony y accède via le réseau interne Compose.
+
 Vérification rapide de l'API :
 
 ```bash
-curl -s http://localhost:3001/api/health   # → {"status":"ok"}
+curl -s http://localhost:3001/api/health           # → {"status":"ok"}
+curl -s "http://localhost:3001/api/resources?page=1&per_page=10"  # → {"items":[…], "pagination":{…}, "request_id":"…"}
+```
+
+Appliquer les migrations Doctrine après un premier `docker compose up` :
+
+```bash
+docker compose exec api php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
 Pour arrêter :
@@ -120,6 +139,17 @@ Côté API, la Phase 6A introduit :
 - `TURNSTILE_ENABLED` / `TURNSTILE_SECRET` — vérification anti-bot ;
 - `CONTACT_RATE_LIMIT` / `CONTACT_RATE_INTERVAL` — rate limit par IP ;
 - `CONTACT_ORIGIN_ALLOWLIST` — CSRF stateless (voir ADR-007).
+
+La Phase 8A ajoute la persistance :
+
+- `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` — service Compose
+  `postgres:17-alpine` (interne uniquement, cf. ADR-009) ;
+- `DATABASE_URL` — DSN Doctrine (`postgresql://…?serverVersion=17&charset=utf8`),
+  défaut pointant sur le service interne `postgres:5432`.
+
+En production, la base est managée (OVH) et la version majeure de
+PostgreSQL doit rester alignée sur celle de dev/CI (17) — toute évolution
+majeure passe par une nouvelle ADR (cf. ADR-009).
 
 La Phase 6C ajoute un jumeau front à `TURNSTILE_ENABLED` :
 `NUXT_PUBLIC_TURNSTILE_ENABLED` (défaut `false`). Les deux flags

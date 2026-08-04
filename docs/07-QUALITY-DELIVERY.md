@@ -139,7 +139,7 @@ Documenter toute incompatibilité acceptée.
 | Workflow                              | Déclencheur (paths)                | Contrôles                                                        |
 |---------------------------------------|------------------------------------|------------------------------------------------------------------|
 | `.github/workflows/web-quality.yml`   | `apps/web/**`                      | Node 24 — lint + typecheck + vitest + build + Playwright (Chromium) |
-| `.github/workflows/api-quality.yml`   | `apps/api/**`                      | PHP 8.4 — `composer validate --strict` + `lint:yaml config` + `lint:container` + PHPUnit |
+| `.github/workflows/api-quality.yml`   | `apps/api/**`                      | PHP 8.4 (ext `pdo_pgsql`) + service `postgres:17-alpine` — `composer validate --strict` + `lint:yaml config` + `lint:container` + `doctrine:migrations:migrate --env=test` + `doctrine:schema:validate --skip-sync` + PHPUnit |
 
 Playwright en CI : `workers: 1`, `retries: 1`, build Nitro préalable
 (`npm run build && node .output/server/index.mjs`), reporter `line`
@@ -173,6 +173,35 @@ requête vers `challenges.cloudflare.com` », qui verrouille le contrat
 en production `docs/checklists/PRODUCTION-CONTACT.md` complète ces
 contrôles automatisés par une séquence manuelle contrôlée (un envoi
 test unique sur OVHcloud).
+
+### Suites PHPUnit du domaine `Editorial` (Phase 8A)
+
+Découpe alignée sur les 4 couches de `apps/api/src/Editorial/` :
+
+- **Domain unit** — `ArticleSlugTest`, `AuthorTest`, `SeoMetadataTest`,
+  `ExpertiseIdentifierTest`, `ArticleTest` (invariants publish/archive
+  idempotents, `Published ⇔ publishedAt non null`, dédoublonnage des
+  `expertiseIds`). Aucune I/O, aucun conteneur Symfony.
+- **Application unit** — `ListPublishedArticlesHandlerTest` (8 cas dont
+  ordre stable `publishedAt DESC, id DESC` et pagination hors bornes)
+  et `GetPublishedArticleHandlerTest`. Pilotés par
+  `InMemoryArticleRepository` (support test), aucune connexion base.
+- **Infrastructure integration** — `DoctrineArticleRepositoryTest`
+  (`KernelTestCase`, transaction rollback en `setUp`/`tearDown` sur
+  `devzair_test`) : filtre `status = Published`, tri stable,
+  `getPublishedBySlug`, `listPublished + countPublished` cohérents.
+- **Presentation functional** — `ListPublishedArticlesControllerTest`
+  et `GetPublishedArticleControllerTest` (`WebTestCase`, base
+  vidée via `DELETE FROM editorial_article`) : contrat 200/400/404,
+  headers `Cache-Control: public, max-age=60, s-maxage=300` sur 200 et
+  `no-store` sur 4xx, `X-Request-Id` UUID v7, payload JSON.
+- **Support tests** — `FixedClock`, `InMemoryArticleRepository`,
+  `ArticleBuilder` (patterns partagés, `apps/api/tests/Editorial/Support/`).
+
+Aucune donnée fictive n'est produite (règle 1 AGENTS.md) : les tests
+construisent leurs articles via `ArticleBuilder` avec des valeurs
+neutres (`Article de test`, `article-de-test`, `contenu court`) et
+nettoient la table après chaque cas.
 
 ### Déploiement
 

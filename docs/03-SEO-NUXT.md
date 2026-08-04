@@ -305,6 +305,20 @@ Le template global `%s | Devzair` transforme le title en
 canonical / robots est portée uniquement par `usePageSeo` — cf. `04.6`
 pour le comportement `noindex` sans canonical (DEC-023).
 
+**État côté API (Phase 8A close, 2026-08-03).** L'API publique
+`GET /api/resources` + `GET /api/resources/{slug}` (Symfony + Doctrine +
+PostgreSQL 17) expose les articles publiés en JSON brut — payload
+markdown non rendu, `seo.title` + `seo.description` inclus dans la vue
+détail. Les pages Nuxt `/ressources` et `/ressources/{slug}`
+**n'existent pas encore** : elles seront livrées en Phase 9 (`ADR-009`
+§Conséquences) et brancheront `usePageSeo({ title: article.seo.title,
+description: article.seo.description, canonical: `${siteUrl}/ressources/${slug}` })`
+sur la vue détail, plus un `type: "article"` (Open Graph) et un JSON-LD
+`Article` référencé sur l'`@id` de l'Organization (miroir DEC-065). Le
+renderer markdown côté serveur (Phase 8B) est un préalable à la
+Phase 9 : la carte de partage OG et le JSON-LD ne doivent pas exposer
+du markdown non rendu.
+
 **Chaînage Schema.org (Phase 7B).** Le nœud `Service` émis par
 `useExpertiseServiceSchema` sur chaque page `/expertises/{slug}` référence
 l'`Organization` globale par son `@id` (`${origin}/#organization`) —

@@ -18,6 +18,8 @@ ADR-003-strategie-seo.md
   Turnstile, rate limit, logging sans PII).
 - `ADR-008` — Transport mail OVHcloud via `MAILER_DSN`, Turnstile facultatif
   (deux flags alignés), réponse HTTP 503 `temporary_error` sur échec SMTP.
+- `ADR-009` — Persistance PostgreSQL 17-alpine du domaine éditorial (Doctrine
+  ORM 3, UUID v7, `expertise_ids` en `jsonb`).
 
 ## Modèle
 

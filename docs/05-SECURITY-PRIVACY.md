@@ -200,6 +200,31 @@ Compléments opérationnels Phase 6C :
 - **Log `contact.mailer_unavailable`** : canal Monolog `contact`, niveau
   warning, aucun PII (mêmes garanties que le happy path — cf. §14.11).
 
+### Persistance PostgreSQL (Phase 8A)
+
+Politique consignée dans `docs/adr/ADR-009-persistance-postgresql-editorial.md`.
+
+- **Service jamais exposé sur l'hôte** : `compose.yaml` publie uniquement
+  `caddy` sur `3001:80`. Le service `postgres` (image `postgres:17-alpine`)
+  n'a pas de bloc `ports:` et n'est joignable que via le réseau interne
+  Compose (`api → postgres:5432`). Aucune règle Caddy ne route vers
+  PostgreSQL. En production, la base est managée (OVH) et l'accès
+  réseau est restreint au serveur applicatif.
+- **Version majeure verrouillée** (`17-alpine` en dev + CI + prod) —
+  toute évolution majeure passe par une nouvelle ADR (cf. DEC-067).
+- **Endpoints publics en lecture seule** : `GET /api/resources` et
+  `GET /api/resources/{slug}` retournent exclusivement les articles
+  `status = Published`. Le filtre est appliqué au niveau du repository
+  Doctrine (`DoctrineArticleRepository`) — jamais côté controller — ce
+  qui garantit qu'aucun brouillon ni archive ne peut fuir par une
+  future extension de la couche HTTP (cf. DEC-070).
+- **Aucune écriture publique** en Phase 8A : pas d'endpoint POST /
+  PUT / DELETE. La table `editorial_article` démarre vide et le reste
+  tant qu'un jalon 8B/8C ne fournit pas d'écriture protégée.
+- **Canal Monolog `editorial`** dédié aux lectures publiques. Aucun
+  PII n'est pertinent pour ces lectures ; le pattern Request-Id + logs
+  corrélés est identique au canal `contact` (cf. §14.11).
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;

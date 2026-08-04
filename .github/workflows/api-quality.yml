@@ -1,13 +1,15 @@
-# Contrôles qualité du backend Symfony (apps/api) — Phase 6A.
+# Contrôles qualité du backend Symfony (apps/api) — Phase 6A + 8A.
 #
-# Un seul job :
+# Un seul job avec un service Postgres 17 aligné sur compose.yaml :
 #   - `composer validate --strict`     : cohérence du manifeste ;
-#   - `bin/console lint:container`      : injection et paramètres résolvables ;
-#   - `bin/console lint:yaml config`    : YAML syntaxiquement corrects ;
-#   - `phpunit`                         : DTO, endpoint, mailer, logs, sécurité.
+#   - `bin/console lint:container`     : injection et paramètres résolvables ;
+#   - `bin/console lint:yaml config`   : YAML syntaxiquement corrects ;
+#   - `doctrine:migrations:migrate`    : applique les migrations sur devzair_test ;
+#   - `doctrine:schema:validate`       : entités <-> schéma cohérents ;
+#   - `phpunit`                        : DTO, endpoint, mailer, logs, sécurité,
+#                                        domaine éditorial (Domain, App, Repo, HTTP).
 #
-# Aucune dépendance externe : Turnstile et Mailer sont désactivés en test
-# (voir apps/api/.env.test et services_test.yaml).
+# Aucune dépendance externe (Turnstile, Mailer) — désactivée en test.
 
 name: api-quality
 
@@ -29,12 +31,32 @@ concurrency:
 
 jobs:
   quality:
-    name: composer validate + lint + phpunit
+    name: composer validate + lint + migrations + phpunit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
       run:
         working-directory: apps/api
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: devzair_test
+          POSTGRES_USER: devzair
+          POSTGRES_PASSWORD: devzair_local_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devzair -d devzair_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      # Le service Postgres du workflow est exposé sur 127.0.0.1:5432.
+      DATABASE_URL: "postgresql://devzair:devzair_local_password@127.0.0.1:5432/devzair_test?serverVersion=17&charset=utf8"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -43,7 +65,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: intl, mbstring, ctype, iconv, opcache
+          extensions: intl, mbstring, ctype, iconv, opcache, pdo_pgsql
           coverage: none
           tools: composer:v2
 
@@ -69,6 +91,12 @@ jobs:
 
       - name: Lint DI container
         run: php bin/console lint:container --env=test
+
+      - name: Run migrations on devzair_test
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Validate Doctrine schema (mapping <-> database)
+        run: php bin/console doctrine:schema:validate --env=test --skip-sync
 
       - name: PHPUnit
         run: vendor/bin/phpunit --colors=never

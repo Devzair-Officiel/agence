@@ -1,0 +1,11 @@
+# Devzair — Doctrine Migrations (Phase 8A, voir ADR-009).
+#
+# Une seule racine `App\Migrations`. Chaque migration doit être réversible
+# (méthode `down()`) et documenter son intention en français au sommet de la
+# classe. Aucun schema:update sur les environnements distants — migrations
+# uniquement.
+
+doctrine_migrations:
+    migrations_paths:
+        'App\Migrations': '%kernel.project_dir%/migrations'
+    enable_profiler: false

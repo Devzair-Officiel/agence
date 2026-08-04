@@ -1,12 +1,16 @@
 {
     "name": "devzair/api",
-    "description": "Devzair — API Symfony 7.4 LTS (Phase 6A : endpoint /api/contact uniquement).",
+    "description": "Devzair — API Symfony 7.4 LTS (Phase 6A : endpoint /api/contact, Phase 8A : domaine éditorial PostgreSQL).",
     "type": "project",
     "license": "proprietary",
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-pdo_pgsql": "*",
+        "doctrine/doctrine-bundle": "^2.13",
+        "doctrine/doctrine-migrations-bundle": "^3.4",
+        "doctrine/orm": "^3.3",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2.4",
@@ -68,7 +72,24 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test:cache:clear": "@php bin/console cache:clear --env=test --no-warmup",
+        "test:db:reset": [
+            "@php bin/console doctrine:database:create --if-not-exists --env=test",
+            "@php bin/console doctrine:migrations:migrate --no-interaction --env=test"
+        ],
+        "test:schema:validate": "@php bin/console doctrine:schema:validate --env=test",
+        "test": [
+            "@test:cache:clear",
+            "@test:db:reset",
+            "@php vendor/bin/phpunit"
         ]
+    },
+    "scripts-descriptions": {
+        "test:cache:clear": "Invalide le cache Symfony env=test avant PHPUnit (routes, container, DI). Requis après toute modification de routing/config test.",
+        "test:db:reset": "Crée la base test si absente puis applique toutes les migrations. Idempotent.",
+        "test:schema:validate": "Vérifie que le mapping Doctrine et le schéma SQL de la base test sont synchronisés (sans --skip-sync).",
+        "test": "Pipeline PHPUnit reproductible : cache test invalidé → schéma migré → suite exécutée."
     },
     "conflict": {
         "symfony/symfony": "*"

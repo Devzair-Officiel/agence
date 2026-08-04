@@ -1,6 +1,7 @@
 monolog:
     channels:
         - contact
+        - editorial
 
 when@dev:
     monolog:

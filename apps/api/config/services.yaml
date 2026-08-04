@@ -26,6 +26,9 @@ services:
             # Force l'injection du canal Monolog "contact" à chaque service
             # qui demande un $contactLogger.
             Psr\Log\LoggerInterface $contactLogger: '@monolog.logger.contact'
+            # Canal dédié aux lectures publiques éditoriales — utile pour
+            # observer indépendamment le trafic Phase 8A.
+            Psr\Log\LoggerInterface $editorialLogger: '@monolog.logger.editorial'
 
     App\:
         resource: '../src/'
@@ -78,3 +81,12 @@ services:
     App\EventListener\ApiExceptionListener:
         arguments:
             $debug: '%kernel.debug%'
+
+    # Domaine éditorial (Phase 8A). L'implémentation par défaut du port est
+    # Doctrine ; les tests unitaires application/domaine utilisent la variante
+    # en mémoire déclarée dans services_test.yaml.
+    App\Editorial\Domain\ArticleRepositoryInterface:
+        alias: App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository
+
+    App\Editorial\Domain\Clock\ClockInterface:
+        alias: App\Editorial\Domain\Clock\SystemClock
