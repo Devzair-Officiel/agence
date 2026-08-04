@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useId } from "vue"
+import { computed, nextTick, onMounted, ref, useId } from "vue"
 
 import BaseButton from "~/components/base/BaseButton.vue"
 import ContactFormField from "~/components/contact/ContactFormField.vue"
@@ -50,6 +50,17 @@ const props = withDefaults(defineProps<Props>(), {
 const form = useContactForm({ endpoint: props.endpoint })
 const titleId = useId()
 const privacyId = props.privacyNoteId ?? `${useId()}-privacy`
+
+// Signal d'hydratation exposé via `data-hydrated` sur le <form>. Sert de
+// synchronisation fiable pour l'E2E : le hook `onMounted` du composant
+// parent est le SEUL point où l'on peut garantir que Vue a attaché ses
+// listeners (`@submit.prevent`, `v-model`) — les enfants (TurnstileWidget)
+// montent AVANT le parent, donc leur propre signal (dev-notice) ne prouve
+// pas que le form parent est hydraté. Voir DEV-045.
+const isHydrated = ref(false)
+onMounted(() => {
+  isHydrated.value = true
+})
 
 const statusRef = ref<InstanceType<typeof ContactFormStatus> | null>(null)
 const nameFieldRef = ref<InstanceType<typeof ContactFormField> | null>(null)
@@ -190,6 +201,7 @@ async function onSubmit(): Promise<void> {
     novalidate
     :aria-labelledby="titleId"
     :aria-describedby="privacyId"
+    :data-hydrated="isHydrated || undefined"
     @submit.prevent="onSubmit"
   >
     <h3 :id="titleId" class="contact-form__sr-title">
@@ -393,7 +405,7 @@ async function onSubmit(): Promise<void> {
       <BaseButton
         type="submit"
         variant="primary"
-        :disabled="!form.canSubmit.value"
+        :disabled="form.isSubmitting.value"
         :loading="form.isSubmitting.value"
       >
         {{ form.isSubmitting.value ? "Envoi en cours…" : "Envoyer le message" }}
@@ -556,6 +568,13 @@ async function onSubmit(): Promise<void> {
   transition:
     border var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out);
+  /*
+   * Overlay purement décoratif : on laisse le clic traverser vers le
+   * <label> parent, qui active alors la radio native (position: absolute,
+   * pointer-events: none). Sans ceci, un clic tombant pile sur la pastille
+   * est capté par ce span et ne déclenche pas la sélection.
+   */
+  pointer-events: none;
 }
 
 .contact-form__project-option[data-checked] .contact-form__project-dot {
@@ -643,6 +662,12 @@ async function onSubmit(): Promise<void> {
   transition:
     background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out);
+  /*
+   * Voir la note sur .contact-form__project-dot : la case décorative
+   * doit laisser passer le clic au <label> parent pour cocher la
+   * checkbox native masquée.
+   */
+  pointer-events: none;
 }
 
 .contact-form__consent-input:checked + .contact-form__consent-box {

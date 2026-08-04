@@ -66,18 +66,47 @@ test.describe('/ (home)', () => {
     await expect(items).toHaveCount(2)
   })
 
-  test('renders the ecosystem SVG with the five pillars', async ({ page }) => {
+  test('renders the ecosystem SVG inside a named <nav> landmark with five pillar links', async ({
+    page,
+  }) => {
     await page.goto('/')
-    const svg = page.locator('svg.home-ecosystem-graph')
-    await expect(svg).toHaveCount(1)
-    await expect(svg).toHaveAttribute('role', 'img')
 
-    // Nom accessible via aria-label (plus de <title> interne, qui déclenchait
-    // le tooltip natif du navigateur au survol).
-    await expect(svg).toHaveAttribute('aria-label', /cinq pôles/)
+    // Le graphe est enveloppé dans un <nav aria-label> qui porte le nom
+    // accessible du bloc. Le SVG lui-même n'a plus de role="img" ni de
+    // aria-label — obligatoire depuis DEC-073 pour éviter la violation Axe
+    // `nested-interactive` (WCAG 4.1.2 : un `role="img"` avec un nom
+    // accessible NE peut PAS contenir d'éléments interactifs, or nos cinq
+    // pôles sont des <a href> focusables).
+    const nav = page.locator('nav.home-ecosystem-navigation')
+    await expect(nav).toHaveCount(1)
+    await expect(nav).toHaveAttribute(
+      'aria-label',
+      'Explorer les expertises Devzair',
+    )
+
+    const svg = nav.locator('svg.home-ecosystem-graph')
+    await expect(svg).toHaveCount(1)
+    // Le SVG ne doit exposer aucun rôle ni nom accessible propre.
+    await expect(svg).not.toHaveAttribute('role', /.+/)
+    await expect(svg).not.toHaveAttribute('aria-label', /.+/)
     await expect(svg.locator('title')).toHaveCount(0)
+
     await expect(svg.locator('.home-ecosystem-graph__pillar')).toHaveCount(5)
-    await expect(svg.locator('.home-ecosystem-graph__pillar-link')).toHaveCount(5)
+    const links = svg.locator('.home-ecosystem-graph__pillar-link')
+    await expect(links).toHaveCount(5)
+
+    // Chaque lien porte un nom accessible contextualisé, exploitable dans
+    // la vue « liste des liens » d'un lecteur d'écran.
+    const labels = await links.evaluateAll((elements) =>
+      elements.map((el) => el.getAttribute('aria-label')),
+    )
+    expect(labels).toEqual([
+      "Découvrir l'expertise Concevoir",
+      "Découvrir l'expertise Construire",
+      "Découvrir l'expertise Valoriser",
+      "Découvrir l'expertise Développer la visibilité",
+      "Découvrir l'expertise Faire évoluer",
+    ])
 
     for (const label of [
       'Concevoir',

@@ -117,15 +117,36 @@ describe("useContactForm.submit", () => {
     vi.restoreAllMocks()
   })
 
-  it("cannot submit while the turnstile token is null", () => {
-    const form = useContactForm({
-      endpoint: "/api/contact",
-      fetcher: vi.fn(),
-    })
-    expect(form.canSubmit.value).toBe(false)
-    form.setTurnstileToken("cf-abc")
-    Object.assign(form.values, validValues())
+  it("keeps canSubmit true at rest and only flips to false while submitting (DEV-045)", async () => {
+    // Le guard historique `canSubmit = !isSubmitting && Boolean(token)`
+    // empêchait un formulaire vide d'être soumis, ce qui masquait les
+    // messages de validation client à l'utilisateur (le bouton restait
+    // grisé sans explication). Depuis DEV-045, la seule condition est
+    // l'absence de soumission en vol — Turnstile est validé côté serveur
+    // (code `turnstile_rejected`) et remonté par `globalError`.
+    let resolveFetch: (value: Response) => void = () => {}
+    const fetcher = vi
+      .fn()
+      .mockImplementation(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveFetch = resolve
+          }),
+      )
+    const form = useContactForm({ endpoint: "/api/contact", fetcher })
     expect(form.canSubmit.value).toBe(true)
+
+    Object.assign(form.values, validValues())
+    const pending = form.submit()
+    expect(form.canSubmit.value).toBe(false)
+    expect(form.isSubmitting.value).toBe(true)
+
+    resolveFetch(
+      makeFetchResponse(200, { status: "accepted", request_id: "req-canSubmit" }),
+    )
+    await pending
+    expect(form.canSubmit.value).toBe(true)
+    expect(form.isSubmitting.value).toBe(false)
   })
 
   it("returns a validation error and never calls fetch on invalid values", async () => {

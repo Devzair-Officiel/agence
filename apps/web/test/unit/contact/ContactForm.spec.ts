@@ -7,7 +7,10 @@ import ContactForm from "~/components/contact/ContactForm.vue"
 //   - le form est bien un <form>, labellé par un titre sr-only ;
 //   - il expose les champs attendus (name, email, message, consent, projectType) ;
 //   - le honeypot `website` est présent, hors flux et aria-hidden ;
-//   - le bouton d'envoi est désactivé tant qu'aucun token Turnstile n'est reçu.
+//   - le bouton d'envoi n'est désactivé QUE pendant l'envoi (DEV-045) —
+//     un formulaire vide doit pouvoir être soumis pour déclencher les
+//     messages de validation client, sans quoi l'utilisateur n'a aucun
+//     retour explicite sur ce qui manque.
 
 describe("ContactForm", () => {
   const stubs = {
@@ -58,11 +61,58 @@ describe("ContactForm", () => {
     expect(container.attributes("aria-hidden")).toBe("true")
   })
 
-  it("keeps the submit button disabled until a Turnstile token arrives", () => {
+  it("keeps the submit button enabled at load — Turnstile is not a gating factor client-side", () => {
     const wrapper = mountForm()
     const submit = wrapper.get('button[type="submit"]')
-    // Le composant Turnstile n'émet pas dans ce test : token reste null.
-    expect(submit.attributes("disabled")).toBeDefined()
+    // DEV-045 : le bouton n'est plus grisé en attente de Turnstile. Le
+    // token est contrôlé côté serveur (code `turnstile_rejected`). Un
+    // formulaire vide doit pouvoir être envoyé pour déclencher les
+    // messages de validation client — sinon l'utilisateur ne sait pas
+    // pourquoi rien ne se passe.
+    expect(submit.attributes("disabled")).toBeUndefined()
+  })
+
+  it("hides the interactive overlays (dot + consent box) from pointer events so the label handles clicks natively", () => {
+    const wrapper = mountForm()
+    // Les inputs natifs (radio + checkbox) sont visuellement masqués
+    // (`position: absolute; opacity: 0`). Les overlays décoratifs
+    // `.contact-form__project-dot` et `.contact-form__consent-box`
+    // doivent être marqués `aria-hidden="true"` ET recevoir CSS
+    // `pointer-events: none` (voir style scoped du composant) pour que
+    // le clic tombant sur eux se propage au <label> parent, qui active
+    // alors l'input natif. Ici on vérifie au moins la sémantique ARIA.
+    const dot = wrapper.find(".contact-form__project-dot")
+    expect(dot.exists()).toBe(true)
+    expect(dot.attributes("aria-hidden")).toBe("true")
+
+    const consentBox = wrapper.find(".contact-form__consent-box")
+    expect(consentBox.exists()).toBe(true)
+    expect(consentBox.attributes("aria-hidden")).toBe("true")
+  })
+
+  it("surfaces field validation errors when submitting an empty form (no API call)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response("{}", { status: 200 }),
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch
+    try {
+      const wrapper = mountForm()
+      await wrapper.get("form").trigger("submit")
+      await flushPromises()
+
+      // Aucun appel réseau — validation client bloque la soumission.
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      // Les erreurs par champ (name, email, message, consent) sont exposées.
+      const emailInput = wrapper.get('input[name="email"]').element as HTMLInputElement
+      expect(emailInput.getAttribute("aria-invalid")).toBe("true")
+      expect(wrapper.text()).toContain("Le nom est requis")
+      expect(wrapper.text()).toContain("Le message doit contenir au moins 20 caractères")
+      expect(wrapper.text()).toContain("Le consentement est requis")
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 
   it("renders the five expected project-type radios", () => {

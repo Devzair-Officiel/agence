@@ -10,11 +10,14 @@ import {
  * les cinq pôles d'expertise reliés autour.
  *
  * Accessibilité :
- *   - `role="img"` + `aria-label` pour le nom accessible et `aria-describedby`
- *     pointant sur `<desc>` pour l'annonce détaillée. On n'utilise pas
- *     `<title>` interne : les navigateurs le transforment en tooltip natif
- *     au survol, ce qui masque le graphe et n'apporte rien à la lecture
- *     assistive (déjà couverte par aria-label + desc).
+ *   - Le SVG contient cinq liens `<a>` focusables. On NE lui applique donc
+ *     PAS `role="img"` ni `aria-label` global : Axe (règle `nested-interactive`,
+ *     WCAG 4.1.2) interdit qu'un élément avec un rôle "widget" (dont img avec
+ *     nom accessible) contienne des interactifs. Voir DEC-073.
+ *   - Le nom accessible du bloc est porté par un `<nav aria-label>` qui
+ *     enveloppe le SVG (landmark de navigation contextualisé).
+ *   - Chaque `<a>` porte son propre `aria-label` contextualisé pour rester
+ *     utilisable en mode "liste des liens" des lecteurs d'écran.
  *   - Ids générés via `useId()` : sûrs si le composant est rendu plusieurs
  *     fois dans une même page (SSR-safe, pas de collision).
  *   - Groupes purement décoratifs marqués `aria-hidden="true"`. Le groupe
@@ -108,13 +111,10 @@ const nodes: readonly GraphNode[] = positions.map((position) => {
   }
 })
 
-const descriptionId = useId()
 const centerHaloId = useId()
 const pillarHaloId = useId()
 const centerGlowId = useId()
 const centerGradientId = useId()
-
-const graphLabel = "Les cinq pôles de l’écosystème digital Devzair"
 
 /**
  * Navigation vers la page détaillée du pôle survolé, en respectant les
@@ -137,20 +137,15 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
 </script>
 
 <template>
-  <svg
-    class="home-ecosystem-graph"
-    viewBox="-24 0 620 520"
-    role="img"
-    :aria-label="graphLabel"
-    :aria-describedby="descriptionId"
-    xmlns="http://www.w3.org/2000/svg"
+  <nav
+    class="home-ecosystem-navigation"
+    aria-label="Explorer les expertises Devzair"
   >
-    <desc :id="descriptionId">
-      L’entreprise du client est placée au centre et reliée aux cinq pôles
-      d’expertise Devzair&nbsp;: Concevoir, Construire, Valoriser, Développer
-      la visibilité et Faire évoluer.
-    </desc>
-
+    <svg
+      class="home-ecosystem-graph"
+      viewBox="-56 0 664 520"
+      xmlns="http://www.w3.org/2000/svg"
+    >
     <defs>
       <radialGradient :id="centerHaloId" cx="50%" cy="50%" r="50%">
         <stop offset="0%" stop-color="var(--color-petrol)" stop-opacity="0.55" />
@@ -322,7 +317,7 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
         :key="node.pillar.id"
         class="home-ecosystem-graph__pillar-link"
         :href="`/expertises/${node.pillar.id}`"
-        :aria-label="`Découvrir notre pôle : ${node.pillar.label}`"
+        :aria-label="`Découvrir l'expertise ${node.pillar.label}`"
         @click="onPillarClick($event, node.pillar.id)"
       >
         <g
@@ -423,10 +418,17 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
         </g>
       </a>
     </g>
-  </svg>
+    </svg>
+  </nav>
 </template>
 
 <style scoped>
+.home-ecosystem-navigation {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
 .home-ecosystem-graph {
   display: block;
   width: 100%;

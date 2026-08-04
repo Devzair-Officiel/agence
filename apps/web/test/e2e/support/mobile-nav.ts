@@ -22,6 +22,15 @@ import { expect } from '@playwright/test'
 export async function openMobileNavigation(page: Page): Promise<Locator> {
   const button = page.locator('button[aria-controls="mobile-navigation"]')
   await button.waitFor({ state: 'visible' })
+  // Attend le marqueur `data-hydrated="true"` posé par `SiteHeader.vue`
+  // dans son `onMounted` (DEV-045). Sans cette attente, la boucle
+  // click+aria-expanded ci-dessous peut consommer ses 10 s de budget en
+  // cliquant sur un bouton dont le listener `@click` n'a jamais été
+  // attaché (JIT Vite lent en `nuxt dev` sous charge). Le marqueur
+  // garantit que Vue a fini l'hydratation du header.
+  await expect(button).toHaveAttribute('data-hydrated', 'true', {
+    timeout: 30_000,
+  })
   await expect(async () => {
     await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', { timeout: 500 })

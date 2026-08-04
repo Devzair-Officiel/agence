@@ -214,9 +214,17 @@ export function useContactForm(options: UseContactFormOptions): ContactFormApi {
   const globalError = ref<GlobalError | null>(null)
   const successRequestId = ref<string | null>(null)
   const isSubmitting = computed(() => status.value === "submitting")
-  const canSubmit = computed(
-    () => !isSubmitting.value && Boolean(values.turnstileToken),
-  )
+  /*
+   * Le bouton d'envoi n'est désactivé que pendant la soumission en vol.
+   * Historiquement on gardait aussi `Boolean(values.turnstileToken)` ici,
+   * mais cela empêchait l'utilisateur de découvrir les erreurs de
+   * validation en cliquant sur un formulaire vide (le bouton restait
+   * grisé sans explication). La validation locale se déclenche désormais
+   * uniquement à la soumission, et Turnstile — quand activé — est
+   * contrôlé côté serveur (code `turnstile_rejected`) puis remonté par
+   * `globalError` avec focus sur la bannière.
+   */
+  const canSubmit = computed(() => !isSubmitting.value)
 
   const fetcher = options.fetcher ?? globalThis.fetch
 

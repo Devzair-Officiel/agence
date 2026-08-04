@@ -167,12 +167,21 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
 }
 
+/*
+ * Bandeau « mode dev » — rendu sur fond cream (surface du formulaire
+ * `#f8f5ef`). L'ancienne combinaison `--color-cream-muted` (#c4cbd3) sur
+ * cream donnait un contraste ~1.55:1, très loin de WCAG 1.4.3 (≥4.5:1
+ * pour le texte < 18 pt). On repasse sur `--text-primary` (`#16191c`)
+ * qui atteint ~17:1 sur cream. La bordure dashed passe elle aussi sur
+ * un token dark (`--border-default`, rgba(22,25,28,.14)) pour rester
+ * visible sans concurrencer le texte.
+ */
 .turnstile-widget__dev-notice {
   font-family: var(--font-family-mono);
   font-size: 0.75rem;
-  color: var(--color-cream-muted);
+  color: var(--text-primary);
   padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--border-inverse);
+  border: 1px dashed var(--border-default);
   border-radius: var(--radius-sm);
 }
 

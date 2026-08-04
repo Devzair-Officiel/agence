@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { onMounted, ref } from "vue"
 import { useMobileNavigation } from "~/composables/useMobileNavigation"
 import { primaryCta, primaryNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
@@ -7,6 +7,16 @@ import { site } from "~/config/site"
 const { toggle, isOpen } = useMobileNavigation()
 
 const menuButtonRef = ref<HTMLButtonElement | null>(null)
+
+// Signal d'hydratation exposé via `data-hydrated` sur le bouton menu.
+// Utilisé par le helper E2E `openMobileNavigation` pour synchroniser sur
+// l'attachement effectif du listener `@click` par Vue (en `nuxt dev`, la
+// compilation JIT peut décaler l'attachement de plusieurs centaines de
+// millisecondes après la visibilité DOM). Voir DEV-045 / DEC-073.
+const isHydrated = ref(false)
+onMounted(() => {
+  isHydrated.value = true
+})
 
 const onToggleMenu = () => {
   toggle(menuButtonRef.value)
@@ -58,6 +68,7 @@ const onToggleMenu = () => {
         class="site-header__menu-button"
         aria-controls="mobile-navigation"
         :aria-expanded="isOpen"
+        :data-hydrated="isHydrated || undefined"
         aria-label="Ouvrir le menu"
         @click="onToggleMenu"
       >

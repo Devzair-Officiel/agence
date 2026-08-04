@@ -667,6 +667,25 @@ sous URL stable, retourne un contrat JSON versionnable, garantit qu'aucun
 brouillon ni archive ne fuit, et permet à la Phase 8B de brancher un flux
 d'écriture sans modifier ni le domaine ni le contrat public.
 
+### Consolidation qualité E2E (DEV-045, 2026-08-04)
+
+Entre Phase 8A et Phase 8B, correctifs frontaux ciblés (aucune modification
+`apps/api/`) pour lever 3 violations Axe WCAG 2.2 AA (nested-interactive sur
+`HomeEcosystemGraph`, contraste dev-notice `TurnstileWidget`, viewBox SVG écrêté),
+2 régressions comportementales du formulaire de contact (label `consent`
+non-cliquable à cause d'un décor sans `pointer-events: none`, bouton primaire
+sans `type="submit"` explicite), et 5 flakies Playwright liés à la course
+d'hydratation Vue sous `nuxt dev`. Nouveau pattern formalisé DEC-073 :
+marqueur `data-hydrated="true"` posé dans `onMounted` du composant *parent
+qui porte le handler* (Vue 3 monte les enfants avant le parent — un signal
+enfant ne prouve pas l'attachement du listener parent). Deux passes
+Playwright complètes vertes sur `nuxt dev` fraîchement redémarré :
+retries=0 workers=1 → **228/0/0** et retries=1 workers=1 → **228/0/0**.
+Vitest 258/258, PHPUnit 110/229 inchangé, curl SEO OK sur `/`, `/contact`,
+`/sitemap.xml`. Aucun `waitForTimeout`, aucun `force: true`, aucun test
+désactivé, aucune règle Axe désactivée. La Phase 8B peut démarrer sur une
+base E2E propre.
+
 ### Phase 8B — Écriture, rendu markdown et validation avancée (À VENIR)
 
 - [ ] Command handler `CreateArticle` + validation.

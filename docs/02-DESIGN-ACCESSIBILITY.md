@@ -90,7 +90,8 @@ L’automatisation ne remplace pas les vérifications manuelles.
 
 ### Illustrations informatives (SVG)
 
-Un schéma qui porte du sens (ex. le graphe des cinq pôles sur `/`) doit :
+Un schéma **purement décoratif ou uniquement informatif** (sans
+interactif à l’intérieur) doit :
 
 - déclarer `role="img"` sur le `<svg>` racine ;
 - exposer un `<title>` court et un `<desc>` détaillé, tous deux référencés
@@ -102,6 +103,39 @@ Un schéma qui porte du sens (ex. le graphe des cinq pôles sur `/`) doit :
 - marquer tous les sous-groupes purement graphiques `aria-hidden="true"` ;
 - ne poser aucun `tabindex` : une illustration n’a pas à entrer dans le
   parcours clavier tant qu’elle n’est pas interactive.
+
+#### Cas particulier — SVG contenant des liens focusables
+
+**`role="img"` avec un nom accessible (aria-label / aria-labelledby /
+`<title>`) ne peut PAS contenir d’éléments interactifs.** Axe soulève la
+règle `nested-interactive` (WCAG 2.2 SC 4.1.2, Nom, rôle et valeur) :
+l’ARIA de l’élément parent absorbe l’arbre a11y et rend les descendants
+imprévisibles pour les technologies d’assistance.
+
+Pour un SVG qui embarque des liens (ex. le graphe des cinq pôles sur `/`
+depuis DEC-073) :
+
+- **NE PAS** appliquer `role="img"`, `aria-label`, `aria-labelledby` ni
+  `aria-describedby` sur le `<svg>` racine ;
+- **enrouler** le `<svg>` dans un `<nav aria-label="…">` (ou une région
+  landmark équivalente) qui porte le nom accessible du bloc ;
+- **conserver** les `<a href>` SVG focusables (natifs — ne pas
+  ajouter `tabindex` custom) ;
+- **donner à chaque `<a>` un `aria-label` contextualisé** exploitable
+  dans la vue « liste des liens » d’un lecteur d’écran (ex.
+  `Découvrir l'expertise Concevoir` plutôt que `Concevoir` seul) ;
+- garder les sous-groupes purement décoratifs `aria-hidden="true"` ;
+- ne pas dupliquer l’information : si le nom accessible est déjà porté
+  par le `<nav>` parent, on n’ajoute pas de `<desc>` visible aux AT
+  (sinon on annonce deux fois la même chose).
+
+En résumé :
+
+| Cas                             | `role="img"` | Nom accessible porté par                  |
+|---------------------------------|:------------:|-------------------------------------------|
+| SVG décoratif                   | non          | `aria-hidden="true"`                      |
+| SVG informatif sans interactif  | oui          | `aria-labelledby` → `<title>` + `<desc>`  |
+| SVG contenant des `<a>`         | **non**      | `<nav aria-label="…">` parent + `aria-label` par lien |
 
 ### Contraste Devzair-blue sur surfaces sombres
 

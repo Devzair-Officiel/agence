@@ -30,17 +30,58 @@ const API_URL = '**/api/contact'
 const VALID_MESSAGE =
   'Nous souhaitons refondre notre site vitrine pour clarifier notre offre commerciale.'
 
+async function waitForFormHydration(
+  page: import('@playwright/test').Page,
+): Promise<void> {
+  // Synchronisation d'hydratation via l'attribut `data-hydrated` posé par
+  // `ContactForm.vue` dans son `onMounted` (DEV-045). C'est le SEUL signal
+  // qui garantit que Vue a fini d'attacher `@submit.prevent` et les
+  // `v-model` sur le form : le dev-notice de TurnstileWidget ne suffit pas
+  // (les enfants montent avant le parent en Vue 3). Sans cette attente, le
+  // clic sur `button[type="submit"]` déclenche une soumission native
+  // (POST → même URL) qui recharge la page et masque toute erreur de
+  // validation ou d'appel API mocké. Timeout 30 s : en local le web
+  // tourne en `nuxt dev` (JIT Vite), qui peut dépasser 15 s au premier
+  // hit froid sur `/contact`. Un warm-up (`test.beforeAll` ci-dessous)
+  // couvre le cold-start ; la marge défensive gère les runs répétés
+  // (repeat×N charge N fois la page dans le même contexte).
+  await expect(page.locator('form.contact-form[data-hydrated="true"]')).toBeVisible({
+    timeout: 30_000,
+  })
+}
+
 async function fillValidForm(page: import('@playwright/test').Page): Promise<void> {
+  await waitForFormHydration(page)
   await page.locator('input[name="name"]').fill('Alice Dupont')
   await page.locator('input[name="email"]').fill('alice@example.com')
   await page.locator('input[name="company"]').fill('Devzair Studio')
   await page.locator('input[name="telephone"]').fill('+33 6 12 34 56 78')
-  await page.locator('input[name="projectType"][value="refonte"]').check()
+  // Les radios `projectType` et la checkbox `consent` sont visuellement
+  // masquées (position:absolute, opacity:0, pointer-events:none) : on
+  // clique le <label> parent — pattern natif où le clic label déclenche
+  // l'activation de l'input associé. `.check()` sur l'input direct
+  // échoue au check d'actionabilité Playwright (élément non
+  // interactif). Voir DEV-045.
+  await page
+    .locator('label.contact-form__project-option')
+    .filter({ hasText: "Refonte d'un site existant" })
+    .click()
+  await expect(page.locator('input[name="projectType"][value="refonte"]')).toBeChecked()
   await page.locator('textarea[name="message"]').fill(VALID_MESSAGE)
-  await page.locator('input[name="consent"]').check()
+  await page.locator('label.contact-form__consent-label').click()
+  await expect(page.locator('input[name="consent"]')).toBeChecked()
 }
 
 test.describe('/contact — formulaire de contact', () => {
+  // Warm-up : en dev (`nuxt dev`), le premier hit sur `/contact` déclenche la
+  // compilation JIT Vite (bundle client + SSR), qui peut dépasser les 30 s.
+  // Toucher la page une fois avant les tests garantit que les hits suivants
+  // servent la version compilée ; aucun impact sur un build (`nuxt preview`)
+  // où c'est un no-op très rapide.
+  test.beforeAll(async ({ request }) => {
+    await request.get(CONTACT_PATH, { timeout: 60_000 })
+  })
+
   test('renders the <form> and its main fields (SSR)', async ({ request }) => {
     const response = await request.get(CONTACT_PATH)
     expect(response.status()).toBe(200)
@@ -209,10 +250,12 @@ test.describe('/contact — formulaire de contact', () => {
     expect(cfScripts).toBe(0)
     expect(cloudflareRequests).toEqual([])
 
-    // Notice dev visible côté DOM : témoigne du mode noop.
+    // Notice dev visible côté DOM : témoigne du mode noop. Timeout aligné
+    // sur `waitForFormHydration` (30 s) — le premier hit après warm-up
+    // reste parfois sous pression en repeat×N (bundle + fonts + hydratation).
     await expect(
       page.locator(`${FORM} .turnstile-widget__dev-notice`),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 30_000 })
   })
 
   test('rate limit 429 → bandeau global avec Retry-After affiché', async ({ page }) => {
@@ -252,9 +295,17 @@ test.describe('/contact — formulaire de contact', () => {
 
     await page.goto(CONTACT_PATH)
     await expect(page.locator(`${FORM} button[type="submit"]`)).toBeEnabled()
-    // On coche uniquement le consentement pour dépasser le blocage côté widget,
-    // les autres champs restent vides → validation client refuse l'envoi.
-    await page.locator('input[name="consent"]').check()
+    // Le bouton est enabled dès le SSR — il faut attendre l'hydratation
+    // client pour que `@submit.prevent="onSubmit"` soit effectivement
+    // attaché sur le <form>, sinon le clic déclenche une soumission
+    // native (POST → même URL) qui recharge la page et masque toute
+    // erreur de validation. Voir waitForFormHydration pour le détail.
+    await waitForFormHydration(page)
+    // On coche uniquement le consentement (via le label — cf. commentaire
+    // dans fillValidForm) ; les autres champs restent vides → validation
+    // client refuse l'envoi et signale les erreurs par champ.
+    await page.locator('label.contact-form__consent-label').click()
+    await expect(page.locator('input[name="consent"]')).toBeChecked()
     await page.locator(`${FORM} button[type="submit"]`).click()
 
     expect(apiCalled).toBe(false)

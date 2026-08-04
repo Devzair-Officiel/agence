@@ -4,26 +4,27 @@ import HomeEcosystemGraph from "~/components/home/HomeEcosystemGraph.vue"
 import { expertisePillars } from "~/config/expertise-pillars"
 
 describe("HomeEcosystemGraph", () => {
-  it("renders an accessible SVG with role='img', aria-label and a linked desc (no <title> tooltip)", () => {
+  it("wraps the SVG in a named <nav> landmark and does NOT expose the SVG itself as a named image", () => {
     const wrapper = mount(HomeEcosystemGraph)
+
+    // Le SVG contient cinq liens focusables. Lui donner role="img" +
+    // aria-label déclenche `nested-interactive` (Axe / WCAG 4.1.2). Le nom
+    // du bloc est donc porté par un <nav aria-label> parent (landmark de
+    // navigation), pas par le SVG. Voir DEC-073.
+    const nav = wrapper.get("nav.home-ecosystem-navigation")
+    expect(nav.attributes("aria-label")).toBe(
+      "Explorer les expertises Devzair",
+    )
+
     const svg = wrapper.get("svg.home-ecosystem-graph")
-    expect(svg.attributes("role")).toBe("img")
+    expect(svg.attributes("role")).toBeUndefined()
+    expect(svg.attributes("aria-label")).toBeUndefined()
+    expect(svg.attributes("aria-labelledby")).toBeUndefined()
+    expect(svg.attributes("aria-describedby")).toBeUndefined()
 
     // Pas de <title> interne : les navigateurs le rendraient comme un
     // tooltip natif au survol, ce que l'on ne veut pas.
     expect(svg.find("title").exists()).toBe(false)
-
-    expect(svg.attributes("aria-label")).toContain("cinq pôles")
-
-    const desc = svg.get("desc")
-    expect(desc.text()).toContain("Concevoir")
-    expect(desc.text()).toContain("Faire évoluer")
-
-    const describedBy = svg.attributes("aria-describedby")
-    expect(describedBy).toBeTruthy()
-    expect(desc.attributes("id")).toBe(describedBy)
-
-    expect(svg.attributes("aria-labelledby")).toBeUndefined()
   })
 
   it("keeps only the decorative top-level groups aria-hidden, exposing the interactive pillars group", () => {
@@ -49,13 +50,13 @@ describe("HomeEcosystemGraph", () => {
     expect(pillarsGroup).toBeDefined()
     expect(pillarsGroup!.getAttribute("aria-hidden")).toBeNull()
 
-    // Aucun tabindex custom : on s'appuie sur la focusabilité native des
-    // ancres SVG (`<a href>`), qui sont automatiquement dans l'ordre de
-    // tabulation.
-    expect(svg.find("[tabindex]").exists()).toBe(false)
+    // Aucun tabindex custom sur le SVG lui-même : on s'appuie sur la
+    // focusabilité native des ancres SVG (`<a href>`), qui sont
+    // automatiquement dans l'ordre de tabulation.
+    expect(svg.attributes("tabindex")).toBeUndefined()
   })
 
-  it("wraps each pillar in a link to its expertise page with an accessible label", () => {
+  it("wraps each pillar in a link with a contextualised aria-label (readable in a screen reader link list)", () => {
     const wrapper = mount(HomeEcosystemGraph)
     const links = wrapper.findAll(".home-ecosystem-graph__pillar-link")
     expect(links).toHaveLength(expertisePillars.length)
@@ -63,7 +64,10 @@ describe("HomeEcosystemGraph", () => {
     for (const [index, pillar] of expertisePillars.entries()) {
       const link = links[index]!
       expect(link.attributes("href")).toBe(`/expertises/${pillar.id}`)
-      expect(link.attributes("aria-label")).toContain(pillar.label)
+      // Chaque libellé doit rester compréhensible hors contexte du graphe.
+      expect(link.attributes("aria-label")).toBe(
+        `Découvrir l'expertise ${pillar.label}`,
+      )
     }
   })
 
@@ -86,9 +90,12 @@ describe("HomeEcosystemGraph", () => {
     }
   })
 
-  it("uses an expanded viewBox and wraps long descriptions instead of clipping them", () => {
+  it("uses an expanded viewBox that accommodates the widest lateral labels", () => {
     const wrapper = mount(HomeEcosystemGraph)
-    expect(wrapper.get("svg").attributes("viewBox")).toBe("-24 0 620 520")
+    // Marge latérale gauche portée à 32 unités SVG pour absorber la
+    // longueur des libellés des pôles gauches (Visibilité, Faire évoluer)
+    // qui débordaient à ≥1 px CSS aux points de rupture 320 / 390 (DEV-045).
+    expect(wrapper.get("svg").attributes("viewBox")).toBe("-56 0 664 520")
 
     const descriptionLines = wrapper.findAll(
       ".home-ecosystem-graph__pillar-description tspan",
