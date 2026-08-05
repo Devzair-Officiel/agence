@@ -9,6 +9,7 @@ use App\Editorial\Application\Query\GetPublishedArticleHandler;
 use App\Editorial\Application\View\ArticleDetailView;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
 use App\Tests\Editorial\Support\ArticleBuilder;
+use App\Tests\Editorial\Support\FixedClock;
 use App\Tests\Editorial\Support\InMemoryArticleRepository;
 use PHPUnit\Framework\TestCase;
 
@@ -21,7 +22,7 @@ final class GetPublishedArticleHandlerTest extends TestCase
             ->withSlug('resource-publie')
             ->published()
             ->build());
-        $handler = new GetPublishedArticleHandler($repository);
+        $handler = new GetPublishedArticleHandler($repository, new FixedClock());
 
         $view = $handler(GetPublishedArticle::fromInput('resource-publie'));
 
@@ -36,7 +37,7 @@ final class GetPublishedArticleHandlerTest extends TestCase
         $repository->save((new ArticleBuilder())
             ->withSlug('brouillon-invisible')
             ->build());
-        $handler = new GetPublishedArticleHandler($repository);
+        $handler = new GetPublishedArticleHandler($repository, new FixedClock());
 
         $this->expectException(ArticleNotFoundException::class);
 
@@ -46,10 +47,29 @@ final class GetPublishedArticleHandlerTest extends TestCase
     public function testRaisesNotFoundForUnknownSlug(): void
     {
         $repository = new InMemoryArticleRepository();
-        $handler = new GetPublishedArticleHandler($repository);
+        $handler = new GetPublishedArticleHandler($repository, new FixedClock());
 
         $this->expectException(ArticleNotFoundException::class);
 
         $handler(GetPublishedArticle::fromInput('slug-inexistant'));
+    }
+
+    public function testRaisesNotFoundWhenPublishedInFutureRelativeToClock(): void
+    {
+        $repository = new InMemoryArticleRepository();
+        $future = new \DateTimeImmutable('2027-01-01T00:00:00+00:00');
+        $repository->save((new ArticleBuilder())
+            ->withSlug('article-programme')
+            ->withNow($future)
+            ->published()
+            ->build());
+        $handler = new GetPublishedArticleHandler(
+            $repository,
+            new FixedClock('2026-08-04T09:00:00+00:00'),
+        );
+
+        $this->expectException(ArticleNotFoundException::class);
+
+        $handler(GetPublishedArticle::fromInput('article-programme'));
     }
 }

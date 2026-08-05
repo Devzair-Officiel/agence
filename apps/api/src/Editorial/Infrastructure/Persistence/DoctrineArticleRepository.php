@@ -14,9 +14,10 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Implémentation Doctrine du port `ArticleRepositoryInterface`.
  *
- * Ne fait aucun `flush` automatique : c'est la couche appelante (le handler
- * ou une future commande d'écriture Phase 8B) qui décide du moment.
- * Les lectures publiques filtrent systématiquement sur `status = Published`.
+ * Ne fait aucun `flush` automatique : c'est la couche appelante (handler ou
+ * commande CLI) qui décide du moment. Les lectures publiques filtrent
+ * doublement sur `status = Published` ET `publishedAt <= :now` — voir la
+ * doc du port pour la justification.
  */
 final class DoctrineArticleRepository implements ArticleRepositoryInterface
 {
@@ -30,14 +31,29 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         $this->entityManager->persist($article);
     }
 
-    public function getPublishedBySlug(ArticleSlug $slug): Article
+    public function findBySlug(ArticleSlug $slug): ?Article
     {
         $article = $this->entityManager
             ->getRepository(Article::class)
-            ->findOneBy([
-                'slug' => $slug->value(),
-                'status' => ArticleStatus::Published,
-            ]);
+            ->findOneBy(['slug' => $slug->value()]);
+
+        return $article instanceof Article ? $article : null;
+    }
+
+    public function getPublishedBySlug(ArticleSlug $slug, \DateTimeImmutable $now): Article
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('a')
+            ->from(Article::class, 'a')
+            ->where('a.slug = :slug')
+            ->andWhere('a.status = :status')
+            ->andWhere('a.publishedAt <= :now')
+            ->setParameter('slug', $slug->value())
+            ->setParameter('status', ArticleStatus::Published)
+            ->setParameter('now', $now)
+            ->setMaxResults(1);
+
+        $article = $qb->getQuery()->getOneOrNullResult();
 
         if (!$article instanceof Article) {
             throw ArticleNotFoundException::forSlug($slug->value());
@@ -46,7 +62,7 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         return $article;
     }
 
-    public function listPublished(int $page, int $perPage): array
+    public function listPublished(int $page, int $perPage, \DateTimeImmutable $now): array
     {
         $offset = ($page - 1) * $perPage;
 
@@ -54,7 +70,9 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
             ->select('a')
             ->from(Article::class, 'a')
             ->where('a.status = :status')
+            ->andWhere('a.publishedAt <= :now')
             ->setParameter('status', ArticleStatus::Published)
+            ->setParameter('now', $now)
             ->orderBy('a.publishedAt', 'DESC')
             ->addOrderBy('a.id', 'DESC')
             ->setFirstResult($offset)
@@ -66,13 +84,15 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         return $result;
     }
 
-    public function countPublished(): int
+    public function countPublished(\DateTimeImmutable $now): int
     {
         $qb = $this->entityManager->createQueryBuilder()
             ->select('COUNT(a.id)')
             ->from(Article::class, 'a')
             ->where('a.status = :status')
-            ->setParameter('status', ArticleStatus::Published);
+            ->andWhere('a.publishedAt <= :now')
+            ->setParameter('status', ArticleStatus::Published)
+            ->setParameter('now', $now);
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }

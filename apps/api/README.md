@@ -1,4 +1,4 @@
-# apps/api — Backend Symfony 7.4 LTS (Phases 6A / 6C / 8A)
+# apps/api — Backend Symfony 7.4 LTS (Phases 6A / 6C / 8A / 8B1)
 
 API HTTP de l'agence Devzair.
 
@@ -6,11 +6,15 @@ API HTTP de l'agence Devzair.
   formulaire) + `GET /api/health` (santé) + commande CLI de diagnostic
   `bin/console app:contact:check`. Aucun stockage, envoi email
   synchrone.
-- Domaine `Editorial` (Phase 8A) : `GET /api/resources` (liste paginée
+- Domaine `Editorial` (Phase 8A + 8B1) : `GET /api/resources` (liste paginée
   des articles publiés) + `GET /api/resources/{slug}` (article publié
-  par slug). Persistance PostgreSQL 17-alpine via Doctrine ORM 3,
-  lecture publique uniquement — l'écriture, le renderer markdown et
-  l'administration authentifiée sont reportés aux Phases 8B / 8C.
+  par slug), avec cache HTTP conditionnel (ETag faible + `Last-Modified`
+  sur le détail + 304 Not Modified). Persistance PostgreSQL 17-alpine
+  via Doctrine ORM 3, lecture publique uniquement. L'alimentation de
+  la base se fait **exclusivement** par les commandes CLI
+  `bin/console app:editorial:import <path> [--dry-run]` et
+  `bin/console app:editorial:publish <slug> [--published-at=<ISO8601>]`
+  (aucun endpoint HTTP d'écriture — cf. ADR-010).
 
 Voir les décisions consignées :
 
@@ -22,6 +26,12 @@ Voir les décisions consignées :
 - `docs/adr/ADR-009-persistance-postgresql-editorial.md` — PostgreSQL 17-alpine
   verrouillée, Doctrine ORM 3 par attributs sur l'entité `Article`,
   UUID v7 direct, `expertise_ids` en `jsonb`, markdown stocké brut.
+- `docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md` —
+  pipeline CLI d'import/publication Markdown (`app:editorial:import`
+  create-only + `app:editorial:publish` idempotent), refus des dates
+  futures (double garde-fou agrégat + lecture), cache HTTP conditionnel
+  faible (`ETag` sur les deux endpoints, `Last-Modified` uniquement
+  sur le détail, `X-Request-Id` préservé sur 304).
 - `docs/checklists/PRODUCTION-CONTACT.md` — séquence opérationnelle de
   mise en prod du formulaire (SPF/DKIM/DMARC, pré-déploiement,
   test réel maîtrisé, dégradation contrôlée, rollback).
@@ -85,10 +95,10 @@ src/
       ContactCheckCommand.php            ← bin/console app:contact:check
     Exception/                           ← Phase 6C
       ContactTemporarilyUnavailableException.php  ← marker de domaine
-  Editorial/                             ← Phase 8A
+  Editorial/                             ← Phase 8A + 8B1
     Domain/                              ← modèle métier, sans I/O
       Article.php                        ← agrégat + attributs Doctrine
-      ArticleRepositoryInterface.php     ← port
+      ArticleRepositoryInterface.php     ← port (Phase 8B1 : +findBySlug + $now)
       ArticleSlug.php                    ← VO (regex, longueur)
       ArticleStatus.php                  ← enum Draft/Published/Archived
       Author.php                         ← VO (organization/person)
@@ -101,7 +111,18 @@ src/
       Exception/
         ArticleInvariantViolation.php
         ArticleNotFoundException.php
-    Application/                         ← cas d'usage (lecture Phase 8A)
+    Application/                         ← cas d'usage
+      Command/                           ← Phase 8B1
+        ImportArticleFromMarkdown.php
+        ImportArticleFromMarkdownHandler.php  ← create-only, refus doublon
+        ImportArticleResult.php
+        PublishArticleBySlug.php
+        PublishArticleBySlugHandler.php  ← idempotent, refus date future
+        PublishArticleResult.php
+      Markdown/                          ← Phase 8B1 — VO front matter + exceptions
+        ArticleFrontMatter.php           ← refuse publishedAt / clés inconnues
+        MarkdownParseException.php
+        MarkdownValidationException.php  ← agrège toutes les violations d'un fichier
       Query/
         ListPublishedArticles.php        ← paramètres validés
         ListPublishedArticlesHandler.php ← invoke → {items, pagination}
@@ -114,10 +135,21 @@ src/
     Infrastructure/
       Persistence/
         DoctrineArticleRepository.php    ← implémente le port, filtre Published
+      Markdown/                          ← Phase 8B1
+        MarkdownArticleFileParser.php    ← ≤ 512 Kio, UTF-8 sans BOM, YAML délimité
+        MarkdownContentValidator.php     ← rejet AST HtmlBlock/HtmlInline + schémas d'URL
+        MarkdownSecurityPolicy.php       ← fige CommonMark (test dédié garde-fou)
+        CommonMarkArticleRenderer.php    ← dry-run CLI + préparation Phase 8B2
     Presentation/
+      Console/                           ← Phase 8B1 — CLI
+        ImportArticleCommand.php         ← app:editorial:import <path> [--dry-run]
+        PublishArticleCommand.php        ← app:editorial:publish <slug> [--published-at=…]
       Http/
-        ListPublishedArticlesController.php  ← GET /resources
-        GetPublishedArticleController.php    ← GET /resources/{slug}
+        ListPublishedArticlesController.php  ← GET /resources (+ ETag/304 Phase 8B1)
+        GetPublishedArticleController.php    ← GET /resources/{slug} (+ ETag/Last-Modified/304)
+        ConditionalCache/                ← Phase 8B1
+          ArticleETag.php                ← W/"sha256(id|updatedAt|v1)"
+          ArticleListETag.php            ← W/"sha256(page|perPage|total|v1 + items)"
   EventListener/
     ApiExceptionListener.php             ← toute exception → JSON
 ```
@@ -165,8 +197,97 @@ Migrations Doctrine : `apps/api/migrations/` (racine `App\Migrations`).
 3. Cherche via `getPublishedBySlug(slug)`. Slug inconnu / non publié
    → 404 `not_found` + `Cache-Control: no-store`.
 4. Réponse 200 avec `ArticleDetailView` (payload complet dont
-   `body_markdown` brut — le renderer HTML est reporté Phase 8B) et
+   `body_markdown` brut — le renderer HTML est reporté Phase 8B2) et
    `Cache-Control: public, max-age=60, s-maxage=300`.
+
+### Cache HTTP conditionnel (Phase 8B1)
+
+Les deux endpoints publient un `ETag` **faible** (`W/"…"`, cf. DEC-076) —
+le corps JSON contient un `request_id` unique par requête, un ETag fort
+mentirait. Le détail publie en plus `Last-Modified` (basé sur
+`updatedAt`) ; la liste paginée n'en publie pas (cf. DEC-077, sémantique
+HTTP réservée à une ressource unique). `Cache-Control: public, max-age=60,
+s-maxage=300` sur 200, `no-store` sur 4xx.
+
+Sur `If-None-Match` correspondant (ou `If-Modified-Since` équivalent
+côté détail), la réponse est `304 Not Modified` avec `X-Request-Id`
+**réécrit explicitement** après `isNotModified()` (Symfony purge la
+plupart des en-têtes non liés à la validation sur 304 — cf. DEC-078).
+Le préfixe de version `v1` dans le matériau du hash permet une
+invalidation en masse en un déploiement si le contrat JSON évolue.
+
+## Pipeline CLI d'import Markdown (Phase 8B1)
+
+L'alimentation de la base éditoriale est **exclusivement** locale, via
+deux commandes exécutées dans le conteneur `api` (aucun endpoint HTTP
+d'écriture — cf. ADR-010 et DEC-074). Les articles vivent en Markdown
+avec YAML front matter délimité par `---` :
+
+```markdown
+---
+slug: mon-article
+title: Mon article de démonstration
+excerpt: Un extrait affiché en liste et dans le meta description.
+seo:
+  title: Un titre SEO (30-70 caractères)
+  description: Une description SEO entre 70 et 160 caractères pour respecter les bonnes pratiques d'indexation.
+author:
+  type: organization
+  name: Devzair
+expertises:
+  - concevoir
+---
+
+# Corps Markdown
+
+Contenu **standard** avec liens `[texte](https://example.com)`,
+images, listes, code — pas de HTML brut, seuls les schémas d'URL
+`http`, `https`, `mailto` et `tel` (les URL relatives sont
+autorisées) sont acceptés.
+```
+
+Le champ `publishedAt` / `published_at` est **explicitement interdit**
+dans le front matter — la publication est une action séparée.
+
+### Import (`app:editorial:import`)
+
+```bash
+# Valider un fichier sans persister :
+docker compose exec api php bin/console app:editorial:import \
+    /chemin/vers/mon-article.md --dry-run
+
+# Importer réellement (article créé en Draft) :
+docker compose exec api php bin/console app:editorial:import \
+    /chemin/vers/mon-article.md
+```
+
+Refus détaillés (parseur / validateur) — le rédacteur voit toutes les
+violations d'un même fichier d'un coup :
+
+- fichier > 512 Kio, BOM UTF-8, YAML manquant ou invalide ;
+- clé racine / SEO / auteur inconnue ;
+- `publishedAt` / `published_at` présent dans le front matter ;
+- HTML brut (`HtmlBlock` / `HtmlInline`) dans le corps ;
+- schéma d'URL hors liste blanche (`javascript:`, `data:`, `vbscript:`,
+  `file:`, `ftp:` sont refusés) ;
+- slug déjà présent en base (peu importe le statut — mode
+  « create only », cf. DEC-074).
+
+### Publication (`app:editorial:publish`)
+
+```bash
+# Publier à l'instant présent (Clock::now) :
+docker compose exec api php bin/console app:editorial:publish mon-article
+
+# Publier avec une date passée explicite (ISO 8601 UTC) :
+docker compose exec api php bin/console app:editorial:publish mon-article \
+    --published-at=2026-08-01T09:00:00+00:00
+```
+
+- Idempotent : un article déjà publié → warning + exit 0.
+- `--published-at` future refusée (double garde-fou agrégat + lecture
+  — cf. DEC-075).
+- Slug inconnu → exit 1.
 
 ## Développement local
 
@@ -236,8 +357,25 @@ Suites PHPUnit :
   `devzair_test`).
 - `tests/Editorial/Presentation/*` — WebTestCase contrat 200 / 400 /
   404 + headers `Cache-Control` + payload JSON.
+- `tests/Editorial/Application/Markdown/*` — Phase 8B1 : `ArticleFrontMatterTest`
+  (refus `publishedAt`, clés inconnues).
+- `tests/Editorial/Infrastructure/Markdown/*` — Phase 8B1 :
+  `MarkdownSecurityPolicyTest` (garde-fou configuration CommonMark),
+  `MarkdownContentValidatorTest` (rejet AST + schémas d'URL),
+  `MarkdownArticleFileParserTest`, `CommonMarkArticleRendererTest`.
+- `tests/Editorial/Application/Command/*` — Phase 8B1 :
+  `ImportArticleFromMarkdownHandlerTest`, `PublishArticleBySlugHandlerTest`.
+- `tests/Editorial/Presentation/Console/*` — Phase 8B1 :
+  `ImportArticleCommandTest`, `PublishArticleCommandTest` (via `CommandTester`).
+- `tests/Editorial/Presentation/ConditionalCache/*` — Phase 8B1 :
+  `GetPublishedArticleConditionalCacheTest`, `ListPublishedArticlesConditionalCacheTest`
+  (ETag faible, 304 sur `If-None-Match`/`If-Modified-Since`, `X-Request-Id`
+  préservé sur 304).
 - `tests/Editorial/Support/*` — `FixedClock`, `InMemoryArticleRepository`,
-  `ArticleBuilder` (patterns partagés, jamais rendus publics).
+  `ArticleBuilder`, trait `EntityManagerStub` (Phase 8B1),
+  `MarkdownFixture` (Phase 8B1) — patterns partagés, jamais rendus publics.
+
+Suite `Editorial` complète : **117 tests / 259 assertions**.
 
 ## Diagnostic de configuration (Phase 6C)
 
@@ -289,16 +427,20 @@ en exception. Documenté dans ADR-007.
 identiques — voir ADR-008. Une divergence produit un rejet systématique
 ou charge un script Cloudflare pour rien.
 
-## Ce qui n'est pas dans les Phases 6A / 6C / 8A
+## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1
 
-- Endpoint d'écriture des articles (POST / PUT / DELETE) — Phase 8B.
-- Renderer markdown côté serveur + sanitizer HTML — Phase 8B (le
-  contenu est actuellement stocké et exposé brut).
-- Cache HTTP fin (ETag / Last-Modified) sur les lectures — Phase 8B.
+- Endpoint HTTP d'écriture des articles (POST / PUT / DELETE) —
+  refus explicite en Phase 8B1 (cf. DEC-074), à re-évaluer uniquement
+  si un back-office authentifié devient nécessaire (Phase 8C).
+- Rendu HTML côté HTTP des articles — Phase 8B2 (le renderer existe
+  déjà via `CommonMarkArticleRenderer` mais ne sert qu'au dry-run CLI).
+  Les endpoints publics continuent d'exposer `body_markdown` brut.
 - Back-office authentifié (édition, journal de publication) — Phase 8C.
-- Pages Nuxt `/ressources` et `/ressources/{slug}` — Phase 9.
+- Pages Nuxt `/ressources` et `/ressources/{slug}` — Phase 8B2.
 - Fixtures ou seeds d'articles fictifs (règle 1 AGENTS.md — rien
-  inventer). La base démarre vide, y compris en dev.
+  inventer). La base démarre vide, y compris en dev — un rédacteur
+  autorisé doit fournir le Markdown puis exécuter
+  `app:editorial:import` + `app:editorial:publish`.
 - Queue asynchrone / worker Messenger (envoi Mailer resté synchrone —
   ré-évaluer si `contact.mailer_unavailable` devient régulier).
 - Image Open Graph dynamique.

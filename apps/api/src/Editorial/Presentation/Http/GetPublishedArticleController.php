@@ -8,6 +8,7 @@ use App\Editorial\Application\Query\GetPublishedArticle;
 use App\Editorial\Application\Query\GetPublishedArticleHandler;
 use App\Editorial\Domain\Exception\ArticleInvariantViolation;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use App\Editorial\Presentation\Http\ConditionalCache\ArticleETag;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +21,10 @@ use Symfony\Component\Uid\Uuid;
  *
  * - Slug malformé (regex/longueur) → 400 `validation_error`.
  * - Slug bien formé mais article inexistant ou non publié → 404.
- * - Succès → 200 avec cache public court/moyen (60s client, 5 min proxy).
+ * - Succès → 200 avec cache public court/moyen (60s client, 5 min proxy),
+ *   ETag faible + Last-Modified (RFC 7231). Si le client fournit
+ *   `If-None-Match` correspondant ou `If-Modified-Since` récent → 304.
+ *   Le `X-Request-Id` est préservé même sans corps.
  */
 #[AsController]
 final class GetPublishedArticleController
@@ -66,8 +70,22 @@ final class GetPublishedArticleController
         $payload['request_id'] = $requestId;
 
         $response = new JsonResponse($payload, Response::HTTP_OK);
+        $response->setEtag(ArticleETag::forDetail($view), weak: true);
+
+        $updatedAt = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $view->updatedAt);
+        if ($updatedAt !== false) {
+            $response->setLastModified($updatedAt);
+        }
+
         $response->headers->set('X-Request-Id', $requestId);
         $response->headers->set('Cache-Control', 'public, max-age=60, s-maxage=300');
+
+        if ($response->isNotModified($request)) {
+            // Symfony vide le corps sur 304 mais conserve les entêtes de
+            // validation. On rétablit X-Request-Id explicitement pour
+            // conserver la corrélation logs.
+            $response->headers->set('X-Request-Id', $requestId);
+        }
 
         return $response;
     }

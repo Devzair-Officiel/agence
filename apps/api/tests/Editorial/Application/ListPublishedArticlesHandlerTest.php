@@ -9,6 +9,7 @@ use App\Editorial\Application\Query\ListPublishedArticlesHandler;
 use App\Editorial\Application\View\ArticleSummaryView;
 use App\Editorial\Domain\Exception\ArticleInvariantViolation;
 use App\Tests\Editorial\Support\ArticleBuilder;
+use App\Tests\Editorial\Support\FixedClock;
 use App\Tests\Editorial\Support\InMemoryArticleRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -17,12 +18,15 @@ final class ListPublishedArticlesHandlerTest extends TestCase
 {
     private InMemoryArticleRepository $repository;
 
+    private FixedClock $clock;
+
     private ListPublishedArticlesHandler $handler;
 
     protected function setUp(): void
     {
         $this->repository = new InMemoryArticleRepository();
-        $this->handler = new ListPublishedArticlesHandler($this->repository);
+        $this->clock = new FixedClock('2026-09-01T00:00:00+00:00');
+        $this->handler = new ListPublishedArticlesHandler($this->repository, $this->clock);
     }
 
     public function testReturnsEmptyWhenNoArticle(): void
@@ -48,6 +52,25 @@ final class ListPublishedArticlesHandlerTest extends TestCase
 
         self::assertCount(1, $result['items']);
         self::assertSame('published-one', $result['items'][0]->slug);
+    }
+
+    public function testFiltersOutFuturePublications(): void
+    {
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('present')
+            ->withNow(new \DateTimeImmutable('2026-08-01T10:00:00+00:00'))
+            ->published()
+            ->build());
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('future-scheduled')
+            ->withNow(new \DateTimeImmutable('2027-01-01T00:00:00+00:00'))
+            ->published()
+            ->build());
+
+        $result = ($this->handler)(ListPublishedArticles::fromInputs(1, null));
+
+        self::assertCount(1, $result['items']);
+        self::assertSame('present', $result['items'][0]->slug);
     }
 
     public function testOrdersByPublishedAtDescendingThenById(): void

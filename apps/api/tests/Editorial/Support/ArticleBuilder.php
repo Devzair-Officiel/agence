@@ -130,7 +130,7 @@ final class ArticleBuilder
         );
 
         if ($this->publish) {
-            $article->publish($this->now);
+            $article->publish($this->now, $this->now);
         }
 
         return $article;

@@ -203,6 +203,50 @@ construisent leurs articles via `ArticleBuilder` avec des valeurs
 neutres (`Article de test`, `article-de-test`, `contenu court`) et
 nettoient la table après chaque cas.
 
+### Suites PHPUnit ajoutées en Phase 8B1
+
+Alignées sur les nouvelles couches (`Application/Markdown`,
+`Application/Command`, `Infrastructure/Markdown`, `Presentation/Console`,
+`Presentation/Http/ConditionalCache`) :
+
+- **Markdown unit** — `MarkdownSecurityPolicyTest` (garde-fou : échoue
+  si `html_input=strip` / `allow_unsafe_links=false` / limites de
+  nesting ou de délimiteurs sont affaiblis), `MarkdownContentValidatorTest`
+  (24 cas dont data provider `testRejectsDangerousUrls` sur les schémas
+  `javascript:`, `data:`, `vbscript:`, `file:`, `ftp:` — regex Unicode
+  `#Schéma d'URL "[^"]+" interdit#u` pour matcher le multi-byte `é`),
+  `MarkdownArticleFileParserTest` (BOM refusé, taille > 512 Kio refusée,
+  YAML manquant / invalide, front matter reconstruit), `ArticleFrontMatterTest`,
+  `CommonMarkArticleRendererTest`. Aucune I/O externe.
+- **Command handlers** — `ImportArticleFromMarkdownHandlerTest` (×4 :
+  import draft + flush, `--dry-run` ne persiste rien, refus slug
+  dupliqué, refus fichier contenant du HTML) et
+  `PublishArticleBySlugHandlerTest` (×5 : publish à `Clock::now()`,
+  publish avec date passée explicite, refus date future, `ArticleNotFoundException`
+  sur slug inconnu, idempotence sur article déjà publié).
+  Pilotés par `InMemoryArticleRepository` + `FixedClock` + trait
+  `EntityManagerStub` (cf. DEC-080).
+- **CLI functional** — `ImportArticleCommandTest` (×5) et
+  `PublishArticleCommandTest` (×6) via `CommandTester` : exit codes
+  0/1, output SymfonyStyle, gestion des options `--dry-run` /
+  `--published-at`, arguments malformés.
+- **Conditional cache functional** — `GetPublishedArticleConditionalCacheTest`
+  (×4 : ETag faible + `Last-Modified` émis, 304 sur `If-None-Match`,
+  304 sur `If-Modified-Since`, ETag différent par article) et
+  `ListPublishedArticlesConditionalCacheTest` (×3 : ETag faible **sans**
+  `Last-Modified`, 304 sur `If-None-Match`, ETag différent par page).
+  Vérifient explicitement `X-Request-Id` non vide sur les réponses 304
+  (cf. DEC-078).
+- **Support tests** — `MarkdownFixture` (fabrique de fichiers Markdown
+  temporaires avec YAML valide / corps invalide), trait
+  `EntityManagerStub` (`entityManagerExpectingFlush()`/`entityManagerExpectingNoFlush()`
+  en méthodes d'instance — cf. DEC-080).
+
+Suite `Editorial` complète (Phase 8A + 8B1) : **117 tests, 259 assertions**.
+Aucun contenu Markdown fictif n'est commité — les tests construisent
+leurs fixtures dans `/tmp/` via `MarkdownFixture` et nettoient après
+chaque cas.
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

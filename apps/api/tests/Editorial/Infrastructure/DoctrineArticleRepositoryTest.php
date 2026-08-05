@@ -28,6 +28,8 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
 
     private DoctrineArticleRepository $repository;
 
+    private \DateTimeImmutable $now;
+
     protected function setUp(): void
     {
         self::bootKernel();
@@ -35,6 +37,7 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
 
         $this->entityManager = $container->get(EntityManagerInterface::class);
         $this->repository = $container->get(DoctrineArticleRepository::class);
+        $this->now = new \DateTimeImmutable('2026-09-01T00:00:00+00:00');
 
         $this->clearEditorialTables($this->entityManager);
         $this->entityManager->beginTransaction();
@@ -61,6 +64,7 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
 
         $found = $this->repository->getPublishedBySlug(
             ArticleSlug::fromString('article-persiste-en-base'),
+            $this->now,
         );
 
         self::assertSame(ArticleStatus::Published, $found->status());
@@ -81,6 +85,27 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
 
         $this->repository->getPublishedBySlug(
             ArticleSlug::fromString('brouillon-en-base'),
+            $this->now,
+        );
+    }
+
+    public function testGetPublishedBySlugRaisesForFuturePublication(): void
+    {
+        $article = (new ArticleBuilder())
+            ->withSlug('article-programme-en-base')
+            ->withNow(new \DateTimeImmutable('2027-01-01T00:00:00+00:00'))
+            ->published()
+            ->build();
+
+        $this->repository->save($article);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $this->expectException(ArticleNotFoundException::class);
+
+        $this->repository->getPublishedBySlug(
+            ArticleSlug::fromString('article-programme-en-base'),
+            $this->now,
         );
     }
 
@@ -97,10 +122,55 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
         $this->entityManager->flush();
         $this->entityManager->clear();
 
-        $items = $this->repository->listPublished(1, 10);
+        $items = $this->repository->listPublished(1, 10, $this->now);
 
         self::assertCount(1, $items);
         self::assertSame('published-x', $items[0]->slug()->value());
-        self::assertSame(1, $this->repository->countPublished());
+        self::assertSame(1, $this->repository->countPublished($this->now));
+    }
+
+    public function testListPublishedIgnoresFuturePublications(): void
+    {
+        $present = (new ArticleBuilder())
+            ->withSlug('article-actuel')
+            ->withNow(new \DateTimeImmutable('2026-08-01T10:00:00+00:00'))
+            ->published()
+            ->build();
+        $future = (new ArticleBuilder())
+            ->withSlug('article-programme')
+            ->withNow(new \DateTimeImmutable('2027-01-01T00:00:00+00:00'))
+            ->published()
+            ->build();
+
+        $this->repository->save($present);
+        $this->repository->save($future);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $items = $this->repository->listPublished(1, 10, $this->now);
+
+        self::assertCount(1, $items);
+        self::assertSame('article-actuel', $items[0]->slug()->value());
+        self::assertSame(1, $this->repository->countPublished($this->now));
+    }
+
+    public function testFindBySlugReturnsDraft(): void
+    {
+        $draft = (new ArticleBuilder())->withSlug('draft-cherche')->build();
+        $this->repository->save($draft);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $found = $this->repository->findBySlug(ArticleSlug::fromString('draft-cherche'));
+
+        self::assertNotNull($found);
+        self::assertSame(ArticleStatus::Draft, $found->status());
+    }
+
+    public function testFindBySlugReturnsNullWhenUnknown(): void
+    {
+        self::assertNull(
+            $this->repository->findBySlug(ArticleSlug::fromString('slug-inexistant')),
+        );
     }
 }

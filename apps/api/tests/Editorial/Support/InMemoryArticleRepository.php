@@ -14,8 +14,8 @@ use App\Editorial\Domain\Exception\ArticleNotFoundException;
  * Implémentation en mémoire pour les tests Application/Domain.
  *
  * Ne prétend pas répliquer PostgreSQL — juste garantir le contrat du port :
- * lecture uniquement des articles publiés, pagination stable, tri par
- * publishedAt DESC puis id DESC.
+ * lecture uniquement des articles publiés dont `publishedAt <= $now`,
+ * pagination stable, tri par publishedAt DESC puis id DESC.
  */
 final class InMemoryArticleRepository implements ArticleRepositoryInterface
 {
@@ -29,13 +29,28 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         $this->articles[$article->id()->toRfc4122()] = $article;
     }
 
-    public function getPublishedBySlug(ArticleSlug $slug): Article
+    public function findBySlug(ArticleSlug $slug): ?Article
+    {
+        foreach ($this->articles as $article) {
+            if ($article->slug()->equals($slug)) {
+                return $article;
+            }
+        }
+
+        return null;
+    }
+
+    public function getPublishedBySlug(ArticleSlug $slug, \DateTimeImmutable $now): Article
     {
         foreach ($this->articles as $article) {
             if (!$article->slug()->equals($slug)) {
                 continue;
             }
             if ($article->status() !== ArticleStatus::Published) {
+                continue;
+            }
+            $publishedAt = $article->publishedAt();
+            if ($publishedAt === null || $publishedAt > $now) {
                 continue;
             }
 
@@ -45,11 +60,18 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         throw ArticleNotFoundException::forSlug($slug->value());
     }
 
-    public function listPublished(int $page, int $perPage): array
+    public function listPublished(int $page, int $perPage, \DateTimeImmutable $now): array
     {
         $published = array_values(array_filter(
             $this->articles,
-            static fn (Article $article): bool => $article->status() === ArticleStatus::Published,
+            static function (Article $article) use ($now): bool {
+                if ($article->status() !== ArticleStatus::Published) {
+                    return false;
+                }
+                $publishedAt = $article->publishedAt();
+
+                return $publishedAt !== null && $publishedAt <= $now;
+            },
         ));
 
         usort($published, static function (Article $a, Article $b): int {
@@ -72,11 +94,18 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         return array_values(\array_slice($published, $offset, $perPage));
     }
 
-    public function countPublished(): int
+    public function countPublished(\DateTimeImmutable $now): int
     {
         return \count(array_filter(
             $this->articles,
-            static fn (Article $article): bool => $article->status() === ArticleStatus::Published,
+            static function (Article $article) use ($now): bool {
+                if ($article->status() !== ArticleStatus::Published) {
+                    return false;
+                }
+                $publishedAt = $article->publishedAt();
+
+                return $publishedAt !== null && $publishedAt <= $now;
+            },
         ));
     }
 }

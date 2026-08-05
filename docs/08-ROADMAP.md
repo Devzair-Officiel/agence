@@ -686,13 +686,74 @@ Vitest 258/258, PHPUnit 110/229 inchangé, curl SEO OK sur `/`, `/contact`,
 désactivé, aucune règle Axe désactivée. La Phase 8B peut démarrer sur une
 base E2E propre.
 
-### Phase 8B — Écriture, rendu markdown et validation avancée (À VENIR)
+### Phase 8B — Écriture, rendu markdown et validation avancée (EN COURS)
 
-- [ ] Command handler `CreateArticle` + validation.
-- [ ] Choix du renderer markdown (CommonMark) + sanitizer HTML.
-- [ ] Endpoint interne d'écriture (protégé, à définir).
-- [ ] Import CLI depuis fichiers markdown (fixtures dev).
-- [ ] Cache HTTP fin (ETag/Last-Modified) sur les lectures.
+**Découpage** :
+
+- **8B1 Pipeline éditorial sécurisé et cache HTTP conditionnel** (livré) :
+  import CLI de Markdown vers Postgres, publication manuelle explicite,
+  cache HTTP conditionnel `ETag`/`Last-Modified` avec 304, refus des
+  publications futures. Aucune page Nuxt éditoriale, aucun endpoint
+  d'écriture HTTP, aucun back-office.
+- **8B2 Rendu HTML Markdown côté Nuxt et pages `/ressources`** (à venir) :
+  branchement du renderer CommonMark côté serveur (Nuxt), pages
+  `/ressources` et `/ressources/{slug}`.
+
+#### Phase 8B1 — Pipeline éditorial sécurisé et cache HTTP conditionnel (TERMINÉE)
+
+- [x] Format YAML front matter + Markdown body versionné et documenté
+      (`ArticleFrontMatter` typé, clés inconnues refusées, `publishedAt`
+      interdit dans le front matter).
+- [x] Parseur `MarkdownArticleFileParser` : fichier ≤ 512 Kio, UTF-8
+      strict (BOM refusé), délimiteurs `---`, refus d'un champ racine /
+      SEO / auteur / expertise inconnu ou d'un `AuthorType` invalide.
+- [x] Validateur `MarkdownContentValidator` sur AST CommonMark : refus
+      explicite de tout `HtmlBlock` / `HtmlInline` et de toute URL dont
+      le schéma n'est pas dans `[http, https, mailto, tel]`. Violations
+      agrégées dans une seule exception.
+- [x] Politique `MarkdownSecurityPolicy` figée par un test dédié
+      (`html_input=strip`, `allow_unsafe_links=false`,
+      `max_nesting_level=15`, `max_delimiters_per_line=100`) — la
+      configuration ne peut pas être affaiblie sans casser la suite.
+- [x] Handler `ImportArticleFromMarkdownHandler` : import « create only »
+      (collision de slug refusée), article importé toujours en `Draft`,
+      support `--dry-run` (aucun flush).
+- [x] Handler `PublishArticleBySlugHandler` : refus `publishedAt` futur,
+      idempotence sur article déjà publié, `ClockInterface` injecté.
+- [x] Ajout au port `ArticleRepositoryInterface` d'une méthode neutre
+      `findBySlug(ArticleSlug): ?Article` (utilisée uniquement par
+      Import et Publish).
+- [x] Modification signature `getPublishedBySlug/listPublished/countPublished`
+      pour recevoir `\DateTimeImmutable $now` — double-filtre `status =
+      Published AND publishedAt <= :now` en Doctrine et en mémoire.
+- [x] `Article::publish($publishedAt, $now)` refuse `$publishedAt > $now`.
+- [x] Commandes CLI `app:editorial:import <path> [--dry-run]` et
+      `app:editorial:publish <slug> [--published-at=<ISO8601>]`.
+      Publication programmée : la date doit être ISO 8601 avec fuseau
+      explicite (`Z` ou `+HH:MM`) ; « naïve » refusée.
+- [x] Cache HTTP conditionnel : `ArticleETag` faible sur les deux
+      endpoints (`W/"sha256(...)"`), `Last-Modified` sur le détail
+      uniquement (RFC 7231), 304 Not Modified sur `If-None-Match` et
+      `If-Modified-Since` matchant. `X-Request-Id` réécrit sur 304 pour
+      préserver la corrélation logs.
+- [x] Suite PHPUnit : Markdown (parser + validator + policy = 24 tests),
+      handlers Import/Publish (9 tests), CLI via `CommandTester` (11
+      tests), HTTP conditional cache (7 tests) — plus ajustement des
+      tests Domain/Application existants pour la nouvelle signature
+      (double-filtre `$now`, refus des dates futures).
+- [x] ADR-010 documente les choix (import CLI, refus des dates futures,
+      cache faible avec `Last-Modified` sur le détail uniquement).
+- [x] Aucun changement frontend, aucune migration Doctrine, aucun
+      endpoint HTTP nouveau, aucun fichier `content/` publié dans Git.
+
+#### Phase 8B2 — Rendu HTML Markdown côté Nuxt et pages `/ressources` (À VENIR)
+
+- [ ] Pages `/ressources` (index) et `/ressources/{slug}` (détail) côté Nuxt.
+- [ ] Rendu Markdown → HTML côté serveur (Nuxt) avec les mêmes garanties
+      que la politique CLI (`html_input=strip`, URLs restreintes).
+- [ ] Métadonnées SEO dynamiques + Schema.org `Article`.
+- [ ] Sitemap dynamique adossé à l'API publique.
+- [ ] Tests SSR + Playwright + Axe pour les deux pages.
 
 ### Phase 8C — Administration authentifiée (À VENIR)
 

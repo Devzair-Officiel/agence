@@ -20,6 +20,10 @@ ADR-003-strategie-seo.md
   (deux flags alignés), réponse HTTP 503 `temporary_error` sur échec SMTP.
 - `ADR-009` — Persistance PostgreSQL 17-alpine du domaine éditorial (Doctrine
   ORM 3, UUID v7, `expertise_ids` en `jsonb`).
+- `ADR-010` — Pipeline d'import Markdown CLI (`app:editorial:import` /
+  `app:editorial:publish`), refus des dates futures, cache HTTP conditionnel
+  faible (`ETag`, `Last-Modified` sur le détail, `X-Request-Id` préservé sur
+  304).
 
 ## Modèle
 

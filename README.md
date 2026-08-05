@@ -22,11 +22,20 @@ Turnstile facultatif via deux flags alignés `TURNSTILE_ENABLED` +
 La Phase 8A introduit le domaine éditorial `Article` (Symfony + Doctrine
 ORM 3 + PostgreSQL 17-alpine) et l'API publique de lecture :
 `GET /api/resources?page=…&per_page=…` (paginée) et
-`GET /api/resources/{slug}` (détail). L'écriture, le rendu markdown et le
-back-office restent différés — voir
-`docs/08-ROADMAP.md`,
+`GET /api/resources/{slug}` (détail).
+
+La Phase 8B1 ajoute un pipeline d'import Markdown CLI (`app:editorial:import`
+create-only + `app:editorial:publish` idempotent, aucune écriture HTTP,
+aucun back-office), la validation stricte des contenus (YAML front matter,
+AST CommonMark, refus HTML brut / URL non `[http, https, mailto, tel]` /
+`publishedAt` futur) et un cache HTTP conditionnel sur `/api/resources` :
+ETag faible + `Last-Modified` (détail uniquement) → `304 Not Modified`
+avec `X-Request-Id` préservé. Le rendu HTML n'est pas exposé HTTP en
+Phase 8B1 (les pages Nuxt `/ressources/**` restent différées à 8B2) —
+voir `docs/08-ROADMAP.md`,
 `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`,
-`docs/adr/ADR-009-persistance-postgresql-editorial.md`
+`docs/adr/ADR-009-persistance-postgresql-editorial.md`,
+`docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`
 et `docs/checklists/PRODUCTION-CONTACT.md`.
 
 ## Structure
@@ -34,7 +43,7 @@ et `docs/checklists/PRODUCTION-CONTACT.md`.
 ```
 apps/
   web/                  Frontend Nuxt 4 + Vue 3 + TypeScript strict
-  api/                  Backend Symfony 7.4 LTS (endpoints /api/contact, /api/resources)
+  api/                  Backend Symfony 7.4 LTS (endpoints /api/contact, /api/resources + CLI éditoriale)
 infra/
   caddy/                Reverse proxy Caddy (Caddyfile + Dockerfile)
 docs/                   Documentation projet (à lire de façon sélective, cf. AGENTS.md)
@@ -71,6 +80,19 @@ Vérification rapide de l'API :
 ```bash
 curl -s http://localhost:3001/api/health           # → {"status":"ok"}
 curl -s "http://localhost:3001/api/resources?page=1&per_page=10"  # → {"items":[…], "pagination":{…}, "request_id":"…"}
+curl -sI "http://localhost:3001/api/resources?page=1&per_page=10" \
+  | grep -i -E '^(etag|cache-control|x-request-id)'
+# → ETag: W/"…"   Cache-Control: public, max-age=60, s-maxage=300   X-Request-Id: 01…
+```
+
+Import CLI d'un article Markdown (Phase 8B1, aucune écriture HTTP) :
+
+```bash
+docker compose exec api php bin/console app:editorial:import chemin/article.md --dry-run
+docker compose exec api php bin/console app:editorial:import chemin/article.md
+docker compose exec api php bin/console app:editorial:publish mon-slug
+# ou avec date explicite (refusée si future) :
+docker compose exec api php bin/console app:editorial:publish mon-slug --published-at="2026-01-15T09:00:00+00:00"
 ```
 
 Appliquer les migrations Doctrine après un premier `docker compose up` :

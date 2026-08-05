@@ -218,12 +218,73 @@ Politique consignée dans `docs/adr/ADR-009-persistance-postgresql-editorial.md`
   Doctrine (`DoctrineArticleRepository`) — jamais côté controller — ce
   qui garantit qu'aucun brouillon ni archive ne peut fuir par une
   future extension de la couche HTTP (cf. DEC-070).
-- **Aucune écriture publique** en Phase 8A : pas d'endpoint POST /
-  PUT / DELETE. La table `editorial_article` démarre vide et le reste
-  tant qu'un jalon 8B/8C ne fournit pas d'écriture protégée.
+- **Aucune écriture publique** en Phase 8A/8B1 : pas d'endpoint POST /
+  PUT / DELETE. La table `editorial_article` démarre vide et n'est
+  alimentée que par la CLI `app:editorial:import` / `app:editorial:publish`
+  (cf. §14.9bis et DEC-074) — jamais par un handler HTTP.
 - **Canal Monolog `editorial`** dédié aux lectures publiques. Aucun
   PII n'est pertinent pour ces lectures ; le pattern Request-Id + logs
   corrélés est identique au canal `contact` (cf. §14.11).
+
+### Import Markdown éditorial (Phase 8B1)
+
+Politique consignée dans `docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`.
+
+- **Surface d'attaque nulle côté HTTP** : aucun endpoint d'écriture
+  n'est ajouté par la Phase 8B1. L'alimentation de la base se fait
+  exclusivement via les commandes `bin/console app:editorial:import`
+  et `bin/console app:editorial:publish` exécutées dans le conteneur
+  `api` (cf. DEC-074, mode « create only » : refus de tout slug
+  déjà présent).
+- **Parseur strict** (`MarkdownArticleFileParser`) : fichier ≤ 512 Kio,
+  UTF-8 sans BOM, YAML délimité `---`. Le front matter est reconstruit
+  dans un VO typé `ArticleFrontMatter` qui refuse explicitement les
+  clés inconnues (racines, SEO, auteur) et interdit `publishedAt` /
+  `published_at` — la publication reste une action séparée.
+- **Validateur AST** (`MarkdownContentValidator`) : parse le corps via
+  `league/commonmark ^2.7`, walke le document et rejette tout
+  `HtmlBlock` / `HtmlInline`, ainsi que toute URL de lien ou d'image
+  dont le schéma n'est pas dans la liste blanche `[http, https, mailto,
+  tel]`. Les URL relatives sont autorisées (elles ne portent pas de
+  schéma). Toutes les violations d'un même fichier sont agrégées dans
+  une seule `MarkdownValidationException` (le rédacteur voit tout d'un
+  coup, pas au goutte-à-goutte).
+- **Security policy figée** (`MarkdownSecurityPolicy`) : configure
+  CommonMark avec `html_input=strip`, `allow_unsafe_links=false`,
+  `max_nesting_level=15`, `max_delimiters_per_line=100`. Un test
+  dédié (`MarkdownSecurityPolicyTest`) échoue si un développeur
+  affaiblit cette configuration.
+- **Double barrière** : le refus explicite à l'import (parseur +
+  validateur) protège de tout HTML douteux *avant* la persistance ;
+  la security policy CommonMark protège au *rendu*. Aucun contenu
+  suspect ne peut donc ni être stocké ni être rendu.
+- **Publication future refusée** : `Article::publish($publishedAt,
+  $now)` lève `ArticleInvariantViolation` si `$publishedAt > $now`.
+  Les lectures publiques double-filtrent sur `publishedAt <= :now`
+  (cf. DEC-075) — un article programmé à cause d'un décalage
+  d'horloge serveur ne peut pas fuir.
+- **Rendu HTML jamais exposé côté HTTP en Phase 8B1** : le
+  `CommonMarkArticleRenderer` sert uniquement au dry-run CLI et
+  prépare la Phase 8B2. Les endpoints publics continuent de retourner
+  le Markdown brut.
+- **Cache HTTP conditionnel** (`ETag` faible + `Last-Modified` sur le
+  détail + 304 avec `X-Request-Id` réinjecté — cf. §14.9ter) : réduit
+  la surface d'exposition sur les pics de trafic sans introduire
+  d'invalidation manuelle.
+
+### Cache HTTP conditionnel (Phase 8B1)
+
+- **ETag faible** (`W/"…"`) sur les deux endpoints. Le corps JSON
+  contient un `request_id` UUID v7 unique par requête, un ETag fort
+  mentirait sur l'équivalence byte-à-byte (cf. DEC-076).
+- **`Last-Modified` uniquement sur le détail** — la liste paginée triée
+  n'a pas de sémantique `Last-Modified` cohérente (cf. DEC-077).
+- **`X-Request-Id` réécrit explicitement sur 304** : Symfony purge la
+  plupart des en-têtes non liés à la validation ; sans ré-injection,
+  la corrélation logs serait perdue sur toute requête cachée (cf.
+  DEC-078).
+- **Préfixe de version `v1`** dans le matériau du hash → invalidation
+  en masse en un déploiement si le contrat JSON évolue.
 
 ## 14.10 Transport, hébergement et réseau
 

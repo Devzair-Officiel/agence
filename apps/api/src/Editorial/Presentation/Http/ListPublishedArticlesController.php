@@ -8,6 +8,7 @@ use App\Editorial\Application\Query\ListPublishedArticles;
 use App\Editorial\Application\Query\ListPublishedArticlesHandler;
 use App\Editorial\Application\View\ArticleSummaryView;
 use App\Editorial\Domain\Exception\ArticleInvariantViolation;
+use App\Editorial\Presentation\Http\ConditionalCache\ArticleListETag;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +24,11 @@ use Symfony\Component\Uid\Uuid;
  * 2. Parse `page` / `per_page` depuis la query string, valide via
  *    `ListPublishedArticles::fromInputs()` → 400 si invalide.
  * 3. Délègue au handler qui renvoie items + pagination.
- * 4. Ajoute `Cache-Control: public, max-age=60, s-maxage=300` pour un cache
+ * 4. Calcule un ETag faible sur (page, perPage, total, id:updatedAt de
+ *    chaque item) et renvoie 304 si le client fournit un `If-None-Match`
+ *    correspondant. Le `X-Request-Id` est préservé sur 304 pour la
+ *    corrélation logs, même sans corps.
+ * 5. Ajoute `Cache-Control: public, max-age=60, s-maxage=300` pour un cache
  *    court côté client et plus long côté reverse proxy.
  *
  * Le contrat JSON est stable : `{ items: [...], pagination: {...}, request_id }`.
@@ -82,8 +87,17 @@ final class ListPublishedArticlesController
         ];
 
         $response = new JsonResponse($payload, Response::HTTP_OK);
+        $etag = ArticleListETag::forPage($result['items'], $result['pagination']);
+        $response->setEtag($etag, weak: true);
         $response->headers->set('X-Request-Id', $requestId);
         $response->headers->set('Cache-Control', 'public, max-age=60, s-maxage=300');
+
+        if ($response->isNotModified($request)) {
+            // isNotModified() vide le corps et positionne 304, mais réécrit
+            // les entêtes conservables. On remet explicitement X-Request-Id
+            // pour la corrélation logs même quand aucun corps n'est renvoyé.
+            $response->headers->set('X-Request-Id', $requestId);
+        }
 
         return $response;
     }

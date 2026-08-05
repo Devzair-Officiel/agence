@@ -152,18 +152,29 @@ class Article
     }
 
     /**
-     * Publie l'article maintenant. `now` doit venir d'un `ClockInterface`.
-     * L'entité refuse toute date future (protège contre un clock skew ou une
-     * demande de « programmation » — non couverte en Phase 8A).
+     * Publie l'article à la date `$publishedAt`, en horodatant `updatedAt`
+     * avec `$now`. `$now` doit venir d'un `ClockInterface`. L'entité refuse
+     * toute date de publication strictement supérieure à `$now` — cette
+     * défense en profondeur double le contrôle fait côté application
+     * (`PublishArticleBySlugHandler`) et protège contre un clock skew ou un
+     * bug d'appelant.
+     *
+     * Idempotent : renvoie silencieusement si l'article est déjà publié.
      */
-    public function publish(\DateTimeImmutable $now): void
+    public function publish(\DateTimeImmutable $publishedAt, \DateTimeImmutable $now): void
     {
         if ($this->status === ArticleStatus::Published) {
             return;
         }
 
+        if ($publishedAt > $now) {
+            throw new ArticleInvariantViolation(
+                'La date de publication ne peut pas être postérieure à l\'instant présent.',
+            );
+        }
+
         $this->status = ArticleStatus::Published;
-        $this->publishedAt = $now;
+        $this->publishedAt = $publishedAt;
         $this->updatedAt = $now;
     }
 

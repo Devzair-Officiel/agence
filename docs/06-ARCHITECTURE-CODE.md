@@ -88,11 +88,20 @@ devzair/
 │       ├── public/
 │       ├── src/
 │       │   ├── Contact/{Controller,Dto,Service,Security,Configuration,Command,Exception}
-│       │   ├── Editorial/            # Phase 8A : domaine éditorial (lecture publique)
+│       │   ├── Editorial/            # Phase 8A/8B1 : domaine éditorial (lecture publique + import CLI + cache HTTP)
 │       │   │   ├── Domain/           # Article, ArticleSlug, Author, SeoMetadata, enums, port, Clock, Exception
-│       │   │   ├── Application/      # Query + Handler + View DTOs (lecture)
-│       │   │   ├── Infrastructure/   # DoctrineArticleRepository
-│       │   │   └── Presentation/     # Controllers HTTP (GET /resources, GET /resources/{slug})
+│       │   │   ├── Application/
+│       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) + Handlers + Results
+│       │   │   │   ├── Markdown/     # Phase 8B1 — ArticleFrontMatter (VO), MarkdownParseException, MarkdownValidationException
+│       │   │   │   ├── Query/        # ListPublishedArticles/GetPublishedArticle + Handlers
+│       │   │   │   └── View/         # ArticleSummaryView, ArticleDetailView, PaginationView
+│       │   │   ├── Infrastructure/
+│       │   │   │   ├── Persistence/  # DoctrineArticleRepository, InMemoryArticleRepository (support)
+│       │   │   │   └── Markdown/     # Phase 8B1 — MarkdownArticleFileParser, MarkdownContentValidator, MarkdownSecurityPolicy, CommonMarkArticleRenderer
+│       │   │   └── Presentation/
+│       │   │       ├── Console/      # Phase 8B1 — app:editorial:import, app:editorial:publish
+│       │   │       └── Http/         # GET /resources, GET /resources/{slug}
+│       │   │           └── ConditionalCache/  # Phase 8B1 — ArticleETag, ArticleListETag (calcul ETag faible)
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
@@ -505,10 +514,15 @@ Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tan
   (Doctrine ORM 3 par attributs sur l'entité `Article`, UUID v7 direct,
   `expertise_ids` en `jsonb`, markdown stocké brut, cache HTTP à
   60/300 s) ;
+- `ADR-010` — pipeline d'import Markdown éditorial CLI
+  (`app:editorial:import` create-only + `app:editorial:publish`
+  idempotent), refus des `publishedAt` futurs (double garde-fou
+  agrégat + lecture), cache HTTP conditionnel faible (`ETag` sur les
+  deux endpoints, `Last-Modified` uniquement sur le détail,
+  `X-Request-Id` préservé sur 304) ;
 - ADR à rédiger lorsque le besoin apparaît : authentification de
-  l’administration, endpoint d'écriture Phase 8B, renderer markdown +
-  sanitizer HTML, stratégie de cache fin (ETag/Last-Modified) et
-  d’invalidation, analytics et consentement.
+  l’administration (Phase 8C), endpoint d'écriture HTTP dédié
+  (post-8B1 si besoin d'un back-office), analytics et consentement.
 
 ---
 

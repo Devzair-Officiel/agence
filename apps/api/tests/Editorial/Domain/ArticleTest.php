@@ -25,7 +25,7 @@ final class ArticleTest extends TestCase
         $now = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
         $article = (new ArticleBuilder())->build();
 
-        $article->publish($now);
+        $article->publish($now, $now);
 
         self::assertSame(ArticleStatus::Published, $article->status());
         self::assertNotNull($article->publishedAt());
@@ -33,15 +33,38 @@ final class ArticleTest extends TestCase
         self::assertTrue($article->status()->isPublished());
     }
 
+    public function testPublishAcceptsExplicitPastPublishedAt(): void
+    {
+        $publishedAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $now = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
+        $article = (new ArticleBuilder())->build();
+
+        $article->publish($publishedAt, $now);
+
+        self::assertSame($publishedAt->getTimestamp(), $article->publishedAt()?->getTimestamp());
+        self::assertSame($now->getTimestamp(), $article->updatedAt()->getTimestamp());
+    }
+
+    public function testPublishRefusesFuturePublishedAt(): void
+    {
+        $now = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
+        $article = (new ArticleBuilder())->build();
+
+        $this->expectException(ArticleInvariantViolation::class);
+
+        $article->publish($now->modify('+1 second'), $now);
+    }
+
     public function testPublishIsIdempotent(): void
     {
         $now = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
         $article = (new ArticleBuilder())->build();
 
-        $article->publish($now);
+        $article->publish($now, $now);
         $firstPublishedAt = $article->publishedAt();
 
-        $article->publish($now->modify('+1 day'));
+        $later = $now->modify('+1 day');
+        $article->publish($later, $later);
 
         self::assertSame(
             $firstPublishedAt?->getTimestamp(),
@@ -62,7 +85,7 @@ final class ArticleTest extends TestCase
     {
         $publishedAt = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
         $article = (new ArticleBuilder())->build();
-        $article->publish($publishedAt);
+        $article->publish($publishedAt, $publishedAt);
         $capturedPublishedAt = $article->publishedAt();
 
         $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
@@ -128,7 +151,7 @@ final class ArticleTest extends TestCase
         $published = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
 
         $article = (new ArticleBuilder())->withNow($created)->build();
-        $article->publish($published);
+        $article->publish($published, $published);
 
         self::assertSame($published->getTimestamp(), $article->updatedAt()->getTimestamp());
     }
