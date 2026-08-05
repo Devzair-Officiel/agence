@@ -113,9 +113,11 @@ export default defineNuxtConfig({
   robots: {
     // En mode `site.indexable=false`, @nuxtjs/robots impose automatiquement :
     //   - robots.txt : User-agent: * / Disallow: /
-    //   - X-Robots-Tag: noindex, nofollow, noarchive sur toutes les réponses HTML
     //   - meta robots injecté en <head>
-    // Aucune page ne peut échapper à la politique globale.
+    // Le X-Robots-Tag HTTP est posé par `server/plugins/x-robots-tag.ts` via
+    // le hook `beforeResponse` de Nitro : le middleware fourni par
+    // @nuxtjs/robots v5.x n'est pas invoqué pour les routes pré-rendues
+    // servies par le static handler (DEV-048).
     sitemap: '/sitemap.xml',
     // Politique documentée pour les robots d'IA :
     //   - OAI-SearchBot (recherche ChatGPT) : autorisé
@@ -133,6 +135,29 @@ export default defineNuxtConfig({
     autoLastmod: false,
   },
 
+  // DEV-048 — désactivation de `payloadExtraction`.
+  //
+  // Par défaut (Nuxt 4), Nitro extrait la donnée d'hydratation de chaque route
+  // pré-rendue dans un `_payload.json` séparé, puis `NuxtLink` en pré-fetch
+  // le contenu à l'apparition du lien (`prefetchOn: 'visibility'`). Pour un
+  // site 100 % statique sans `useAsyncData` côté serveur, ces payloads sont
+  // vides (`{"data":1,...}`) — aucun gain d'hydratation, uniquement des
+  // requêtes réseau supplémentaires.
+  //
+  // Le pré-fetch de payload sous Nitro production déclenche par ailleurs deux
+  // diagnostics Nuxt bruyants (`NUXT_E7001` / `NUXT_E7003`, cf. le pipeline
+  // `_getPayloadURL` de `app/composables/payload.js`) qui n'apparaissent
+  // jamais sous `nuxt dev`. Les tests E2E capturent ces erreurs dans le
+  // scénario « menu mobile → CTA → /contact » et échouent.
+  //
+  // Désactiver `payloadExtraction` court-circuite `loadPayload` (retour
+  // immédiat `null`) et supprime les payloads du build. C'est le fix produit
+  // minimal : aucune donnée applicative perdue, aucun bruit dans la console,
+  // et la navigation SPA continue de fonctionner via le composant préchargé.
+  experimental: {
+    payloadExtraction: false,
+  },
+
   routeRules: {
     // Pré-rendu limité aux pages marketing réellement existantes.
     // Phase 5D : accueil `/` (8 sections stables, 100 % SSR, données typées
@@ -145,6 +170,11 @@ export default defineNuxtConfig({
     // (`createError`) pour toute autre valeur. Les slugs sont énumérés ci-
     // dessous pour que Nitro pré-rende chaque page à la construction et les
     // inclue dans le sitemap.
+    //
+    // On n'attache PAS `headers['X-Robots-Tag']` ici : @nuxtjs/sitemap
+    // inspecte les headers de chaque routeRule et écarte silencieusement
+    // toute URL dont le header contient `noindex` (sitemap/nitro.js:70).
+    // L'en-tête est posé côté runtime par `server/plugins/x-robots-tag.ts`.
     '/': { prerender: true },
     '/agence': { prerender: true },
     '/contact': { prerender: true },

@@ -746,7 +746,14 @@ base E2E propre.
 - [x] Aucun changement frontend, aucune migration Doctrine, aucun
       endpoint HTTP nouveau, aucun fichier `content/` publié dans Git.
 
-#### Phase 8B2 — Rendu HTML Markdown côté Nuxt et pages `/ressources` (À VENIR)
+#### Phase 8B2 — Rendu HTML Markdown côté Nuxt et pages `/ressources` (DÉBLOQUÉE)
+
+Débloquée le 2026-08-05 par DEV-048 : deux régressions Playwright
+spécifiques à Nitro production corrigées (X-Robots-Tag posé via un Nitro
+plugin sur `beforeResponse` — cf. DEC-081 — et payload prefetch
+désactivé — cf. DEC-082). Playwright Nitro : **228/228, 0 flaky, 0 failed**
+sur deux passes complètes, x10 stabilité sur les specs sensibles, passe CI
+configuration verte. Base E2E propre pour attaquer la Phase 8B2.
 
 - [ ] Pages `/ressources` (index) et `/ressources/{slug}` (détail) côté Nuxt.
 - [ ] Rendu Markdown → HTML côté serveur (Nuxt) avec les mêmes garanties
