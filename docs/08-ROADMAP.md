@@ -686,7 +686,7 @@ Vitest 258/258, PHPUnit 110/229 inchangé, curl SEO OK sur `/`, `/contact`,
 désactivé, aucune règle Axe désactivée. La Phase 8B peut démarrer sur une
 base E2E propre.
 
-### Phase 8B — Écriture, rendu markdown et validation avancée (EN COURS)
+### Phase 8B — Écriture, rendu markdown et validation avancée (TERMINÉE)
 
 **Découpage** :
 
@@ -695,9 +695,13 @@ base E2E propre.
   cache HTTP conditionnel `ETag`/`Last-Modified` avec 304, refus des
   publications futures. Aucune page Nuxt éditoriale, aucun endpoint
   d'écriture HTTP, aucun back-office.
-- **8B2 Rendu HTML Markdown côté Nuxt et pages `/ressources`** (à venir) :
-  branchement du renderer CommonMark côté serveur (Nuxt), pages
-  `/ressources` et `/ressources/{slug}`.
+- **8B2 Rendu HTML Markdown côté serveur + pages `/ressources`** (livré) :
+  rendu HTML backend (League CommonMark + `MarkdownSecurityPolicy`),
+  `content_html` calculé à la requête (non persisté, aucune migration
+  Doctrine, aucune commande `app:editorial:rerender`), ETag détail
+  `v1 → v2` après évolution du payload, pages Nuxt SSR complètes,
+  frontière `v-html` unique (`ResourceContent`), cache Nitro respectant
+  HTTP, sitemap dynamique honnête.
 
 #### Phase 8B1 — Pipeline éditorial sécurisé et cache HTTP conditionnel (TERMINÉE)
 
@@ -746,21 +750,45 @@ base E2E propre.
 - [x] Aucun changement frontend, aucune migration Doctrine, aucun
       endpoint HTTP nouveau, aucun fichier `content/` publié dans Git.
 
-#### Phase 8B2 — Rendu HTML Markdown côté Nuxt et pages `/ressources` (DÉBLOQUÉE)
+#### Phase 8B2 — Rendu HTML Markdown côté Nuxt et pages `/ressources` (TERMINÉE)
 
-Débloquée le 2026-08-05 par DEV-048 : deux régressions Playwright
-spécifiques à Nitro production corrigées (X-Robots-Tag posé via un Nitro
-plugin sur `beforeResponse` — cf. DEC-081 — et payload prefetch
-désactivé — cf. DEC-082). Playwright Nitro : **228/228, 0 flaky, 0 failed**
-sur deux passes complètes, x10 stabilité sur les specs sensibles, passe CI
-configuration verte. Base E2E propre pour attaquer la Phase 8B2.
+Débloquée le 2026-08-05 par DEV-048 (Playwright Nitro : 228/228, 0 flaky).
+Livrée le 2026-08-05 par DEV-049 : intégration SSR complète des ressources
+éditoriales, avec sept corrections obligatoires appliquées (voir
+`docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md`).
 
-- [ ] Pages `/ressources` (index) et `/ressources/{slug}` (détail) côté Nuxt.
-- [ ] Rendu Markdown → HTML côté serveur (Nuxt) avec les mêmes garanties
-      que la politique CLI (`html_input=strip`, URLs restreintes).
-- [ ] Métadonnées SEO dynamiques + Schema.org `Article`.
-- [ ] Sitemap dynamique adossé à l'API publique.
-- [ ] Tests SSR + Playwright + Axe pour les deux pages.
+- [x] Rendu Markdown → HTML côté **backend** (League CommonMark avec
+      `MarkdownSecurityPolicy` : `html_input=strip`, URLs restreintes,
+      alignée sur la politique CLI Phase 8B1). `content_html` calculé à la
+      requête par `GetPublishedArticleHandler` via `CommonMarkArticleRenderer`
+      et exposé dans `ArticleDetailView` (aucune persistance HTML, aucune
+      nouvelle migration). Bump `ArticleETag` v1→v2 pour invalider les
+      caches HTTP après ajout du champ au payload détail.
+- [x] Pages `/ressources` (index) et `/ressources/{slug}` (détail) côté
+      Nuxt, SSR strict (`useAsyncData` avec clés stables).
+- [x] Endpoints Nitro internes `/_editorial/list` et
+      `/_editorial/detail/{slug}` (préfixe non conflictuel avec Caddy),
+      cache local `useStorage("editorial")` respectant HTTP (validateur
+      `If-None-Match` posé UNIQUEMENT depuis le cache local, jamais du
+      navigateur).
+- [x] Composant unique frontière de confiance `ResourceContent.vue` (seul
+      point d'usage `v-html` du site, `vue/no-v-html` désactivé localement
+      avec justification).
+- [x] Métadonnées SEO dynamiques (`useArticleSeo`) : JSON-LD `BlogPosting`
+      référençant l'`Organization` par `@id`, `BreadcrumbList` Accueil →
+      Ressources → Article, canonical propre.
+- [x] Sitemap dynamique via source `/__sitemap__/resources` (échec honnête
+      en 503 si l'API tombe — refus d'un sitemap partiel).
+- [x] Contrat d'erreur strict côté page : 404 (slug inconnu / brouillon /
+      archivé / futur / hors bornes), 503 (API indisponible / payload
+      invalide), 301 sur `?page=1` → `/ressources` (URL canonique unique).
+- [x] Commande console `app:editorial:e2e-fixtures <load|clear>` scopée
+      dev/test (`#[When]`), suppression restreinte au préfixe `e2e-8b2-`
+      (jamais de TRUNCATE ni de DELETE global) — script orchestrateur
+      `scripts/e2e-fixtures.sh` pour découpler Playwright de docker.sock.
+- [x] Tests : 55 tests unitaires Vitest (contrat, api, cache, composables,
+      composants), 13 scénarios Playwright dédiés `/ressources` via Caddy
+      (241/241 E2E verts au total).
 
 ### Phase 8C — Administration authentifiée (À VENIR)
 

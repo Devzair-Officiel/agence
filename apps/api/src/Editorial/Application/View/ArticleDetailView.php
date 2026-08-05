@@ -10,9 +10,17 @@ use App\Editorial\Domain\ExpertiseIdentifier;
 /**
  * Vue complète d'un article — utilisée par `/api/resources/{slug}`.
  *
- * Le body est renvoyé en markdown brut. Le rendu HTML et l'assainissement
- * sont délégués au front (Phase 8B) : le domaine ne doit pas connaître
- * l'existence d'un moteur de rendu.
+ * Depuis la Phase 8B2, la vue expose à la fois :
+ *   - `body_markdown` : le corps Markdown source, conservé temporairement
+ *     pour ne pas rompre le contrat public existant (débogage, dry-run
+ *     éditorial, futurs consommateurs) ;
+ *   - `content_html` : le rendu HTML sécurisé produit par le seul
+ *     `CommonMarkArticleRenderer` de l'infra. C'est la représentation que
+ *     le front public consomme (Symfony reste propriétaire de la frontière
+ *     de confiance HTML — cf. ADR-011).
+ *
+ * Le DTO reste un objet valeur pur : il ne connaît ni le renderer ni la
+ * politique de sécurité. Le handler construit les deux et les injecte.
  */
 final class ArticleDetailView
 {
@@ -25,6 +33,7 @@ final class ArticleDetailView
         public readonly string $title,
         public readonly string $excerpt,
         public readonly string $bodyMarkdown,
+        public readonly string $contentHtml,
         public readonly string $seoTitle,
         public readonly string $seoDescription,
         public readonly string $authorName,
@@ -35,7 +44,7 @@ final class ArticleDetailView
     ) {
     }
 
-    public static function fromEntity(Article $article): self
+    public static function fromEntity(Article $article, string $contentHtml): self
     {
         $publishedAt = $article->publishedAt();
         if ($publishedAt === null) {
@@ -50,6 +59,7 @@ final class ArticleDetailView
             title: $article->title(),
             excerpt: $article->excerpt(),
             bodyMarkdown: $article->bodyMarkdown(),
+            contentHtml: $contentHtml,
             seoTitle: $seo->title(),
             seoDescription: $seo->description(),
             authorName: $article->author()->name(),
@@ -71,6 +81,7 @@ final class ArticleDetailView
             'title' => $this->title,
             'excerpt' => $this->excerpt,
             'body_markdown' => $this->bodyMarkdown,
+            'content_html' => $this->contentHtml,
             'seo' => [
                 'title' => $this->seoTitle,
                 'description' => $this->seoDescription,

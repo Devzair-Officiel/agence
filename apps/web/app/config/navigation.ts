@@ -34,6 +34,7 @@ export interface NavigationGroup {
 export const primaryNavigation: readonly NavigationItem[] = [
   { label: "Expertises", to: "/expertises", isRoute: true },
   { label: "Agence", to: "/agence", isRoute: true },
+  { label: "Ressources", to: "/ressources", isRoute: true },
   { label: "Réalisations", to: "/#realisations", isRoute: true },
 ]
 
@@ -52,6 +53,7 @@ export const footerNavigation: readonly NavigationGroup[] = [
     items: [
       { label: "L'agence", to: "/agence", isRoute: true },
       { label: "Nos expertises", to: "/expertises", isRoute: true },
+      { label: "Ressources", to: "/ressources", isRoute: true },
       { label: "Réalisations", to: "/#realisations", isRoute: false },
     ],
   },

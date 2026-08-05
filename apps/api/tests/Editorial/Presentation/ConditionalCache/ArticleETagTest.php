@@ -34,6 +34,7 @@ final class ArticleETagTest extends TestCase
             title: 'Sample',
             excerpt: 'Sample excerpt suffisamment long pour dépasser la borne min.',
             bodyMarkdown: 'Body',
+            contentHtml: '<p>Body</p>',
             seoTitle: 'Sample SEO title assez long pour passer',
             seoDescription: 'Description SEO assez longue pour passer les bornes.',
             authorName: 'Devzair',

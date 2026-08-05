@@ -79,6 +79,14 @@ export default defineNuxtConfig({
   // Source de vérité runtime. Les valeurs sont surchargées par les variables
   // NUXT_PUBLIC_* au démarrage. Aucun secret dans .public.
   runtimeConfig: {
+    // Base URL interne de l'API Symfony utilisée par Nitro en SSR.
+    // Doit pointer directement le conteneur `api` (chemin réseau interne
+    // Compose) — sans passer par Caddy. Convention Nuxt : la variable
+    // d'environnement `NUXT_EDITORIAL_API_BASE_URL` override cette clé.
+    // Le préfixe `/api` est retiré côté Caddy avant forwarding, donc les
+    // routes Symfony vivent sous `/resources`, `/contact`… : la base URL
+    // interne ne doit PAS inclure `/api`. Voir ADR-011.
+    editorialApiBaseUrl: '',
     public: {
       siteUrl: 'http://localhost:3001',
       siteIndexable: false,
@@ -133,6 +141,11 @@ export default defineNuxtConfig({
     // Ne pas inventer de lastmod pour les routes statiques : mieux vaut
     // omettre la valeur que fournir une date fabriquée.
     autoLastmod: false,
+    // Source dynamique pour les URLs éditoriales (`/ressources/{slug}`).
+    // L'endpoint interne itère la liste paginée de l'API Symfony et
+    // retourne un tableau enrichi de `lastmod`. Il refuse de renvoyer une
+    // liste vide silencieuse en cas d'indisponibilité (503) — cf. ADR-011.
+    sources: ['/__sitemap__/resources'],
   },
 
   // DEV-048 — désactivation de `payloadExtraction`.

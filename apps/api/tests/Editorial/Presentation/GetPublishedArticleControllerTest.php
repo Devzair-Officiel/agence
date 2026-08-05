@@ -37,6 +37,11 @@ final class GetPublishedArticleControllerTest extends WebTestCase
         $data = $this->decode($client);
         self::assertSame('article-detail-teste', $data['slug']);
         self::assertArrayHasKey('body_markdown', $data);
+        // Phase 8B2 : le détail expose désormais aussi la représentation HTML
+        // sécurisée, calculée côté Symfony via CommonMarkArticleRenderer.
+        self::assertArrayHasKey('content_html', $data);
+        self::assertIsString($data['content_html']);
+        self::assertNotSame('', $data['content_html']);
         self::assertArrayHasKey('seo', $data);
         self::assertArrayHasKey('title', $data['seo']);
         self::assertArrayHasKey('description', $data['seo']);

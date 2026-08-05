@@ -30,12 +30,22 @@ aucun back-office), la validation stricte des contenus (YAML front matter,
 AST CommonMark, refus HTML brut / URL non `[http, https, mailto, tel]` /
 `publishedAt` futur) et un cache HTTP conditionnel sur `/api/resources` :
 ETag faible + `Last-Modified` (détail uniquement) → `304 Not Modified`
-avec `X-Request-Id` préservé. Le rendu HTML n'est pas exposé HTTP en
-Phase 8B1 (les pages Nuxt `/ressources/**` restent différées à 8B2) —
-voir `docs/08-ROADMAP.md`,
+avec `X-Request-Id` préservé.
+
+La Phase 8B2 livre les pages Nuxt publiques `/ressources` (listing SSR
+paginé) et `/ressources/{slug}` (détail Markdown rendu côté serveur par
+`CommonMarkArticleRenderer` — le rendu reste gouverné par
+`MarkdownSecurityPolicy`). Sitemap dynamique via
+`server/routes/__sitemap__/resources.ts` (retourne 503 si l'API
+éditoriale est indisponible — refus du partiel). Un jeu de fixtures E2E
+scopé dev/test uniquement (`bin/console app:editorial:e2e-fixtures
+<load|clear>`, préfixe `e2e-8b2-*`) permet à Playwright de valider le
+parcours via Caddy (`PLAYWRIGHT_BASE_URL=http://localhost:3001`) sans
+aucune dépendance à `docker.sock` — voir `docs/08-ROADMAP.md`,
 `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`,
 `docs/adr/ADR-009-persistance-postgresql-editorial.md`,
-`docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`
+`docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`,
+`docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md`
 et `docs/checklists/PRODUCTION-CONTACT.md`.
 
 ## Structure
@@ -69,8 +79,10 @@ docker compose logs -f caddy  # suivi du reverse proxy public
 
 Le site est disponible sur http://localhost:3001. Caddy route :
 
-- `http://localhost:3001/`         → Nuxt (conteneur `web`)
-- `http://localhost:3001/api/*`    → Symfony (conteneur `api`, préfixe `/api` strippé)
+- `http://localhost:3001/`             → Nuxt (conteneur `web`, page d'accueil)
+- `http://localhost:3001/ressources`   → Nuxt (listing SSR paginé des articles publiés)
+- `http://localhost:3001/ressources/…` → Nuxt (détail SSR d'un article, HTML rendu depuis Markdown)
+- `http://localhost:3001/api/*`        → Symfony (conteneur `api`, préfixe `/api` strippé)
 
 Le service `postgres` (PostgreSQL 17-alpine) n'est jamais exposé sur
 l'hôte : Symfony y accède via le réseau interne Compose.
@@ -94,6 +106,25 @@ docker compose exec api php bin/console app:editorial:publish mon-slug
 # ou avec date explicite (refusée si future) :
 docker compose exec api php bin/console app:editorial:publish mon-slug --published-at="2026-01-15T09:00:00+00:00"
 ```
+
+Jeu de fixtures E2E Phase 8B2 (dev/test uniquement, préfixe `e2e-8b2-*`,
+scopé par `#[When(env: 'dev'|'test')]` — jamais chargé en prod) :
+
+```bash
+scripts/e2e-fixtures.sh load    # purge + insertion du jeu déterministe (7 publiés + 1 brouillon + 1 archivé + 1 futur)
+scripts/e2e-fixtures.sh clear   # purge seulement (DELETE ciblé, jamais TRUNCATE)
+```
+
+Purge : `DELETE FROM editorial_article WHERE slug LIKE 'e2e-8b2-%'`
+uniquement (jamais `TRUNCATE`, jamais `DELETE` global). La commande
+n'est enregistrée dans le container que sous les environnements `dev`
+et `test` (`#[When]`) — en `prod`, elle est simplement absente de la
+liste `bin/console`.
+
+Le script encapsule `docker compose exec -T api bin/console
+app:editorial:e2e-fixtures <action>` : Playwright ne parle jamais
+directement à Docker (`PLAYWRIGHT_BASE_URL=http://localhost:3001`
+appelle uniquement Caddy).
 
 Appliquer les migrations Doctrine après un premier `docker compose up` :
 

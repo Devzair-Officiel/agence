@@ -24,16 +24,27 @@ use App\Editorial\Application\View\ArticleDetailView;
  * savoir si le contenu article a bougé.
  *
  * L'entrée du hash est :
- *     "{article_id}|{updated_at ATOM}|v1"
+ *     "{article_id}|{updated_at ATOM}|{CONTRACT_VERSION}"
  *
  * - `article_id` change si l'article est ré-importé ;
  * - `updated_at` change à chaque `Article::publish()` ou `archive()` ;
- * - le suffixe `v1` permet d'invalider en masse le cache sans requérir un
- *   changement de contenu, si un jour le contrat JSON évolue.
+ * - le suffixe de version permet d'invalider en masse le cache sans requérir
+ *   un changement de contenu, quand le contrat JSON évolue.
+ *
+ * La constante est volontairement dissociée de la version d'ETag de la liste
+ * (`ArticleListETag`) : les deux représentations ont des cycles de vie
+ * distincts. Un ajout de champ au détail (`content_html` en Phase 8B2) ne
+ * doit pas invalider les caches de la liste, et inversement.
+ *
+ * Historique :
+ * - v1 : payload initial (sans `content_html`).
+ * - v2 : Phase 8B2 — ajout de `content_html` (rendu Markdown → HTML côté
+ *   Symfony via `CommonMarkArticleRenderer`). Le payload change, l'ETag
+ *   doit changer : d'où le bump.
  */
 final class ArticleETag
 {
-    public const CONTRACT_VERSION = 'v1';
+    public const CONTRACT_VERSION = 'v2';
 
     public static function forDetail(ArticleDetailView $view): string
     {
