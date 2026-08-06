@@ -1,0 +1,37 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Tableau de bord — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Tableau de bord</h1>
+
+    <section class="card" aria-labelledby="account-heading">
+        <h2 id="account-heading">Compte connecté</h2>
+
+        <dl>
+            <dt>Nom affiché</dt>
+            <dd>{{ admin_user.displayName }}</dd>
+
+            <dt>Email</dt>
+            <dd>{{ admin_user.email.display }}</dd>
+
+            <dt>Dernière connexion</dt>
+            <dd>
+                {% if admin_user.lastLoginAt %}
+                    {{ admin_user.lastLoginAt|date('Y-m-d H:i:s T') }}
+                {% else %}
+                    Première connexion en cours.
+                {% endif %}
+            </dd>
+        </dl>
+
+        <form method="post" action="{{ path('admin_logout') }}" class="logout">
+            <input
+                type="hidden"
+                name="_csrf_token"
+                value="{{ csrf_token('logout') }}"
+            >
+            <button type="submit">Se déconnecter</button>
+        </form>
+    </section>
+{% endblock %}

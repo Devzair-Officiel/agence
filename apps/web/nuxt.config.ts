@@ -127,12 +127,15 @@ export default defineNuxtConfig({
     // @nuxtjs/robots v5.x n'est pas invoqué pour les routes pré-rendues
     // servies par le static handler (DEV-048).
     sitemap: '/sitemap.xml',
-    // Politique documentée pour les robots d'IA :
-    //   - OAI-SearchBot (recherche ChatGPT) : autorisé
-    //   - GPTBot (entraînement)             : refusé
-    // Ces règles ne s'appliquent qu'en mode indexable.
+    // Politique documentée pour les robots (site + IA) :
+    //   - `*`               : bloque /admin (Phase 8C1, ADR-012).
+    //   - OAI-SearchBot     : recherche ChatGPT autorisée.
+    //   - GPTBot            : entraînement refusé.
+    // Le blocage /admin s'applique même en mode `indexable: true` — la
+    // console d'administration ne doit jamais être indexable.
     groups: [
-      { userAgent: ['OAI-SearchBot'], allow: ['/'] },
+      { userAgent: ['*'], disallow: ['/admin', '/admin/'] },
+      { userAgent: ['OAI-SearchBot'], allow: ['/'], disallow: ['/admin', '/admin/'] },
       { userAgent: ['GPTBot'], disallow: ['/'] },
     ],
   },

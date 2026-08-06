@@ -1,9 +1,10 @@
 # Devzair — reverse proxy Caddy en frontal (dev).
 #
-# Un seul domaine public (localhost:3001 en dev, devzair.fr en prod). Toutes
-# les URL qui commencent par /api/ sont routées vers le conteneur Symfony ;
-# tout le reste va vers Nuxt/Nitro. Le chemin /api/ est **retiré** avant
-# forwarding : Symfony expose ses routes sous /contact, /health, etc.
+# Un seul domaine public (localhost:3001 en dev, devzair.fr en prod). Trois
+# familles de routes distinctes :
+# - `/api/*`   → Symfony, préfixe RETIRÉ avant forwarding (endpoints publics).
+# - `/admin/*` → Symfony, préfixe PRÉSERVÉ (déclenche le firewall admin).
+# - le reste  → Nuxt/Nitro (pages publiques SSR).
 
 {
     admin off
@@ -23,7 +24,29 @@
         reverse_proxy api:8000 {
             header_up X-Forwarded-Proto {scheme}
             header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Host {host}
+            # `{http.request.host_port}` = valeur exacte du header Host (avec
+            # port si le client en a mis un). `{host}` seul strip le port,
+            # ce qui casse la reconstruction d'URL absolue par Symfony
+            # (redirection post-login `http://localhost/admin` inaccessible
+            # depuis :3001 en dev).
+            header_up X-Forwarded-Host {http.request.host_port}
+        }
+    }
+
+    # Administration Symfony (Phase 8C1, cf. ADR-012). AUCUN strip_prefix :
+    # le firewall Symfony s'accroche sur ^/admin, il a besoin du préfixe.
+    @admin path /admin /admin/*
+    handle @admin {
+        reverse_proxy api:8000 {
+            # Caddy pose déjà X-Forwarded-Proto, X-Forwarded-For et
+            # X-Forwarded-Host par défaut à partir de la requête cliente.
+            # X-Forwarded-Port en revanche N'EST PAS posé automatiquement :
+            # sans lui, Symfony reconstruit les URLs absolues (Location après
+            # login) en utilisant le port du serveur upstream (8000) au lieu
+            # du port frontal (3001 en dev, 443 en prod derrière TLS). On
+            # force donc l'en-tête ici — la valeur `{http.request.port}`
+            # correspond au port présent dans la requête cliente.
+            header_up X-Forwarded-Port {http.request.port}
         }
     }
 

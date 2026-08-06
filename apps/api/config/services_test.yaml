@@ -61,3 +61,48 @@ services:
     Doctrine\ORM\EntityManagerInterface:
         alias: doctrine.orm.default_entity_manager
         public: true
+
+    # ------------------------------------------------------------------
+    # Domaine Admin (Phase 8C1)
+    # ------------------------------------------------------------------
+    # Les tests intégration Doctrine + tests HTTP utilisent la base
+    # `devzair_test` réelle. Les services suivants sont publiés pour que
+    # les tests puissent instancier des cas d'usage et vérifier l'état.
+    App\Admin\Infrastructure\Persistence\DoctrineAdminUserRepository:
+        public: true
+
+    App\Admin\Application\AdminAccountService:
+        public: true
+
+    App\Admin\Presentation\Console\CreateAdminUserCommand:
+        public: true
+
+    App\Admin\Presentation\Console\ResetAdminPasswordCommand:
+        public: true
+
+    App\Admin\Presentation\Console\DisableAdminUserCommand:
+        public: true
+
+    # Le UserProvider et le UserChecker sont récupérés via alias par le
+    # security bundle en test intégration — pas besoin de public ici.
+
+    # Login throttling : Symfony pose deux fenêtres (`_login_local_admin` et
+    # `_login_global_admin`) sur le cache `cache.rate_limiter`, qui est
+    # `FilesystemAdapter` par défaut. Ce cache persiste entre les runs PHPUnit
+    # et sature les 5 tentatives autorisées → les tests qui doivent réussir se
+    # font rejeter avec un renvoi vers /admin/login. On force donc les deux
+    # storages à `InMemoryStorage` : chaque boot de kernel repart d'un compteur
+    # neuf, sans changer le comportement documenté (throttling toujours actif
+    # dans les tests qui tapent >5 échecs consécutifs dans un même kernel).
+    limiter.storage._login_local_admin:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.storage._login_global_admin:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    # Horloge testable : chaque test peut geler l'instant en surchargeant
+    # ce service (via `getContainer()->set(...)`).
+    Symfony\Component\Clock\NativeClock:
+        public: true

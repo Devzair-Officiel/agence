@@ -6,9 +6,31 @@ framework:
     http_method_override: false
     handle_all_throwables: true
 
-    # Pas de session : l'endpoint /api/contact est stateless (voir ADR-007).
+    # Sessions activées pour la Phase 8C1 (authentification admin).
+    #
+    # Le cookie porte un nom dédié `DZ_ADMIN_SESSID` : il ne peut jamais être
+    # confondu avec un cookie public émis par Nuxt (le domaine public reste
+    # servi en stateless). En dev, `cookie_secure: auto` laisse HTTP passer ;
+    # en prod, HTTPS obligatoire (voir docs/checklists/PRODUCTION-CONTACT.md
+    # à étendre lors de la mise en prod admin).
+    #
+    # `cookie_samesite: lax` permet à un lien externe légitime de revenir sur
+    # l'admin sans effet de bord (les actions d'écriture Phase 8C1 se limitent
+    # à `POST /admin/login` et `POST /admin/logout`, tous deux protégés CSRF).
     session:
-        enabled: false
+        enabled: true
+        # `handler_id: null` = stockage filesystem (défaut Symfony). Pas de
+        # Redis pour Phase 8C1 (un seul conteneur `api`, filesystem suffit).
+        handler_id: null
+        cookie_secure: auto
+        cookie_httponly: true
+        cookie_samesite: lax
+        name: DZ_ADMIN_SESSID
+        # Durée d'inactivité côté cookie (0 = fermeture du navigateur), la
+        # durée serveur est gérée par `gc_maxlifetime`. On aligne les deux via
+        # `cookie_lifetime` = `gc_maxlifetime` = ADMIN_SESSION_LIFETIME.
+        cookie_lifetime: '%env(int:ADMIN_SESSION_LIFETIME)%'
+        gc_maxlifetime: '%env(int:ADMIN_SESSION_LIFETIME)%'
 
     php_errors:
         log: true
@@ -25,3 +47,8 @@ framework:
 when@test:
     framework:
         test: true
+        session:
+            # Le storage `mock_file` évite de créer de vrais fichiers de session
+            # pendant les tests et supprime la nécessité d'un `session_start`
+            # avant l'envoi des headers.
+            storage_factory_id: session.storage.factory.mock_file

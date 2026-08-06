@@ -1,0 +1,92 @@
+# Devzair — Sécurité Symfony (Phase 8C1, voir ADR-012).
+#
+# Un seul firewall métier : `admin`, ancré sur ^/admin. Les autres routes
+# HTTP (/contact, /health, /resources, /resources/{slug}) restent hors
+# firewall — Symfony expose une chaîne « anonyme » pour tout ce qui n'est
+# pas matché par un pattern.
+#
+# Rôle unique implicite `ROLE_ADMIN` — la colonne `roles` n'existe pas en
+# base (voir ADR-012). Le UserProvider custom normalise l'email avant lecture,
+# le UserChecker custom refuse `is_active = false`.
+
+security:
+    # Rotation systématique de l'identifiant de session à la connexion : bloque
+    # toute attaque de fixation (le cookie qu'un attaquant aurait injecté avant
+    # login devient invalide). Défaut Symfony = `migrate` — déclaré ici de
+    # façon explicite pour signaler le choix.
+    session_fixation_strategy: migrate
+
+    password_hashers:
+        # `auto` = Argon2id sur PHP 8.4 avec `sodium`. Coûts par défaut
+        # Symfony (memory 65 MiB, time cost 4, threads 1) — adaptés à un
+        # serveur applicatif standard.
+        App\Admin\Domain\AdminUser: 'auto'
+
+    providers:
+        admin_users:
+            id: App\Admin\Infrastructure\Security\AdminUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        admin:
+            pattern: ^/admin
+            provider: admin_users
+            user_checker: App\Admin\Infrastructure\Security\AdminUserChecker
+            lazy: true
+
+            form_login:
+                login_path: admin_login
+                check_path: admin_login
+                username_parameter: email
+                password_parameter: password
+                default_target_path: admin_dashboard
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: authenticate
+                # Ne jamais réémettre l'identifiant saisi dans la réponse :
+                # évite qu'un email tapé par erreur ne se retrouve dans les
+                # logs d'accès Caddy via query string.
+                post_only: true
+
+            # Throttling natif Symfony : 5 tentatives / 15 minutes par IP.
+            # Valeurs figées ici : les factories security-bundle sont
+            # résolues à la compilation du container Symfony et n'acceptent
+            # pas de référence `%env(...)%`. Un ajustement demande un
+            # redéploiement, ce qui est acceptable — la valeur est un
+            # paramètre de sécurité, pas un tuning runtime.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+
+            logout:
+                path: admin_logout
+                target: admin_login
+                # Invalide le cookie côté client + purge la session côté serveur.
+                invalidate_session: true
+                # Nécessite un token CSRF sur POST /admin/logout.
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+                csrf_token_id: logout
+
+    access_control:
+        # Le point d'entrée login doit rester joignable anonymement.
+        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        # CSS statique de l'admin (`apps/api/public/admin/assets/*`) — servi
+        # par le routeur php -S de Symfony, indispensable au rendu du login
+        # AVANT toute authentification. Doit rester PUBLIC_ACCESS, sinon la
+        # feuille de style est bloquée et la page login apparaît nue.
+        - { path: ^/admin/assets/, roles: PUBLIC_ACCESS }
+        # Tout le reste de /admin exige ROLE_ADMIN.
+        - { path: ^/admin, roles: ROLE_ADMIN }
+
+when@test:
+    security:
+        password_hashers:
+            # Bcrypt cost 4 : compression drastique du temps de hash en tests
+            # sans changer le format (une chaîne bcrypt reste valide en prod).
+            App\Admin\Domain\AdminUser:
+                algorithm: bcrypt
+                cost: 4

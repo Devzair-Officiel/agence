@@ -54,7 +54,9 @@ Voir les décisions consignées :
   restreint à `App\Editorial\Domain` uniquement — le domaine `Contact`
   reste sans ORM.
 - PostgreSQL 17-alpine (dev + CI + prod, version verrouillée par ADR-009).
-  Pas de Twig, pas d'admin en Phase 8A.
+- Twig (Phase 8C1) : rendu SSR de l'administration sous `/admin/**`
+  (`symfony/twig-bundle`). L'admin est same-origin, sans surface JS
+  (CSP `script-src 'none'`) — voir ADR-012.
 
 ## Architecture
 
@@ -427,20 +429,64 @@ en exception. Documenté dans ADR-007.
 identiques — voir ADR-008. Une divergence produit un rejet systématique
 ou charge un script Cloudflare pour rien.
 
-## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1
+## Administration (Phase 8C1)
+
+Rendu SSR Symfony/Twig sous `/admin/**`, same-origin, sans surface JS
+(CSP `script-src 'none'`). Voir ADR-012 pour le détail des décisions.
+
+Routes livrées en Phase 8C1 :
+
+- `GET /admin/login` et `POST /admin/login` (formulaire, CSRF
+  `authenticate`, `post_only: true`, message d'erreur générique
+  « Identifiants invalides »).
+- `GET /admin` (dashboard = profil + logout ; `#[IsGranted('ROLE_ADMIN')]`).
+- `POST /admin/logout` (CSRF `logout`, `invalidate_session: true`).
+- `GET /admin/assets/*` (CSS statique — `PUBLIC_ACCESS`).
+
+Session cookie dédié `DZ_ADMIN_SESSID` (HttpOnly, SameSite=Lax,
+Secure=auto), lifetime piloté par `ADMIN_SESSION_LIFETIME` (défaut
+28 800 s), stockage filesystem local. Throttling `login_throttling`
+5 tentatives / 15 minutes (deux fenêtres `_login_local_admin` +
+`_login_global_admin`). Password hashing Argon2id `auto` en prod.
+
+Commandes CLI de gestion des comptes (mot de passe accepté uniquement
+via `--password-stdin` ou `askHidden` interactif — jamais
+`--password=xxx`) :
+
+- `bin/console app:admin:create-user --email=... --display-name=...
+  --password-stdin`
+- `bin/console app:admin:reset-password --email=... --password-stdin`
+- `bin/console app:admin:disable --email=...` (idempotent)
+
+Phase 8C1 ne livre aucune capacité éditoriale (aucun CRUD article,
+aucun upload, aucun endpoint JSON admin), aucune MFA, aucun reset de
+mot de passe HTTP, aucun IdP externe. Ces sujets sont explicitement
+reportés aux Phases 8C2 / 8C3 / 8C4 (voir `docs/08-ROADMAP.md` et
+ADR-012).
+
+## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1 / 8B2 / 8C1
 
 - Endpoint HTTP d'écriture des articles (POST / PUT / DELETE) —
-  refus explicite en Phase 8B1 (cf. DEC-074), à re-évaluer uniquement
-  si un back-office authentifié devient nécessaire (Phase 8C).
-- Rendu HTML côté HTTP des articles — Phase 8B2 (le renderer existe
-  déjà via `CommonMarkArticleRenderer` mais ne sert qu'au dry-run CLI).
-  Les endpoints publics continuent d'exposer `body_markdown` brut.
-- Back-office authentifié (édition, journal de publication) — Phase 8C.
-- Pages Nuxt `/ressources` et `/ressources/{slug}` — Phase 8B2.
+  refus explicite en Phase 8B1 (cf. DEC-074), livraison prévue en
+  Phases 8C2 (création brouillon) et 8C3 (publication).
+- Rendu HTML côté HTTP des articles — livré en Phase 8B2 via
+  `content_html` dans `ArticleDetailView` (calcul à la requête par
+  `CommonMarkArticleRenderer`). Les listes exposent uniquement les
+  résumés (`ArticleSummaryView`).
+- IHM éditoriale admin (liste, création, édition d'article) —
+  Phase 8C2.
+- Publication depuis l'IHM avec invalidation coordonnée des caches
+  (bump ETag + purge Nitro) — Phase 8C3.
+- MFA, table d'audit persistante, reset HTTP, bascule session Redis,
+  rôles multiples — Phase 8C4 (à planifier avant ouverture prod).
+- Pages Nuxt `/ressources` et `/ressources/{slug}` — livrées en
+  Phase 8B2 (SSR + cache Nitro + sitemap dynamique).
 - Fixtures ou seeds d'articles fictifs (règle 1 AGENTS.md — rien
   inventer). La base démarre vide, y compris en dev — un rédacteur
   autorisé doit fournir le Markdown puis exécuter
-  `app:editorial:import` + `app:editorial:publish`.
+  `app:editorial:import` + `app:editorial:publish`. Un jeu de
+  fixtures E2E scopé (`e2e-8b2-*`) est disponible pour Playwright
+  via `scripts/e2e-fixtures.sh load|clear`.
 - Queue asynchrone / worker Messenger (envoi Mailer resté synchrone —
   ré-évaluer si `contact.mailer_unavailable` devient régulier).
 - Image Open Graph dynamique.

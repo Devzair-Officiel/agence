@@ -24,6 +24,13 @@ ADR-003-strategie-seo.md
   `app:editorial:publish`), refus des dates futures, cache HTTP conditionnel
   faible (`ETag`, `Last-Modified` sur le détail, `X-Request-Id` préservé sur
   304).
+- `ADR-011` — SSR Nuxt des ressources éditoriales, cache Nitro local,
+  bump `ArticleETag v1 → v2`, sitemap dynamique, contrat d'URL
+  `/ressources` canonique.
+- `ADR-012` — Administration Symfony SSR authentifiée (Phase 8C1) :
+  firewall same-origin `/admin/**`, session cookie dédié
+  `DZ_ADMIN_SESSID`, ROLE_ADMIN unique, CLI de gestion des comptes,
+  aucune capacité éditoriale ni MFA dans cette itération.
 
 ## Modèle
 

@@ -95,6 +95,12 @@ services:
       CONTACT_ORIGIN_ALLOWLIST: ${CONTACT_ORIGIN_ALLOWLIST:-http://localhost:3001}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,REMOTE_ADDR}
       TRUSTED_HEADERS: ${TRUSTED_HEADERS:-x-forwarded-for,x-forwarded-proto,x-forwarded-host}
+      # Administration Symfony (Phase 8C1, cf. ADR-012).
+      # Durée de vie de la session admin en secondes (défaut : 8 heures).
+      ADMIN_SESSION_LIFETIME: ${ADMIN_SESSION_LIFETIME:-28800}
+      # Throttling natif Symfony sur /admin/login (login_throttling).
+      ADMIN_LOGIN_MAX_ATTEMPTS: ${ADMIN_LOGIN_MAX_ATTEMPTS:-5}
+      ADMIN_LOGIN_INTERVAL: ${ADMIN_LOGIN_INTERVAL:-15 minutes}
     env_file:
       - path: .env
         required: false

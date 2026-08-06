@@ -1,0 +1,52 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Connexion — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Administration</h1>
+
+    <section class="card" aria-labelledby="login-heading">
+        <h2 id="login-heading">Connexion</h2>
+
+        {% if error %}
+            <div class="alert-error" role="alert">
+                Identifiants invalides ou compte indisponible.
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('admin_login') }}" novalidate>
+            <div class="field">
+                <label for="admin-email">Adresse email</label>
+                <input
+                    id="admin-email"
+                    type="email"
+                    name="email"
+                    value="{{ last_email }}"
+                    autocomplete="username"
+                    autocapitalize="off"
+                    inputmode="email"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="admin-password">Mot de passe</label>
+                <input
+                    id="admin-password"
+                    type="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <input
+                type="hidden"
+                name="_csrf_token"
+                value="{{ csrf_token('authenticate') }}"
+            >
+
+            <button type="submit">Se connecter</button>
+        </form>
+    </section>
+{% endblock %}

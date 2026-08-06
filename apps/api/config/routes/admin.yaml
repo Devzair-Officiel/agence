@@ -1,0 +1,23 @@
+# Devzair — routes d'administration (Phase 8C1, voir ADR-012).
+#
+# Contrairement aux routes publiques (/api/*, préfixe strippé par Caddy),
+# ces routes sont exposées AVEC leur préfixe `/admin` — le handle Caddy
+# `@admin` ne strippe rien. C'est ce préfixe qui déclenche le firewall
+# `admin` défini dans security.yaml.
+
+admin_login:
+    path: /admin/login
+    controller: App\Admin\Presentation\Http\AdminLoginController::__invoke
+    methods: [GET, POST]
+
+admin_dashboard:
+    path: /admin
+    controller: App\Admin\Presentation\Http\AdminDashboardController::__invoke
+    methods: [GET]
+
+# La route `admin_logout` est branchée par la security bundle (attribut
+# `logout.path` dans security.yaml). Aucun contrôleur métier n'est nécessaire :
+# Symfony intercepte, purge la session et redirige.
+admin_logout:
+    path: /admin/logout
+    methods: [POST]

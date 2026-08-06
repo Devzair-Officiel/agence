@@ -790,12 +790,116 @@ Livrée le 2026-08-05 par DEV-049 : intégration SSR complète des ressources
       composants), 13 scénarios Playwright dédiés `/ressources` via Caddy
       (241/241 E2E verts au total).
 
-### Phase 8C — Administration authentifiée (À VENIR)
+### Phase 8C — Administration authentifiée
 
-- [ ] Auth admin (mode et provider à décider).
-- [ ] UI d'édition (Nuxt route protégée ou Symfony admin dédiée).
-- [ ] Journal éditorial (qui a publié/archivé, quand).
-- [ ] Rôles fins si besoin (multi-auteurs).
+Décomposée en quatre itérations indépendantes. Décisions techniques
+consignées dans `docs/adr/ADR-012-administration-symfony-ssr-authentifiee.md`.
+
+#### Phase 8C1 — Socle authentification admin (TERMINÉE)
+
+Livrée le 2026-08-06 par DEV-050. Socle SSR authentifié Symfony/Twig
+same-origin sous `/admin/**`, sans capacité éditoriale ni API JSON
+dédiée (voir ADR-012).
+
+- [x] Rendu SSR Symfony + Twig sous `/admin/**` (Caddy préserve le
+      préfixe, aucun `strip_prefix` sur cette famille de routes).
+      Ajout de `TwigBundle` et de `apps/api/config/packages/twig.yaml`.
+- [x] Domaine `Admin` : agrégat `AdminUser` (UUID v7, ROLE_ADMIN
+      implicite, pas de colonne `roles` en base), VO `AdminEmail`
+      (normalisation `mb_strtolower(trim())` + index unique
+      `normalized_email`), invariants métier, repository Doctrine
+      dédié. Migration `Version20260805221410`.
+- [x] Firewall Symfony `admin` (`^/admin`) : `form_login` avec
+      `post_only: true`, CSRF `authenticate` sur login, `logout`
+      POST-only avec CSRF `logout` et `invalidate_session: true`,
+      `session_fixation_strategy: migrate` explicite,
+      `login_throttling` 5 tentatives / 15 minutes (fenêtres
+      `_login_local_admin` + `_login_global_admin`).
+- [x] `AdminUserProvider` (lookup par email normalisé,
+      `UserNotFoundException` générique) et `AdminUserChecker`
+      (refuse `is_active = false` via `DisabledException`).
+- [x] Password hashing `auto` (Argon2id en prod) ; override
+      `bcrypt cost 4` en test pour compresser le temps de hash.
+- [x] Session cookie dédié `DZ_ADMIN_SESSID` (HttpOnly, SameSite=Lax,
+      Secure=auto), `cookie_lifetime` et `gc_maxlifetime` pilotés par
+      `ADMIN_SESSION_LIFETIME` (défaut 28 800 s). Stockage filesystem
+      local (single instance).
+- [x] Deux vues Twig uniquement : `/admin/login` (formulaire, aucun
+      JS) et `/admin` (dashboard = profil + logout). `AdminLoginController`
+      redirige les authentifiés vers `admin_dashboard`.
+      `AdminDashboardController` protégé par
+      `#[IsGranted('ROLE_ADMIN')]`.
+- [x] Message d'erreur générique unique (« Identifiants invalides »)
+      — aucune divulgation d'existence d'un compte.
+- [x] Headers défensifs scopés `/admin/*` via
+      `AdminSecurityHeadersSubscriber` : CSP durcie
+      (`default-src 'none'; script-src 'none'; style-src 'self';
+      img-src 'self' data:; font-src 'self'; form-action 'self';
+      base-uri 'none'; frame-ancestors 'none'`, CSS externalisé dans
+      `apps/api/public/admin/assets/admin.css`, `unsafe-inline`
+      supprimé), `X-Frame-Options: DENY`, `X-Content-Type-Options:
+      nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy`
+      restrictive, COOP/CORP `same-origin`, `X-Robots-Tag: noindex,
+      nofollow`.
+- [x] Non-indexation renforcée dans `apps/web/nuxt.config.ts` :
+      `Disallow: /admin` (et `/admin/`) pour tous les groupes de
+      bots incluant IA (`GPTBot`, `Google-Extended`, `ClaudeBot`,
+      `PerplexityBot`, `CCBot`).
+- [x] Canal Monolog `admin` + `AdminAuditListener` :
+      `admin.login_failure` avec short class name uniquement (aucune
+      PII, pas d'email, pas d'IP), `admin.logout` avec UUID admin
+      uniquement. `RecordSuccessfulLoginListener` met à jour
+      `last_login_at` sur l'entité.
+- [x] Commandes CLI `app:admin:create-user`,
+      `app:admin:reset-password`, `app:admin:disable` — mot de passe
+      via `--password-stdin` ou `askHidden` interactif uniquement
+      (jamais via `--password=xxx`). Toutes idempotentes.
+- [x] Tests : intégration Symfony `WebTestCase` (auth, redirection,
+      throttling, disabled, session fixation, CSRF, headers,
+      logout) + E2E Playwright via Caddy (`admin.spec.ts` :
+      accessibilité Axe WCAG 2.2 AA sur `/admin/login` et `/admin`,
+      login valide, login invalide, headers de sécurité). Overrides
+      `services_test.yaml` : session `mock_file`, `InMemoryStorage`
+      pour les deux fenêtres de throttling.
+- [x] Documentation : ADR-012 acceptée le 2026-08-06,
+      `.env.example` documente `ADMIN_SESSION_LIFETIME`,
+      `ADMIN_LOGIN_MAX_ATTEMPTS`, `ADMIN_LOGIN_INTERVAL`.
+
+#### Phase 8C2 — IHM éditoriale (NON DÉMARRÉE)
+
+Prérequis : Phase 8C1 mergée. Livraison prévue dans une phase séparée
+avec ADR dédiée si la frontière change.
+
+- [ ] Liste des articles éditoriaux dans `/admin/articles` (Twig SSR,
+      pagination, filtres par statut).
+- [ ] Formulaire de création / édition d'un article (brouillon).
+- [ ] Upload d'images (politique de stockage à décider avant
+      implémentation).
+- [ ] Aucune modification de l'agrégat `Article` sans révision de
+      l'ADR-009 (domaine éditorial) et sans nouveau contrat d'API si
+      pertinent.
+
+#### Phase 8C3 — Publication depuis l'IHM (NON DÉMARRÉE)
+
+- [ ] Transition brouillon → publié via l'IHM, avec vérification des
+      invariants métier (date de publication non future, slug
+      unique, etc.).
+- [ ] Invalidation coordonnée des caches HTTP (bump ETag) et Nitro
+      (purge locale) lors des publications.
+- [ ] Historique des transitions (qui a publié / archivé, quand).
+
+#### Phase 8C4 — Durcissements complémentaires (NON DÉMARRÉE)
+
+- [ ] MFA (TOTP) — à réévaluer avant ouverture prod si l'exposition
+      change.
+- [ ] Table d'audit persistante (si un référentiel conformité
+      formalise le besoin).
+- [ ] Reset de mot de passe HTTP (si l'admin devient
+      multi-utilisateur).
+- [ ] Bascule stockage session vers Redis (si scaling horizontal du
+      conteneur `api`).
+- [ ] Rôles multiples (éditeur, publicateur) — nécessite migration
+      colonne `roles` et refonte `access_control`.
 
 ### Critère de sortie (Phase 8 complète)
 

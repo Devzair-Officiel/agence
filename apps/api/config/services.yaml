@@ -29,6 +29,9 @@ services:
             # Canal dédié aux lectures publiques éditoriales — utile pour
             # observer indépendamment le trafic Phase 8A.
             Psr\Log\LoggerInterface $editorialLogger: '@monolog.logger.editorial'
+            # Canal dédié aux événements admin (login success/failure, logout,
+            # opérations CLI de gestion de comptes). Voir ADR-012.
+            Psr\Log\LoggerInterface $adminLogger: '@monolog.logger.admin'
 
     App\:
         resource: '../src/'
@@ -90,3 +93,19 @@ services:
 
     App\Editorial\Domain\Clock\ClockInterface:
         alias: App\Editorial\Domain\Clock\SystemClock
+
+    # Domaine Admin (Phase 8C1). Le port est branché sur l'adaptateur Doctrine ;
+    # une variante en mémoire pour les tests unitaires est déclarée dans
+    # services_test.yaml. L'horloge PSR-20 est fournie par le composant Symfony
+    # Clock (transitif via security-bundle).
+    App\Admin\Domain\AdminUserRepositoryInterface:
+        alias: App\Admin\Infrastructure\Persistence\DoctrineAdminUserRepository
+
+    # NativeClock vit hors du namespace `App\` : le bloc resource `../src/`
+    # ne le découvre pas. Registration explicite pour que l'alias PSR-20 ci-
+    # dessous puisse résoudre. Les tests peuvent surcharger via
+    # `getContainer()->set(NativeClock::class, $frozenClock)` pour geler l'instant.
+    Symfony\Component\Clock\NativeClock: ~
+
+    Psr\Clock\ClockInterface:
+        alias: Symfony\Component\Clock\NativeClock

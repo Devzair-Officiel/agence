@@ -1,6 +1,11 @@
-# Routes exposées par l'API. Toutes les URL sont *déjà* préfixées par /api
-# côté Caddy (rewrite → strip /api → forward au conteneur). Ici on décrit
-# donc les chemins sans /api.
+# Routes exposées par l'API. Deux familles :
+# - `/contact`, `/health`, `/resources` : Caddy strippe le préfixe `/api`
+#   avant le forward — les routes ci-dessous sont donc écrites sans `/api`.
+# - `/admin/*` (Phase 8C1, cf. `routes/admin.yaml`) : Caddy PRÉSERVE le
+#   préfixe pour que le pattern firewall `^/admin` matche côté Symfony.
+
+admin_routes:
+    resource: routes/admin.yaml
 
 contact_submission:
     path: /contact

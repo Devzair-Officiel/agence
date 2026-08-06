@@ -2,6 +2,7 @@ monolog:
     channels:
         - contact
         - editorial
+        - admin
 
 when@dev:
     monolog:
