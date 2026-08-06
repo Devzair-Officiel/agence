@@ -283,6 +283,74 @@ Aucun contenu Markdown fictif n'est commité — les tests construisent
 leurs fixtures dans `/tmp/` via `MarkdownFixture` et nettoient après
 chaque cas.
 
+### Suites PHPUnit ajoutées en Phase 8C3
+
+IHM éditoriale Twig SSR sous `/admin/articles/**` — nouveaux tests
+d'application (handlers Command/Query), d'infrastructure (adaptateur
+Doctrine admin) et de présentation (contrôleurs `WebTestCase`).
+
+- **Application `Query` handlers admin** —
+  `ListAdminArticlesHandlerTest` (pagination + filtre statut + ordre
+  stable `updated_at DESC, id DESC`), `GetAdminArticleForEditHandlerTest`.
+- **Application `Command` handlers admin** —
+  `CreateDraftArticleHandlerTest` : validation atomique de tous les VOs
+  (échec avant `save`), pré-check via `findBySlug` avec 409 domaine,
+  test de course concurrente (mock `EntityManager` levant
+  `UniqueConstraintViolationException` sur `flush` → interception et
+  traduction en `ArticleSlugAlreadyExistsException` — le vocabulaire
+  Doctrine ne fuit jamais vers la présentation, cf. DEC-091).
+  `PublishDraftArticleHandlerTest` : `Draft → Published`, refus strict
+  `Published → *` et `Archived → *` via
+  `InvalidArticleTransitionException::cannotPublishFrom($status)`,
+  `ArticleNotFoundException::forId` sur UUID inconnu.
+- **Infrastructure integration** —
+  `DoctrineAdminArticleReadRepositoryTest` (KernelTestCase + rollback
+  transaction) : pagination Doctrine, filtre statut, tri stable, DTO
+  plat mappé (aucune fuite d'entité).
+- **Presentation `WebTestCase`** — `AdminArticleListControllerTest`
+  (rendu Twig, pagination, filtre statut), `AdminArticleCreateControllerTest`
+  (GET + POST valide → PRG vers `/edit`, POST invalide → re-render 200
+  avec `FormErrorBag`, slug déjà existant → alerte inline, CSRF
+  invalide → 403), `AdminArticleEditControllerTest` (édition brouillon,
+  slug absent du payload — immuabilité vérifiée côté serveur cf. DEC-091),
+  `AdminArticleTransitionControllerTest` (POST publish/archive/restore,
+  CSRF par action, throttling via `AdminActionRateLimiter` avec 429
+  et `Retry-After`), `AdminArticleAuditLoggingTest` (canal Monolog
+  `admin` : aucun email, aucun titre, aucun Markdown, uniquement UUID
+  admin + UUID article + slug + statut).
+- **Support** — `AdminHttpTestHelper` (login form-based réutilisable),
+  `InMemoryAdminArticleReadRepository` (double comportement conforme au
+  port + ordre stable).
+
+Backend PHPUnit total après Phase 8C3 : **327 tests / 834 assertions**
+verts sur 2 seeds aléatoires. `doctrine:schema:validate --skip-sync`
+reste OK — aucune migration en Phase 8C3.
+
+Frontend Vitest : **317/317** verts (aucune régression).
+
+Playwright : **250/250 verts sur deux passes** (image
+`mcr.microsoft.com/playwright:v1.62.1-noble --network host`,
+`PLAYWRIGHT_BASE_URL=http://localhost:3001`, workers 1, retries 0).
+Nouvelle suite `apps/web/test/e2e/admin-editorial.spec.ts` (5 tests
+`describe.serial` — le firewall Symfony applique un throttling
+`email+IP` qui interdit les logins parallèles, cf. Phase 8C1) :
+liste vide accessible (Axe WCAG 2.2 AA), création brouillon → PRG,
+édition brouillon persistée, cycle complet publish → archive → restore
+avec extraction UUID depuis `page.url()`, headers de sécurité admin
+(CSP `default-src 'none'`, `X-Frame-Options: DENY`, `X-Robots-Tag:
+noindex, nofollow`, `Cache-Control: private, no-store`).
+
+Orchestration E2E — nouveau script `scripts/e2e-admin-articles.sh`
+symétrique à `scripts/e2e-fixtures.sh` et `scripts/e2e-admin-user.sh` :
+`load` = purge préventive `DELETE FROM editorial_article WHERE slug
+LIKE 'e2e-8c3-%'` (état propre si le `clear` précédent avait crashé),
+`clear` = purge post-suite, `E2E_SLUG_PREFIX` codé en dur (jamais
+TRUNCATE, jamais DELETE global — même triple pattern que DEC-086),
+`ON_ERROR_STOP=1`. Le workflow `.github/workflows/web-quality.yml`
+étend ses path triggers (`scripts/e2e-admin-articles.sh`) et exécute
+`load` avant Playwright puis `clear` avec `if: always()` en fin, en
+symétrie stricte avec les fixtures 8B2 et le compte admin 8C1.
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

@@ -286,6 +286,53 @@ Politique consignée dans `docs/adr/ADR-010-pipeline-markdown-editorial-cache-ht
 - **Préfixe de version `v1`** dans le matériau du hash → invalidation
   en masse en un déploiement si le contrat JSON évolue.
 
+### IHM éditoriale admin (Phase 8C3)
+
+- **CSP admin inchangée depuis 8C1** : `default-src 'none'; script-src
+  'none'; style-src 'self'; img-src 'self' data:; font-src 'self';
+  form-action 'self'; base-uri 'none'; frame-ancestors 'none'`. Aucun
+  script, aucun styles inline. La feuille
+  `apps/api/public/admin/assets/admin.css` est servie en `self`.
+- **Cache-Control `private, no-store, no-cache, must-revalidate`** sur
+  toutes les réponses `/admin/*` (lecture ou mutation) :
+  `AdminSecurityHeadersSubscriber` étendu en Phase 8C3. Aucun rendu
+  admin n'est cacheable, même dans le navigateur en arrière/suivant.
+- **Correctif `apps/api/public/index.php`** : sous
+  `PHP_SAPI === 'cli-server'`, tout fichier réel du dossier `public/`
+  court-circuite le kernel via `return false` (extraction chemin via
+  `parse_url()` puis `urldecode()`, `is_file()` en garde stricte).
+  No-op en prod (php-fpm derrière Caddy/nginx). Cf. DEC-087.
+- **Rate-limiting par UUID admin** : `AdminActionRateLimiter` enveloppe
+  deux `RateLimiterFactory` (`admin_write` 30/min, `admin_publish`
+  10/min) **indexés par l'UUID admin** — jamais par IP, jamais par
+  session, jamais par email (cf. DEC-088). Deux administrateurs ont
+  des compteurs strictement indépendants. 429 avec `Retry-After` +
+  template `rate_limited.html.twig` si `!isAccepted()`.
+- **CSRF par action** : chaque bouton publish/archive/restore utilise
+  un token dédié (`publish|archive|restore-{uuid}`). Les mutations
+  sont exclusivement POST + CSRF, jamais GET.
+- **Immuabilité du slug** : le `slug` est absent de `ArticleEditData`
+  (form d'édition), l'agrégat n'expose aucune méthode `changeSlug()`,
+  le template affiche le slug en lecture seule via
+  `<code class="field-readonly">`. Cf. DEC-091.
+- **Race concurrente sur `slug` unique** : `CreateDraftArticleHandler`
+  pré-vérifie via `findBySlug()` puis intercepte toute
+  `UniqueConstraintViolationException` (Doctrine) levée à `flush()`
+  et la traduit en `ArticleSlugAlreadyExistsException` — le
+  vocabulaire Doctrine ne fuit jamais vers la présentation.
+  Cf. DEC-091.
+- **Canal Monolog `admin`** étendu en Phase 8C3 avec 8 événements
+  éditoriaux : `admin.article.created` / `.updated` / `.update_noop`
+  / `.published` / `.archived` / `.restored` / `.action_failed`
+  / `.rate_limited`. **Seul identifiant admin loggé = UUID** — jamais
+  email, jamais displayName. Payload : UUID article + slug (public
+  par nature) + statut cible ; **jamais titre, chapô, Markdown ou
+  HTML rendu**. Aucune PII n'entre dans le canal `admin`.
+- **WCAG 2.2 §2.5.8** (« Target Size ») : les boutons secondaires
+  (`.button-small`) exposent `min-height/-width: 24px`, les rangées
+  (`.row-actions`) ont un `gap ≥ 0.5rem`. Documenté §2.5.8 dans
+  `docs/02-DESIGN-ACCESSIBILITY.md`.
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;

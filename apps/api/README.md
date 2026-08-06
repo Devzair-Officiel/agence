@@ -1,20 +1,33 @@
-# apps/api — Backend Symfony 7.4 LTS (Phases 6A / 6C / 8A / 8B1)
+# apps/api — Backend Symfony 7.4 LTS (Phases 6A / 6C / 8A / 8B1 / 8B2 / 8C1 / 8C2 / 8C3)
 
-API HTTP de l'agence Devzair.
+API HTTP + IHM admin de l'agence Devzair.
 
 - Domaine `Contact` (Phases 6A + 6C) : `POST /api/contact` (soumission du
   formulaire) + `GET /api/health` (santé) + commande CLI de diagnostic
   `bin/console app:contact:check`. Aucun stockage, envoi email
   synchrone.
-- Domaine `Editorial` (Phase 8A + 8B1) : `GET /api/resources` (liste paginée
-  des articles publiés) + `GET /api/resources/{slug}` (article publié
-  par slug), avec cache HTTP conditionnel (ETag faible + `Last-Modified`
-  sur le détail + 304 Not Modified). Persistance PostgreSQL 17-alpine
-  via Doctrine ORM 3, lecture publique uniquement. L'alimentation de
-  la base se fait **exclusivement** par les commandes CLI
+- Domaine `Editorial` (Phases 8A + 8B1 + 8C2 + 8C3) : `GET /api/resources`
+  (liste paginée des articles publiés) + `GET /api/resources/{slug}`
+  (article publié par slug), avec cache HTTP conditionnel (ETag faible
+  + `Last-Modified` sur le détail + 304 Not Modified). Persistance
+  PostgreSQL 17-alpine via Doctrine ORM 3. La lecture publique n'expose
+  que les articles `Published` avec `publishedAt <= now`. L'alimentation
+  se fait soit par les commandes CLI
   `bin/console app:editorial:import <path> [--dry-run]` et
   `bin/console app:editorial:publish <slug> [--published-at=<ISO8601>]`
-  (aucun endpoint HTTP d'écriture — cf. ADR-010).
+  (Phase 8B1 — aucun endpoint HTTP JSON d'écriture, cf. ADR-010), soit
+  par l'IHM éditoriale admin sous `/admin/articles/**` (Phase 8C3 —
+  Twig SSR, POST + CSRF, aucun endpoint JSON admin).
+- Domaine `Admin` (Phases 8C1 + 8C3) : firewall Symfony `admin` sur
+  `^/admin` (cookie session dédié `DZ_ADMIN_SESSID`, CSP `default-src
+  'none'; style-src 'self'`, throttling 5/15min, CSRF sur toutes les
+  mutations). Phase 8C1 = socle auth + CLI `app:admin:*`. Phase 8C3 =
+  IHM éditoriale `/admin/articles/**` (liste paginée + filtre statut,
+  création brouillon, édition draft-only, publication depuis IHM,
+  archivage, restauration), rate-limiting par UUID admin
+  (`AdminActionRateLimiter` : `admin_write` 30/min, `admin_publish`
+  10/min), audit sans PII (canal Monolog `admin`, UUID admin
+  uniquement).
 
 Voir les décisions consignées :
 
@@ -32,6 +45,13 @@ Voir les décisions consignées :
   futures (double garde-fou agrégat + lecture), cache HTTP conditionnel
   faible (`ETag` sur les deux endpoints, `Last-Modified` uniquement
   sur le détail, `X-Request-Id` préservé sur 304).
+- `docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md` — SSR Nuxt des
+  pages `/ressources/**` et frontière du cache Nitro
+  (`useStorage("editorial")`).
+- `docs/adr/ADR-012-administration-symfony-ssr-authentifiee.md` —
+  administration Symfony/Twig SSR sous `/admin/**` (Phase 8C1 +
+  extensions 8C3 documentées via DEC-087..091 dans
+  `docs/10-TRACKING.md`).
 - `docs/checklists/PRODUCTION-CONTACT.md` — séquence opérationnelle de
   mise en prod du formulaire (SPF/DKIM/DMARC, pré-déploiement,
   test réel maîtrisé, dégradation contrôlée, rollback).
@@ -97,10 +117,10 @@ src/
       ContactCheckCommand.php            ← bin/console app:contact:check
     Exception/                           ← Phase 6C
       ContactTemporarilyUnavailableException.php  ← marker de domaine
-  Editorial/                             ← Phase 8A + 8B1
+  Editorial/                             ← Phase 8A + 8B1 + 8C2 + 8C3
     Domain/                              ← modèle métier, sans I/O
-      Article.php                        ← agrégat + attributs Doctrine
-      ArticleRepositoryInterface.php     ← port (Phase 8B1 : +findBySlug + $now)
+      Article.php                        ← agrégat + attributs Doctrine (Phase 8C2 : +mutations draft-only)
+      ArticleRepositoryInterface.php     ← port (Phase 8B1 : +findBySlug + $now ; Phase 8C2 : +findById)
       ArticleSlug.php                    ← VO (regex, longueur)
       ArticleStatus.php                  ← enum Draft/Published/Archived
       Author.php                         ← VO (organization/person)
@@ -112,24 +132,31 @@ src/
         SystemClock.php                  ← implémentation runtime
       Exception/
         ArticleInvariantViolation.php
-        ArticleNotFoundException.php
+        ArticleNotFoundException.php     ← +forId(string) en Phase 8C2
+        ArticleNotEditableException.php  ← Phase 8C2
+        InvalidArticleTransitionException.php  ← Phase 8C2 (+cannotPublishFrom en 8C3)
+        ArticleSlugAlreadyExistsException.php  ← Phase 8C3 (race concurrente Doctrine → domaine)
     Application/                         ← cas d'usage
-      Command/                           ← Phase 8B1
-        ImportArticleFromMarkdown.php
-        ImportArticleFromMarkdownHandler.php  ← create-only, refus doublon
-        ImportArticleResult.php
-        PublishArticleBySlug.php
-        PublishArticleBySlugHandler.php  ← idempotent, refus date future
-        PublishArticleResult.php
+      Command/                           ← Phase 8B1 (CLI) + 8C2 (mutations) + 8C3 (admin)
+        ImportArticleFromMarkdown.php + Handler + Result  ← Phase 8B1
+        PublishArticleBySlug.php + Handler + Result       ← Phase 8B1 (chemin CLI)
+        UpdateDraftArticle.php + Handler + Result         ← Phase 8C2 (patch atomique)
+        ArchiveArticleAction.php + Handler + Result       ← Phase 8C2 (idempotent)
+        RestoreArticleAction.php + Handler + Result       ← Phase 8C2 (Archived → Draft)
+        CreateDraftArticle.php + Handler + Result         ← Phase 8C3 (atomique + interception slug conflict)
+        PublishDraftArticle.php + Handler + Result        ← Phase 8C3 (distinct de PublishArticleBySlug, refus strict Published/Archived)
       Markdown/                          ← Phase 8B1 — VO front matter + exceptions
         ArticleFrontMatter.php           ← refuse publishedAt / clés inconnues
         MarkdownParseException.php
         MarkdownValidationException.php  ← agrège toutes les violations d'un fichier
       Query/
-        ListPublishedArticles.php        ← paramètres validés
+        ListPublishedArticles.php        ← Phase 8A — paramètres validés
         ListPublishedArticlesHandler.php ← invoke → {items, pagination}
         GetPublishedArticle.php
         GetPublishedArticleHandler.php
+        AdminArticleReadRepositoryInterface.php  ← Phase 8C3 — port CQRS admin distinct (cf. DEC-088)
+        ListAdminArticles.php + Handler + AdminArticleListPage + AdminArticleListItem  ← Phase 8C3
+        GetAdminArticleForEdit.php + Handler + AdminArticleEditView                    ← Phase 8C3
       View/
         ArticleSummaryView.php           ← sans body_markdown / seo
         ArticleDetailView.php            ← payload complet
@@ -137,6 +164,7 @@ src/
     Infrastructure/
       Persistence/
         DoctrineArticleRepository.php    ← implémente le port, filtre Published
+        DoctrineAdminArticleReadRepository.php  ← Phase 8C3 (tri stable updated_at DESC, id DESC)
       Markdown/                          ← Phase 8B1
         MarkdownArticleFileParser.php    ← ≤ 512 Kio, UTF-8 sans BOM, YAML délimité
         MarkdownContentValidator.php     ← rejet AST HtmlBlock/HtmlInline + schémas d'URL
@@ -152,6 +180,17 @@ src/
         ConditionalCache/                ← Phase 8B1
           ArticleETag.php                ← W/"sha256(id|updatedAt|v1)"
           ArticleListETag.php            ← W/"sha256(page|perPage|total|v1 + items)"
+  Admin/                                 ← Phase 8C1 + 8C3
+    Domain/                              ← Phase 8C1 — AdminUser, AdminEmail (VO normalisé), port, exceptions
+    Application/                         ← Phase 8C1 — AdminAccountService
+    Infrastructure/
+      Persistence/                       ← Phase 8C1 — DoctrineAdminUserRepository
+      Security/                          ← Phase 8C1 — AdminUserProvider, AdminUserChecker ; Phase 8C3 — AdminActionRateLimiter (par UUID admin)
+      Logging/                           ← Phase 8C3 — EditorialAdminAuditLogger (canal `admin`, UUID uniquement)
+    Presentation/
+      Console/                           ← Phase 8C1 — app:admin:create-user / reset-password / disable
+      EventSubscriber/                   ← Phase 8C1 — AdminSecurityHeadersSubscriber (CSP durcie + noindex ; 8C3 : +Cache-Control private no-store)
+      Http/                              ← Phase 8C1 — Login/Dashboard ; Phase 8C3 — AdminArticle{List,Create,Edit,Publish,Archive,Restore}Controller + Form/{ArticleCreateData,ArticleEditData,FormErrorBag,ArticleFormPayload}
   EventListener/
     ApiExceptionListener.php             ← toute exception → JSON
 ```
@@ -429,12 +468,14 @@ en exception. Documenté dans ADR-007.
 identiques — voir ADR-008. Une divergence produit un rejet systématique
 ou charge un script Cloudflare pour rien.
 
-## Administration (Phase 8C1)
+## Administration (Phases 8C1 + 8C3)
 
 Rendu SSR Symfony/Twig sous `/admin/**`, same-origin, sans surface JS
-(CSP `script-src 'none'`). Voir ADR-012 pour le détail des décisions.
+(CSP `default-src 'none'; script-src 'none'; style-src 'self'`). Voir
+ADR-012 pour le socle 8C1 et DEC-087..091 dans `docs/10-TRACKING.md`
+pour les décisions structurantes 8C3.
 
-Routes livrées en Phase 8C1 :
+Routes du socle 8C1 :
 
 - `GET /admin/login` et `POST /admin/login` (formulaire, CSRF
   `authenticate`, `post_only: true`, message d'erreur générique
@@ -443,11 +484,41 @@ Routes livrées en Phase 8C1 :
 - `POST /admin/logout` (CSRF `logout`, `invalidate_session: true`).
 - `GET /admin/assets/*` (CSS statique — `PUBLIC_ACCESS`).
 
+Routes de l'IHM éditoriale 8C3 (`#[IsGranted('ROLE_ADMIN')]`,
+PRG systématique, `Cache-Control: private, no-store, no-cache,
+must-revalidate` sur toutes les réponses) :
+
+- `GET /admin/articles` — liste paginée, filtre `?status=draft|published|archived`.
+- `GET /admin/articles/new` et `POST /admin/articles/new` — création
+  brouillon (pipeline atomique, interception
+  `UniqueConstraintViolationException` → `ArticleSlugAlreadyExistsException`
+  cf. DEC-091).
+- `GET /admin/articles/{id}/edit` et `POST /admin/articles/{id}/edit` —
+  édition draft-only ; slug **absent du payload** (immuable, cf. DEC-091).
+- `POST /admin/articles/{id}/publish` — via
+  `PublishDraftArticleHandler` distinct du chemin CLI (cf. DEC-089).
+- `POST /admin/articles/{id}/archive` — via `ArchiveArticleHandler`
+  (8C2, idempotent).
+- `POST /admin/articles/{id}/restore` — via `RestoreArticleHandler`
+  (8C2, `Archived → Draft`, refuse `Published → *`).
+
+Toutes les mutations utilisent un token CSRF dédié par action
+(`publish|archive|restore-{uuid}`) et passent par `AdminActionRateLimiter`
+(deux `RateLimiterFactory` : `admin_write` 30/min, `admin_publish`
+10/min — indexés par UUID admin, cf. DEC-088). 429 avec `Retry-After`
++ template `rate_limited.html.twig` si `!isAccepted()`.
+
 Session cookie dédié `DZ_ADMIN_SESSID` (HttpOnly, SameSite=Lax,
 Secure=auto), lifetime piloté par `ADMIN_SESSION_LIFETIME` (défaut
 28 800 s), stockage filesystem local. Throttling `login_throttling`
 5 tentatives / 15 minutes (deux fenêtres `_login_local_admin` +
 `_login_global_admin`). Password hashing Argon2id `auto` en prod.
+
+Audit — canal Monolog `admin`, 8 événements éditoriaux 8C3 :
+`admin.article.created` / `.updated` / `.update_noop` / `.published`
+/ `.archived` / `.restored` / `.action_failed` / `.rate_limited`.
+Seul identifiant admin loggé = UUID (jamais email, jamais displayName,
+jamais titre ni Markdown ni HTML rendu).
 
 Commandes CLI de gestion des comptes (mot de passe accepté uniquement
 via `--password-stdin` ou `askHidden` interactif — jamais
@@ -458,27 +529,47 @@ via `--password-stdin` ou `askHidden` interactif — jamais
 - `bin/console app:admin:reset-password --email=... --password-stdin`
 - `bin/console app:admin:disable --email=...` (idempotent)
 
-Phase 8C1 ne livre aucune capacité éditoriale (aucun CRUD article,
-aucun upload, aucun endpoint JSON admin), aucune MFA, aucun reset de
-mot de passe HTTP, aucun IdP externe. Ces sujets sont explicitement
-reportés aux Phases 8C2 / 8C3 / 8C4 (voir `docs/08-ROADMAP.md` et
-ADR-012).
+Correctif racine `apps/api/public/index.php` livré 8C3 : sous
+`PHP_SAPI === 'cli-server'`, tout fichier réel de `public/`
+court-circuite le kernel via `return false` (`is_file()` en garde
+stricte + extraction chemin via `parse_url()` puis `urldecode()`).
+Sans cette garde, le serveur PHP intégré routait `/admin/assets/*`
+vers `index.php` et Symfony retournait du HTML — Chrome refusait la
+CSS pour MIME strict. No-op en prod derrière Caddy/nginx/php-fpm. Cf.
+DEC-087.
 
-## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1 / 8B2 / 8C1
+Phase 8C3 ne livre pas : upload d'images (report Phase 9),
+invalidation coordonnée du cache Nitro sur publication (aucune purge
+locale explicite — le cache Nitro respire par TTL, à traiter avec un
+futur `ArticleUpdatedEvent`), prévisualisation authentifiée d'un
+brouillon (Phase 8C4), recette OWASP finale et préparation prod
+(Phase 8C4). Historique persistant des transitions, MFA, reset HTTP,
+audit log persistant, Redis, multi-instance des sessions restent
+différés (non planifiés dans 8C4 — à requalifier si le besoin
+change).
 
-- Endpoint HTTP d'écriture des articles (POST / PUT / DELETE) —
-  refus explicite en Phase 8B1 (cf. DEC-074), livraison prévue en
-  Phases 8C2 (création brouillon) et 8C3 (publication).
+## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1 / 8B2 / 8C1 / 8C2 / 8C3
+
+- Endpoint HTTP JSON d'écriture des articles — refus explicite en
+  Phase 8B1 (cf. DEC-074), pas de bascule en 8C3 (l'IHM Twig reste
+  form-post + CSRF, aucun JSON admin).
 - Rendu HTML côté HTTP des articles — livré en Phase 8B2 via
   `content_html` dans `ArticleDetailView` (calcul à la requête par
   `CommonMarkArticleRenderer`). Les listes exposent uniquement les
   résumés (`ArticleSummaryView`).
-- IHM éditoriale admin (liste, création, édition d'article) —
-  Phase 8C2.
-- Publication depuis l'IHM avec invalidation coordonnée des caches
-  (bump ETag + purge Nitro) — Phase 8C3.
+- Invalidation coordonnée du cache Nitro sur publication admin (bump
+  ETag + purge Nitro locale) — le contrat public reste `v2`, l'ETag
+  n'a pas changé en 8C3 ; à revoir avec un `ArticleUpdatedEvent` si
+  le TTL Nitro devient insuffisant.
+- Upload d'images éditoriales — report Phase 9 avec politique de
+  stockage dédiée.
+- Prévisualisation authentifiée d'un brouillon (aperçu Twig SSR
+  utilisant `CommonMarkArticleRenderer`, headers `noindex` +
+  `private, no-store`) et recette finale de sécurité (E2E complet,
+  OWASP, préparation prod) — Phase 8C4.
 - MFA, table d'audit persistante, reset HTTP, bascule session Redis,
-  rôles multiples — Phase 8C4 (à planifier avant ouverture prod).
+  multi-instance sessions, rôles multiples — différés au-delà de
+  8C4, à requalifier si le besoin change.
 - Pages Nuxt `/ressources` et `/ressources/{slug}` — livrées en
   Phase 8B2 (SSR + cache Nitro + sitemap dynamique).
 - Fixtures ou seeds d'articles fictifs (règle 1 AGENTS.md — rien

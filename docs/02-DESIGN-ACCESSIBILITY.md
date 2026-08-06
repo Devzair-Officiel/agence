@@ -88,6 +88,32 @@ Viser WCAG 2.2 niveau AA pour le parcours principal.
 
 L’automatisation ne remplace pas les vérifications manuelles.
 
+### Zones cliquables minimales (WCAG 2.2 §2.5.8 « Target Size »)
+
+Tout contrôle interactif doit exposer une cible **≥ 24 × 24 CSS px**.
+L'espacement inter-boutons compte dans la « safe clickable diameter »
+autour de chaque cible — une cible plus petite est acceptée si aucune
+autre cible n'est présente dans un cercle de 24 px de diamètre centré
+sur elle.
+
+Application dans l'administration éditoriale (Phase 8C3) :
+
+- `.button-small` (boutons secondaires des tables et fils d'action)
+  expose `min-height: 24px; min-width: 24px; line-height: 1.25` — sans
+  quoi les libellés courts (« Publier », « Archiver ») ne
+  satisferaient pas la règle.
+- `.row-actions` et `.lifecycle-actions` (conteneurs de rangée de
+  boutons) exposent `gap ≥ 0.5rem` (= 8 px) pour préserver la safe
+  zone entre deux cibles adjacentes.
+- Détection : la suite Axe WCAG 2.2 AA de
+  `apps/web/test/e2e/admin-editorial.spec.ts` (règle `target-size`)
+  fait échouer immédiatement tout futur bouton qui violerait la règle.
+
+Cette contrainte s'applique à tout futur composant interactif — hors
+liens en texte courant (exemptés par la spec) et hors contrôles
+définis par le navigateur (checkboxes, radios natifs sur mobile
+tactile — le user-agent choisit sa propre hitbox).
+
 ### Illustrations informatives (SVG)
 
 Un schéma **purement décoratif ou uniquement informatif** (sans

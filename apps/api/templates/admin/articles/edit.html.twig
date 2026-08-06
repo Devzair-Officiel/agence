@@ -1,0 +1,85 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Édition — {{ view.title }} — Administration Devzair{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <h1>Édition du brouillon</h1>
+        <p class="page-meta">
+            Statut :
+            <span class="status-badge status-{{ view.status.value }}">
+                {% if view.status.value == 'draft' %}Brouillon
+                {% elseif view.status.value == 'published' %}Publié
+                {% else %}Archivé
+                {% endif %}
+            </span>
+            {% if view.publishedAt %}
+                — publié le
+                <time datetime="{{ view.publishedAt|date('c') }}">
+                    {{ view.publishedAt|date('Y-m-d H:i') }} UTC
+                </time>
+            {% endif %}
+            — dernière modification
+            <time datetime="{{ view.updatedAt|date('c') }}">
+                {{ view.updatedAt|date('Y-m-d H:i') }} UTC
+            </time>
+        </p>
+    </div>
+
+    <section class="card" aria-labelledby="lifecycle-heading">
+        <h2 id="lifecycle-heading">Cycle de vie</h2>
+
+        <div class="lifecycle-actions">
+            {% if view.status.value == 'draft' %}
+                <form method="post" action="{{ path('admin_article_publish', { id: view.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_publish_' ~ view.id) }}">
+                    <button type="submit" class="button-primary">Publier ce brouillon</button>
+                </form>
+
+                <form method="post" action="{{ path('admin_article_archive', { id: view.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ view.id) }}">
+                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
+                </form>
+            {% elseif view.status.value == 'published' %}
+                <p class="lifecycle-note">
+                    Article publié. L'édition libre est verrouillée pour préserver l'URL et la cohérence
+                    du contenu affiché. Pour retirer l'article du site public, utilisez « Archiver ».
+                </p>
+
+                <form method="post" action="{{ path('admin_article_archive', { id: view.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ view.id) }}">
+                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
+                </form>
+            {% else %}
+                <p class="lifecycle-note">
+                    Article archivé. Pour reprendre l'édition, restaurez-le en brouillon.
+                </p>
+
+                <form method="post" action="{{ path('admin_article_restore', { id: view.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_restore_' ~ view.id) }}">
+                    <button type="submit">Restaurer comme brouillon</button>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="form-heading">
+        <h2 id="form-heading">Contenu</h2>
+
+        {% if view.status.value != 'draft' %}
+            <div class="alert alert-info" role="status">
+                L'édition libre n'est autorisée qu'à l'état « brouillon ». Restaurez l'article
+                en brouillon si vous devez modifier son contenu.
+            </div>
+        {% else %}
+            {% include 'admin/articles/_form.html.twig' with {
+                data: data,
+                errors: errors,
+                csrf_id: 'article_edit_' ~ view.id,
+                submit_url: path('admin_article_edit', { id: view.id }),
+                submit_label: 'Enregistrer les modifications',
+                is_create: false,
+            } only %}
+        {% endif %}
+    </section>
+{% endblock %}

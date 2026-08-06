@@ -88,20 +88,31 @@ devzair/
 │       ├── public/
 │       ├── src/
 │       │   ├── Contact/{Controller,Dto,Service,Security,Configuration,Command,Exception}
-│       │   ├── Editorial/            # Phase 8A/8B1/8C2 : domaine éditorial (lecture publique + import CLI + cache HTTP + mutations draft-only)
-│       │   │   ├── Domain/           # Article (+ mutations 8C2), ArticleSlug, Author, SeoMetadata, enums, port (findById + findBySlug), Clock, Exception (+ ArticleNotEditable, InvalidArticleTransition)
+│       │   ├── Editorial/            # Phase 8A/8B1/8C2/8C3 : domaine éditorial (lecture publique + import CLI + cache HTTP + mutations draft-only + commandes admin)
+│       │   │   ├── Domain/           # Article (+ mutations 8C2), ArticleSlug, Author, SeoMetadata, enums, port (findById + findBySlug), Clock, Exception (+ ArticleNotEditable, InvalidArticleTransition::cannotPublishFrom, ArticleSlugAlreadyExists — 8C3)
 │       │   │   ├── Application/
-│       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) ; Phase 8C2 — UpdateDraftArticle/ArchiveArticle/RestoreArticle + Handlers + Results
+│       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) ; Phase 8C2 — UpdateDraftArticle/ArchiveArticle/RestoreArticle ; Phase 8C3 — CreateDraftArticle (atomic + slug conflict), PublishDraftArticle (distinct du chemin CLI 8B1)
 │       │   │   │   ├── Markdown/     # Phase 8B1 — ArticleFrontMatter (VO), MarkdownParseException, MarkdownValidationException
-│       │   │   │   ├── Query/        # ListPublishedArticles/GetPublishedArticle + Handlers
+│       │   │   │   ├── Query/        # Phase 8A — ListPublishedArticles/GetPublishedArticle ; Phase 8C3 — AdminArticleReadRepositoryInterface (port CQRS admin distinct, cf. DEC-088), ListAdminArticles/GetAdminArticleForEdit + AdminArticleListItem/AdminArticleListPage/AdminArticleEditView
 │       │   │   │   └── View/         # ArticleSummaryView, ArticleDetailView, PaginationView
 │       │   │   ├── Infrastructure/
-│       │   │   │   ├── Persistence/  # DoctrineArticleRepository, InMemoryArticleRepository (support)
+│       │   │   │   ├── Persistence/  # DoctrineArticleRepository, InMemoryArticleRepository (support), DoctrineAdminArticleReadRepository + InMemoryAdminArticleReadRepository (Phase 8C3, tri stable updated_at DESC, id DESC)
 │       │   │   │   └── Markdown/     # Phase 8B1 — MarkdownArticleFileParser, MarkdownContentValidator, MarkdownSecurityPolicy, CommonMarkArticleRenderer
 │       │   │   └── Presentation/
 │       │   │       ├── Console/      # Phase 8B1 — app:editorial:import, app:editorial:publish
 │       │   │       └── Http/         # GET /resources, GET /resources/{slug}
 │       │   │           └── ConditionalCache/  # Phase 8B1 — ArticleETag, ArticleListETag (calcul ETag faible)
+│       │   ├── Admin/                 # Phase 8C1/8C3 : authentification + IHM éditoriale
+│       │   │   ├── Domain/           # Phase 8C1 — AdminUser, AdminEmail (VO normalisé), AdminUserRepositoryInterface, Exceptions
+│       │   │   ├── Application/      # Phase 8C1 — AdminAccountService (createAdmin/resetPassword/disableAdmin)
+│       │   │   ├── Infrastructure/
+│       │   │   │   ├── Persistence/  # Phase 8C1 — DoctrineAdminUserRepository
+│       │   │   │   ├── Security/     # Phase 8C1 — AdminUserProvider, AdminUserChecker ; Phase 8C3 — AdminActionRateLimiter (par UUID admin, cf. DEC-088)
+│       │   │   │   └── Logging/      # Phase 8C3 — EditorialAdminAuditLogger (canal Monolog `admin`, 8 événements, UUID admin uniquement, aucune PII)
+│       │   │   └── Presentation/
+│       │   │       ├── Console/      # Phase 8C1 — app:admin:create-user / reset-password / disable
+│       │   │       ├── EventSubscriber/  # Phase 8C1 — AdminSecurityHeadersSubscriber (CSP durcie + X-Robots noindex + Cache-Control private no-store étendu 8C3)
+│       │   │       └── Http/         # Phase 8C1 — AdminLoginController, AdminDashboardController ; Phase 8C3 — AdminArticleList/Create/Edit/Publish/Archive/Restore + Form/{ArticleCreateData,ArticleEditData,FormErrorBag,ArticleFormPayload}
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
@@ -520,9 +531,22 @@ Ne pas introduire de méthodologie CSS complexe (Tailwind, Panda, CSS-in-JS) tan
   agrégat + lecture), cache HTTP conditionnel faible (`ETag` sur les
   deux endpoints, `Last-Modified` uniquement sur le détail,
   `X-Request-Id` préservé sur 304) ;
-- ADR à rédiger lorsque le besoin apparaît : authentification de
-  l’administration (Phase 8C), endpoint d'écriture HTTP dédié
-  (post-8B1 si besoin d'un back-office), analytics et consentement.
+- `ADR-011` — SSR Nuxt des pages `/ressources/**` et cache Nitro
+  éditorial (Phase 8B2) : `useStorage("editorial")` = frontière HTTP
+  côté SSR, jamais de relais `If-None-Match` du navigateur vers l'API,
+  `v-html` autorisé seulement sur la sortie de
+  `CommonMarkArticleRenderer` ;
+- `ADR-012` — administration Symfony Twig SSR authentifiée sous
+  `/admin/**` (Phase 8C1) : firewall dédié, cookie de session isolé
+  `DZ_ADMIN_SESSID`, CSP `default-src 'none'; style-src 'self'`,
+  aucune capacité éditoriale en 8C1, aucun endpoint JSON admin. La
+  Phase 8C3 (IHM éditoriale) reste sous le périmètre d'ADR-012 : la
+  frontière n'a pas changé (Twig SSR, POST + CSRF, aucun endpoint
+  JSON) — cf. DEC-087..091 ;
+- ADR à rédiger lorsque le besoin apparaît : upload d'images
+  éditoriales (Phase 9), invalidation coordonnée du cache Nitro sur
+  publication admin (post-8C3 si TTL insuffisant), analytics et
+  consentement.
 
 ---
 

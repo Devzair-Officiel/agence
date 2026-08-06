@@ -588,8 +588,17 @@ silencieuse d'un contenu déjà diffusé. Toute mutation avec un
 horodatage antérieur au dernier `updatedAt` est refusée (garde-fou
 horloge monotone), et une mutation dont la valeur est identique à
 l'existant est un no-op sans bump d'`updatedAt` — l'ETag public reste
-donc stable. L'IHM éditoriale qui exposera ces mutations est prévue
-en Phase 8C3.
+donc stable.
+
+**IHM éditoriale (Phase 8C3, livrée)** — l'administration Twig SSR
+sous `/admin/articles/**` permet à un compte `ROLE_ADMIN` de créer un
+brouillon, d'éditer les champs listés ci-dessus, de publier, d'archiver
+et de restaurer un article. Aucun changement de slug depuis l'IHM
+(cf. règle d'immuabilité). Aucun endpoint HTTP JSON admin, aucun
+upload d'images en 8C3 (les images seront traitées en Phase 9 avec
+une politique de stockage dédiée). Le cycle complet est piloté depuis
+la même vue d'édition — publier depuis `Draft`, archiver depuis
+`Published`, restaurer depuis `Archived` vers `Draft`.
 
 ### Membre ou contributeur
 

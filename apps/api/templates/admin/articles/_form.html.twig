@@ -1,0 +1,195 @@
+{#
+    Fragment mutualisé pour les formulaires create/edit.
+
+    Attend :
+      - `csrf_id`     : identifiant du jeton CSRF (ex. `article_create`, `article_edit_{uuid}`) ;
+      - `data`        : `ArticleCreateData` ou `ArticleEditData` (accès via `data.payload.*`) ;
+      - `errors`      : `FormErrorBag` — `.for('field')` et `.global()` ;
+      - `submit_url`  : cible du POST ;
+      - `submit_label`: libellé du bouton principal ;
+      - `is_create`   : booléen — pilote l'affichage du champ `slug` (create only).
+
+    Le fragment n'émet AUCUN JavaScript (CSP `script-src 'none'`). Toute
+    validation est côté serveur (VOs + `MarkdownSecurityPolicy`). Les
+    attributs `required` HTML5 sont fournis à titre d'ergonomie navigateur ;
+    ils ne dispensent pas de la validation métier.
+#}
+<form method="post" action="{{ submit_url }}" novalidate class="article-form">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrf_id) }}">
+
+    {% for message in errors.global %}
+        <div class="alert alert-error" role="alert">{{ message }}</div>
+    {% endfor %}
+
+    {% if is_create %}
+        <div class="field">
+            <label for="article-slug">Slug (URL publique, immuable après création)</label>
+            <input
+                id="article-slug"
+                type="text"
+                name="slug"
+                value="{{ data.payload.slug }}"
+                autocapitalize="off"
+                autocomplete="off"
+                inputmode="url"
+                maxlength="120"
+                required
+            >
+            <p class="field-hint">Lettres minuscules, chiffres et tirets. Exemple : <code>audit-seo-technique</code>.</p>
+            {% for message in errors.for('slug') %}
+                <p class="field-error">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="field">
+            <label>Slug (URL publique — non modifiable)</label>
+            <p class="field-readonly"><code>{{ data.payload.slug }}</code></p>
+        </div>
+    {% endif %}
+
+    <div class="field">
+        <label for="article-title">Titre</label>
+        <input
+            id="article-title"
+            type="text"
+            name="title"
+            value="{{ data.payload.title }}"
+            maxlength="180"
+            required
+        >
+        {% for message in errors.for('title') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="field">
+        <label for="article-excerpt">Chapô (résumé court)</label>
+        <textarea
+            id="article-excerpt"
+            name="excerpt"
+            rows="3"
+            maxlength="320"
+            required
+        >{{ data.payload.excerpt }}</textarea>
+        {% for message in errors.for('excerpt') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="field">
+        <label for="article-body">Corps (Markdown)</label>
+        <textarea
+            id="article-body"
+            name="body_markdown"
+            rows="18"
+            required
+        >{{ data.payload.bodyMarkdown }}</textarea>
+        <p class="field-hint">
+            Markdown standard. HTML brut interdit ; les liens externes doivent utiliser <code>http</code>,
+            <code>https</code> ou <code>mailto</code>.
+        </p>
+        {% for message in errors.for('body_markdown') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+
+    <fieldset class="field-group">
+        <legend>Référencement</legend>
+
+        <div class="field">
+            <label for="article-seo-title">Titre SEO</label>
+            <input
+                id="article-seo-title"
+                type="text"
+                name="seo_title"
+                value="{{ data.payload.seoTitle }}"
+                maxlength="70"
+                required
+            >
+            {% for message in errors.for('seo_title') %}
+                <p class="field-error">{{ message }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="field">
+            <label for="article-seo-description">Meta description</label>
+            <textarea
+                id="article-seo-description"
+                name="seo_description"
+                rows="2"
+                maxlength="180"
+                required
+            >{{ data.payload.seoDescription }}</textarea>
+            {% for message in errors.for('seo_description') %}
+                <p class="field-error">{{ message }}</p>
+            {% endfor %}
+        </div>
+    </fieldset>
+
+    <fieldset class="field-group">
+        <legend>Auteur</legend>
+
+        <div class="field">
+            <label for="article-author-name">Nom affiché</label>
+            <input
+                id="article-author-name"
+                type="text"
+                name="author_name"
+                value="{{ data.payload.authorName }}"
+                maxlength="120"
+                required
+            >
+            {% for message in errors.for('author_name') %}
+                <p class="field-error">{{ message }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="field">
+            <label for="article-author-type">Type</label>
+            <select id="article-author-type" name="author_type" required>
+                <option value="organization" {{ data.payload.authorType == 'organization' ? 'selected' : '' }}>
+                    Devzair (institutionnel)
+                </option>
+                <option value="person" {{ data.payload.authorType == 'person' ? 'selected' : '' }}>
+                    Personne nommée
+                </option>
+            </select>
+        </div>
+    </fieldset>
+
+    <fieldset class="field-group">
+        <legend>Piliers d'expertise</legend>
+        <p class="field-hint">Un article peut être associé à un ou plusieurs piliers.</p>
+
+        {% set selected_expertises = data.payload.expertises %}
+        {% set pillars = [
+            { id: 'concevoir',     label: 'Concevoir' },
+            { id: 'construire',    label: 'Construire' },
+            { id: 'valoriser',     label: 'Valoriser' },
+            { id: 'visibilite',    label: 'Visibilité' },
+            { id: 'faire-evoluer', label: 'Faire évoluer' },
+        ] %}
+
+        <div class="checkbox-grid">
+            {% for pillar in pillars %}
+                <label class="checkbox">
+                    <input
+                        type="checkbox"
+                        name="expertises[]"
+                        value="{{ pillar.id }}"
+                        {{ pillar.id in selected_expertises ? 'checked' : '' }}
+                    >
+                    <span>{{ pillar.label }}</span>
+                </label>
+            {% endfor %}
+        </div>
+        {% for message in errors.for('expertises') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </fieldset>
+
+    <div class="form-actions">
+        <button type="submit">{{ submit_label }}</button>
+        <a href="{{ path('admin_articles_list') }}" class="button-link">Annuler</a>
+    </div>
+</form>

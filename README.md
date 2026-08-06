@@ -41,11 +41,23 @@ paginé) et `/ressources/{slug}` (détail Markdown rendu côté serveur par
 scopé dev/test uniquement (`bin/console app:editorial:e2e-fixtures
 <load|clear>`, préfixe `e2e-8b2-*`) permet à Playwright de valider le
 parcours via Caddy (`PLAYWRIGHT_BASE_URL=http://localhost:3001`) sans
-aucune dépendance à `docker.sock` — voir `docs/08-ROADMAP.md`,
+aucune dépendance à `docker.sock`.
+
+La Phase 8C1 pose le socle d'authentification admin Symfony/Twig sous
+`/admin/**` (firewall dédié `DZ_ADMIN_SESSID`, CSP `style-src 'self'`,
+CLI `app:admin:*`, aucun endpoint JSON admin). La Phase 8C2 verrouille
+les mutations backend draft-only de l'agrégat `Article`. La Phase 8C3
+livre l'IHM éditoriale complète sous `/admin/articles/**` (liste
+paginée + filtre statut, création de brouillon, édition draft-only,
+publication depuis IHM, archivage, restauration) — port CQRS admin
+distinct du port public (cf. DEC-088), rate-limiting par UUID admin,
+audit sans PII (canal Monolog `admin`), CSP admin inchangée. Voir
+`docs/08-ROADMAP.md`,
 `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`,
 `docs/adr/ADR-009-persistance-postgresql-editorial.md`,
 `docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`,
-`docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md`
+`docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md`,
+`docs/adr/ADR-012-administration-symfony-ssr-authentifiee.md`
 et `docs/checklists/PRODUCTION-CONTACT.md`.
 
 ## Structure
@@ -125,6 +137,24 @@ Le script encapsule `docker compose exec -T api bin/console
 app:editorial:e2e-fixtures <action>` : Playwright ne parle jamais
 directement à Docker (`PLAYWRIGHT_BASE_URL=http://localhost:3001`
 appelle uniquement Caddy).
+
+Fixtures Phase 8C3 (IHM admin — la suite Playwright crée elle-même les
+articles via l'UI ; le script sert uniquement à purger les résidus
+d'un run précédent qui aurait crashé avant le `clear`) :
+
+```bash
+scripts/e2e-admin-articles.sh load    # purge préventive (DELETE ciblé sur slug LIKE 'e2e-8c3-%')
+scripts/e2e-admin-articles.sh clear   # purge post-suite (idem)
+```
+
+Compte admin E2E dédié (RFC 6761 `example.test`, jamais confondable
+avec un opérateur réel, `--password-stdin` pour éviter toute fuite
+dans `ps`) :
+
+```bash
+scripts/e2e-admin-user.sh load    # provisionne e2e-admin@example.test (idempotent)
+scripts/e2e-admin-user.sh clear   # DELETE normalized_email = 'e2e-admin@example.test'
+```
 
 Appliquer les migrations Doctrine après un premier `docker compose up` :
 

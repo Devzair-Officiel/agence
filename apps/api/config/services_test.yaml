@@ -55,6 +55,31 @@ services:
     App\Editorial\Application\Query\GetPublishedArticleHandler:
         public: true
 
+    # Handlers admin éditoriaux (Phase 8C3) — publiés pour intégration.
+    App\Editorial\Application\Query\ListAdminArticlesHandler:
+        public: true
+
+    App\Editorial\Application\Query\GetAdminArticleForEditHandler:
+        public: true
+
+    App\Editorial\Application\Command\CreateDraftArticleHandler:
+        public: true
+
+    App\Editorial\Application\Command\PublishDraftArticleHandler:
+        public: true
+
+    App\Editorial\Application\Command\UpdateDraftArticleHandler:
+        public: true
+
+    App\Editorial\Application\Command\ArchiveArticleHandler:
+        public: true
+
+    App\Editorial\Application\Command\RestoreArticleHandler:
+        public: true
+
+    App\Editorial\Infrastructure\Persistence\DoctrineAdminArticleReadRepository:
+        public: true
+
     # Rendu public pour permettre aux tests d'intégration Doctrine et aux
     # tests HTTP d'accéder à l'EntityManager (flush après insertion via
     # ArticleBuilder, nettoyage entre cas).
@@ -100,6 +125,42 @@ services:
 
     limiter.storage._login_global_admin:
         class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    # Limiteurs admin_write / admin_publish (Phase 8C3) — même stratégie :
+    # storage en mémoire pour ne pas polluer entre tests / entre runs.
+    limiter.storage.admin_write:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.storage.admin_publish:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.admin_write:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'admin_write'
+              limit: 60
+              rate: { interval: '5 minutes', amount: 60 }
+            - '@limiter.storage.admin_write'
+        public: true
+
+    limiter.admin_publish:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'admin_publish'
+              limit: 20
+              rate: { interval: '5 minutes', amount: 20 }
+            - '@limiter.storage.admin_publish'
+        public: true
+
+    App\Admin\Infrastructure\Security\AdminActionRateLimiter:
+        arguments:
+            $adminWriteLimiter: '@limiter.admin_write'
+            $adminPublishLimiter: '@limiter.admin_publish'
         public: true
 
     # Horloge testable : chaque test peut geler l'instant en surchargeant

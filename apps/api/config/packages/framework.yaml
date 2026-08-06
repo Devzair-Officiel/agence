@@ -41,6 +41,27 @@ framework:
             limit: '%app.contact.rate_limit%'
             rate: { interval: '%app.contact.rate_interval%', amount: '%app.contact.rate_limit%' }
 
+        # Écritures admin non-publiantes (create, update, archive, restore).
+        # Fenêtre confortable (60 requêtes / 5 min) — les admins réels ne
+        # dépassent jamais ces débits, mais un script détourné ou un onglet
+        # « bouclé » (F5 répété) se voit refuser à 429 avant d'atteindre la
+        # base. La clef est l'UUID de l'admin authentifié (voir
+        # `AdminActionRateLimiter`) — un compteur par identité.
+        admin_write:
+            policy: 'token_bucket'
+            limit: 60
+            rate: { interval: '5 minutes', amount: 60 }
+
+        # Publications (transition Draft → Published). Débit plus serré
+        # (20 requêtes / 5 min) : la publication est un acte éditorial rare
+        # et coûteux (visibilité publique + invalidation ETag). 20 tentatives
+        # par admin et par tranche de 5 min laissent largement place à une
+        # session d'édition normale mais coupent un scripting anormal.
+        admin_publish:
+            policy: 'token_bucket'
+            limit: 20
+            rate: { interval: '5 minutes', amount: 20 }
+
     serializer:
         enabled: true
 

@@ -21,3 +21,43 @@ admin_dashboard:
 admin_logout:
     path: /admin/logout
     methods: [POST]
+
+# Administration éditoriale (Phase 8C3, voir ADR-013 à ajouter).
+# Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
+admin_articles_list:
+    path: /admin/articles
+    controller: App\Admin\Presentation\Http\AdminArticleListController::__invoke
+    methods: [GET]
+
+admin_article_create:
+    path: /admin/articles/new
+    controller: App\Admin\Presentation\Http\AdminArticleCreateController::__invoke
+    methods: [GET, POST]
+
+admin_article_edit:
+    path: /admin/articles/{id}/edit
+    controller: App\Admin\Presentation\Http\AdminArticleEditController::__invoke
+    methods: [GET, POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_article_publish:
+    path: /admin/articles/{id}/publish
+    controller: App\Admin\Presentation\Http\AdminArticlePublishController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_article_archive:
+    path: /admin/articles/{id}/archive
+    controller: App\Admin\Presentation\Http\AdminArticleArchiveController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_article_restore:
+    path: /admin/articles/{id}/restore
+    controller: App\Admin\Presentation\Http\AdminArticleRestoreController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'

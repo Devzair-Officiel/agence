@@ -1,0 +1,18 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Nouveau brouillon — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Nouveau brouillon</h1>
+
+    <section class="card">
+        {% include 'admin/articles/_form.html.twig' with {
+            data: data,
+            errors: errors,
+            csrf_id: 'article_create',
+            submit_url: path('admin_article_create'),
+            submit_label: 'Créer le brouillon',
+            is_create: true,
+        } only %}
+    </section>
+{% endblock %}

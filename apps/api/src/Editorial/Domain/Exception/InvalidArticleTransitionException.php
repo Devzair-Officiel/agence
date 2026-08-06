@@ -21,4 +21,21 @@ final class InvalidArticleTransitionException extends \DomainException
             $status->value,
         ));
     }
+
+    /**
+     * Refus de publication depuis un statut autre que `Draft` — utilisé par
+     * `PublishDraftArticleHandler` pour distinguer :
+     *   - `Archived` : bloqué net (la publication passe par une restauration
+     *     explicite, cf. directive utilisateur 8C3 n°3) ;
+     *   - `Published` : bloqué net également, la publication n'est jamais
+     *     idempotente dans le chemin admin (transparence explicite plutôt
+     *     que no-op silencieux).
+     */
+    public static function cannotPublishFrom(ArticleStatus $status): self
+    {
+        return new self(\sprintf(
+            'Un brouillon ne peut être publié qu\'à partir du statut "draft" (actuel : "%s").',
+            $status->value,
+        ));
+    }
 }

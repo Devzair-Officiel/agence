@@ -1,0 +1,23 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Trop de requêtes — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Trop de requêtes</h1>
+
+    <section class="card">
+        <p>
+            Vous avez dépassé la limite d'actions rapides autorisées pour {{ action_label }}.
+            C'est une protection contre les abus (voir en-tête <code>Retry-After</code>).
+        </p>
+
+        <p>
+            Merci de patienter <strong>{{ retry_after_seconds }} seconde{{ retry_after_seconds > 1 ? 's' : '' }}</strong>
+            avant de renvoyer votre demande.
+        </p>
+
+        <p>
+            <a href="{{ path('admin_articles_list') }}" class="button-link">Retour à la liste des articles</a>
+        </p>
+    </section>
+{% endblock %}

@@ -1,0 +1,31 @@
+{#
+    Attend `item` (`AdminArticleListItem`).
+
+    Chaque action destructrice a son propre formulaire POST + jeton CSRF
+    dédié à l'UUID — un jeton exfiltré ne suffit qu'à agir sur l'article
+    associé, pas sur l'ensemble du catalogue. Aucun JavaScript.
+#}
+<div class="row-actions">
+    <a href="{{ path('admin_article_edit', { id: item.id }) }}" class="button-link">
+        {% if item.status.value == 'archived' %}Voir{% else %}Éditer{% endif %}
+    </a>
+
+    {% if item.status.value == 'draft' %}
+        <form method="post" action="{{ path('admin_article_publish', { id: item.id }) }}" class="inline-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_publish_' ~ item.id) }}">
+            <button type="submit" class="button-small button-primary">Publier</button>
+        </form>
+    {% endif %}
+
+    {% if item.status.value != 'archived' %}
+        <form method="post" action="{{ path('admin_article_archive', { id: item.id }) }}" class="inline-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ item.id) }}">
+            <button type="submit" class="button-small button-danger">Archiver</button>
+        </form>
+    {% else %}
+        <form method="post" action="{{ path('admin_article_restore', { id: item.id }) }}" class="inline-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_restore_' ~ item.id) }}">
+            <button type="submit" class="button-small">Restaurer</button>
+        </form>
+    {% endif %}
+</div>

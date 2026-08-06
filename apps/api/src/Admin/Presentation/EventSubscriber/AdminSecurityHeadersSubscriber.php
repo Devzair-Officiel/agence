@@ -23,6 +23,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * Toute réintroduction d'inline styles doit passer par un mécanisme de
  * nonce et faire l'objet d'une nouvelle ADR.
  *
+ * Phase 8C3 : ajout d'un `Cache-Control` strict pour interdire à tout
+ * intermédiaire (navigateur, reverse proxy) de mémoriser les pages d'admin.
+ * Le contenu est spécifique à l'admin authentifié, contient parfois des
+ * jetons CSRF fraîchement générés et n'a pas vocation à être resservi.
+ *
  * Toutes les autres réponses (site public, API contact, ressources) ne sont
  * pas touchées : leur politique est portée respectivement par Nuxt et par
  * les listeners Contact/Editorial existants.
@@ -38,6 +43,8 @@ final class AdminSecurityHeadersSubscriber implements EventSubscriberInterface
         'Cross-Origin-Opener-Policy' => 'same-origin',
         'Cross-Origin-Resource-Policy' => 'same-origin',
         'X-Robots-Tag' => 'noindex, nofollow',
+        'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
+        'Pragma' => 'no-cache',
     ];
 
     public static function getSubscribedEvents(): array

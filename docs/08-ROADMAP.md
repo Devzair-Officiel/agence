@@ -926,40 +926,101 @@ autorisées sur un article en `Draft`.
       slug, aucun historique de révisions, aucun changement Nuxt /
       Caddy / frontend.
 
-#### Phase 8C3 — IHM éditoriale et publication depuis l'IHM (NON DÉMARRÉE)
+#### Phase 8C3 — IHM éditoriale et publication depuis l'IHM (TERMINÉE)
 
-Prérequis : Phase 8C2 mergée. Livraison prévue dans une phase séparée
-avec ADR dédiée si la frontière change (endpoint HTTP admin, formulaire
-Twig, upload images).
+Sortie 2026-08-06. Cf. DEV-052 et changelog 2.22 (`docs/10-TRACKING.md`),
+DEC-087 à DEC-091. ADR-012 (Phase 8C1) reste seule ADR admin : la
+frontière n'a pas changé (IHM Twig SSR, aucun endpoint HTTP JSON admin,
+aucun upload d'images).
 
-- [ ] Liste des articles éditoriaux dans `/admin/articles` (Twig SSR,
-      pagination, filtres par statut) — consomme la vue lecture
-      existante.
-- [ ] Formulaire de création / édition d'un article (brouillon) —
-      appelle `UpdateDraftArticleHandler` livré en 8C2.
-- [ ] Transition brouillon → publié via l'IHM, avec vérification des
-      invariants métier (date de publication non future, slug
-      unique, etc.) — appelle `PublishArticleBySlugHandler` livré en
-      8B1.
-- [ ] Upload d'images (politique de stockage à décider avant
-      implémentation).
-- [ ] Invalidation coordonnée des caches HTTP (bump ETag `v2 → v3` si
-      le contrat détail évolue) et Nitro (purge locale) lors des
-      publications.
-- [ ] Historique des transitions (qui a publié / archivé, quand).
+- [x] Liste des articles éditoriaux dans `/admin/articles` (Twig SSR,
+      pagination, filtre statut) — nouveau port CQRS
+      `AdminArticleReadRepositoryInterface` distinct du port public
+      (cf. DEC-088), tri stable `updated_at DESC, id DESC`.
+- [x] Formulaire de création d'un article (brouillon) —
+      `CreateDraftArticleHandler` avec pipeline atomique (validation
+      complète VOs + Markdown, `findBySlug` pré-check, interception
+      `UniqueConstraintViolationException` → `ArticleSlugAlreadyExistsException`,
+      cf. DEC-091). Le `slug` est absent du formulaire d'édition
+      (immuable, cf. DEC-091).
+- [x] Formulaire d'édition d'un brouillon — appelle
+      `UpdateDraftArticleHandler` (livré 8C2), `ArchiveArticleHandler`
+      (livré 8C2), `RestoreArticleHandler` (livré 8C2).
+- [x] Transition brouillon → publié via l'IHM :
+      `PublishDraftArticleHandler` **distinct** de
+      `PublishArticleBySlugHandler` (chemin CLI 8B1) — chargement par
+      UUID, refus strict `Published`/`Archived` via
+      `InvalidArticleTransitionException::cannotPublishFrom()`
+      (cf. DEC-089).
+- [x] Rate-limiting par UUID admin (jamais IP/session/email —
+      cf. DEC-088) : `AdminActionRateLimiter` enveloppe deux
+      `RateLimiterFactory` (`admin_write` 30/min, `admin_publish`
+      10/min).
+- [x] CSP admin durcie inchangée depuis 8C1 (`style-src 'self'`) grâce
+      au correctif racine `apps/api/public/index.php` — le serveur PHP
+      built-in `cli-server` court-circuite désormais le kernel sur les
+      fichiers réels du dossier `public/` (cf. DEC-087). Le no-op est
+      strict en prod (php-fpm derrière Caddy/nginx).
+- [x] `Cache-Control: private, no-store, no-cache, must-revalidate`
+      sur toutes les réponses `/admin/*` (extension
+      `AdminSecurityHeadersSubscriber`).
+- [x] Journalisation audit : canal Monolog `admin` avec 8 événements
+      (`admin.article.created/.updated/.update_noop/.published/
+      .archived/.restored/.action_failed/.rate_limited`) — seul
+      identifiant admin loggé = UUID (jamais email, jamais titre ni
+      Markdown).
+- [x] Suite E2E Playwright dédiée
+      `apps/web/test/e2e/admin-editorial.spec.ts` (5 scénarios en
+      `describe.serial`, Axe WCAG 2.2 AA sur la liste et le
+      formulaire), CI `.github/workflows/web-quality.yml` étendue,
+      `scripts/e2e-admin-articles.sh` (purge `slug LIKE 'e2e-8c3-%'`).
+- [x] Ajustement WCAG 2.2 §2.5.8 « Target Size (Minimum) » :
+      `.button-small` gagne `min-height/-width: 24px` +
+      `.row-actions gap 0.5rem` (cf. DEC-090).
 
-#### Phase 8C4 — Durcissements complémentaires (NON DÉMARRÉE)
+**Hors périmètre confirmé Phase 8C3** :
+upload d'images (report Phase 9), invalidation coordonnée du cache
+Nitro sur publication (aucune purge locale explicite — le cache Nitro
+respire par TTL, à traiter avec le futur `ArticleUpdatedEvent`),
+historique persistant des transitions (non planifié — aucune ADR à ce
+jour, à requalifier si un besoin de conformité le formalise).
 
-- [ ] MFA (TOTP) — à réévaluer avant ouverture prod si l'exposition
-      change.
-- [ ] Table d'audit persistante (si un référentiel conformité
-      formalise le besoin).
-- [ ] Reset de mot de passe HTTP (si l'admin devient
-      multi-utilisateur).
-- [ ] Bascule stockage session vers Redis (si scaling horizontal du
-      conteneur `api`).
-- [ ] Rôles multiples (éditeur, publicateur) — nécessite migration
-      colonne `roles` et refonte `access_control`.
+#### Phase 8C4 — Prévisualisation éditoriale et recette finale de sécurité (NON DÉMARRÉE)
+
+Livraison de la prévisualisation authentifiée d'un brouillon, avec le
+même renderer Markdown que le public (aucun sanitizer parallèle,
+aucune divergence de rendu), et recette finale avant ouverture prod.
+
+- [ ] Route admin d'aperçu d'un article en `Draft` (rendu Twig SSR
+      utilisant `CommonMarkArticleRenderer` — même pipeline que le
+      contrat public).
+- [ ] Headers `X-Robots-Tag: noindex, nofollow` et `Cache-Control:
+      private, no-store` sur la route d'aperçu (déjà posés par
+      `AdminSecurityHeadersSubscriber`, à vérifier par test).
+- [ ] Recette E2E complète du parcours éditorial (création → aperçu →
+      publication → vérification `/ressources/{slug}` public).
+- [ ] Recette OWASP (ASVS L1 pertinent sur la surface admin :
+      auth, session, CSRF, headers, rate limiting, logs).
+- [ ] Préparation production : `bin/console app:admin:create-user` en
+      preprod, checklist d'ouverture, vérification cookies +
+      throttling + CSP en environnement réel.
+
+**Différé au-delà de Phase 8C4** (aucune date, aucune ADR — à
+requalifier si le besoin change) :
+
+- MFA (TOTP) — à réévaluer si l'exposition ou le volume de comptes
+  admin change.
+- Table d'audit persistante — pour l'instant les 8 événements sont
+  logués Monolog canal `admin` (UUID admin, jamais PII). Basculer
+  vers une table dédiée si un référentiel conformité le formalise.
+- Reset de mot de passe HTTP — reste CLI-only (`app:admin:reset-password`)
+  tant que l'admin ne devient pas multi-utilisateur.
+- Bascule stockage session vers Redis — reste filesystem tant que
+  l'API n'est pas mise à l'échelle horizontalement.
+- Multi-instance des sessions — même condition (scaling horizontal
+  du conteneur `api`).
+- Rôles multiples (éditeur, publicateur) — nécessite migration
+  colonne `roles` et refonte `access_control`, non planifié.
 
 ### Critère de sortie (Phase 8 complète)
 

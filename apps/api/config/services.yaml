@@ -91,6 +91,20 @@ services:
     App\Editorial\Domain\ArticleRepositoryInterface:
         alias: App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository
 
+    # Port de lecture admin (Phase 8C3) — séparé du port public pour préserver
+    # l'invariant « lectures publiques doublement filtrées ».
+    App\Editorial\Application\Query\AdminArticleReadRepositoryInterface:
+        alias: App\Editorial\Infrastructure\Persistence\DoctrineAdminArticleReadRepository
+
+    # Limiteur de débit par admin authentifié (Phase 8C3). Deux fenêtres
+    # distinctes : `admin_write` (60/5min, mutations non-publiantes) et
+    # `admin_publish` (20/5min, transition Draft→Published). Les compteurs
+    # sont indexés par UUID d'admin — voir `AdminActionRateLimiter`.
+    App\Admin\Infrastructure\Security\AdminActionRateLimiter:
+        arguments:
+            $adminWriteLimiter: '@limiter.admin_write'
+            $adminPublishLimiter: '@limiter.admin_publish'
+
     App\Editorial\Domain\Clock\ClockInterface:
         alias: App\Editorial\Domain\Clock\SystemClock
 

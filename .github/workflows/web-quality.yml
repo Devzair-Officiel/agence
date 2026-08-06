@@ -31,6 +31,8 @@ on:
       - 'apps/api/**'
       - 'infra/**'
       - 'scripts/e2e-fixtures.sh'
+      - 'scripts/e2e-admin-user.sh'
+      - 'scripts/e2e-admin-articles.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -41,6 +43,8 @@ on:
       - 'apps/api/**'
       - 'infra/**'
       - 'scripts/e2e-fixtures.sh'
+      - 'scripts/e2e-admin-user.sh'
+      - 'scripts/e2e-admin-articles.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -164,6 +168,13 @@ jobs:
         # sans effet si le compte existe déjà.
         run: ./scripts/e2e-admin-user.sh load
 
+      - name: Ensure clean state for admin editorial E2E (e2e-8c3-*)
+        # La suite admin-editorial.spec.ts CRÉE ses articles via l'UI ;
+        # ce `load` ne préremplit rien mais purge tout résidu d'un run
+        # précédent qui aurait crashé avant `clear`. Préfixe strict
+        # `e2e-8c3-`, DELETE ciblé — voir en-tête du script.
+        run: ./scripts/e2e-admin-articles.sh load
+
       - name: Run Playwright tests
         working-directory: apps/web
         env:
@@ -187,6 +198,13 @@ jobs:
         # `admin@devzair.local`, jamais un DELETE sans clause.
         if: always()
         run: ./scripts/e2e-admin-user.sh clear
+
+      - name: Clear admin editorial E2E articles (e2e-8c3-*)
+        # Purge post-suite : DELETE ciblé `slug LIKE 'e2e-8c3-%'`. Symétrique
+        # au load ci-dessus ; `if: always()` pour ne jamais laisser de résidu
+        # en cas d'échec Playwright.
+        if: always()
+        run: ./scripts/e2e-admin-articles.sh clear
 
       - name: Collect docker compose logs (on failure)
         if: failure()

@@ -37,6 +37,14 @@ final class AdminSecurityHeadersTest extends WebTestCase
         self::assertSame('same-origin', $headers->get('Cross-Origin-Resource-Policy'));
         self::assertSame('noindex, nofollow', $headers->get('X-Robots-Tag'));
         self::assertStringContainsString('camera=()', (string) $headers->get('Permissions-Policy'));
+
+        // Phase 8C3 : pages d'admin toujours privées, jamais mises en cache
+        // par un proxy — le contenu est spécifique à l'admin authentifié.
+        $cacheControl = (string) $headers->get('Cache-Control');
+        self::assertStringContainsString('no-store', $cacheControl);
+        self::assertStringContainsString('no-cache', $cacheControl);
+        self::assertStringContainsString('private', $cacheControl);
+        self::assertStringContainsString('must-revalidate', $cacheControl);
     }
 
     public function testPublicHealthEndpointDoesNotReceiveAdminHeaders(): void
