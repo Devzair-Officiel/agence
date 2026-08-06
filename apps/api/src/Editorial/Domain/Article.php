@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Editorial\Domain;
 
 use App\Editorial\Domain\Exception\ArticleInvariantViolation;
+use App\Editorial\Domain\Exception\ArticleNotEditableException;
+use App\Editorial\Domain\Exception\InvalidArticleTransitionException;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -184,7 +186,148 @@ class Article
             return;
         }
 
+        $this->assertMonotonicNow($now);
+
         $this->status = ArticleStatus::Archived;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Restaure un article archivé vers le statut `Draft`.
+     *
+     * - `Draft` : idempotent, no-op silencieux.
+     * - `Published` : refusé — pour éditer un article publié, il faut
+     *   d'abord `archive()` puis `restore()`.
+     * - `Archived` : bascule vers `Draft` et remet `publishedAt` à `null`
+     *   (l'éventuelle date historique de publication est perdue à dessein :
+     *   un brouillon ne porte pas de date active ; une future publication
+     *   en assignera une nouvelle).
+     */
+    public function restore(\DateTimeImmutable $now): void
+    {
+        if ($this->status === ArticleStatus::Draft) {
+            return;
+        }
+
+        if ($this->status !== ArticleStatus::Archived) {
+            throw InvalidArticleTransitionException::cannotRestoreFrom($this->status);
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->status = ArticleStatus::Draft;
+        $this->publishedAt = null;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Modifie le titre d'un brouillon. Idempotent quand la valeur est
+     * inchangée après trim — l'horodatage `updatedAt` reste alors intact,
+     * ce qui préserve stabilité et ETag.
+     */
+    public function changeTitle(string $title, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        $trimmed = trim($title);
+        self::assertLength('titre', $trimmed, 5, 200);
+
+        if ($this->title === $trimmed) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->title = $trimmed;
+        $this->updatedAt = $now;
+    }
+
+    public function changeExcerpt(string $excerpt, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        $trimmed = trim($excerpt);
+        self::assertLength('résumé', $trimmed, 40, 320);
+
+        if ($this->excerpt === $trimmed) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->excerpt = $trimmed;
+        $this->updatedAt = $now;
+    }
+
+    public function rewriteBody(string $bodyMarkdown, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        $trimmed = trim($bodyMarkdown);
+        if ($trimmed === '') {
+            throw new ArticleInvariantViolation('Le corps markdown ne peut pas être vide.');
+        }
+
+        if ($this->bodyMarkdown === $trimmed) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->bodyMarkdown = $trimmed;
+        $this->updatedAt = $now;
+    }
+
+    public function changeSeo(SeoMetadata $seo, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        if ($this->seoTitle === $seo->title() && $this->seoDescription === $seo->description()) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->seoTitle = $seo->title();
+        $this->seoDescription = $seo->description();
+        $this->updatedAt = $now;
+    }
+
+    public function changeAuthor(Author $author, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        if ($this->authorName === $author->name() && $this->authorType === $author->type()) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->authorName = $author->name();
+        $this->authorType = $author->type();
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * @param list<ExpertiseIdentifier> $expertises
+     */
+    public function changeExpertises(array $expertises, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        if ($expertises === []) {
+            throw new ArticleInvariantViolation('Au moins un pilier d\'expertise est requis.');
+        }
+
+        $deduped = ExpertiseIdentifier::toList(self::dedupe($expertises));
+
+        if ($this->expertiseIds === $deduped) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->expertiseIds = $deduped;
         $this->updatedAt = $now;
     }
 
@@ -272,6 +415,28 @@ class Article
         }
 
         return $unique;
+    }
+
+    private function assertDraftEditable(): void
+    {
+        if ($this->status !== ArticleStatus::Draft) {
+            throw ArticleNotEditableException::becauseStatusIs($this->status);
+        }
+    }
+
+    /**
+     * Refuse un `$now` strictement antérieur à `updatedAt`. Défense en
+     * profondeur contre un clock skew ou un appelant qui recyclerait un
+     * horodatage périmé — le domaine garantit ainsi que `updatedAt`
+     * progresse toujours de manière monotone.
+     */
+    private function assertMonotonicNow(\DateTimeImmutable $now): void
+    {
+        if ($now < $this->updatedAt) {
+            throw new ArticleInvariantViolation(
+                'L\'horodatage courant ne peut pas être antérieur à `updatedAt`.',
+            );
+        }
     }
 
     private static function assertLength(string $field, string $value, int $min, int $max): void

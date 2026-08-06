@@ -15,4 +15,9 @@ final class ArticleNotFoundException extends \DomainException
     {
         return new self(\sprintf('Aucun article publié pour le slug "%s".', $slug));
     }
+
+    public static function forId(string $id): self
+    {
+        return new self(\sprintf('Aucun article ne correspond à l\'identifiant "%s".', $id));
+    }
 }

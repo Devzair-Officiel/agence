@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Editorial\Domain;
 
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Port du domaine éditorial.
@@ -33,6 +34,14 @@ interface ArticleRepositoryInterface
      * aucun article ne porte ce slug.
      */
     public function findBySlug(ArticleSlug $slug): ?Article;
+
+    /**
+     * Résout un article, publié ou non, par son identifiant. Renvoie `null`
+     * si aucun article ne porte cet UUID. Utilisé par les handlers d'admin
+     * qui adressent l'agrégat par son identifiant stable (indépendant du
+     * slug, qui reste immuable en Phase 8C mais pourrait changer plus tard).
+     */
+    public function findById(Uuid $id): ?Article;
 
     /**
      * Résout un article publié dont `publishedAt <= $now` ou lève

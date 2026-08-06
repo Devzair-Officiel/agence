@@ -48,7 +48,13 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class MarkdownArticleFileParser
 {
-    private const MAX_BYTES = 524_288;
+    /**
+     * Borne dure sur la taille du fichier `.md` complet (front matter + corps).
+     * Alignée sur `MarkdownContentValidator::MAX_BODY_BYTES` pour garantir
+     * qu'un fichier valide côté import est aussi valide côté validation
+     * applicative (le corps est nécessairement plus petit que le fichier).
+     */
+    private const MAX_BYTES = MarkdownContentValidator::MAX_BODY_BYTES;
 
     private const ALLOWED_ROOT_KEYS = [
         'slug' => true,

@@ -12,6 +12,7 @@ use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\EditorialDatabaseCleanup;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Test d'intégration Doctrine — nécessite `devzair_test` accessible.
@@ -172,5 +173,29 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
         self::assertNull(
             $this->repository->findBySlug(ArticleSlug::fromString('slug-inexistant')),
         );
+    }
+
+    public function testFindByIdReturnsArticleWhatvereItsStatus(): void
+    {
+        $id = Uuid::v7();
+        $draft = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('brouillon-par-id')
+            ->build();
+
+        $this->repository->save($draft);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $found = $this->repository->findById($id);
+
+        self::assertNotNull($found);
+        self::assertSame($id->toRfc4122(), $found->id()->toRfc4122());
+        self::assertSame(ArticleStatus::Draft, $found->status());
+    }
+
+    public function testFindByIdReturnsNullWhenUnknown(): void
+    {
+        self::assertNull($this->repository->findById(Uuid::v7()));
     }
 }

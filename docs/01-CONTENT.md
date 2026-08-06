@@ -576,6 +576,21 @@ Prévoir des types structurés plutôt que des pages entièrement libres.
 - SEO ;
 - statut éditorial.
 
+**Champs modifiables après création (Phase 8C2, backend only)** —
+l'agrégat `Article` expose des mutations métier explicites, autorisées
+uniquement quand l'article est en statut `Draft` : titre, résumé,
+corps Markdown, SEO (title + description, indivisibles), auteur (name
++ type, indivisibles), liste d'expertises. Le slug reste immuable en
+Phase 8C. Un article publié ou archivé doit être remis en brouillon
+via `restore()` avant toute édition ; `restore()` refuse la
+transition depuis `Published` pour empêcher toute modification
+silencieuse d'un contenu déjà diffusé. Toute mutation avec un
+horodatage antérieur au dernier `updatedAt` est refusée (garde-fou
+horloge monotone), et une mutation dont la valeur est identique à
+l'existant est un no-op sans bump d'`updatedAt` — l'ETag public reste
+donc stable. L'IHM éditoriale qui exposera ces mutations est prévue
+en Phase 8C3.
+
 ### Membre ou contributeur
 
 Seulement pour des personnes réelles ayant autorisé la publication :

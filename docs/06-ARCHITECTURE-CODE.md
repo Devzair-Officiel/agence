@@ -88,10 +88,10 @@ devzair/
 │       ├── public/
 │       ├── src/
 │       │   ├── Contact/{Controller,Dto,Service,Security,Configuration,Command,Exception}
-│       │   ├── Editorial/            # Phase 8A/8B1 : domaine éditorial (lecture publique + import CLI + cache HTTP)
-│       │   │   ├── Domain/           # Article, ArticleSlug, Author, SeoMetadata, enums, port, Clock, Exception
+│       │   ├── Editorial/            # Phase 8A/8B1/8C2 : domaine éditorial (lecture publique + import CLI + cache HTTP + mutations draft-only)
+│       │   │   ├── Domain/           # Article (+ mutations 8C2), ArticleSlug, Author, SeoMetadata, enums, port (findById + findBySlug), Clock, Exception (+ ArticleNotEditable, InvalidArticleTransition)
 │       │   │   ├── Application/
-│       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) + Handlers + Results
+│       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) ; Phase 8C2 — UpdateDraftArticle/ArchiveArticle/RestoreArticle + Handlers + Results
 │       │   │   │   ├── Markdown/     # Phase 8B1 — ArticleFrontMatter (VO), MarkdownParseException, MarkdownValidationException
 │       │   │   │   ├── Query/        # ListPublishedArticles/GetPublishedArticle + Handlers
 │       │   │   │   └── View/         # ArticleSummaryView, ArticleDetailView, PaginationView

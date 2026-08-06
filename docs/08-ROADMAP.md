@@ -865,27 +865,87 @@ dédiée (voir ADR-012).
       `.env.example` documente `ADMIN_SESSION_LIFETIME`,
       `ADMIN_LOGIN_MAX_ATTEMPTS`, `ADMIN_LOGIN_INTERVAL`.
 
-#### Phase 8C2 — IHM éditoriale (NON DÉMARRÉE)
+#### Phase 8C2 — Mutations métier explicites de l'agrégat Article (TERMINÉE)
 
-Prérequis : Phase 8C1 mergée. Livraison prévue dans une phase séparée
-avec ADR dédiée si la frontière change.
+Livrée le 2026-08-06 par DEV-051. **Backend only** — aucune route
+HTTP, aucun contrôleur admin, aucun template Twig, aucune migration,
+aucun changement Nuxt. La phase prépare l'IHM éditoriale à venir
+(reportée) en verrouillant côté domaine et application les mutations
+autorisées sur un article en `Draft`.
+
+- [x] 7 mutations métier explicites ajoutées à l'agrégat `Article`
+      (`changeTitle`, `changeExcerpt`, `rewriteBody`, `changeSeo`,
+      `changeAuthor`, `changeExpertises`, `restore`). Toutes refusent
+      la mutation si le statut n'est pas `Draft` (via
+      `ArticleNotEditableException`), sont no-op si valeur identique
+      (préserve `updatedAt` et donc l'ETag), refusent un `$now`
+      antérieur à `updatedAt` (horloge monotone garantie).
+- [x] `restore(now)` : `Archived → Draft` (perd `publishedAt` à
+      dessein, un brouillon ne porte pas de date active) ; `Draft →`
+      no-op ; `Published → InvalidArticleTransitionException`.
+      L'édition d'un article publié doit passer par le chemin
+      `archive() → restore() → Draft`, jamais directement.
+- [x] `slug` reste immuable en Phase 8C ; aucune colonne `version` ;
+      aucun historique de révisions.
+- [x] Handlers Application : `UpdateDraftArticleHandler` (validation
+      atomique — construit tous les VOs + valide Markdown avant
+      d'appliquer la moindre mutation, un seul `flush`),
+      `ArchiveArticleHandler`, `RestoreArticleHandler`. Contrat
+      `Result` typé (`mutated`/`unchanged`, `archived`/`alreadyArchived`,
+      `alreadyDraft`) pour piloter la couche présentation future.
+- [x] `ArticleRepositoryInterface::findById(Uuid)` ajouté (port +
+      `DoctrineArticleRepository` + `InMemoryArticleRepository` +
+      tests). `findBySlug` reste la seule lecture neutre pour
+      import/publish, `findById` la seule lecture neutre pour
+      mutation admin. Aucune écriture n'est exposée publiquement.
+- [x] Constante partagée `MarkdownContentValidator::MAX_BODY_BYTES =
+      524_288` (512 Kio) — utilisée à la fois par le pipeline
+      d'import CLI (`MarkdownArticleFileParser`) et par le handler
+      admin, plus de valeur dupliquée entre les deux chemins.
+- [x] Validation Markdown des mutations admin réutilise
+      `MarkdownContentValidator` + `MarkdownSecurityPolicy` de la
+      Phase 8B1 (rejet HTML brut, schémas d'URL dangereux, taille
+      excessive, contenu vide, VOs invalides). L'agrégat reste seul
+      responsable de sa cohérence — les VOs sont construits avant
+      les mutations pour garantir l'atomicité.
+- [x] `ArticleETag::CONTRACT_VERSION = 'v2'` et `ArticleListETag`
+      `'v1'` inchangés — les mutations ne modifient pas la forme du
+      payload public, donc pas d'invalidation en masse à propager.
+- [x] Tests : PHPUnit +49 (Domain `Article` +23 : chaque mutation +
+      no-op + rejet publié/archivé + horloge monotone + `restore` × 4 ;
+      Application `Command` handlers +19 : `ArchiveArticleHandlerTest`
+      ×4, `RestoreArticleHandlerTest` ×4, `UpdateDraftArticleHandlerTest`
+      ×11 dont test explicite d'atomicité `testValidatesAllBeforeMutating`
+      ; Infrastructure `DoctrineArticleRepositoryTest` +2 sur `findById`
+      ; Markdown `MarkdownContentValidatorTest` +2 sur la nouvelle
+      constante partagée). Suite Editorial complète après 8C2 : 154
+      tests / 340 assertions.
+- [x] Non-goals confirmés Phase 8C2 : aucune route HTTP admin, aucun
+      contrôleur, aucun template Twig, aucun formulaire, aucun DTO
+      d'entrée HTTP, aucune migration Doctrine, aucun changement de
+      slug, aucun historique de révisions, aucun changement Nuxt /
+      Caddy / frontend.
+
+#### Phase 8C3 — IHM éditoriale et publication depuis l'IHM (NON DÉMARRÉE)
+
+Prérequis : Phase 8C2 mergée. Livraison prévue dans une phase séparée
+avec ADR dédiée si la frontière change (endpoint HTTP admin, formulaire
+Twig, upload images).
 
 - [ ] Liste des articles éditoriaux dans `/admin/articles` (Twig SSR,
-      pagination, filtres par statut).
-- [ ] Formulaire de création / édition d'un article (brouillon).
-- [ ] Upload d'images (politique de stockage à décider avant
-      implémentation).
-- [ ] Aucune modification de l'agrégat `Article` sans révision de
-      l'ADR-009 (domaine éditorial) et sans nouveau contrat d'API si
-      pertinent.
-
-#### Phase 8C3 — Publication depuis l'IHM (NON DÉMARRÉE)
-
+      pagination, filtres par statut) — consomme la vue lecture
+      existante.
+- [ ] Formulaire de création / édition d'un article (brouillon) —
+      appelle `UpdateDraftArticleHandler` livré en 8C2.
 - [ ] Transition brouillon → publié via l'IHM, avec vérification des
       invariants métier (date de publication non future, slug
-      unique, etc.).
-- [ ] Invalidation coordonnée des caches HTTP (bump ETag) et Nitro
-      (purge locale) lors des publications.
+      unique, etc.) — appelle `PublishArticleBySlugHandler` livré en
+      8B1.
+- [ ] Upload d'images (politique de stockage à décider avant
+      implémentation).
+- [ ] Invalidation coordonnée des caches HTTP (bump ETag `v2 → v3` si
+      le contrat détail évolue) et Nitro (purge locale) lors des
+      publications.
 - [ ] Historique des transitions (qui a publié / archivé, quand).
 
 #### Phase 8C4 — Durcissements complémentaires (NON DÉMARRÉE)

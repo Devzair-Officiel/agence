@@ -30,6 +30,18 @@ use League\CommonMark\Parser\MarkdownParser;
  */
 final class MarkdownContentValidator
 {
+    /**
+     * Borne dure sur la taille d'un corps Markdown (en octets UTF-8).
+     *
+     * 512 KB — largement au-dessus du besoin éditorial réel, mais assez
+     * bas pour couper court à un fichier pathologique ou à une tentative
+     * d'inflation via le chemin admin (POST/PUT futur). Utilisée aussi
+     * par `MarkdownArticleFileParser` pour borner le fichier complet
+     * (front matter + corps) — même intention, périmètres légèrement
+     * différents mais équivalents en pratique.
+     */
+    public const MAX_BODY_BYTES = 524_288;
+
     private const ALLOWED_URL_SCHEMES = [
         'http' => true,
         'https' => true,
@@ -49,6 +61,18 @@ final class MarkdownContentValidator
      */
     public function validate(string $bodyMarkdown): void
     {
+        $size = \strlen($bodyMarkdown);
+        if ($size > self::MAX_BODY_BYTES) {
+            throw new MarkdownValidationException(
+                \sprintf(
+                    'Corps Markdown trop volumineux (%d octets, max %d).',
+                    $size,
+                    self::MAX_BODY_BYTES,
+                ),
+                [\sprintf('Corps Markdown trop volumineux (%d octets, max %d).', $size, self::MAX_BODY_BYTES)],
+            );
+        }
+
         $document = $this->parser->parse($bodyMarkdown);
 
         $violations = [];

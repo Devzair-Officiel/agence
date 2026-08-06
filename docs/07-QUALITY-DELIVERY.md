@@ -247,6 +247,42 @@ Aucun contenu Markdown fictif n'est commité — les tests construisent
 leurs fixtures dans `/tmp/` via `MarkdownFixture` et nettoient après
 chaque cas.
 
+### Suites PHPUnit ajoutées en Phase 8C2
+
+Backend uniquement — aucune route HTTP admin, aucun template Twig,
+aucune migration. Portée strictement `apps/api/src/Editorial/{Domain,Application,Infrastructure}/`.
+
+- **Domain unit étendu** — `ArticleTest` +23 cas couvrant chaque
+  mutation (`changeTitle`, `changeExcerpt`, `rewriteBody`, `changeSeo`,
+  `changeAuthor`, `changeExpertises`, `restore`) : mise à jour +
+  `updatedAt` bump, no-op quand la valeur est identique, rejet quand
+  l'article n'est pas `Draft` (`ArticleNotEditableException`), rejet
+  quand `$now < updatedAt` (garde-fou horloge monotone),
+  `restore` × 4 (`Archived → Draft` reset `publishedAt`, `Draft`
+  idempotent, `Published` refusé via `InvalidArticleTransitionException`,
+  article restauré redevient éditable).
+- **Application `Command` handlers** — `UpdateDraftArticleHandlerTest`
+  ×11 (dont `testValidatesAllBeforeMutating` qui prouve l'atomicité :
+  un titre valide fourni conjointement à un couple SEO invalide ne
+  modifie ni le titre ni `updatedAt`), `ArchiveArticleHandlerTest` ×4
+  (publié → archivé + flush, brouillon → archivé, déjà archivé
+  idempotent sans flush, 404 sur UUID inconnu),
+  `RestoreArticleHandlerTest` ×4 (archivé → brouillon + `publishedAt=null`,
+  brouillon idempotent, publié refusé, 404 sur UUID inconnu).
+  Pilotés par `InMemoryArticleRepository` + `FixedClock` + trait
+  `EntityManagerStub`, aucune connexion base.
+- **Infrastructure integration** — `DoctrineArticleRepositoryTest` +2
+  cas sur `findById` (retourne l'article quel que soit son statut,
+  retourne `null` sur UUID inconnu).
+- **Markdown validator** — `MarkdownContentValidatorTest` +2 cas sur
+  la nouvelle constante partagée `MAX_BODY_BYTES = 524_288` (accepte
+  la limite exacte, refuse au-delà avec message `trop volumineux`).
+
+Suite `Editorial` complète après Phase 8C2 : **154 tests, 340 assertions**.
+Aucun contenu Markdown fictif n'est commité — les tests construisent
+leurs fixtures dans `/tmp/` via `MarkdownFixture` et nettoient après
+chaque cas.
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

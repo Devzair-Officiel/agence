@@ -10,6 +10,7 @@ use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Implémentation Doctrine du port `ArticleRepositoryInterface`.
@@ -36,6 +37,15 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         $article = $this->entityManager
             ->getRepository(Article::class)
             ->findOneBy(['slug' => $slug->value()]);
+
+        return $article instanceof Article ? $article : null;
+    }
+
+    public function findById(Uuid $id): ?Article
+    {
+        $article = $this->entityManager
+            ->getRepository(Article::class)
+            ->find($id);
 
         return $article instanceof Article ? $article : null;
     }

@@ -9,6 +9,7 @@ use App\Editorial\Domain\ArticleRepositoryInterface;
 use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Implémentation en mémoire pour les tests Application/Domain.
@@ -38,6 +39,11 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         }
 
         return null;
+    }
+
+    public function findById(Uuid $id): ?Article
+    {
+        return $this->articles[$id->toRfc4122()] ?? null;
     }
 
     public function getPublishedBySlug(ArticleSlug $slug, \DateTimeImmutable $now): Article

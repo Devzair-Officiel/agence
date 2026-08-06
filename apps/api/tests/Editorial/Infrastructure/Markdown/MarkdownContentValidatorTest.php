@@ -93,6 +93,24 @@ final class MarkdownContentValidatorTest extends TestCase
         $this->validator->validate('Un [lien]().');
     }
 
+    public function testRejectsBodyExceedingMaxBytes(): void
+    {
+        $tooLarge = str_repeat('a', MarkdownContentValidator::MAX_BODY_BYTES + 1);
+
+        $this->expectException(MarkdownValidationException::class);
+        $this->expectExceptionMessageMatches('/trop volumineux/');
+
+        $this->validator->validate($tooLarge);
+    }
+
+    public function testAcceptsBodyAtMaxBytes(): void
+    {
+        $atLimit = str_repeat('a', MarkdownContentValidator::MAX_BODY_BYTES);
+
+        $this->validator->validate($atLimit);
+        $this->addToAssertionCount(1);
+    }
+
     public function testAggregatesMultipleViolationsIntoSingleException(): void
     {
         try {
