@@ -1,0 +1,23 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Trop de téléversements — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Trop de téléversements</h1>
+
+    <section class="card">
+        <p>
+            Vous avez dépassé la limite d'uploads autorisés dans la fenêtre courante.
+            C'est une protection contre les abus (voir en-tête <code>Retry-After</code>).
+        </p>
+
+        <p>
+            Merci de patienter <strong>{{ retry_after_seconds }} seconde{{ retry_after_seconds > 1 ? 's' : '' }}</strong>
+            avant de renvoyer votre téléversement.
+        </p>
+
+        <p>
+            <a href="{{ path('admin_media_list') }}" class="button-link">Retour à la liste des médias</a>
+        </p>
+    </section>
+{% endblock %}

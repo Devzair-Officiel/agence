@@ -1,0 +1,45 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Téléverser un média — Administration Devzair{% endblock %}
+
+{% block body %}
+    <h1>Téléverser un média</h1>
+
+    <section class="card">
+        {% if error_message %}
+            <div class="alert alert-error" role="alert">
+                {{ error_message }}
+            </div>
+        {% endif %}
+
+        <form method="post"
+              action="{{ path('admin_media_upload') }}"
+              enctype="multipart/form-data"
+              novalidate
+              class="article-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('media_upload') }}">
+
+            <div class="field">
+                <label for="media-file">Fichier image</label>
+                <input type="file"
+                       id="media-file"
+                       name="file"
+                       accept="image/jpeg,image/png,image/webp"
+                       required>
+                <p class="field-hint">
+                    Formats acceptés : JPEG, PNG, WebP. Poids maximum : 8&nbsp;Mio.
+                    Dimensions maximum : 8000&nbsp;×&nbsp;8000&nbsp;px, 40&nbsp;millions de pixels.
+                </p>
+                <p class="field-hint">
+                    Les métadonnées EXIF (dont GPS et informations d'appareil) sont
+                    automatiquement supprimées lors du ré-encodage côté serveur.
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit">Téléverser</button>
+                <a href="{{ path('admin_media_list') }}" class="button-link">Annuler</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Médias éditoriaux — Administration Devzair{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <h1>Médias éditoriaux</h1>
+        <a href="{{ path('admin_media_upload') }}" class="button-link button-primary">
+            Téléverser un média
+        </a>
+    </div>
+
+    <section class="card">
+        {% if result.items is empty %}
+            <p class="empty-state">Aucun média n'a encore été téléversé.</p>
+        {% else %}
+            <table class="admin-table">
+                <caption class="visually-hidden">
+                    Liste des médias éditoriaux — page {{ result.page }} sur {{ result.lastPage() }},
+                    {{ result.total }} média{{ result.total > 1 ? 's' : '' }} au total.
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Aperçu</th>
+                        <th scope="col">Nom d'origine</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Dimensions</th>
+                        <th scope="col">Poids</th>
+                        <th scope="col">Téléversé le (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in result.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('admin_media_preview', { id: item.id }) }}"
+                                   aria-label="Ouvrir la prévisualisation du média {{ item.originalFilename }}">
+                                    <img src="{{ path('admin_media_preview', { id: item.id }) }}"
+                                         alt=""
+                                         class="admin-media-thumb"
+                                         width="80"
+                                         height="80"
+                                         loading="lazy">
+                                </a>
+                            </td>
+                            <td>{{ item.originalFilename }}</td>
+                            <td><code>{{ item.mimeType.mime }}</code></td>
+                            <td>{{ item.width }}&nbsp;×&nbsp;{{ item.height }}&nbsp;px</td>
+                            <td>{{ (item.sizeBytes / 1024)|number_format(1, ',', ' ') }}&nbsp;Kio</td>
+                            <td>
+                                <time datetime="{{ item.createdAt|date('c') }}">
+                                    {{ item.createdAt|date('Y-m-d H:i') }}
+                                </time>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <nav class="pagination" aria-label="Pagination des médias">
+                <p class="pagination-summary">
+                    Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} média{{ result.total > 1 ? 's' : '' }}.
+                </p>
+                <ul class="pagination-links">
+                    {% if result.hasPrevious() %}
+                        <li>
+                            <a href="{{ path('admin_media_list', { page: result.page - 1 }) }}">
+                                ← Précédent
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if result.hasNext() %}
+                        <li>
+                            <a href="{{ path('admin_media_list', { page: result.page + 1 }) }}">
+                                Suivant →
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </section>
+{% endblock %}

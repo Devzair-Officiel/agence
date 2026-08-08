@@ -101,6 +101,13 @@ services:
       # Throttling natif Symfony sur /admin/login (login_throttling).
       ADMIN_LOGIN_MAX_ATTEMPTS: ${ADMIN_LOGIN_MAX_ATTEMPTS:-5}
       ADMIN_LOGIN_INTERVAL: ${ADMIN_LOGIN_INTERVAL:-15 minutes}
+      # Média éditorial (Phase 9A). Répertoire de stockage privé, hors
+      # webroot ; sert de racine à LocalMediaStorage. Le volume `api_var`
+      # persiste déjà l'ensemble de /app/var — aucun besoin de volume
+      # supplémentaire dédié aux médias en dev.
+      EDITORIAL_MEDIA_STORAGE_DIR: ${EDITORIAL_MEDIA_STORAGE_DIR:-/app/var/editorial-media}
+      ADMIN_MEDIA_UPLOAD_LIMIT: ${ADMIN_MEDIA_UPLOAD_LIMIT:-20}
+      ADMIN_MEDIA_UPLOAD_INTERVAL: ${ADMIN_MEDIA_UPLOAD_INTERVAL:-10 minutes}
     env_file:
       - path: .env
         required: false

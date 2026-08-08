@@ -40,6 +40,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Admin/Domain'
                 prefix: 'App\Admin\Domain'
                 alias: Admin
+            EditorialMedia:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/EditorialMedia/Domain'
+                prefix: 'App\EditorialMedia\Domain'
+                alias: EditorialMedia
 
 when@test:
     doctrine:

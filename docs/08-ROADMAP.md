@@ -1053,10 +1053,202 @@ depuis la persistance jusqu'à l'administration protégée.
 
 ---
 
-## Phase 9 — Intégration du blog dans Nuxt
+## Phase 9 — Média éditorial et intégration du blog dans Nuxt
 
+Décomposée en deux jalons indépendants — **9A fondation média
+éditoriale côté admin** (livré 2026-08-08), **9B rattachement des
+médias à l'article + exposition publique + intégration Nuxt** (non
+démarré). La 9A introduit uniquement la bibliothèque et le
+téléversement authentifié ; **elle n'ajoute AUCUNE relation à
+`Article`, AUCUNE route publique, AUCUN alt-text contextuel** — ces
+préoccupations sont volontairement isolées en 9B pour que le socle
+image (pipeline sécurisé, stockage privé, audit) puisse vivre et
+mûrir sans coupler le contrat public.
+
+### Phase 9A — Fondation média éditoriale (TERMINÉE)
+
+Livrée le 2026-08-08 par DEV-055. Bibliothèque admin, téléversement
+authentifié avec normalisation image + strip EXIF, stockage privé
+hors webroot, prévisualisation authentifiée. Aucun rattachement à
+`Article`, aucune route publique.
+
+- [x] Domaine `EditorialMedia` : agrégat `MediaAsset` (UUID v7,
+      créé via factory `fromNormalized()` — jamais construit à la
+      main côté application), VO `StorageKey` (format canonique
+      `{uuid}/original.{jpg|png|webp}` généré côté serveur —
+      **jamais dérivé du nom d'origine** du fichier client),
+      `Sha256` (64 hex, calculé sur le fichier NORMALISÉ),
+      `MediaDimensions` (width/height positifs), enum `MediaType`
+      (JPEG/PNG/WEBP, extensions et MIME depuis l'enum), exceptions
+      `EditorialMediaInvariantViolation` et
+      `MediaAssetNotFoundException`, port
+      `MediaAssetRepositoryInterface`. Aucun champ `alt`, aucune
+      FK vers `editorial_article`.
+- [x] Application : commande `UploadEditorialMedia` (source path +
+      original filename) + handler `UploadEditorialMediaHandler`
+      qui orchestre le pipeline (détection MIME serveur → policy
+      → normalisation → stockage → persistence Doctrine, avec
+      compensation `MediaStorageInterface::delete()` si le flush
+      échoue). `MediaUploadPolicy` : `MAX_SIZE_BYTES = 8 * 1024 * 1024`
+      (8 MiB), `MAX_WIDTH = MAX_HEIGHT = 8000`,
+      `MAX_TOTAL_PIXELS = 40_000_000` (garde-fou pixel-flood
+      indépendant des dimensions). Cinq exceptions applicatives
+      typées (`MediaTooLargeException`,
+      `UnsupportedMediaTypeException`, `InvalidImageException`,
+      `ImageDimensionsExceededException`, `MediaStorageException`).
+      Query `ListAdminMedia(Handler)` + DTO plats
+      `AdminMediaListItem` / `AdminMediaListPage` avec
+      `PaginationView` réutilisée d'`Editorial`.
+- [x] Infrastructure : `GdImageProcessor` — décode via
+      `imagecreatefrom{jpeg,png,webp}`, ré-encode via
+      `imagejpeg/png/webp` : **le ré-encodage GD supprime
+      systématiquement les métadonnées EXIF / IPTC / GPS**, jamais
+      d'appel `exif_read_data`. `LocalMediaStorage` — racine
+      pilotée par `EDITORIAL_MEDIA_STORAGE_DIR` (défaut
+      `/app/var/editorial-media`, **hors webroot** derrière Caddy),
+      dossiers 0750, fichiers 0640, défense en profondeur
+      path-traversal via `realpath` (rejette toute clé qui
+      s'échapperait de la racine). `FinfoMimeTypeDetector` (jamais
+      `mime_content_type`, jamais l'en-tête HTTP client).
+      `DoctrineMediaAssetRepository` (implémente le port : `save`
+      sans flush, `findById`, `listPaginated`, `count`).
+      `AdminMediaUploadRateLimiter` — enveloppe `RateLimiterFactory`
+      `admin_media_upload` (token_bucket, **20 uploads / 10 minutes
+      par UUID admin**, jamais IP), pilotable via env
+      `ADMIN_MEDIA_UPLOAD_LIMIT` et `ADMIN_MEDIA_UPLOAD_INTERVAL`.
+      `MediaAdminAuditLogger` — canal Monolog `admin` (partagé
+      avec 8C4), 4 événements : `admin.media.uploaded`,
+      `.upload_failed`, `.upload_rate_limited`, `.previewed`.
+      **Seul identifiant admin loggé = UUID** ; jamais email,
+      jamais nom de fichier arbitraire dans les logs de succès.
+- [x] Presentation `Admin/Presentation/Http/` (3 contrôleurs,
+      tous `#[IsGranted('ROLE_ADMIN')]`) :
+      `AdminMediaListController` (GET `/admin/media`, pagination),
+      `AdminMediaUploadController` (GET + POST `/admin/media/new`,
+      PRG vers `/admin/media` avec flash succès contenant
+      `original_filename`, formulaire multipart, CSRF token
+      `media_upload`, rate-limit → 429 + template
+      `rate_limited.html.twig` + `Retry-After`),
+      `AdminMediaPreviewController` (GET-only
+      `/admin/media/{id}/preview` avec route requirement
+      `[0-9a-fA-F-]{36}`, `StreamedResponse` streamé depuis
+      `MediaStorageInterface::openStream()`,
+      `Content-Type` **fixé par l'enum `MediaType`** — jamais
+      renvoyé côté client, `Content-Disposition: inline`, headers
+      admin `X-Robots-Tag`/`X-Frame-Options`/CSP hérités du
+      subscriber Phase 8C1, `Cache-Control: private, no-store`).
+- [x] Templates `apps/api/templates/admin/media/` (3 fichiers) :
+      `list.html.twig` (table `.admin-table` : miniature via lien
+      preview, `original_filename`, `mime_type`, dimensions,
+      poids ; état vide ; pagination), `new.html.twig` (formulaire
+      multipart avec `<label for="media-file">` explicite, notice
+      « JPEG, PNG, WebP — 8 MiB max, 8000×8000 px max »),
+      `rate_limited.html.twig`.
+- [x] Migration `Version20260808120000` : table
+      `editorial_media_asset` (`id` UUID PK, `storage_key`
+      VARCHAR(255) UNIQUE, `original_filename` VARCHAR(255),
+      `mime_type` VARCHAR(64), `size_bytes` BIGINT,
+      `width`/`height` INT, `sha256` VARCHAR(64),
+      `created_at` TIMESTAMPTZ). Un seul index chronologique
+      `(created_at DESC, id DESC)` pour la pagination stable.
+      **Aucune FK vers `editorial_article`**, aucun statut de
+      publication, aucun champ `alt` — tout cela est reporté en 9B.
+- [x] Configuration : `apps/api/docker/php/editorial-media.ini`
+      (couvre 8 MiB `upload_max_filesize=12M`, `post_max_size=16M`,
+      `memory_limit=256M`, `max_file_uploads=1`) chargé
+      exclusivement par l'image API Devzair via `Dockerfile.dev`.
+      `apps/api/config/services.yaml` étendu (câblage complet des
+      alias ports → adaptateurs Doctrine/GD/Finfo/LocalStorage +
+      wiring `AdminMediaUploadRateLimiter` sur la factory).
+      `apps/api/config/packages/doctrine.yaml` étend le mapping
+      Doctrine (namespace additionnel `App\EditorialMedia\Domain`).
+      `apps/api/config/packages/framework.yaml` déclare le limiteur
+      `admin_media_upload` (token_bucket, pilotable via env).
+      `apps/api/config/routes/admin.yaml` déclare les 3 routes
+      `admin_media_list`/`admin_media_upload`/`admin_media_preview`.
+      `apps/api/templates/admin/_layout.html.twig` gagne l'entrée
+      de navigation « Médias ».
+      `apps/api/public/admin/assets/admin.css` étend les styles
+      pour la table médias, le bloc miniature, le formulaire
+      upload et l'état vide.
+- [x] Tests : PHPUnit +96 (Domain `MediaAssetTest` ×6,
+      `StorageKeyTest` ×4, `Sha256Test` ×3, `MediaDimensionsTest`
+      ×2, `MediaTypeTest` ×5 ; Application
+      `MediaUploadPolicyTest` ×9, `UploadEditorialMediaHandlerTest`
+      ×10 dont **compensation storage** sur flush failure,
+      `ListAdminMediaHandlerTest` ×4 ; Infrastructure
+      `GdImageProcessorTest` ×7 dont **strip EXIF/GPS vérifié sur
+      un JPEG source contenant `exif_read_data` positive**,
+      `FinfoMimeTypeDetectorTest` ×6, `LocalMediaStorageTest` ×6
+      dont défense path-traversal, `DoctrineMediaAssetRepositoryTest`
+      ×6 avec rollback, `MediaAdminAuditLoggerTest` ×4 ;
+      Presentation `AdminMediaListControllerTest` ×6,
+      `AdminMediaUploadControllerTest` ×9 dont 429 + `Retry-After`,
+      `AdminMediaPreviewControllerTest` ×9 dont **`Content-Type`
+      fixé serveur et non côté client**, headers de sécurité,
+      405 sur POST). Support tests `EditorialMediaDatabaseCleanup`,
+      `FakeImageProcessor`, `FakeMediaStorage`,
+      `FakeMimeTypeDetector`, `InMemoryMediaAssetRepository`,
+      `MediaAssetBuilder`.
+- [x] E2E Playwright `apps/web/test/e2e/admin-media.spec.ts` :
+      `test.describe.serial` (throttling firewall + rate-limiter),
+      6 scénarios — (1) anonyme → 302 `/admin/login`, (2)
+      bibliothèque accessible Axe WCAG 2.2 AA, (3) formulaire
+      d'upload accessible Axe WCAG 2.2 AA, (4) cycle complet
+      upload PNG → PRG → média visible → preview privée
+      (`content-type: image/png`, `content-disposition: inline`,
+      `cache-control` contient `private` + `no-store`,
+      `x-robots-tag: noindex, nofollow`, `x-frame-options: DENY`,
+      magic bytes PNG), (5) preview anonyme → 302 `/admin/login`,
+      (6) en-têtes de sécurité admin sur `/admin/media` et
+      `/admin/media/new`. Préfixe strict `e2e-9a-`.
+- [x] Orchestration `scripts/e2e-admin-media.sh` : constante
+      `readonly E2E_FILENAME_PREFIX='e2e-9a-'` codée en dur
+      (garde-fou n°1), `DELETE FROM editorial_media_asset WHERE
+      original_filename LIKE '${E2E_FILENAME_PREFIX}%'` (garde-fou
+      n°2 — jamais TRUNCATE), suppression fichier-par-fichier via
+      `rm -f --` sur chaque `storage_key` retourné par le SELECT
+      (garde-fou n°3 — jamais `rm -rf` racine) avec défense en
+      profondeur contre `..`, `/*`, `-*`, `ON_ERROR_STOP=1`.
+      Symétrique aux scripts 8B2/8C1/8C3/8C4 avec la spécificité
+      **filesystem cleanup en plus** (les articles n'ont pas de
+      fichier binaire, les médias oui).
+- [x] CI `.github/workflows/web-quality.yml` : path triggers
+      étendus (`scripts/e2e-admin-media.sh`), étape
+      `./scripts/e2e-admin-media.sh load` avant Playwright, étape
+      `./scripts/e2e-admin-media.sh clear` avec `if: always()` en
+      fin — symétrique aux fixtures 8B2/8C1/8C3/8C4.
+
+**Hors périmètre confirmé Phase 9A** : aucune colonne
+`hero_image_id`/`cover_image_id`/`alt` sur `editorial_article`
+(Phase 9B), aucun rattachement d'un média à un article, aucun
+alt-text contextuel (le VO `MediaAsset` porte l'identité serveur,
+pas le contexte éditorial), aucune route publique
+(`/api/media/{id}` ou variante — le stockage reste **strictement
+privé** derrière le firewall admin), aucun rendu Nuxt côté
+`/ressources/**`, aucune indexation dans le sitemap public, aucun
+WYSIWYG ni éditeur d'image, aucun redimensionnement `srcset`
+(l'original normalisé est le seul rendu, les variantes seront
+introduites en 9B si le contrat public en a besoin), aucune
+suppression de média (report Phase 9B — supprimer un média
+référencé par un article devra propager une invalidation),
+aucune modification du contrat public éditorial existant (list /
+detail views intactes, ETag `v2` inchangé), aucun changement
+Nuxt (`apps/web/app/**`), aucun changement Caddy.
+
+### Phase 9B — Rattachement à l'article et intégration Nuxt (NON DÉMARRÉE)
+
+- [ ] Ajouter la relation `MediaAsset ↔ Article` (colonnes
+      `hero_image_id`/`content_image_ids`, alt-text contextuel
+      porté par la relation, pas par l'agrégat média).
+- [ ] Exposer les médias associés dans le contrat public
+      (`ArticleDetailView.heroImage`/`.contentImages`,
+      **bumper `ArticleETag::CONTRACT_VERSION` de `v2` à `v3`**).
+- [ ] Décider et livrer la stratégie d'exposition publique du
+      binaire (proxy signé, CDN, ou route publique dédiée avec
+      cache long — arbitrage sécurité vs performance).
 - [ ] Créer les types partagés frontend.
-- [ ] Créer `ArticleRepository`.
+- [ ] Créer `ArticleRepository` côté Nuxt.
 - [ ] Créer l’adaptateur Symfony.
 - [ ] Créer les composables de liste et détail.
 - [ ] Créer `/ressources`.
@@ -1070,10 +1262,12 @@ depuis la persistance jusqu'à l'administration protégée.
 - [ ] Ajouter flux RSS si pertinent.
 - [ ] Définir cache et invalidation.
 - [ ] Tester la publication et la mise à jour.
+- [ ] Traiter la suppression d'un média référencé par un article
+      (soft-delete, replace-then-delete, ou refus).
 
-### Critère de sortie
+### Critère de sortie (Phase 9 complète)
 
-Un article publié dans Symfony est visible sous une URL Nuxt canonique avec HTML, métadonnées et données structurées corrects.
+Un article publié dans Symfony est visible sous une URL Nuxt canonique avec HTML, métadonnées et données structurées corrects — image d'entête incluse, servie depuis un canal explicitement décidé (privé signé ou public caché), avec un contrat versionnable.
 
 ---
 

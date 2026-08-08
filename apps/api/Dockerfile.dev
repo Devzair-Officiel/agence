@@ -1,4 +1,4 @@
-# Devzair — API Symfony 7.4 LTS (Phase 6A + 8A)
+# Devzair — API Symfony 7.4 LTS (Phase 6A + 8A + 9A)
 #
 # Image de développement uniquement. Utilise le serveur intégré PHP (php -S)
 # car l'API n'exécute ni worker asynchrone ni serveur d'assets : un serveur
@@ -7,17 +7,34 @@
 #
 # Extensions PostgreSQL ajoutées en Phase 8A (voir ADR-009) : pdo_pgsql pour
 # Doctrine ORM 3, pgsql pour les diagnostics CLI.
+#
+# Extensions image ajoutées en Phase 9A : gd (avec JPEG/PNG/WebP) pour décoder
+# et ré-encoder les téléversements éditoriaux (élimine EXIF/GPS et
+# neutralise les fichiers polyglottes), fileinfo pour détecter le MIME
+# côté serveur (jamais confiance à l'extension), exif exposé pour
+# diagnostiquer l'orientation. Pas de bibliothèque Composer supplémentaire :
+# GD suffit pour le pipeline décode → contrôle → ré-encode requis en 9A.
 
 FROM php:8.4-cli-alpine
 
 RUN apk add --no-cache \
+        freetype-dev \
         git \
         icu-dev \
-        oniguruma-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libwebp-dev \
         libzip-dev \
+        oniguruma-dev \
         postgresql-dev \
         unzip \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
     && docker-php-ext-install \
+        exif \
+        gd \
         intl \
         opcache \
         pdo_pgsql \
@@ -25,6 +42,9 @@ RUN apk add --no-cache \
         zip
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+# Phase 9A : override des limites PHP pour le téléversement média.
+COPY docker/php/editorial-media.ini /usr/local/etc/php/conf.d/zz-editorial-media.ini
 
 WORKDIR /app
 

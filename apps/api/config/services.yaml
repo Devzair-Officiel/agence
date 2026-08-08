@@ -6,6 +6,7 @@
 # - interface  : contrat stable, remplacé par un fake en test.
 
 parameters:
+    app.editorial_media.storage_dir: '%env(default::EDITORIAL_MEDIA_STORAGE_DIR)%'
     app.contact.rate_limit: '%env(int:CONTACT_RATE_LIMIT)%'
     app.contact.rate_interval: '%env(CONTACT_RATE_INTERVAL)%'
     app.contact.from_email: '%env(CONTACT_FROM_EMAIL)%'
@@ -123,3 +124,29 @@ services:
 
     Psr\Clock\ClockInterface:
         alias: Symfony\Component\Clock\NativeClock
+
+    # Domaine EditorialMedia (Phase 9A). Le port de persistance est branché sur
+    # Doctrine ; l'implémentation par défaut du stockage privé écrit sur disque
+    # dans un répertoire hors webroot. Le processeur d'image et le détecteur
+    # MIME utilisent respectivement GD et l'extension fileinfo.
+    App\EditorialMedia\Domain\MediaAssetRepositoryInterface:
+        alias: App\EditorialMedia\Infrastructure\Persistence\DoctrineMediaAssetRepository
+
+    App\EditorialMedia\Application\Storage\MediaStorageInterface:
+        alias: App\EditorialMedia\Infrastructure\Storage\LocalMediaStorage
+
+    App\EditorialMedia\Infrastructure\Storage\LocalMediaStorage:
+        arguments:
+            $storageRoot: '%app.editorial_media.storage_dir%'
+
+    App\EditorialMedia\Application\Image\ImageProcessorInterface:
+        alias: App\EditorialMedia\Infrastructure\Image\GdImageProcessor
+
+    App\EditorialMedia\Application\Mime\MimeTypeDetectorInterface:
+        alias: App\EditorialMedia\Infrastructure\Mime\FinfoMimeTypeDetector
+
+    # Limiteur d'upload par admin authentifié (Phase 9A). Fenêtre glissante
+    # 20 uploads / 10 minutes, indexée par UUID d'admin — voir §11 du brief.
+    App\EditorialMedia\Infrastructure\Security\AdminMediaUploadRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.admin_media_upload'

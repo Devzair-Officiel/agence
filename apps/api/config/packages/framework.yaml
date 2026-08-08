@@ -62,6 +62,17 @@ framework:
             limit: 20
             rate: { interval: '5 minutes', amount: 20 }
 
+        # Téléversements de médias éditoriaux (Phase 9A). Fenêtre glissante
+        # 20 uploads / 10 min par admin authentifié. Le décodage GD et le
+        # ré-encodage sont coûteux CPU/mémoire ; sans limiteur, un admin
+        # compromis pourrait boucler des téléversements et saturer le
+        # serveur. La clef est l'UUID de l'admin (voir
+        # `AdminMediaUploadRateLimiter`) — un compteur par identité.
+        admin_media_upload:
+            policy: 'token_bucket'
+            limit: '%env(int:ADMIN_MEDIA_UPLOAD_LIMIT)%'
+            rate: { interval: '%env(ADMIN_MEDIA_UPLOAD_INTERVAL)%', amount: '%env(int:ADMIN_MEDIA_UPLOAD_LIMIT)%' }
+
     serializer:
         enabled: true
 

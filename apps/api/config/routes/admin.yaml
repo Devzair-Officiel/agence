@@ -71,3 +71,24 @@ admin_article_restore:
     methods: [POST]
     requirements:
         id: '[0-9a-fA-F-]{36}'
+
+# Administration des médias éditoriaux (Phase 9A).
+# Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
+# En 9A, seules la liste, la création (formulaire + POST) et la prévisualisation
+# authentifiée existent — pas de DELETE (voir §5 du brief).
+admin_media_list:
+    path: /admin/media
+    controller: App\Admin\Presentation\Http\AdminMediaListController::__invoke
+    methods: [GET]
+
+admin_media_upload:
+    path: /admin/media/new
+    controller: App\Admin\Presentation\Http\AdminMediaUploadController::__invoke
+    methods: [GET, POST]
+
+admin_media_preview:
+    path: /admin/media/{id}/preview
+    controller: App\Admin\Presentation\Http\AdminMediaPreviewController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'

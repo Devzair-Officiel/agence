@@ -34,6 +34,7 @@ on:
       - 'scripts/e2e-admin-user.sh'
       - 'scripts/e2e-admin-articles.sh'
       - 'scripts/e2e-admin-preview.sh'
+      - 'scripts/e2e-admin-media.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -47,6 +48,7 @@ on:
       - 'scripts/e2e-admin-user.sh'
       - 'scripts/e2e-admin-articles.sh'
       - 'scripts/e2e-admin-preview.sh'
+      - 'scripts/e2e-admin-media.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -183,6 +185,14 @@ jobs:
         # (plus long que 8C3 pour éviter toute ambiguïté), DELETE ciblé.
         run: ./scripts/e2e-admin-preview.sh load
 
+      - name: Ensure clean state for admin media E2E (e2e-9a-*)
+        # La suite admin-media.spec.ts CRÉE ses médias via l'UI (upload réel
+        # via /admin/media/new). Ce `load` purge tout résidu d'un run
+        # précédent — LIGNES en base ET FICHIERS binaires sur le volume
+        # `api_var` (contrairement aux scripts articles). Préfixe strict
+        # `e2e-9a-`, DELETE ciblé, `rm` fichier-par-fichier — voir en-tête.
+        run: ./scripts/e2e-admin-media.sh load
+
       - name: Run Playwright tests
         working-directory: apps/web
         env:
@@ -219,6 +229,14 @@ jobs:
         # `if: always()` : la purge doit s'exécuter même après un crash Playwright.
         if: always()
         run: ./scripts/e2e-admin-preview.sh clear
+
+      - name: Clear admin media E2E assets (e2e-9a-*)
+        # Symétrique au load 9A : suppression des LIGNES en base ET des
+        # FICHIERS binaires (préfixe `e2e-9a-`, chaque `storage_key` retourné
+        # par le SELECT est rm-é individuellement — jamais `rm -rf` racine).
+        # `if: always()` pour ne jamais laisser de résidu après un échec.
+        if: always()
+        run: ./scripts/e2e-admin-media.sh clear
 
       - name: Collect docker compose logs (on failure)
         if: failure()

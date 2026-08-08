@@ -163,6 +163,49 @@ services:
             $adminPublishLimiter: '@limiter.admin_publish'
         public: true
 
+    # ------------------------------------------------------------------
+    # Domaine EditorialMedia (Phase 9A)
+    # ------------------------------------------------------------------
+    # Repository, handlers et rate limiter publiés pour intégration + HTTP.
+    App\EditorialMedia\Infrastructure\Persistence\DoctrineMediaAssetRepository:
+        public: true
+
+    App\EditorialMedia\Domain\MediaAssetRepositoryInterface:
+        alias: App\EditorialMedia\Infrastructure\Persistence\DoctrineMediaAssetRepository
+        public: true
+
+    App\EditorialMedia\Application\Query\ListAdminMediaHandler:
+        public: true
+
+    App\EditorialMedia\Application\Command\UploadEditorialMediaHandler:
+        public: true
+
+    App\EditorialMedia\Infrastructure\Logging\MediaAdminAuditLogger:
+        public: true
+
+    # Storage en mémoire pour le limiter d'upload : chaque test repart d'un
+    # bucket neuf, indépendamment de `ADMIN_MEDIA_UPLOAD_LIMIT` (fixé à 1000
+    # dans `.env.test`). Le test qui vérifie 429 réduit la limite via un
+    # `RateLimiterFactory` alternatif construit à la volée.
+    limiter.storage.admin_media_upload:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.admin_media_upload:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'admin_media_upload'
+              limit: '%env(int:ADMIN_MEDIA_UPLOAD_LIMIT)%'
+              rate: { interval: '%env(ADMIN_MEDIA_UPLOAD_INTERVAL)%', amount: '%env(int:ADMIN_MEDIA_UPLOAD_LIMIT)%' }
+            - '@limiter.storage.admin_media_upload'
+        public: true
+
+    App\EditorialMedia\Infrastructure\Security\AdminMediaUploadRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.admin_media_upload'
+        public: true
+
     # Horloge testable : chaque test peut geler l'instant en surchargeant
     # ce service (via `getContainer()->set(...)`).
     Symfony\Component\Clock\NativeClock:
