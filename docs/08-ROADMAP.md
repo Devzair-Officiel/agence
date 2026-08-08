@@ -985,25 +985,49 @@ respire par TTL, à traiter avec le futur `ArticleUpdatedEvent`),
 historique persistant des transitions (non planifié — aucune ADR à ce
 jour, à requalifier si un besoin de conformité le formalise).
 
-#### Phase 8C4 — Prévisualisation éditoriale et recette finale de sécurité (NON DÉMARRÉE)
+#### Phase 8C4 — Prévisualisation éditoriale et recette finale de sécurité (TERMINÉE)
 
 Livraison de la prévisualisation authentifiée d'un brouillon, avec le
 même renderer Markdown que le public (aucun sanitizer parallèle,
 aucune divergence de rendu), et recette finale avant ouverture prod.
 
-- [ ] Route admin d'aperçu d'un article en `Draft` (rendu Twig SSR
-      utilisant `CommonMarkArticleRenderer` — même pipeline que le
-      contrat public).
-- [ ] Headers `X-Robots-Tag: noindex, nofollow` et `Cache-Control:
-      private, no-store` sur la route d'aperçu (déjà posés par
-      `AdminSecurityHeadersSubscriber`, à vérifier par test).
-- [ ] Recette E2E complète du parcours éditorial (création → aperçu →
-      publication → vérification `/ressources/{slug}` public).
-- [ ] Recette OWASP (ASVS L1 pertinent sur la surface admin :
-      auth, session, CSRF, headers, rate limiting, logs).
-- [ ] Préparation production : `bin/console app:admin:create-user` en
-      preprod, checklist d'ouverture, vérification cookies +
-      throttling + CSP en environnement réel.
+- [x] Route admin d'aperçu `/admin/articles/{id}/preview` (GET-only,
+      `#[IsGranted('ROLE_ADMIN')]`, rendu Twig SSR utilisant
+      `CommonMarkArticleRenderer` — même pipeline que le contrat public,
+      aucun sanitizer parallèle). Handler `GetAdminArticlePreviewHandler`
+      + DTO `AdminArticlePreviewView` + route requirement
+      `[0-9a-fA-F-]{36}` sur l'UUID. Aucune méthode d'écriture atteignable
+      depuis le handler (vérifié par introspection réflexive du port
+      `AdminArticleReadRepositoryInterface`).
+- [x] Headers `X-Robots-Tag: noindex, nofollow`, `Cache-Control: private,
+      no-store, no-cache, must-revalidate`, CSP `default-src 'none'`,
+      `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+      `Referrer-Policy: no-referrer` : posés par
+      `AdminSecurityHeadersSubscriber` (Phase 8C1), vérifiés par
+      PHPUnit (`testSecurityHeadersAreAppliedToPreview`) et Playwright
+      (« en-têtes de sécurité admin appliqués à la preview »).
+- [x] Recette E2E complète du parcours éditorial
+      (`apps/web/test/e2e/admin-preview.spec.ts`, 7 scénarios) : login →
+      création draft via UI → preview → publication → vérification
+      `/ressources/{slug}` public 200 → archivage → 404 public →
+      restauration en draft → preview draft. Axe WCAG 2.2 AA + WCAG 2.1
+      AAA sans violation.
+- [x] Recette de sécurité admin formalisée dans
+      `docs/checklists/ADMIN-SECURITY-REVIEW.md` : revue ciblée inspirée
+      des contrôles OWASP ASVS applicables à la surface d'administration
+      (11 sections : auth, access, session, CSRF, sanitisation, headers,
+      robots, DB isolation, logs, non-mutation, fin de recette) avec
+      références aux catégories OWASP Top 10 2021 correspondantes. **Pas
+      une certification ASVS complète** : la grille officielle n'a pas été
+      auditée dans son intégralité. Chaque item pointe soit vers un test
+      automatique nommé, soit vers une commande shell reproductible.
+- [x] Préparation production : la checklist ci-dessus fait office de
+      liste d'ouverture prod. Le compte E2E est provisionné via
+      `app:admin:create-user` (même commande que la prod). CSP,
+      throttling (5/15min login), rate-limiting (30/min write, 10/min
+      publish), cookies (`DZ_ADMIN_SESSID` HttpOnly SameSite=Lax,
+      Secure=auto) sont vérifiés par Playwright sur la stack docker
+      compose complète (Caddy + Nitro + Symfony + PostgreSQL).
 
 **Différé au-delà de Phase 8C4** (aucune date, aucune ADR — à
 requalifier si le besoin change) :

@@ -351,6 +351,58 @@ TRUNCATE, jamais DELETE global — même triple pattern que DEC-086),
 `load` avant Playwright puis `clear` avec `if: always()` en fin, en
 symétrie stricte avec les fixtures 8B2 et le compte admin 8C1.
 
+### Suites ajoutées en Phase 8C4 (prévisualisation éditoriale + recette de sécurité)
+
+- **PHPUnit application** — `GetAdminArticlePreviewHandlerTest`
+  (9 méthodes) : Draft/Published/Archived, `ArticleNotFoundException`
+  sur UUID absent, non-mutation de l'article (getters inchangés après
+  invocation), introspection réflexive de
+  `AdminArticleReadRepositoryInterface` — préfixes d'écriture
+  `save|persist|remove|flush|update|delete|insert|store` **absents**,
+  XSS `<script>`/`<iframe>` strippés par `MarkdownSecurityPolicy`,
+  liens `javascript:`/`data:` neutralisés, exposition complète des
+  métadonnées éditoriales (slug, SEO, auteur, expertises).
+- **PHPUnit presentation** — `AdminArticlePreviewControllerTest`
+  (10 méthodes) : anonyme → 302 vers `/admin/login`, UUID malformé →
+  404, ID inconnu → 404 (aucune fuite d'existence), draft render avec
+  bandeau + actions Publier/Archiver, published expose Archiver
+  uniquement, archived expose Restaurer uniquement, tokens CSRF vivants
+  sur chaque formulaire (`article_publish_{id}` / `article_archive_{id}`
+  / `article_restore_{id}` — jetons **existants** Phase 8C3, aucune
+  nouvelle surface), XSS titre `<img>`/`<b>` échappés en `&lt;` par
+  Twig, en-têtes de sécurité complets (CSP `default-src 'none'`,
+  `X-Frame-Options: DENY`, `X-Robots-Tag: noindex, nofollow`,
+  `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`,
+  `X-Content-Type-Options: nosniff`), `POST /preview` → 405. Assertions
+  Crawler via `filterXPath` (CssSelector non installé côté PHPUnit).
+- **Playwright E2E** — `apps/web/test/e2e/admin-preview.spec.ts`
+  (7 tests `describe.serial`, `SLUG_PREFIX='e2e-8c4-preview-'`) :
+  (1) anonyme → 302, (2) preview d'un brouillon + Axe WCAG 2.2 AA +
+  WCAG 2.1 AAA (`wcag2a wcag2aa wcag21a wcag21aa wcag22aa`),
+  (3) cycle complet : login → création draft via UI → preview →
+  publication → **vérification `/ressources/{slug}` public renvoie
+  200** → archivage → **404 public** → restauration en draft →
+  preview draft, (4) en-têtes admin appliqués à la preview via
+  `request` context, (5) XSS `<img>` dans titre : `page.locator('img').count() === 0`
+  + titre visible comme texte, (6) responsive 390/768/1440 (bandeau et
+  badge visibles à chaque viewport), (7) clavier : bouton
+  « Publier ce brouillon » focusable.
+- **Orchestration** — `scripts/e2e-admin-preview.sh` : constante
+  `E2E_SLUG_PREFIX='e2e-8c4-preview-'` codée en dur (préfixe plus long
+  que 8C3 pour éviter toute ambiguïté), `DELETE FROM editorial_article
+  WHERE slug LIKE '${E2E_SLUG_PREFIX}%'`, `ON_ERROR_STOP=1`,
+  `set -euo pipefail`. Le workflow `.github/workflows/web-quality.yml`
+  étend ses path triggers (`scripts/e2e-admin-preview.sh`) et exécute
+  `load` avant Playwright puis `clear` avec `if: always()` en fin, en
+  symétrie stricte avec 8B2 / 8C1 / 8C3.
+- **Checklist finale** — `docs/checklists/ADMIN-SECURITY-REVIEW.md` :
+  revue ciblée inspirée des contrôles OWASP ASVS applicables à la surface
+  d'administration Devzair, avec références aux catégories OWASP Top 10
+  2021 correspondantes (11 sections). **Pas une certification ASVS complète**
+  — la grille officielle n'a pas été auditée dans son intégralité. Chaque
+  item pointe soit vers un test automatique nommé, soit vers une commande
+  shell reproductible — aucune vérification manuelle « à l'œil ».
+
 ### Déploiement
 
 - migrations réversibles ou procédure de retour ;

@@ -1,0 +1,189 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{#
+    Prévisualisation admin authentifiée (Phase 8C4).
+
+    ── Sécurité ──────────────────────────────────────────────────────────────
+    Un seul `|raw` dans ce template — celui qui rend `preview.contentHtml`.
+    Ce champ vient exclusivement de `CommonMarkArticleRenderer` avec la
+    politique `MarkdownSecurityPolicy` (`html_input=strip`, `allow_unsafe_links=false`,
+    `max_nesting_level`, `max_delimiters_per_line`). Le pipeline sanitize
+    déjà tout `<script>`, tout `javascript:` et tout HTML brut à l'import
+    ET au rendu — voir ADR-010/011. Tous les autres champs (titre, chapô,
+    slug, SEO, auteur, nom de pilier) sont rendus par Twig avec l'escape
+    HTML par défaut : une tentative d'injection dans `title` s'affiche
+    comme du texte, jamais comme du markup exécutable.
+
+    ── Cache / robots ────────────────────────────────────────────────────────
+    Les en-têtes `X-Robots-Tag: noindex, nofollow` et `Cache-Control:
+    private, no-store, no-cache, must-revalidate` sont appliqués par
+    `AdminSecurityHeadersSubscriber` sur toutes les réponses `/admin/*` —
+    aucun `meta name="robots"` en plus (déjà dans `_layout.html.twig`).
+    Le bandeau visuel « Prévisualisation privée » n'est pas un mécanisme
+    de sécurité : c'est un signal humain, la sécurité vient des en-têtes
+    et du firewall Symfony.
+
+    ── Actions rendues ───────────────────────────────────────────────────────
+    Aucune nouvelle action serveur : les formulaires Publier / Archiver /
+    Restaurer réutilisent leurs routes et jetons CSRF existants
+    (`admin_article_publish`, `admin_article_archive`, `admin_article_restore`).
+    Ce template ne fait qu'offrir un point d'accès supplémentaire à ces
+    actions déjà éprouvées par la Phase 8C3.
+#}
+
+{% block title %}Prévisualisation — {{ preview.title }} — Administration Devzair{% endblock %}
+
+{% block body %}
+    <div class="preview-banner" role="status" aria-live="polite">
+        <strong>Prévisualisation privée</strong> — cette page est visible uniquement
+        des administrateurs authentifiés. Aucun visiteur, aucun moteur de
+        recherche n'y a accès.
+    </div>
+
+    <div class="page-header">
+        <p class="page-eyebrow">Prévisualisation de l'article</p>
+        <h1 class="preview-title">{{ preview.title }}</h1>
+        <p class="page-meta">
+            Statut :
+            <span class="status-badge status-{{ preview.status.value }}">
+                {% if preview.status.value == 'draft' %}Brouillon
+                {% elseif preview.status.value == 'published' %}Publié
+                {% else %}Archivé
+                {% endif %}
+            </span>
+        </p>
+    </div>
+
+    <nav class="preview-actions" aria-label="Actions sur cet article">
+        <a class="button-link" href="{{ path('admin_article_edit', { id: preview.id }) }}">
+            ← Retour à l'édition
+        </a>
+        <a class="button-link" href="{{ path('admin_articles_list') }}">
+            Retour à la liste
+        </a>
+    </nav>
+
+    <section class="card" aria-labelledby="preview-metadata-heading">
+        <h2 id="preview-metadata-heading">Métadonnées éditoriales</h2>
+
+        <dl class="preview-metadata">
+            <dt>Slug (URL publique, immuable)</dt>
+            <dd><code>{{ preview.slug }}</code></dd>
+
+            <dt>Auteur affiché</dt>
+            <dd>
+                {{ preview.authorName }}
+                <span class="preview-metadata__hint">
+                    ({% if preview.authorType.value == 'organization' %}organisation{% else %}personne{% endif %})
+                </span>
+            </dd>
+
+            <dt>Piliers d'expertise</dt>
+            <dd>
+                <ul class="preview-expertise-list">
+                    {% for expertise in preview.expertises %}
+                        <li>{{ expertise.value }}</li>
+                    {% endfor %}
+                </ul>
+            </dd>
+
+            <dt>Créé le</dt>
+            <dd>
+                <time datetime="{{ preview.createdAt|date('c') }}">
+                    {{ preview.createdAt|date('Y-m-d H:i') }} UTC
+                </time>
+            </dd>
+
+            <dt>Dernière modification</dt>
+            <dd>
+                <time datetime="{{ preview.updatedAt|date('c') }}">
+                    {{ preview.updatedAt|date('Y-m-d H:i') }} UTC
+                </time>
+            </dd>
+
+            {% if preview.publishedAt %}
+                <dt>Date de publication</dt>
+                <dd>
+                    <time datetime="{{ preview.publishedAt|date('c') }}">
+                        {{ preview.publishedAt|date('Y-m-d H:i') }} UTC
+                    </time>
+                </dd>
+            {% endif %}
+        </dl>
+    </section>
+
+    <section class="card" aria-labelledby="preview-seo-heading">
+        <h2 id="preview-seo-heading">SEO — tel qu'il apparaîtra sur le site public</h2>
+
+        <dl class="preview-seo">
+            <dt>Titre SEO</dt>
+            <dd>{{ preview.seoTitle }}</dd>
+
+            <dt>Meta description</dt>
+            <dd>{{ preview.seoDescription }}</dd>
+        </dl>
+
+        <p class="preview-seo__note">
+            Rappel : ces champs alimenteront <code>&lt;title&gt;</code> et
+            <code>&lt;meta name="description"&gt;</code> uniquement quand
+            l'article aura été publié. Tant que le statut reste
+            <em>brouillon</em> ou <em>archivé</em>, la fiche publique renvoie 404.
+        </p>
+    </section>
+
+    <section class="card preview-content" aria-labelledby="preview-content-heading">
+        <h2 id="preview-content-heading">Aperçu du contenu</h2>
+
+        <p class="preview-content__intro">
+            Chapô publié en tête de page :
+        </p>
+        <p class="preview-content__excerpt">{{ preview.excerpt }}</p>
+
+        <hr class="preview-content__separator" aria-hidden="true">
+
+        <div class="preview-prose">
+            {# ── SEUL usage justifié de `|raw` dans le codebase admin. ──
+               `contentHtml` provient exclusivement de `CommonMarkArticleRenderer`
+               piloté par `MarkdownSecurityPolicy` : HTML brut retiré,
+               schémas dangereux refusés, aucune évaluation JavaScript
+               possible. Voir en-tête de fichier pour l'analyse complète. #}
+            {{ preview.contentHtml|raw }}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="preview-lifecycle-heading">
+        <h2 id="preview-lifecycle-heading">Actions disponibles</h2>
+
+        <div class="lifecycle-actions">
+            {% if preview.status.value == 'draft' %}
+                <form method="post" action="{{ path('admin_article_publish', { id: preview.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_publish_' ~ preview.id) }}">
+                    <button type="submit" class="button-primary">Publier ce brouillon</button>
+                </form>
+
+                <form method="post" action="{{ path('admin_article_archive', { id: preview.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ preview.id) }}">
+                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
+                </form>
+            {% elseif preview.status.value == 'published' %}
+                <p class="lifecycle-note">
+                    Article publié. Pour rééditer, archivez-le puis restaurez-le en brouillon.
+                </p>
+
+                <form method="post" action="{{ path('admin_article_archive', { id: preview.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ preview.id) }}">
+                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
+                </form>
+            {% else %}
+                <p class="lifecycle-note">
+                    Article archivé. Restaurez-le en brouillon pour reprendre l'édition.
+                </p>
+
+                <form method="post" action="{{ path('admin_article_restore', { id: preview.id }) }}" class="inline-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_restore_' ~ preview.id) }}">
+                    <button type="submit">Restaurer comme brouillon</button>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

@@ -501,6 +501,15 @@ must-revalidate` sur toutes les réponses) :
   (8C2, idempotent).
 - `POST /admin/articles/{id}/restore` — via `RestoreArticleHandler`
   (8C2, `Archived → Draft`, refuse `Published → *`).
+- `GET /admin/articles/{id}/preview` — prévisualisation éditoriale
+  authentifiée (Phase 8C4). Rendu Twig SSR via
+  `GetAdminArticlePreviewHandler` : `AdminArticleReadRepositoryInterface::findForEdit()`
+  + `CommonMarkArticleRenderer` avec `MarkdownSecurityPolicy` (même
+  pipeline que le contrat public — aucun sanitizer parallèle, aucune
+  divergence de rendu). GET-only (`methods: [GET]`, POST renvoie 405),
+  aucune méthode d'écriture atteignable depuis le handler (vérifié par
+  introspection réflexive du port, cf. DEC-092). Un seul `|raw` dans
+  tout le codebase admin — réservé à `preview.contentHtml`.
 
 Toutes les mutations utilisent un token CSRF dédié par action
 (`publish|archive|restore-{uuid}`) et passent par `AdminActionRateLimiter`
@@ -538,15 +547,21 @@ vers `index.php` et Symfony retournait du HTML — Chrome refusait la
 CSS pour MIME strict. No-op en prod derrière Caddy/nginx/php-fpm. Cf.
 DEC-087.
 
-Phase 8C3 ne livre pas : upload d'images (report Phase 9),
-invalidation coordonnée du cache Nitro sur publication (aucune purge
-locale explicite — le cache Nitro respire par TTL, à traiter avec un
-futur `ArticleUpdatedEvent`), prévisualisation authentifiée d'un
-brouillon (Phase 8C4), recette OWASP finale et préparation prod
-(Phase 8C4). Historique persistant des transitions, MFA, reset HTTP,
-audit log persistant, Redis, multi-instance des sessions restent
-différés (non planifiés dans 8C4 — à requalifier si le besoin
-change).
+Phase 8C4 ajoute la prévisualisation éditoriale authentifiée et la
+recette finale de sécurité — revue ciblée inspirée des contrôles
+OWASP ASVS pertinents pour l'administration Devzair, formalisée dans
+`docs/checklists/ADMIN-SECURITY-REVIEW.md` (pas une certification
+ASVS complète : la grille officielle n'a pas été auditée dans son
+intégralité). Pas d'endpoint JSON
+admin, pas de token signé pour URL publique de preview, pas de
+changement de contrat public (`ArticleETag::CONTRACT_VERSION` intact),
+pas de nouvelle migration Doctrine. Historique persistant des
+transitions, MFA, reset HTTP, audit log persistant, Redis,
+multi-instance des sessions restent différés au-delà de 8C4 (à
+requalifier si le besoin change). Prochaine étape : upload d'images
+éditoriales (Phase 9) et invalidation coordonnée du cache Nitro sur
+publication admin (bump ETag + purge — à traiter avec un futur
+`ArticleUpdatedEvent`).
 
 ## Ce qui n'est pas dans les Phases 6A / 6C / 8A / 8B1 / 8B2 / 8C1 / 8C2 / 8C3
 
@@ -563,10 +578,12 @@ change).
   le TTL Nitro devient insuffisant.
 - Upload d'images éditoriales — report Phase 9 avec politique de
   stockage dédiée.
-- Prévisualisation authentifiée d'un brouillon (aperçu Twig SSR
-  utilisant `CommonMarkArticleRenderer`, headers `noindex` +
-  `private, no-store`) et recette finale de sécurité (E2E complet,
-  OWASP, préparation prod) — Phase 8C4.
+- Prévisualisation authentifiée d'un brouillon — **livrée en
+  Phase 8C4** via `GET /admin/articles/{id}/preview`
+  (`AdminArticlePreviewController`, `preview.html.twig`,
+  `GetAdminArticlePreviewHandler`). Recette finale de sécurité :
+  `docs/checklists/ADMIN-SECURITY-REVIEW.md` + PHPUnit + Playwright +
+  Axe (voir DEC-092).
 - MFA, table d'audit persistante, reset HTTP, bascule session Redis,
   multi-instance sessions, rôles multiples — différés au-delà de
   8C4, à requalifier si le besoin change.

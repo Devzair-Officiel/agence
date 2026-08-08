@@ -13,8 +13,13 @@ use App\Editorial\Domain\ExpertiseIdentifier;
  * Vue plate d'un article pour l'écran d'édition administrateur.
  *
  * Distinct de `ArticleDetailView` (public) :
- *   - inclut le statut et la date brute (utile aux templates admin) ;
+ *   - inclut le statut et les dates brutes — `updatedAt` sert d'ETag logique
+ *     à l'édition, `createdAt` documente l'historique dans la prévisualisation
+ *     admin (Phase 8C4) ;
  *   - n'embarque pas le rendu HTML — l'admin travaille sur la source Markdown ;
+ *     la prévisualisation (Phase 8C4) enveloppe cette vue dans
+ *     `AdminArticlePreviewView` en y ajoutant `contentHtml` calculé par
+ *     `CommonMarkArticleRenderer` ;
  *   - ne franchit pas la frontière `/api/**` : c'est un DTO de présentation
  *     interne.
  */
@@ -36,6 +41,7 @@ final class AdminArticleEditView
         public readonly array $expertises,
         public readonly ArticleStatus $status,
         public readonly ?\DateTimeImmutable $publishedAt,
+        public readonly \DateTimeImmutable $createdAt,
         public readonly \DateTimeImmutable $updatedAt,
     ) {
     }
@@ -58,6 +64,7 @@ final class AdminArticleEditView
             expertises: $article->expertises(),
             status: $article->status(),
             publishedAt: $article->publishedAt(),
+            createdAt: $article->createdAt(),
             updatedAt: $article->updatedAt(),
         );
     }

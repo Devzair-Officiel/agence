@@ -33,6 +33,7 @@ on:
       - 'scripts/e2e-fixtures.sh'
       - 'scripts/e2e-admin-user.sh'
       - 'scripts/e2e-admin-articles.sh'
+      - 'scripts/e2e-admin-preview.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -45,6 +46,7 @@ on:
       - 'scripts/e2e-fixtures.sh'
       - 'scripts/e2e-admin-user.sh'
       - 'scripts/e2e-admin-articles.sh'
+      - 'scripts/e2e-admin-preview.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -175,6 +177,12 @@ jobs:
         # `e2e-8c3-`, DELETE ciblé — voir en-tête du script.
         run: ./scripts/e2e-admin-articles.sh load
 
+      - name: Ensure clean state for admin preview E2E (e2e-8c4-preview-*)
+        # Symétrique au load 8C3 : la suite admin-preview.spec.ts crée
+        # ses articles via l'UI. Préfixe strict `e2e-8c4-preview-`
+        # (plus long que 8C3 pour éviter toute ambiguïté), DELETE ciblé.
+        run: ./scripts/e2e-admin-preview.sh load
+
       - name: Run Playwright tests
         working-directory: apps/web
         env:
@@ -205,6 +213,12 @@ jobs:
         # en cas d'échec Playwright.
         if: always()
         run: ./scripts/e2e-admin-articles.sh clear
+
+      - name: Clear admin preview E2E articles (e2e-8c4-preview-*)
+        # Symétrique au clear 8C3, DELETE ciblé `slug LIKE 'e2e-8c4-preview-%'`.
+        # `if: always()` : la purge doit s'exécuter même après un crash Playwright.
+        if: always()
+        run: ./scripts/e2e-admin-preview.sh clear
 
       - name: Collect docker compose logs (on failure)
         if: failure()

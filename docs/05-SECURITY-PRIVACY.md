@@ -333,6 +333,49 @@ Politique consignée dans `docs/adr/ADR-010-pipeline-markdown-editorial-cache-ht
   (`.row-actions`) ont un `gap ≥ 0.5rem`. Documenté §2.5.8 dans
   `docs/02-DESIGN-ACCESSIBILITY.md`.
 
+### Prévisualisation éditoriale admin (Phase 8C4)
+
+- **Route `GET /admin/articles/{id}/preview`** — `#[IsGranted('ROLE_ADMIN')]`,
+  `methods: [GET]` (POST → 405, aucun risque de mutation via cette URL).
+  Aucun endpoint JSON admin, aucun token signé, aucune URL publique
+  alternative (cf. DEC-092).
+- **Lecture pure garantie par le type système** : le port
+  `AdminArticleReadRepositoryInterface` n'expose aucune méthode
+  d'écriture (`save|persist|remove|flush|update|delete|insert|store`).
+  Vérifié par introspection réflexive
+  (`testPortInterfaceHasNoWriteMethodsExposedToHandler`) — n'importe quel
+  refactor qui ajouterait une méthode d'écriture au port casserait ce
+  test avant la revue.
+- **Un seul `|raw` dans le codebase admin** — réservé à
+  `preview.contentHtml`. La chaîne HTML provient exclusivement de
+  `CommonMarkArticleRenderer` piloté par `MarkdownSecurityPolicy`
+  (`html_input=strip`, `allow_unsafe_links=false`, `max_nesting_level`,
+  `max_delimiters_per_line`). Défense en profondeur : le sanitizer est
+  déjà appliqué à l'import (voir §14.6) et rejoué au rendu.
+- **En-têtes de sécurité** : posés par `AdminSecurityHeadersSubscriber`
+  (Phase 8C1) sur toute réponse `/admin/*` — CSP `default-src 'none'`,
+  `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex, nofollow`,
+  `Cache-Control: private, no-store, no-cache, must-revalidate`. Vérifiés
+  par test PHPUnit (`testSecurityHeadersAreAppliedToPreview`) et
+  Playwright (« en-têtes de sécurité admin appliqués à la preview »).
+- **Actions inline (Publier / Archiver / Restaurer)** : réutilisent les
+  jetons CSRF existants Phase 8C3 (`article_publish_{id}` /
+  `article_archive_{id}` / `article_restore_{id}`). Aucune nouvelle
+  surface CSRF introduite. Aucune action GET.
+- **Aucune fuite d'existence** : un UUID inconnu (ou invalide) renvoie
+  la page 404 standard — le contrôleur intercepte
+  `ArticleNotFoundException` et lève `NotFoundHttpException` sans
+  distinguer les deux cas.
+- **Checklist de recette admin** : `docs/checklists/ADMIN-SECURITY-REVIEW.md`
+  — revue ciblée inspirée des contrôles OWASP ASVS applicables à la
+  surface d'administration Devzair, avec références aux catégories OWASP
+  Top 10 2021 (11 sections auth / access / session / CSRF / sanitisation /
+  headers / robots / DB isolation / logs / non-mutation / fin de recette).
+  **Ce n'est pas une certification ASVS complète** — la grille officielle
+  n'a pas été auditée dans son intégralité. Chaque item pointe vers un
+  test automatique ou une commande shell reproductible.
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;

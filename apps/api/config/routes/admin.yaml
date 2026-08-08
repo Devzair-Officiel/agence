@@ -41,6 +41,16 @@ admin_article_edit:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+# Prévisualisation admin authentifiée (Phase 8C4). GET uniquement — aucune
+# mutation possible. Le UUID est doublement validé : regex de route +
+# `Uuid::fromString()` côté contrôleur.
+admin_article_preview:
+    path: /admin/articles/{id}/preview
+    controller: App\Admin\Presentation\Http\AdminArticlePreviewController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
 admin_article_publish:
     path: /admin/articles/{id}/publish
     controller: App\Admin\Presentation\Http\AdminArticlePublishController::__invoke

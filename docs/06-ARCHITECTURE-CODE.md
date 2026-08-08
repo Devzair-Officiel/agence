@@ -93,7 +93,7 @@ devzair/
 │       │   │   ├── Application/
 │       │   │   │   ├── Command/      # Phase 8B1 — Import/Publish (CLI) ; Phase 8C2 — UpdateDraftArticle/ArchiveArticle/RestoreArticle ; Phase 8C3 — CreateDraftArticle (atomic + slug conflict), PublishDraftArticle (distinct du chemin CLI 8B1)
 │       │   │   │   ├── Markdown/     # Phase 8B1 — ArticleFrontMatter (VO), MarkdownParseException, MarkdownValidationException
-│       │   │   │   ├── Query/        # Phase 8A — ListPublishedArticles/GetPublishedArticle ; Phase 8C3 — AdminArticleReadRepositoryInterface (port CQRS admin distinct, cf. DEC-088), ListAdminArticles/GetAdminArticleForEdit + AdminArticleListItem/AdminArticleListPage/AdminArticleEditView
+│       │   │   │   ├── Query/        # Phase 8A — ListPublishedArticles/GetPublishedArticle ; Phase 8C3 — AdminArticleReadRepositoryInterface (port CQRS admin distinct, cf. DEC-088), ListAdminArticles/GetAdminArticleForEdit + AdminArticleListItem/AdminArticleListPage/AdminArticleEditView ; Phase 8C4 — GetAdminArticlePreview/GetAdminArticlePreviewHandler + AdminArticlePreviewView (via findForEdit + CommonMarkArticleRenderer, non-mutation garantie par introspection réflexive du port, cf. DEC-092)
 │       │   │   │   └── View/         # ArticleSummaryView, ArticleDetailView, PaginationView
 │       │   │   ├── Infrastructure/
 │       │   │   │   ├── Persistence/  # DoctrineArticleRepository, InMemoryArticleRepository (support), DoctrineAdminArticleReadRepository + InMemoryAdminArticleReadRepository (Phase 8C3, tri stable updated_at DESC, id DESC)
@@ -112,7 +112,7 @@ devzair/
 │       │   │   └── Presentation/
 │       │   │       ├── Console/      # Phase 8C1 — app:admin:create-user / reset-password / disable
 │       │   │       ├── EventSubscriber/  # Phase 8C1 — AdminSecurityHeadersSubscriber (CSP durcie + X-Robots noindex + Cache-Control private no-store étendu 8C3)
-│       │   │       └── Http/         # Phase 8C1 — AdminLoginController, AdminDashboardController ; Phase 8C3 — AdminArticleList/Create/Edit/Publish/Archive/Restore + Form/{ArticleCreateData,ArticleEditData,FormErrorBag,ArticleFormPayload}
+│       │   │       └── Http/         # Phase 8C1 — AdminLoginController, AdminDashboardController ; Phase 8C3 — AdminArticleList/Create/Edit/Publish/Archive/Restore + Form/{ArticleCreateData,ArticleEditData,FormErrorBag,ArticleFormPayload} ; Phase 8C4 — AdminArticlePreviewController (GET-only, /admin/articles/{id}/preview, `#[IsGranted('ROLE_ADMIN')]`, aucune mutation)
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/

@@ -51,14 +51,26 @@ livre l'IHM éditoriale complète sous `/admin/articles/**` (liste
 paginée + filtre statut, création de brouillon, édition draft-only,
 publication depuis IHM, archivage, restauration) — port CQRS admin
 distinct du port public (cf. DEC-088), rate-limiting par UUID admin,
-audit sans PII (canal Monolog `admin`), CSP admin inchangée. Voir
-`docs/08-ROADMAP.md`,
+audit sans PII (canal Monolog `admin`), CSP admin inchangée. La
+Phase 8C4 ajoute la prévisualisation éditoriale authentifiée
+`/admin/articles/{id}/preview` (rendu Twig SSR utilisant le même
+`CommonMarkArticleRenderer` que le contrat public — aucun sanitizer
+parallèle, aucune divergence de rendu). Lecture pure garantie par
+introspection réflexive du port CQRS admin, un seul `|raw` dans tout
+le codebase admin (borne unique auditable, cf. DEC-092), en-têtes
+`noindex, nofollow` + `Cache-Control: private, no-store` posés par
+`AdminSecurityHeadersSubscriber`. La recette finale de sécurité est
+formalisée dans `docs/checklists/ADMIN-SECURITY-REVIEW.md` : revue
+ciblée inspirée des contrôles OWASP ASVS pertinents pour la surface
+d'administration et des risques OWASP Top 10 2021 correspondants —
+**ce n'est pas une certification ASVS complète**. Voir `docs/08-ROADMAP.md`,
 `docs/adr/ADR-008-mailer-ovhcloud-turnstile-optionnel.md`,
 `docs/adr/ADR-009-persistance-postgresql-editorial.md`,
 `docs/adr/ADR-010-pipeline-markdown-editorial-cache-http.md`,
 `docs/adr/ADR-011-ssr-nuxt-editorial-cache-nitro.md`,
-`docs/adr/ADR-012-administration-symfony-ssr-authentifiee.md`
-et `docs/checklists/PRODUCTION-CONTACT.md`.
+`docs/adr/ADR-012-administration-symfony-ssr-authentifiee.md`,
+`docs/checklists/PRODUCTION-CONTACT.md`
+et `docs/checklists/ADMIN-SECURITY-REVIEW.md`.
 
 ## Structure
 
