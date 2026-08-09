@@ -59,6 +59,12 @@ export interface EditorialApiOptions {
 export interface ListParams {
   page: number
   perPage: number
+  /**
+   * Identifiant d'expertise (allowlist déjà validée en amont — enum PHP côté
+   * Symfony, tableau `EXPERTISE_IDS` côté Nuxt). Omis quand le listing n'est
+   * pas filtré.
+   */
+  expertise?: string | null
   /** Validateur envoyé à Symfony (jamais celui du navigateur). */
   ifNoneMatch?: string | null
 }
@@ -98,6 +104,9 @@ export function createEditorialApi(options: EditorialApiOptions) {
           page: String(params.page),
           per_page: String(params.perPage),
         })
+        if (params.expertise) {
+          query.set("expertise", params.expertise)
+        }
         response = await call(`/resources?${query.toString()}`, params.ifNoneMatch ?? null)
       } catch {
         return { status: "unavailable", httpStatus: null }

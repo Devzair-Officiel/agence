@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { expertisePages } from "~/config/expertise-pages"
+import {
+  EXPERTISE_IDS,
+  expertisePages,
+  resolveExpertiseRoute,
+} from "~/config/expertise-pages"
 import { expertisePillars } from "~/config/expertise-pillars"
 
 describe("expertisePages", () => {
@@ -144,5 +148,32 @@ describe("expertisePages", () => {
     const pageIds = expertisePages.map((p) => p.id)
     const pillarIds = expertisePillars.map((p) => p.id)
     expect(pageIds).toEqual(pillarIds)
+  })
+})
+
+describe("EXPERTISE_IDS allowlist", () => {
+  it("mirrors the five identifiers declared in expertisePages", () => {
+    expect(EXPERTISE_IDS).toEqual(expertisePages.map((page) => page.id))
+    expect(EXPERTISE_IDS).toHaveLength(5)
+  })
+
+  it("matches the PHP enum values (source de vérité côté API)", () => {
+    // Sync avec App\\Editorial\\Domain\\ExpertiseIdentifier. Toute divergence
+    // ici ou côté PHP est un contrat cassé — voir DEV-058.
+    expect([...EXPERTISE_IDS].sort()).toEqual(
+      ["concevoir", "construire", "faire-evoluer", "valoriser", "visibilite"].sort(),
+    )
+  })
+})
+
+describe("resolveExpertiseRoute", () => {
+  it("returns the public route for a known expertise id", () => {
+    expect(resolveExpertiseRoute("concevoir")).toBe("/expertises/concevoir")
+    expect(resolveExpertiseRoute("faire-evoluer")).toBe("/expertises/faire-evoluer")
+  })
+
+  it("returns null for unknown identifiers", () => {
+    expect(resolveExpertiseRoute("marketing-affiliation")).toBeNull()
+    expect(resolveExpertiseRoute("")).toBeNull()
   })
 })

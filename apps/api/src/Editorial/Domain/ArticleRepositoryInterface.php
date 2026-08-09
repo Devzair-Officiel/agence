@@ -55,12 +55,27 @@ interface ArticleRepositoryInterface
      * Renvoie une page ordonnée par `publishedAt DESC, id DESC`, restreinte
      * aux articles publiés dont `publishedAt <= $now`.
      *
+     * Filtrage facultatif par identifiant d'expertise (Phase 10A2). Quand
+     * `$expertise` est fourni, la requête ne retourne que les articles
+     * dont `expertise_ids` contient cet identifiant. La valeur est un cas
+     * d'enum du domaine, donc allowlistée par construction — le repository
+     * n'accepte jamais de chaîne brute.
+     *
      * @param int<1, max>   $page
      * @param int<1, max>   $perPage
      *
      * @return list<Article>
      */
-    public function listPublished(int $page, int $perPage, \DateTimeImmutable $now): array;
+    public function listPublished(
+        int $page,
+        int $perPage,
+        \DateTimeImmutable $now,
+        ?ExpertiseIdentifier $expertise = null,
+    ): array;
 
-    public function countPublished(\DateTimeImmutable $now): int;
+    /**
+     * Compte le nombre d'articles publiés (`publishedAt <= $now`), avec le
+     * même filtre facultatif d'expertise que `listPublished()`.
+     */
+    public function countPublished(\DateTimeImmutable $now, ?ExpertiseIdentifier $expertise = null): int;
 }

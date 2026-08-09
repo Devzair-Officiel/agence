@@ -52,6 +52,17 @@ Les longueurs ne doivent pas être forcées mécaniquement : l’objectif est la
 - cohérence entre canonical, sitemap, liens internes et redirections ;
 - si multilingue : URL distincte, contenu réellement traduit, `hreflang` réciproque et canonique dans la même langue.
 
+### Variantes filtrées de `/ressources` (Phase 10A2, DEC-095)
+
+Le listing éditorial `/ressources` expose un axe de filtre `?expertise=<id>` et une pagination `?page=<n>`. Ces variantes forment un « triangle canonical » strict qui doit être respecté pour toute future extension à d'autres axes (tag, format, période) :
+
+- **Canonical** : chaque variante (`?expertise=…`, `?page=2`, combinaison des deux) déclare un `<link rel="canonical" href="/ressources">` — jamais un auto-canonical vers la variante elle-même, qui créerait un cluster d'index dupliqué.
+- **Robots** : la variante filtrée ou paginée porte `<meta name="robots" content="noindex, follow">` via `usePageSeo({ robots: "noindex, follow" })`. Ne jamais utiliser `noindex: true` (qui suppose le composable de désactiver aussi le canonical) — le `follow` est essentiel pour que les crawlers découvrent les articles depuis la variante.
+- **Sitemap** : `/sitemap.xml` n'énumère **jamais** une URL contenant `?expertise=` ni `?page=`. Le sitemap ne référence que la ressource canonique (`/ressources`) et les slugs d'articles publiés.
+- **Filtre inconnu** : un paramètre `?expertise=<inconnu>` retourne un 404 explicite côté serveur (allowlist `EXPERTISE_IDS` synchrone avec l'enum PHP `ExpertiseIdentifier`) — pas de silent-fallback vers la liste non filtrée, qui masquerait un lien externe cassé.
+
+Test garde-fou : `apps/web/test/e2e/resources-phase10a2.spec.ts`.
+
 ## 10.5 Données structurées
 
 Implémenter uniquement les données exactes, visibles et pertinentes :

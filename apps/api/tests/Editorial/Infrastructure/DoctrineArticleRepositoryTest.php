@@ -7,6 +7,7 @@ namespace App\Tests\Editorial\Infrastructure;
 use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use App\Editorial\Domain\ExpertiseIdentifier;
 use App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository;
 use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\EditorialDatabaseCleanup;
@@ -197,5 +198,94 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
     public function testFindByIdReturnsNullWhenUnknown(): void
     {
         self::assertNull($this->repository->findById(Uuid::v7()));
+    }
+
+    public function testListPublishedFiltersByExpertiseUsingJsonbContainment(): void
+    {
+        // Trois articles publiés, deux avec « concevoir », un sans.
+        // Vérifie que l'opérateur JSONB `@>` retourne la bonne intersection
+        // et que l'ordre publishedAt DESC + id DESC est conservé.
+        $concevoirRecent = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-concevoir-recent')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->withNow(new \DateTimeImmutable('2026-08-04T10:00:00+00:00'))
+            ->published()
+            ->build();
+        $concevoirMulti = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-concevoir-multi')
+            ->withExpertises([ExpertiseIdentifier::Concevoir, ExpertiseIdentifier::Visibilite])
+            ->withNow(new \DateTimeImmutable('2026-08-02T10:00:00+00:00'))
+            ->published()
+            ->build();
+        $construire = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-construire')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->published()
+            ->build();
+
+        $this->repository->save($concevoirRecent);
+        $this->repository->save($concevoirMulti);
+        $this->repository->save($construire);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $items = $this->repository->listPublished(1, 10, $this->now, ExpertiseIdentifier::Concevoir);
+
+        self::assertCount(2, $items);
+        self::assertSame('doctrine-jsonb-concevoir-recent', $items[0]->slug()->value());
+        self::assertSame('doctrine-jsonb-concevoir-multi', $items[1]->slug()->value());
+        self::assertSame(
+            2,
+            $this->repository->countPublished($this->now, ExpertiseIdentifier::Concevoir),
+        );
+    }
+
+    public function testListPublishedByExpertiseExcludesDraftsAndArchived(): void
+    {
+        $draft = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-draft-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->build();
+        $archived = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-archive-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->published()
+            ->build();
+        $archived->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $published = (new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-publie-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->published()
+            ->build();
+
+        $this->repository->save($draft);
+        $this->repository->save($archived);
+        $this->repository->save($published);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $items = $this->repository->listPublished(1, 10, $this->now, ExpertiseIdentifier::Concevoir);
+
+        self::assertCount(1, $items);
+        self::assertSame('doctrine-jsonb-publie-concevoir', $items[0]->slug()->value());
+    }
+
+    public function testListPublishedByExpertiseReturnsEmptyWhenNoMatch(): void
+    {
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('doctrine-jsonb-solo')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->published()
+            ->build());
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $items = $this->repository->listPublished(1, 10, $this->now, ExpertiseIdentifier::FaireEvoluer);
+
+        self::assertSame([], $items);
+        self::assertSame(
+            0,
+            $this->repository->countPublished($this->now, ExpertiseIdentifier::FaireEvoluer),
+        );
     }
 }

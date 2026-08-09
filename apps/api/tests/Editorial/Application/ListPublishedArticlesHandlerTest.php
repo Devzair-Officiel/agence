@@ -8,6 +8,7 @@ use App\Editorial\Application\Query\ListPublishedArticles;
 use App\Editorial\Application\Query\ListPublishedArticlesHandler;
 use App\Editorial\Application\View\ArticleSummaryView;
 use App\Editorial\Domain\Exception\ArticleInvariantViolation;
+use App\Editorial\Domain\ExpertiseIdentifier;
 use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\FixedClock;
 use App\Tests\Editorial\Support\InMemoryArticleRepository;
@@ -159,5 +160,111 @@ final class ListPublishedArticlesHandlerTest extends TestCase
     {
         $this->expectException(ArticleInvariantViolation::class);
         ListPublishedArticles::fromInputs(1, 51);
+    }
+
+    public function testFromInputsAcceptsAllExpertiseCases(): void
+    {
+        foreach (ExpertiseIdentifier::cases() as $case) {
+            $query = ListPublishedArticles::fromInputs(1, null, $case->value);
+            self::assertSame($case, $query->expertise);
+        }
+    }
+
+    public function testFromInputsRejectsUnknownExpertise(): void
+    {
+        $this->expectException(ArticleInvariantViolation::class);
+        ListPublishedArticles::fromInputs(1, null, 'crypto-monnaie');
+    }
+
+    public function testFromInputsWithEmptyExpertiseIsUnfiltered(): void
+    {
+        $query = ListPublishedArticles::fromInputs(1, null, '');
+        self::assertNull($query->expertise);
+    }
+
+    public function testFiltersByExpertiseWhenProvided(): void
+    {
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('article-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->published()
+            ->build());
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('article-construire')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->published()
+            ->build());
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('article-multi')
+            ->withExpertises([ExpertiseIdentifier::Concevoir, ExpertiseIdentifier::Visibilite])
+            ->published()
+            ->build());
+
+        $result = ($this->handler)(
+            ListPublishedArticles::fromInputs(1, null, ExpertiseIdentifier::Concevoir->value),
+        );
+
+        self::assertSame(2, $result['pagination']->total);
+        $slugs = array_map(
+            static fn (ArticleSummaryView $view): string => $view->slug,
+            $result['items'],
+        );
+        self::assertContains('article-concevoir', $slugs);
+        self::assertContains('article-multi', $slugs);
+        self::assertNotContains('article-construire', $slugs);
+    }
+
+    public function testExpertiseFilterExcludesDraftsAndFuturePublications(): void
+    {
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('draft-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->build());
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('future-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->withNow(new \DateTimeImmutable('2027-01-01T00:00:00+00:00'))
+            ->published()
+            ->build());
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('published-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->published()
+            ->build());
+
+        $result = ($this->handler)(
+            ListPublishedArticles::fromInputs(1, null, ExpertiseIdentifier::Concevoir->value),
+        );
+
+        self::assertCount(1, $result['items']);
+        self::assertSame('published-concevoir', $result['items'][0]->slug);
+    }
+
+    public function testExpertiseFilterCombinesWithPagination(): void
+    {
+        for ($i = 0; $i < 12; ++$i) {
+            $this->repository->save((new ArticleBuilder())
+                ->withSlug(\sprintf('valoriser-%02d', $i))
+                ->withExpertises([ExpertiseIdentifier::Valoriser])
+                ->withNow(new \DateTimeImmutable(\sprintf('2026-08-%02dT10:00:00+00:00', $i + 1)))
+                ->published()
+                ->build());
+        }
+        $this->repository->save((new ArticleBuilder())
+            ->withSlug('autre-expertise')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->published()
+            ->build());
+
+        $page2 = ($this->handler)(
+            ListPublishedArticles::fromInputs(2, 5, ExpertiseIdentifier::Valoriser->value),
+        );
+
+        self::assertCount(5, $page2['items']);
+        self::assertSame(12, $page2['pagination']->total);
+        self::assertSame(3, $page2['pagination']->totalPages);
+        foreach ($page2['items'] as $item) {
+            self::assertContains('valoriser', $item->expertiseIds);
+        }
     }
 }

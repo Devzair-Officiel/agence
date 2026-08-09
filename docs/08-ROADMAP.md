@@ -1289,6 +1289,28 @@ Un article publié dans Symfony est visible sous une URL Nuxt canonique avec HTM
 
 Les 6 articles pillar sont publiés, indexables, cohérents avec l'architecture existante, et leur bootstrap est reproductible en dev comme en CI.
 
+### Phase 10A2 — Maillage éditorial et découverte des ressources
+
+État actuel : EN COURS.
+
+Objectifs :
+
+- [ ] Ajouter le filtrage des ressources par expertise.
+- [ ] Relier les pages expertise aux ressources Published pertinentes.
+- [ ] Relier les articles à leurs pages expertise publiques.
+- [ ] Ajouter Ressources à la navigation publique lorsque pertinent.
+- [ ] Préserver pagination, ETags et cache HTTP avec les filtres.
+- [ ] Garantir le SSR du maillage.
+- [ ] Éviter l’indexation des variantes filtrées.
+- [ ] Vérifier responsive et WCAG 2.2 AA.
+- [ ] Ajouter les tests backend, frontend et E2E concernés.
+
+Critère de sortie :
+
+Les ressources et les expertises forment un maillage public cohérent,
+explorable et maintenable, sans duplication SEO ni contenu éditorial
+obsolète lié à une stratégie de rendu inadéquate.
+
 ### Phase 10B — SEO local et GEO avancé (À VENIR)
 
 - [ ] Valider l’éligibilité locale.

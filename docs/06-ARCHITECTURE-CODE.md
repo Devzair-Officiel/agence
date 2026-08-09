@@ -311,6 +311,16 @@ Règles :
 - ne pas désactiver SSR globalement ;
 - ne pas activer une option expérimentale sans ADR.
 
+### Politique prerender vs SSR runtime (Phase 10A2, DEC-095)
+
+Le `prerender: true` est réservé aux pages **strictement statiques** — celles dont le contenu ne dépend d'aucun port éditorial mutable. Une page qui appelle `useAsyncData` sur `Article`, `Project` ou tout futur agrégat qui bouge sans re-déploiement doit rester en **SSR runtime** :
+
+- Cas concret : `/expertises/{slug}` rendait ses cinq slugs en prerender jusqu'à Phase 10A. L'ajout de la section « Ressources liées » (`ExpertiseRelatedResources.vue`, appel `useAsyncData("resources:related:<id>")`) a imposé le passage en SSR runtime — sinon toute publication d'article Phase 10 aurait nécessité un re-build pour synchroniser les pages expertise.
+- Compensation cache : `routeRules['/expertises/**'] = { headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' } }` — le CDN (Caddy/Cloudflare) sert les pages depuis son cache 5 min max, la latence perçue reste équivalente au statique.
+- Compensation sitemap : quand une page perd son prerender, l'auto-collecte du crawler ne peut plus l'énumérer. Une page à cardinalité **fixe** (< 20 routes, contrat métier stable) doit alors être ré-injectée manuellement via `sitemap.urls: expertisePages.filter(published).map(p => ({ loc: p.route }))`. Une page à cardinalité **variable** (articles, projets) doit rester couverte par la source dédiée (`@nuxtjs/sitemap` + endpoint `/__sitemap__/resources`).
+
+Ne jamais retirer un prerender sans documenter la compensation cache **ET** la compensation sitemap dans un DEC dédié.
+
 ## 16.6 Environnement Docker
 
 ### Objectif

@@ -381,3 +381,34 @@ export const expertisePages: readonly ExpertisePageDefinition[] = [
     relatedPillarIds: ["construire", "visibilite"],
   },
 ]
+
+/**
+ * Allowlist des identifiants d'expertise reconnus par le front public.
+ *
+ * Dérivée de `expertisePages` — elle reste automatiquement alignée sur les
+ * cinq slugs publiés qui possèdent une page dédiée. Utilisée par le proxy
+ * Nitro (`/_editorial/list`) pour valider le paramètre `?expertise=` avant
+ * de le relayer à Symfony, et par la page `/ressources` pour construire les
+ * liens de filtre.
+ *
+ * Le miroir côté PHP est `App\Editorial\Domain\ExpertiseIdentifier` (enum).
+ * Toute divergence est un contrat cassé : le test unitaire du controller
+ * Symfony vérifie que ces cinq valeurs sont acceptées ; le test Vitest de
+ * cette config vérifie qu'aucun autre slug ne fuit ici.
+ */
+export const EXPERTISE_IDS: readonly string[] = expertisePages.map((page) => page.id)
+
+/**
+ * Résout la route publique d'une page expertise à partir de son identifiant.
+ *
+ * Retourne `null` si l'id ne correspond à aucune page publiée. Consommé par
+ * les vues d'articles pour rendre les puces d'expertise cliquables vers la
+ * page dédiée (mapping centralisé, pas de logique dispersée dans les
+ * composants — cf. AGENTS.md §6/§7).
+ */
+export function resolveExpertiseRoute(expertiseId: string): string | null {
+  const page = expertisePages.find(
+    (candidate) => candidate.id === expertiseId && candidate.status === "published",
+  )
+  return page ? page.route : null
+}

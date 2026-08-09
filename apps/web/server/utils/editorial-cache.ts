@@ -44,8 +44,12 @@ function storage() {
   return useStorage(STORAGE_NAMESPACE)
 }
 
-function listKey(page: number, perPage: number): string {
-  return `list:${page}:${perPage}`
+function listKey(page: number, perPage: number, expertise: string | null): string {
+  // La clé de cache doit distinguer explicitement chaque filtre pour empêcher
+  // qu'une page filtrée reserve une entrée d'une page non filtrée du même
+  // rang. Le suffixe `-` marque l'absence de filtre — plus lisible dans les
+  // logs de stockage qu'une chaîne vide.
+  return `list:${page}:${perPage}:${expertise ?? "-"}`
 }
 
 function detailKey(slug: string): string {
@@ -66,7 +70,11 @@ async function dropCache(key: string): Promise<void> {
 }
 
 export interface EditorialCache {
-  list(page: number, perPage: number): Promise<EditorialResult<ArticleListResult>>
+  list(
+    page: number,
+    perPage: number,
+    expertise?: string | null,
+  ): Promise<EditorialResult<ArticleListResult>>
   detail(slug: string): Promise<EditorialResult<ArticleDetail>>
 }
 
@@ -74,13 +82,15 @@ export function createEditorialCache(options: EditorialApiOptions): EditorialCac
   const api = createEditorialApi(options)
 
   return {
-    async list(page, perPage) {
-      const key = listKey(page, perPage)
+    async list(page, perPage, expertise = null) {
+      const normalizedExpertise = expertise ?? null
+      const key = listKey(page, perPage, normalizedExpertise)
       const cached = await readCache<ArticleListResult>(key)
 
       const firstResult = await api.list({
         page,
         perPage,
+        expertise: normalizedExpertise,
         ifNoneMatch: cached?.etag ?? null,
       })
 
@@ -95,7 +105,12 @@ export function createEditorialCache(options: EditorialApiOptions): EditorialCac
         }
         // 304 sans corps local : Symfony a fait confiance à un ETag qu'on
         // n'a plus. On refait une requête sans validateur.
-        const retry = await api.list({ page, perPage, ifNoneMatch: null })
+        const retry = await api.list({
+          page,
+          perPage,
+          expertise: normalizedExpertise,
+          ifNoneMatch: null,
+        })
         if (retry.status === "ok") {
           await writeCache(key, {
             data: retry.data,

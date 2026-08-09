@@ -48,6 +48,7 @@ final class ListPublishedArticlesController
 
         $rawPage = $request->query->get('page', '1');
         $rawPerPage = $request->query->get('per_page');
+        $rawExpertise = $request->query->get('expertise');
 
         if (!is_string($rawPage) || !ctype_digit($rawPage)) {
             return $this->validationError($requestId, 'page doit être un entier positif.');
@@ -62,8 +63,16 @@ final class ListPublishedArticlesController
             $perPage = (int) $rawPerPage;
         }
 
+        $expertiseRaw = null;
+        if ($rawExpertise !== null) {
+            if (!is_string($rawExpertise)) {
+                return $this->validationError($requestId, 'expertise doit être une chaîne.');
+            }
+            $expertiseRaw = $rawExpertise;
+        }
+
         try {
-            $query = ListPublishedArticles::fromInputs($page, $perPage);
+            $query = ListPublishedArticles::fromInputs($page, $perPage, $expertiseRaw);
         } catch (ArticleInvariantViolation $exception) {
             return $this->validationError($requestId, $exception->getMessage());
         }
@@ -74,6 +83,7 @@ final class ListPublishedArticlesController
             'request_id' => $requestId,
             'page' => $query->page,
             'per_page' => $query->perPage,
+            'expertise' => $query->expertise?->value,
             'total' => $result['pagination']->total,
         ]);
 
@@ -87,7 +97,7 @@ final class ListPublishedArticlesController
         ];
 
         $response = new JsonResponse($payload, Response::HTTP_OK);
-        $etag = ArticleListETag::forPage($result['items'], $result['pagination']);
+        $etag = ArticleListETag::forPage($result['items'], $result['pagination'], $query->expertise);
         $response->setEtag($etag, weak: true);
         $response->headers->set('X-Request-Id', $requestId);
         $response->headers->set('Cache-Control', 'public, max-age=60, s-maxage=300');

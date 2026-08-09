@@ -23,6 +23,13 @@ import type { ArticleDetail, ArticleListResult, Pagination } from "~/types/edito
 export interface UseResourceListArgs {
   page: number
   perPage: number
+  /**
+   * Filtre optionnel par identifiant d'expertise. Doit appartenir à
+   * `EXPERTISE_IDS` — le proxy Nitro renvoie 400 sur une valeur inconnue,
+   * qui se propage ici en 503 fatal (défensif : la page appelante refuse
+   * déjà les valeurs hors allowlist avant d'appeler ce composable).
+   */
+  expertise?: string | null
 }
 
 interface EditorialErrorPayload {
@@ -71,13 +78,20 @@ export interface UseResourceListReturn {
  *
  * Refuse une pagination hors bornes (404 amont) et propage le 503 si l'API
  * est indisponible. Utilise une clé `useAsyncData` déterministe pour
- * l'hydratation (`resources:list:<page>:<perPage>`).
+ * l'hydratation (`resources:list:<page>:<perPage>:<expertise ?? "-">`) —
+ * le filtre expertise est intégré à la clé pour éviter qu'une hydratation
+ * filtrée écrase la liste globale (ou l'inverse).
  */
 export async function useResourceList(args: UseResourceListArgs): Promise<UseResourceListReturn> {
-  const key = `resources:list:${args.page}:${args.perPage}`
+  const expertise = args.expertise ?? null
+  const key = `resources:list:${args.page}:${args.perPage}:${expertise ?? "-"}`
   const { data, error } = await useAsyncData<ArticleListResult>(key, () =>
     $fetch<ArticleListResult>("/_editorial/list", {
-      query: { page: args.page, per_page: args.perPage },
+      query: {
+        page: args.page,
+        per_page: args.perPage,
+        ...(expertise ? { expertise } : {}),
+      },
     }),
   )
 

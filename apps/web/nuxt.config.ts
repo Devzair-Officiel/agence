@@ -1,3 +1,4 @@
+import { expertisePages } from "./app/config/expertise-pages"
 import { site } from "./app/config/site"
 
 // Configuration Nuxt du frontend Devzair.
@@ -149,6 +150,14 @@ export default defineNuxtConfig({
     // retourne un tableau enrichi de `lastmod`. Il refuse de renvoyer une
     // liste vide silencieuse en cas d'indisponibilité (503) — cf. ADR-011.
     sources: ['/__sitemap__/resources'],
+    // Phase 10A2 : sans `prerender: true`, @nuxtjs/sitemap ne détecte plus
+    // les cinq pages `/expertises/{slug}` (route dynamique). On les
+    // énumère explicitement pour préserver leur présence dans le sitemap.
+    // Filtré aux pages `published` — une page `planned` ne doit pas y
+    // apparaître (règle 11 : pas de placeholder indexable).
+    urls: expertisePages
+      .filter((page) => page.status === 'published')
+      .map((page) => ({ loc: page.route })),
   },
 
   // DEV-048 — désactivation de `payloadExtraction`.
@@ -183,9 +192,17 @@ export default defineNuxtConfig({
     // Phase 7B : ajout des cinq pages filles `/expertises/{slug}` — servies
     // par une route dynamique Nuxt (`pages/expertises/[slug].vue`) qui
     // résout le slug via `expertise-pages.ts` et retourne un 404 explicite
-    // (`createError`) pour toute autre valeur. Les slugs sont énumérés ci-
-    // dessous pour que Nitro pré-rende chaque page à la construction et les
-    // inclue dans le sitemap.
+    // (`createError`) pour toute autre valeur.
+    //
+    // Phase 10A2 (DEC-095) : les pages `/expertises/{slug}` embarquent une
+    // section « Ressources liées » qui interroge l'API éditoriale au SSR.
+    // Sans mécanisme d'ISR (Incremental Static Regeneration) branché sur les
+    // publications côté back-office, un pré-rendu figerait la liste au
+    // moment du build : après publication d'un article, la page expertise
+    // serait obsolète jusqu'au prochain déploiement. On bascule donc sur du
+    // SSR à la volée, mitigé par un `Cache-Control` court côté client et
+    // plus long côté reverse proxy (identique à `/api/resources`), et par
+    // le cache Nitro `editorialCache` qui négocie l'ETag JSON avec Symfony.
     //
     // On n'attache PAS `headers['X-Robots-Tag']` ici : @nuxtjs/sitemap
     // inspecte les headers de chaque routeRule et écarte silencieusement
@@ -195,10 +212,8 @@ export default defineNuxtConfig({
     '/agence': { prerender: true },
     '/contact': { prerender: true },
     '/expertises': { prerender: true },
-    '/expertises/concevoir': { prerender: true },
-    '/expertises/construire': { prerender: true },
-    '/expertises/valoriser': { prerender: true },
-    '/expertises/visibilite': { prerender: true },
-    '/expertises/faire-evoluer': { prerender: true },
+    '/expertises/**': {
+      headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' },
+    },
   },
 })

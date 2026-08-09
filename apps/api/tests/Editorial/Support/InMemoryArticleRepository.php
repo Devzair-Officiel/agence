@@ -9,6 +9,7 @@ use App\Editorial\Domain\ArticleRepositoryInterface;
 use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use App\Editorial\Domain\ExpertiseIdentifier;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -66,18 +67,15 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         throw ArticleNotFoundException::forSlug($slug->value());
     }
 
-    public function listPublished(int $page, int $perPage, \DateTimeImmutable $now): array
-    {
+    public function listPublished(
+        int $page,
+        int $perPage,
+        \DateTimeImmutable $now,
+        ?ExpertiseIdentifier $expertise = null,
+    ): array {
         $published = array_values(array_filter(
             $this->articles,
-            static function (Article $article) use ($now): bool {
-                if ($article->status() !== ArticleStatus::Published) {
-                    return false;
-                }
-                $publishedAt = $article->publishedAt();
-
-                return $publishedAt !== null && $publishedAt <= $now;
-            },
+            fn (Article $article): bool => $this->isVisiblyPublished($article, $now, $expertise),
         ));
 
         usort($published, static function (Article $a, Article $b): int {
@@ -100,18 +98,36 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         return array_values(\array_slice($published, $offset, $perPage));
     }
 
-    public function countPublished(\DateTimeImmutable $now): int
+    public function countPublished(\DateTimeImmutable $now, ?ExpertiseIdentifier $expertise = null): int
     {
         return \count(array_filter(
             $this->articles,
-            static function (Article $article) use ($now): bool {
-                if ($article->status() !== ArticleStatus::Published) {
-                    return false;
-                }
-                $publishedAt = $article->publishedAt();
-
-                return $publishedAt !== null && $publishedAt <= $now;
-            },
+            fn (Article $article): bool => $this->isVisiblyPublished($article, $now, $expertise),
         ));
+    }
+
+    private function isVisiblyPublished(
+        Article $article,
+        \DateTimeImmutable $now,
+        ?ExpertiseIdentifier $expertise,
+    ): bool {
+        if ($article->status() !== ArticleStatus::Published) {
+            return false;
+        }
+        $publishedAt = $article->publishedAt();
+        if ($publishedAt === null || $publishedAt > $now) {
+            return false;
+        }
+        if ($expertise === null) {
+            return true;
+        }
+
+        foreach ($article->expertises() as $candidate) {
+            if ($candidate === $expertise) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

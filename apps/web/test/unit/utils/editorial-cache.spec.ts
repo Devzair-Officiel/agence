@@ -171,4 +171,57 @@ describe("createEditorialCache.list", () => {
       .headers
     expect(thirdHeaders["If-None-Match"]).toBeUndefined()
   })
+
+  it("Phase 10A2 — deux filtres expertise différents ne partagent PAS d'entrée de cache", async () => {
+    // Requête 1 : /resources?expertise=concevoir → ETag v-concevoir cache.
+    // Requête 2 : /resources?expertise=construire → doit être un appel neuf,
+    //   sans If-None-Match (pas d'entrée de cache partagée entre filtres),
+    //   sinon Symfony renverrait 304 avec un ETag calculé sur l'autre filtre.
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        response({ status: 200, body: validList, headers: { etag: 'W/"v-concevoir"' } }),
+      )
+      .mockResolvedValueOnce(
+        response({ status: 200, body: validList, headers: { etag: 'W/"v-construire"' } }),
+      )
+    const cache = build(fetcher)
+    await cache.list(1, 6, "concevoir")
+    await cache.list(1, 6, "construire")
+
+    const firstHeaders = (fetcher.mock.calls[0]?.[1] as { headers: Record<string, string> })
+      .headers
+    const secondHeaders = (fetcher.mock.calls[1]?.[1] as { headers: Record<string, string> })
+      .headers
+    expect(firstHeaders["If-None-Match"]).toBeUndefined()
+    expect(secondHeaders["If-None-Match"]).toBeUndefined()
+
+    // Chaque URL doit porter son propre paramètre expertise.
+    const firstUrl = String((fetcher.mock.calls[0] ?? [])[0])
+    const secondUrl = String((fetcher.mock.calls[1] ?? [])[0])
+    expect(firstUrl).toContain("expertise=concevoir")
+    expect(secondUrl).toContain("expertise=construire")
+  })
+
+  it("Phase 10A2 — la liste globale et la liste filtrée sont des entrées de cache distinctes", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        response({ status: 200, body: validList, headers: { etag: 'W/"v-all"' } }),
+      )
+      .mockResolvedValueOnce(
+        response({ status: 200, body: validList, headers: { etag: 'W/"v-concevoir"' } }),
+      )
+      .mockResolvedValueOnce(response({ status: 304, headers: { etag: 'W/"v-all"' } }))
+    const cache = build(fetcher)
+    await cache.list(1, 6)
+    await cache.list(1, 6, "concevoir")
+    // Le second appel à la liste globale doit envoyer l'ETag « v-all »,
+    // pas « v-concevoir » — les entrées sont distinctes.
+    await cache.list(1, 6)
+
+    const thirdHeaders = (fetcher.mock.calls[2]?.[1] as { headers: Record<string, string> })
+      .headers
+    expect(thirdHeaders["If-None-Match"]).toBe('W/"v-all"')
+  })
 })

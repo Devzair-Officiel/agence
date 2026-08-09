@@ -9,6 +9,8 @@ use App\Editorial\Domain\ArticleRepositoryInterface;
 use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
+use App\Editorial\Domain\ExpertiseIdentifier;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -72,8 +74,16 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         return $article;
     }
 
-    public function listPublished(int $page, int $perPage, \DateTimeImmutable $now): array
-    {
+    public function listPublished(
+        int $page,
+        int $perPage,
+        \DateTimeImmutable $now,
+        ?ExpertiseIdentifier $expertise = null,
+    ): array {
+        if ($expertise !== null) {
+            return $this->listPublishedFilteredByExpertise($page, $perPage, $now, $expertise);
+        }
+
         $offset = ($page - 1) * $perPage;
 
         $qb = $this->entityManager->createQueryBuilder()
@@ -94,8 +104,26 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         return $result;
     }
 
-    public function countPublished(\DateTimeImmutable $now): int
+    public function countPublished(\DateTimeImmutable $now, ?ExpertiseIdentifier $expertise = null): int
     {
+        if ($expertise !== null) {
+            $count = $this->entityManager->getConnection()->fetchOne(
+                <<<'SQL'
+                SELECT COUNT(*)
+                FROM editorial_article
+                WHERE status = 'published'
+                  AND published_at <= :now
+                  AND expertise_ids @> CAST(:expertise AS jsonb)
+                SQL,
+                [
+                    'now' => $now->format('Y-m-d H:i:sO'),
+                    'expertise' => \json_encode([$expertise->value], \JSON_THROW_ON_ERROR),
+                ],
+            );
+
+            return (int) $count;
+        }
+
         $qb = $this->entityManager->createQueryBuilder()
             ->select('COUNT(a.id)')
             ->from(Article::class, 'a')
@@ -105,5 +133,75 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
             ->setParameter('now', $now);
 
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Filtrage JSONB `expertise_ids @> '["<value>"]'` via DBAL brut : Doctrine
+     * ORM ne dispose pas d'opérateur natif pour l'inclusion dans un tableau
+     * JSON PostgreSQL et l'ajout d'une DQL function serait disproportionné
+     * pour un unique filtre. On sélectionne d'abord les identifiants, puis on
+     * hydrate les agrégats via l'ORM en préservant l'ordre chronologique.
+     *
+     * @return list<Article>
+     */
+    private function listPublishedFilteredByExpertise(
+        int $page,
+        int $perPage,
+        \DateTimeImmutable $now,
+        ExpertiseIdentifier $expertise,
+    ): array {
+        $offset = ($page - 1) * $perPage;
+        $connection = $this->entityManager->getConnection();
+
+        /** @var list<string> $ids */
+        $ids = $connection->fetchFirstColumn(
+            <<<'SQL'
+            SELECT id
+            FROM editorial_article
+            WHERE status = 'published'
+              AND published_at <= :now
+              AND expertise_ids @> CAST(:expertise AS jsonb)
+            ORDER BY published_at DESC, id DESC
+            LIMIT :limit OFFSET :offset
+            SQL,
+            [
+                'now' => $now->format('Y-m-d H:i:sO'),
+                'expertise' => \json_encode([$expertise->value], \JSON_THROW_ON_ERROR),
+                'limit' => $perPage,
+                'offset' => $offset,
+            ],
+            [
+                'limit' => ParameterType::INTEGER,
+                'offset' => ParameterType::INTEGER,
+            ],
+        );
+
+        if ($ids === []) {
+            return [];
+        }
+
+        /** @var list<Article> $articles */
+        $articles = $this->entityManager->createQueryBuilder()
+            ->select('a')
+            ->from(Article::class, 'a')
+            ->where('a.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+
+        $indexed = [];
+        foreach ($articles as $article) {
+            $indexed[$article->id()->toRfc4122()] = $article;
+        }
+
+        $ordered = [];
+        foreach ($ids as $id) {
+            $key = (string) $id;
+            if (isset($indexed[$key])) {
+                $ordered[] = $indexed[$key];
+            }
+        }
+
+        return $ordered;
     }
 }

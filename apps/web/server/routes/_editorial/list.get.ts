@@ -12,11 +12,13 @@
  * retournée ; les statuts HTTP sont mappés vers l'état applicatif.
  */
 
+import { EXPERTISE_IDS } from "~/config/expertise-pages"
 import { editorialCache } from "~~/server/utils/editorial-runtime"
 
 interface QueryShape {
   page?: unknown
   per_page?: unknown
+  expertise?: unknown
 }
 
 function parseInteger(value: unknown, min: number, max: number, fallback: number): number | null {
@@ -28,17 +30,29 @@ function parseInteger(value: unknown, min: number, max: number, fallback: number
   return parsed
 }
 
+// Le filtre expertise est validé côté Nitro AVANT de solliciter Symfony :
+// une valeur inconnue devient un 400 propre sans occuper l'API, et prévient
+// aussi qu'un attaquant l'utilise pour sonder le back. L'allowlist côté
+// Nuxt (`EXPERTISE_IDS`) est le miroir de l'enum PHP.
+function parseExpertise(value: unknown): string | null | undefined {
+  if (value === undefined || value === "" || value === null) return null
+  const raw = typeof value === "string" ? value : Array.isArray(value) ? value[0] : null
+  if (typeof raw !== "string" || raw.length === 0) return undefined
+  return EXPERTISE_IDS.includes(raw) ? raw : undefined
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event) as QueryShape
   const page = parseInteger(query.page, 1, 10_000, 1)
   const perPage = parseInteger(query.per_page, 1, 100, 6)
+  const expertise = parseExpertise(query.expertise)
 
-  if (page === null || perPage === null) {
-    throw createError({ statusCode: 400, statusMessage: "Paramètres de pagination invalides." })
+  if (page === null || perPage === null || expertise === undefined) {
+    throw createError({ statusCode: 400, statusMessage: "Paramètres de listing invalides." })
   }
 
   const cache = editorialCache()
-  const result = await cache.list(page, perPage)
+  const result = await cache.list(page, perPage, expertise)
 
   switch (result.status) {
     case "ok":

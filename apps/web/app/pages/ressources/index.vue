@@ -4,8 +4,10 @@ import BaseContainer from "~/components/base/BaseContainer.vue"
 import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
 import EditorialHero from "~/components/editorial/EditorialHero.vue"
 import ResourceEmptyState from "~/components/resources/ResourceEmptyState.vue"
+import ResourceExpertiseFilter from "~/components/resources/ResourceExpertiseFilter.vue"
 import ResourceListItem from "~/components/resources/ResourceListItem.vue"
 import ResourcePagination from "~/components/resources/ResourcePagination.vue"
+import { EXPERTISE_IDS, expertisePages } from "~/config/expertise-pages"
 import { useResourceList } from "~/composables/useResources"
 
 /**
@@ -19,6 +21,18 @@ import { useResourceList } from "~/composables/useResources"
  *   - `?page` invalide (non entier, ≤0, > totalPages ou hors bornes)
  *                                → 404 explicite fatal.
  *
+ * Phase 10A2 — filtre expertise :
+ *   - `/ressources?expertise=<id>` → même page filtrée sur les articles de
+ *     l'expertise ; combinable avec `?page=N`.
+ *   - `?expertise=<id>` inconnu → 404 explicite (pas de silent-fallback qui
+ *     laisserait indexer une variante non voulue).
+ *   - Les variantes filtrées portent `<meta robots="noindex, follow">` et
+ *     un canonical vers `/ressources` — elles ne doivent pas concurrencer
+ *     la liste canonique dans les résultats de recherche. Ce sont des
+ *     vues de navigation, pas des pages d'atterrissage éditoriales.
+ *   - Le sitemap dynamique n'énumère que les URLs `/ressources/<slug>` ;
+ *     aucune URL filtrée n'y est ajoutée (cf. `server/routes/__sitemap__/`).
+ *
  * Contrat d'état applicatif (correction 6) :
  *   - `pagination.total === 0`  → HTTP 200 + `ResourceEmptyState`
  *                                 (pas de 404 : la liste vide est un état
@@ -26,10 +40,6 @@ import { useResourceList } from "~/composables/useResources"
  *   - API 404 sur pagination hors bornes → 404 fatal (via `useResourceList`) ;
  *   - API 502 (payload invalide) → 502 fatal (via `useResourceList`) ;
  *   - API 503 (indisponible)    → 503 fatal (via `useResourceList`).
- *
- * Le canonical est bâti par `usePageSeo` en supprimant la query (règle du
- * builder canonical). Aucun `<link rel="prev/next">` : ces balises sont
- * dépréciées côté Google (2019) et ajoutent de la surface d'incohérence.
  *
  * Choix : pas de `prerender` — l'inventaire des pages varie avec les
  * publications côté back-office. Le SSR à la volée est acceptable
@@ -68,20 +78,53 @@ function parseRequestedPage(): number {
 
 const requestedPage = parseRequestedPage()
 
-// Redirect canonique `?page=1` → `/ressources` (correction 6).
-// `await` pour bloquer le rendu SSR ; navigateTo pose un 301 côté serveur.
+// Le filtre expertise est validé strictement contre l'allowlist. Une valeur
+// inconnue devient 404 : mieux vaut refuser explicitement une URL fabriquée
+// que renvoyer silencieusement la liste complète — cela évite qu'un bot
+// n'indexe des variantes invalides.
+function parseRequestedExpertise(): string | null {
+  const raw = route.query.expertise
+  if (raw === undefined) return null
+  const asString = Array.isArray(raw) ? raw[0] : raw
+  if (typeof asString !== "string" || asString.length === 0) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Expertise inconnue",
+      fatal: true,
+    })
+  }
+  if (!EXPERTISE_IDS.includes(asString)) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Expertise inconnue",
+      fatal: true,
+    })
+  }
+  return asString
+}
+
+const requestedExpertise = parseRequestedExpertise()
+
+// Redirect canonique `?page=1` → `/ressources` (correction 6). Préserve
+// le filtre expertise s'il est présent.
 if (requestedPage === 1 && route.query.page !== undefined) {
-  await navigateTo("/ressources", { redirectCode: 301 })
+  const target = requestedExpertise
+    ? `/ressources?expertise=${requestedExpertise}`
+    : "/ressources"
+  await navigateTo(target, { redirectCode: 301 })
 }
 
 const { items, pagination } = await useResourceList({
   page: requestedPage,
   perPage: PER_PAGE,
+  expertise: requestedExpertise,
 })
 
 // Garde de cohérence : la page demandée doit exister. Si le back renvoie
 // une pagination cohérente mais que la page dépasse le total, on
-// transforme en 404 fatal — le canonical de la page N n'existe pas.
+// transforme en 404 fatal — le canonical de la page N n'existe pas. Une
+// vue filtrée vide (total = 0) reste 200 (état valide, comme la liste
+// globale vide) : c'est le cas `isEmpty` géré plus bas.
 if (pagination.value.totalPages > 0 && requestedPage > pagination.value.totalPages) {
   throw createError({
     statusCode: 404,
@@ -90,38 +133,52 @@ if (pagination.value.totalPages > 0 && requestedPage > pagination.value.totalPag
   })
 }
 
-const canonicalPath = computed(() =>
-  requestedPage === 1 ? "/ressources" : `/ressources?page=${requestedPage}`,
+const activeExpertisePage = computed(() =>
+  requestedExpertise
+    ? expertisePages.find((page) => page.id === requestedExpertise) ?? null
+    : null,
 )
 
-const canonicalPathForSeo = computed(() => "/ressources")
-
-// Fabrique un href canonique pour la pagination — page 1 sans query.
+// Fabrique un href canonique pour la pagination — page 1 sans query, tout
+// en préservant le filtre expertise actif.
 function buildPageHref(page: number): string {
-  return page === 1 ? "/ressources" : `/ressources?page=${page}`
+  const params = new URLSearchParams()
+  if (page > 1) params.set("page", String(page))
+  if (requestedExpertise) params.set("expertise", requestedExpertise)
+  const qs = params.toString()
+  return qs ? `/ressources?${qs}` : "/ressources"
 }
 
-const title =
-  requestedPage === 1
-    ? "Ressources"
-    : `Ressources — page ${requestedPage}`
+const title = computed(() => {
+  const base = activeExpertisePage.value
+    ? `Ressources — ${activeExpertisePage.value.shortTitle}`
+    : "Ressources"
+  return requestedPage === 1 ? base : `${base} — page ${requestedPage}`
+})
 const description =
   "Nos analyses, méthodes et retours d'expérience sur le web, le design, les contenus et la visibilité — publiés au rythme de nos projets."
 
+// Politique SEO Phase 10A2 :
+//   - liste canonique (`/ressources`, aucune query) → indexable, canonical
+//     absolu vers elle-même ;
+//   - variantes filtrées ou paginées → `noindex, follow` : on ne les fait
+//     pas concurrencer la page canonique, mais on laisse le crawler suivre
+//     les liens vers les articles individuels (qui restent indexables).
+const isFiltered = computed(() => requestedExpertise !== null)
+const isPaginated = computed(() => requestedPage > 1)
+const shouldNoindex = computed(() => isFiltered.value || isPaginated.value)
+
 usePageSeo({
-  title,
+  title: title.value,
   description,
-  path: canonicalPathForSeo.value,
+  path: "/ressources",
   type: "website",
+  robots: shouldNoindex.value ? "noindex, follow" : undefined,
 })
 
 const isEmpty = computed(() => pagination.value.total === 0)
 
-// `router` est présent pour usage futur (highlight actif). `canonicalPath`
-// est référencé dans le template implicite via le title mais utile aussi
-// pour un usage dérivé — on l'annote pour éviter un warning `no-unused`.
 void router
-void canonicalPath.value
 </script>
 
 <template>
@@ -136,14 +193,32 @@ void canonicalPath.value
       <BaseContainer class="resources-index__container">
         <header class="resources-index__header">
           <h2 id="resources-list-title" class="resources-index__title">
-            Toutes les ressources
+            {{ activeExpertisePage
+              ? `Ressources — ${activeExpertisePage.shortTitle}`
+              : "Toutes les ressources" }}
           </h2>
           <p v-if="!isEmpty" class="resources-index__count">
             {{ pagination.total }} ressource{{ pagination.total > 1 ? "s" : "" }} publiée{{ pagination.total > 1 ? "s" : "" }}
           </p>
         </header>
 
-        <ResourceEmptyState v-if="isEmpty" />
+        <ResourceExpertiseFilter :active-expertise="requestedExpertise" />
+
+        <p
+          v-if="isEmpty && activeExpertisePage"
+          class="resources-index__filter-empty"
+        >
+          Aucune ressource n'est encore publiée pour l'expertise
+          « {{ activeExpertisePage.shortTitle }} ». Consultez
+          <NuxtLink to="/ressources">
+            l'ensemble des ressources
+          </NuxtLink>
+          ou <NuxtLink :to="activeExpertisePage.route">
+            découvrez cette expertise
+          </NuxtLink>.
+        </p>
+
+        <ResourceEmptyState v-else-if="isEmpty" />
 
         <template v-else>
           <ul class="resources-index__grid" role="list">
@@ -217,6 +292,23 @@ void canonicalPath.value
   letter-spacing: 0.06em;
   color: var(--text-muted);
   margin: 0;
+}
+
+.resources-index__filter-empty {
+  margin: 0;
+  padding: var(--space-6);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  background-color: var(--background-secondary);
+  font-family: var(--font-family-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.resources-index__filter-empty :where(a) {
+  color: var(--color-petrol);
+  font-weight: 600;
 }
 
 .resources-index__grid {

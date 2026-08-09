@@ -6,6 +6,7 @@ import ExpertiseBenefits from "~/components/expertise/ExpertiseBenefits.vue"
 import ExpertiseDeliverables from "~/components/expertise/ExpertiseDeliverables.vue"
 import ExpertisePageHero from "~/components/expertise/ExpertisePageHero.vue"
 import ExpertiseRelatedPillars from "~/components/expertise/ExpertiseRelatedPillars.vue"
+import ExpertiseRelatedResources from "~/components/expertise/ExpertiseRelatedResources.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { expertisePages } from "~/config/expertise-pages"
 
@@ -145,6 +146,11 @@ useExpertiseServiceSchema({
     >
       <ExpertiseRelatedPillars :pillar-ids="resolvedPage.relatedPillarIds" />
     </EditorialSection>
+
+    <ExpertiseRelatedResources
+      :expertise-id="resolvedPage.id"
+      :expertise-label="resolvedPage.shortTitle"
+    />
 
     <EditorialCallout
       eyebrow="Parler de votre projet"

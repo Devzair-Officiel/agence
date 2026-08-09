@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Editorial\Presentation\ConditionalCache;
 
+use App\Editorial\Domain\ExpertiseIdentifier;
 use App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository;
 use App\Editorial\Presentation\Http\ListPublishedArticlesController;
 use App\Tests\Editorial\Support\ArticleBuilder;
@@ -88,6 +89,75 @@ final class ListPublishedArticlesConditionalCacheTest extends WebTestCase
         $etagPage2 = $client->getResponse()->headers->get('ETag');
 
         self::assertNotSame($etagPage1, $etagPage2);
+    }
+
+    public function testDifferentEtagPerExpertiseFilter(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = self::getContainer()->get(DoctrineArticleRepository::class);
+        $repo->save((new ArticleBuilder())
+            ->withSlug('etag-filter-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->withNow(new \DateTimeImmutable('2026-08-04T12:00:00+00:00'))
+            ->published()
+            ->build());
+        $repo->save((new ArticleBuilder())
+            ->withSlug('etag-filter-construire')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->withNow(new \DateTimeImmutable('2026-08-03T12:00:00+00:00'))
+            ->published()
+            ->build());
+        $em->flush();
+
+        $client->request('GET', '/resources');
+        $etagUnfiltered = $client->getResponse()->headers->get('ETag');
+
+        $client->request('GET', '/resources?expertise=concevoir');
+        $etagConcevoir = $client->getResponse()->headers->get('ETag');
+
+        $client->request('GET', '/resources?expertise=construire');
+        $etagConstruire = $client->getResponse()->headers->get('ETag');
+
+        self::assertIsString($etagUnfiltered);
+        self::assertIsString($etagConcevoir);
+        self::assertIsString($etagConstruire);
+        // Sans collision : trois vues différentes doivent produire trois
+        // ETag différents pour qu'un `If-None-Match` d'une vue ne renvoie
+        // pas 304 sur une autre.
+        self::assertNotSame($etagUnfiltered, $etagConcevoir);
+        self::assertNotSame($etagUnfiltered, $etagConstruire);
+        self::assertNotSame($etagConcevoir, $etagConstruire);
+    }
+
+    public function testFilteredEtagReturns304OnRepeatedRequest(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = self::getContainer()->get(DoctrineArticleRepository::class);
+        $repo->save((new ArticleBuilder())
+            ->withSlug('etag-filter-repeat')
+            ->withExpertises([ExpertiseIdentifier::Valoriser])
+            ->published()
+            ->build());
+        $em->flush();
+
+        $client->request('GET', '/resources?expertise=valoriser');
+        $etag = $client->getResponse()->headers->get('ETag');
+        self::assertIsString($etag);
+
+        $client->request(
+            'GET',
+            '/resources?expertise=valoriser',
+            [],
+            [],
+            ['HTTP_IF_NONE_MATCH' => $etag],
+        );
+        self::assertResponseStatusCodeSame(304);
     }
 
     private function seedTwoArticles(): void

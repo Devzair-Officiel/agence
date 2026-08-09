@@ -118,6 +118,22 @@ describe("createEditorialApi.list", () => {
     const result = await api(fetcher).list({ page: 1, perPage: 6 })
     expect(result.status).toBe("payload_invalid")
   })
+
+  it("relaie le filtre expertise dans la query string", async () => {
+    const fetcher = vi.fn(async () => response({ status: 200, body: validListBody }))
+    await api(fetcher).list({ page: 1, perPage: 6, expertise: "concevoir" })
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.stringMatching(/expertise=concevoir/),
+      expect.any(Object),
+    )
+  })
+
+  it("n'inclut PAS le paramètre expertise quand il vaut null", async () => {
+    const fetcher = vi.fn(async () => response({ status: 200, body: validListBody }))
+    await api(fetcher).list({ page: 1, perPage: 6, expertise: null })
+    const url = String((fetcher.mock.calls[0] ?? [])[0])
+    expect(url).not.toContain("expertise=")
+  })
 })
 
 describe("createEditorialApi.detail", () => {

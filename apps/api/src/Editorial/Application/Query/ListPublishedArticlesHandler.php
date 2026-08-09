@@ -37,7 +37,7 @@ final class ListPublishedArticlesHandler
     public function __invoke(ListPublishedArticles $query): array
     {
         $now = $this->clock->now();
-        $total = $this->repository->countPublished($now);
+        $total = $this->repository->countPublished($now, $query->expertise);
         $pagination = PaginationView::fromCount($query->page, $query->perPage, $total);
 
         // Si la page demandée est au-delà du total, on renvoie une liste vide
@@ -50,7 +50,7 @@ final class ListPublishedArticlesHandler
             ];
         }
 
-        $articles = $this->repository->listPublished($query->page, $query->perPage, $now);
+        $articles = $this->repository->listPublished($query->page, $query->perPage, $now, $query->expertise);
 
         $items = array_map(
             fn (Article $article): ArticleSummaryView => ArticleSummaryView::fromEntity(

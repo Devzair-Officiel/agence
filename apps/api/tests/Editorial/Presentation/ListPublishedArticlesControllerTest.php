@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Editorial\Presentation;
 
 use App\Editorial\Domain\ArticleHeroImage;
+use App\Editorial\Domain\ExpertiseIdentifier;
 use App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository;
 use App\Editorial\Presentation\Http\ListPublishedArticlesController;
 use App\EditorialMedia\Domain\MediaAssetRepositoryInterface;
@@ -169,6 +170,73 @@ final class ListPublishedArticlesControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(400);
         self::assertSame('validation_error', $this->decode($client)['code']);
+    }
+
+    public function testUnknownExpertiseReturns400(): void
+    {
+        $client = self::createClient();
+
+        $client->request('GET', '/resources?expertise=marketing-affiliation');
+
+        self::assertResponseStatusCodeSame(400);
+        $data = $this->decode($client);
+        self::assertSame('validation_error', $data['code']);
+        self::assertNotEmpty($data['errors']);
+    }
+
+    public function testKnownExpertiseFiltersItems(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = self::getContainer()->get(DoctrineArticleRepository::class);
+
+        $repo->save((new ArticleBuilder())
+            ->withSlug('list-filter-concevoir')
+            ->withExpertises([ExpertiseIdentifier::Concevoir])
+            ->withNow(new \DateTimeImmutable('2026-08-04T12:00:00+00:00'))
+            ->published()
+            ->build());
+        $repo->save((new ArticleBuilder())
+            ->withSlug('list-filter-construire')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->withNow(new \DateTimeImmutable('2026-08-03T12:00:00+00:00'))
+            ->published()
+            ->build());
+        $em->flush();
+
+        $client->request('GET', '/resources?expertise=concevoir');
+
+        self::assertResponseStatusCodeSame(200);
+        $data = $this->decode($client);
+        self::assertCount(1, $data['items']);
+        self::assertSame('list-filter-concevoir', $data['items'][0]['slug']);
+        self::assertContains('concevoir', $data['items'][0]['expertise_ids']);
+        self::assertSame(1, $data['pagination']['total']);
+    }
+
+    public function testKnownExpertiseWithNoMatchReturnsEmptyList(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = self::getContainer()->get(DoctrineArticleRepository::class);
+
+        $repo->save((new ArticleBuilder())
+            ->withSlug('list-empty-filter-source')
+            ->withExpertises([ExpertiseIdentifier::Construire])
+            ->published()
+            ->build());
+        $em->flush();
+
+        $client->request('GET', '/resources?expertise=faire-evoluer');
+
+        self::assertResponseStatusCodeSame(200);
+        $data = $this->decode($client);
+        self::assertSame([], $data['items']);
+        self::assertSame(0, $data['pagination']['total']);
     }
 
     /**
