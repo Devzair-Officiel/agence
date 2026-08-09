@@ -1271,7 +1271,25 @@ Un article publié dans Symfony est visible sous une URL Nuxt canonique avec HTM
 
 ---
 
-## Phase 10 — SEO local et GEO avancé
+## Phase 10 — Contenu éditorial et SEO section Ressources
+
+### Phase 10A — Contenu éditorial pillar et maillage interne (TERMINÉE — 2026-08-09)
+
+- [x] Rédiger 6 articles evergreen (900–1600 mots) pour `/ressources` sans invention de client, chiffre, témoignage, certification ou garantie SEO.
+- [x] Positionner Devzair comme agence digitale à taille humaine, jamais comme freelance.
+- [x] Importer via `app:editorial:import` (dry-run puis réel, create-only).
+- [x] Publier via `app:editorial:publish` avec dates réelles séquentielles (2026-08-04 à 2026-08-09).
+- [x] Maillage interne 2–5 liens par article vers `/expertises/{slug}`, `/agence`, autres `/ressources/*`, `/contact`.
+- [x] Vérifier SEO SSR : title, description, canonical, OG, Twitter, JSON-LD BlogPosting + BreadcrumbList, sitemap.
+- [x] Créer `scripts/editorial-content-bootstrap.sh` idempotent (skip si slug existe, re-publication idempotente sur dates identiques).
+- [x] Ajouter `apps/web/test/e2e/resources-phase10.spec.ts` (listing paginé, sitemap, SSR SEO, JSON-LD, corps Markdown, Axe /ressources + article).
+- [x] Corriger `apps/web/test/e2e/resources.spec.ts` pour agnosticité de position — assertions par pattern `e2e-8b2-*` sur tous les slugs plutôt que sur la page 1.
+
+### Critère de sortie 10A
+
+Les 6 articles pillar sont publiés, indexables, cohérents avec l'architecture existante, et leur bootstrap est reproductible en dev comme en CI.
+
+### Phase 10B — SEO local et GEO avancé (À VENIR)
 
 - [ ] Valider l’éligibilité locale.
 - [ ] Harmoniser les informations d’entreprise.
@@ -1285,7 +1303,7 @@ Un article publié dans Symfony est visible sous une URL Nuxt canonique avec HTM
 - [ ] Mesurer les référents IA identifiables.
 - [ ] Étudier `llms.txt` sans le considérer obligatoire.
 
-### Critère de sortie
+### Critère de sortie 10B
 
 L’identité, les contenus et la politique des robots sont cohérents et vérifiables.
 

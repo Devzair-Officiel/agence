@@ -32,25 +32,60 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
     expect(headings[0]?.trim()).not.toBe('')
   })
 
-  test('affiche 6 items publiés en page 1 (les plus récents d\'abord)', async ({ page }) => {
-    await page.goto('/ressources')
-    const items = page.locator('article a[href^="/ressources/"]')
-    await expect(items).toHaveCount(6)
-    // Ordre : published-7 (juillet) doit précéder published-2 (février).
-    const hrefs = await items.evaluateAll((els) =>
-      els.map((e) => (e as HTMLAnchorElement).getAttribute('href')),
-    )
-    expect(hrefs[0]).toBe(`/ressources/${FIXTURE_PREFIX}published-7`)
-    expect(hrefs[5]).toBe(`/ressources/${FIXTURE_PREFIX}published-2`)
+  test('rend une grille paginée (max 6 items par page, tous les fixtures visibles)', async ({
+    page,
+  }) => {
+    // Phase 10 : la position exacte des fixtures e2e-8b2-* dans la pagination
+    // dépend du contenu réel désormais publié (dates > fixtures). Le test
+    // reste déterministe en parcourant toutes les pages jusqu'à retrouver
+    // les 7 slugs published-* fixtures dans l'ordre chronologique inverse
+    // relatif (published-7 apparaît avant published-2 dans la séquence).
+    const seenFixtureHrefs: string[] = []
+    let currentPage = 1
+    const maxPages = 20
+    while (currentPage <= maxPages) {
+      const url = currentPage === 1 ? '/ressources' : `/ressources?page=${currentPage}`
+      const response = await page.goto(url)
+      if (response?.status() !== 200) break
+      const items = page.locator('article a[href^="/ressources/"]')
+      const count = await items.count()
+      expect(count).toBeLessThanOrEqual(6)
+      if (count === 0) break
+      const hrefs = await items.evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+      for (const href of hrefs) {
+        if (href.includes(`${FIXTURE_PREFIX}published-`)) seenFixtureHrefs.push(href)
+      }
+      if (count < 6) break
+      currentPage += 1
+    }
+
+    // Les 7 fixtures publiées doivent toutes apparaître, dans l'ordre 7 → 1.
+    expect(seenFixtureHrefs).toHaveLength(7)
+    expect(seenFixtureHrefs[0]).toBe(`/ressources/${FIXTURE_PREFIX}published-7`)
+    expect(seenFixtureHrefs[6]).toBe(`/ressources/${FIXTURE_PREFIX}published-1`)
   })
 
-  test('n\'expose ni brouillon ni archivé ni futur dans le SSR', async ({ page }) => {
-    const response = await page.goto('/ressources?page=2')
-    expect(response?.status()).toBe(200)
-    const html = await page.content()
-    expect(html).not.toContain(DRAFT_SLUG)
-    expect(html).not.toContain(ARCHIVED_SLUG)
-    expect(html).not.toContain(FUTURE_SLUG)
+  test('n\'expose ni brouillon ni archivé ni futur sur aucune page du listing', async ({
+    page,
+  }) => {
+    // Balayage complet des pages pour garantir l'absence des slugs interdits,
+    // quel que soit le volume de contenu réel.
+    let currentPage = 1
+    const maxPages = 20
+    while (currentPage <= maxPages) {
+      const url = currentPage === 1 ? '/ressources' : `/ressources?page=${currentPage}`
+      const response = await page.goto(url)
+      if (response?.status() !== 200) break
+      const html = await page.content()
+      expect(html).not.toContain(DRAFT_SLUG)
+      expect(html).not.toContain(ARCHIVED_SLUG)
+      expect(html).not.toContain(FUTURE_SLUG)
+      const count = await page.locator('article a[href^="/ressources/"]').count()
+      if (count < 6) break
+      currentPage += 1
+    }
   })
 
   test('la pagination expose une nav aria-label et une URL propre pour la page 1', async ({
