@@ -109,4 +109,30 @@ final class EditorialAdminAuditLogger
             'retry_after_seconds' => $retryAfterSeconds,
         ]);
     }
+
+    public function heroImageSet(AdminUser $admin, string $articleId, string $mediaId): void
+    {
+        $this->adminLogger->info('admin.article.hero_image_set', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'article_id' => $articleId,
+            'media_id' => $mediaId,
+        ]);
+    }
+
+    public function heroImageRemoved(AdminUser $admin, string $articleId): void
+    {
+        $this->adminLogger->info('admin.article.hero_image_removed', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'article_id' => $articleId,
+        ]);
+    }
+
+    public function heroImageNoop(AdminUser $admin, string $articleId, string $action): void
+    {
+        $this->adminLogger->info('admin.article.hero_image_noop', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'article_id' => $articleId,
+            'action' => $action,
+        ]);
+    }
 }

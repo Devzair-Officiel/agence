@@ -150,3 +150,31 @@ services:
     App\EditorialMedia\Infrastructure\Security\AdminMediaUploadRateLimiter:
         arguments:
             $limiterFactory: '@limiter.admin_media_upload'
+
+    # Adaptateur ANTI-CORRUPTION-LAYER entre `Editorial` et `EditorialMedia`
+    # (Phase 9B). Un unique service implémente les deux ports du contexte
+    # `Editorial` : le lookup binaire (mutations) et le reader (read-models
+    # admin/publique). Les deux alias pointent explicitement sur cette
+    # implémentation — pas d'autowiring implicite sur l'interface pour
+    # rester lisible.
+    App\Editorial\Application\Media\MediaAssetLookupInterface:
+        alias: App\EditorialMedia\Infrastructure\Adapter\EditorialMediaAssetLookup
+
+    App\Editorial\Application\Media\MediaAssetReaderInterface:
+        alias: App\EditorialMedia\Infrastructure\Adapter\EditorialMediaAssetLookup
+
+    # Diffusion publique des médias (Phase 9B). Deux ports séparés :
+    #   - `PublicMediaGateInterface` (SQL brut sur editorial_article) porté
+    #     par `Editorial` — la règle « référencé par un Published » vit dans
+    #     le contexte aval qui la définit.
+    #   - `PublicMediaStreamerInterface` porté par `EditorialMedia` — c'est
+    #     lui qui possède le fichier physique et son mime.
+    App\Editorial\Application\Media\PublicMediaGateInterface:
+        alias: App\Editorial\Infrastructure\Persistence\DoctrinePublicMediaGate
+
+    App\Editorial\Application\Media\PublicMediaStreamerInterface:
+        alias: App\EditorialMedia\Infrastructure\Adapter\EditorialMediaPublicStreamer
+
+    App\EditorialMedia\Infrastructure\Adapter\EditorialMediaPublicStreamer:
+        arguments:
+            $editorialMediaLogger: '@logger'

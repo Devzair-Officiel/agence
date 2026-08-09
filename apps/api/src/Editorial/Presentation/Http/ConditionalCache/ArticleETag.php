@@ -41,10 +41,13 @@ use App\Editorial\Application\View\ArticleDetailView;
  * - v2 : Phase 8B2 — ajout de `content_html` (rendu Markdown → HTML côté
  *   Symfony via `CommonMarkArticleRenderer`). Le payload change, l'ETag
  *   doit changer : d'où le bump.
+ * - v3 : Phase 9B — ajout de `hero_image` (image principale et texte
+ *   alternatif). Nouveau champ dans le payload → nouvel ETag pour invalider
+ *   les caches des consommateurs (Nuxt SSR, reverse proxy).
  */
 final class ArticleETag
 {
-    public const CONTRACT_VERSION = 'v2';
+    public const CONTRACT_VERSION = 'v3';
 
     public static function forDetail(ArticleDetailView $view): string
     {

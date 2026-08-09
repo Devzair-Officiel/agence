@@ -69,6 +69,61 @@
         </div>
     </section>
 
+    <section class="card" aria-labelledby="hero-image-heading">
+        <h2 id="hero-image-heading">Image principale</h2>
+
+        {% if view.heroImage %}
+            <figure class="hero-image-preview">
+                <img src="{{ path('admin_media_preview', { id: view.heroImage.mediaId }) }}"
+                     alt="{{ view.heroImage.altText }}"
+                     width="{{ view.heroImage.width }}"
+                     height="{{ view.heroImage.height }}"
+                     loading="lazy">
+                <figcaption>
+                    <strong>Texte alternatif :</strong> {{ view.heroImage.altText }}
+                    <br>
+                    <span class="hero-image-preview__meta">
+                        {{ view.heroImage.width }}&nbsp;×&nbsp;{{ view.heroImage.height }}&nbsp;px —
+                        <code>{{ view.heroImage.mimeType }}</code>
+                    </span>
+                </figcaption>
+            </figure>
+
+            {% if view.status.value == 'draft' %}
+                <div class="hero-image-actions">
+                    <a class="button-link" href="{{ path('admin_article_hero_image', { id: view.id }) }}">
+                        Modifier l'image ou le texte alternatif
+                    </a>
+
+                    <form method="post"
+                          action="{{ path('admin_article_hero_image_remove', { id: view.id }) }}"
+                          class="inline-form">
+                        <input type="hidden" name="_csrf_token"
+                               value="{{ csrf_token('article_hero_image_remove_' ~ view.id) }}">
+                        <button type="submit" class="button-danger">
+                            Retirer l'image principale
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <p class="lifecycle-note">
+                    L'image principale ne peut être modifiée qu'à l'état « brouillon ».
+                </p>
+            {% endif %}
+        {% else %}
+            <p>Aucune image principale n'est rattachée à ce brouillon.</p>
+
+            {% if view.status.value == 'draft' %}
+                <p>
+                    <a class="button-link button-primary"
+                       href="{{ path('admin_article_hero_image', { id: view.id }) }}">
+                        Choisir une image dans la bibliothèque
+                    </a>
+                </p>
+            {% endif %}
+        {% endif %}
+    </section>
+
     <section class="card" aria-labelledby="form-heading">
         <h2 id="form-heading">Contenu</h2>
 

@@ -43,13 +43,41 @@ final class AdminArticleEditView
         public readonly ?\DateTimeImmutable $publishedAt,
         public readonly \DateTimeImmutable $createdAt,
         public readonly \DateTimeImmutable $updatedAt,
+        public readonly ?AdminArticleHeroImageView $heroImage = null,
     ) {
     }
 
-    public static function fromEntity(Article $article): self
+    /**
+     * Reconstitue la vue plate à partir de l'agrégat Doctrine hydraté.
+     *
+     * Le descripteur média est fourni par l'appelant (adaptateur admin qui
+     * a orchestré le JOIN cross-context) : l'agrégat `Article` ne connaît
+     * qu'un `Uuid` de média et un alt text — le rendu admin a besoin des
+     * dimensions et du MIME. Passer `null` produit une vue sans image
+     * principale, cohérent avec un article Draft/Published sans hero.
+     *
+     * Si l'article porte une référence média mais que le descripteur n'a
+     * pas pu être résolu (rare : race entre lecture Article/lecture Media),
+     * on retourne une vue SANS image — l'admin verra alors le CTA « choisir
+     * une image » plutôt qu'un rendu cassé. Le read-repository loggue cette
+     * situation le cas échéant.
+     */
+    public static function fromEntity(Article $article, ?\App\Editorial\Application\Media\MediaAssetDescriptor $heroDescriptor = null): self
     {
         $seo = $article->seo();
         $author = $article->author();
+
+        $heroImageVo = $article->heroImage();
+        $heroImageView = null;
+        if ($heroImageVo !== null && $heroDescriptor !== null && $heroImageVo->mediaAssetId()->equals($heroDescriptor->id)) {
+            $heroImageView = new AdminArticleHeroImageView(
+                mediaId: $heroDescriptor->id->toRfc4122(),
+                altText: $heroImageVo->altText(),
+                width: $heroDescriptor->width,
+                height: $heroDescriptor->height,
+                mimeType: $heroDescriptor->mimeType,
+            );
+        }
 
         return new self(
             id: $article->id()->toRfc4122(),
@@ -66,6 +94,7 @@ final class AdminArticleEditView
             publishedAt: $article->publishedAt(),
             createdAt: $article->createdAt(),
             updatedAt: $article->updatedAt(),
+            heroImage: $heroImageView,
         );
     }
 }

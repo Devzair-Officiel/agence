@@ -1,0 +1,214 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{#
+    Chooser SSR d'image principale (Phase 9B).
+
+    ── Sécurité ──────────────────────────────────────────────────────────────
+    Aucun `|raw` dans ce template. Toutes les valeurs `mediaId`, `altText`,
+    `originalFilename`, `mimeType` sont rendues par Twig avec l'échappement
+    HTML par défaut. Les miniatures sont servies par la route privée
+    `admin_media_preview` (session + noindex).
+
+    ── Interaction ───────────────────────────────────────────────────────────
+    Zéro JavaScript : chaque miniature est un `<input type="radio">`, la
+    valeur `alt_text` est rappelée sur `<input type="text">`, la pagination
+    reste des liens `?page=N` (GET) qui préservent l'article ciblé.
+
+    ── Statut affiché ────────────────────────────────────────────────────────
+    Si l'article n'est pas Draft, le chooser est verrouillé : ni radio, ni
+    champ alt, seul un CTA « Retour à l'édition » est proposé. Le contrôleur
+    renvoie un 409 côté HTTP pour signaler l'incohérence à un client bot.
+#}
+
+{% block title %}Image principale — {{ view.title }} — Administration Devzair{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <p class="page-eyebrow">Article — {{ view.title }}</p>
+        <h1>Image principale du brouillon</h1>
+        <p class="page-meta">
+            Statut :
+            <span class="status-badge status-{{ view.status.value }}">
+                {% if view.status.value == 'draft' %}Brouillon
+                {% elseif view.status.value == 'published' %}Publié
+                {% else %}Archivé
+                {% endif %}
+            </span>
+        </p>
+    </div>
+
+    <nav class="preview-actions" aria-label="Navigation article">
+        <a class="button-link" href="{{ path('admin_article_edit', { id: view.id }) }}">
+            ← Retour à l'édition
+        </a>
+    </nav>
+
+    {% if view.status.value != 'draft' %}
+        <section class="card" aria-labelledby="hero-locked-heading">
+            <h2 id="hero-locked-heading">Modification verrouillée</h2>
+            <div class="alert alert-info" role="status">
+                L'image principale ne peut être modifiée qu'à l'état « brouillon ».
+                Restaurez l'article en brouillon pour rattacher, remplacer ou retirer son image.
+            </div>
+
+            {% if view.heroImage %}
+                <figure class="hero-image-preview">
+                    <img src="{{ path('admin_media_preview', { id: view.heroImage.mediaId }) }}"
+                         alt="{{ view.heroImage.altText }}"
+                         width="{{ view.heroImage.width }}"
+                         height="{{ view.heroImage.height }}"
+                         loading="lazy">
+                    <figcaption>
+                        <strong>Texte alternatif :</strong> {{ view.heroImage.altText }}
+                        <br>
+                        <span class="hero-image-preview__meta">
+                            {{ view.heroImage.width }}&nbsp;×&nbsp;{{ view.heroImage.height }}&nbsp;px —
+                            <code>{{ view.heroImage.mimeType }}</code>
+                        </span>
+                    </figcaption>
+                </figure>
+            {% else %}
+                <p>Aucune image principale rattachée à cet article.</p>
+            {% endif %}
+        </section>
+    {% else %}
+        {% if error_global %}
+            <div class="alert alert-error" role="alert">{{ error_global }}</div>
+        {% endif %}
+
+        {% if view.heroImage %}
+            <section class="card" aria-labelledby="hero-current-heading">
+                <h2 id="hero-current-heading">Image actuellement rattachée</h2>
+                <figure class="hero-image-preview">
+                    <img src="{{ path('admin_media_preview', { id: view.heroImage.mediaId }) }}"
+                         alt="{{ view.heroImage.altText }}"
+                         width="{{ view.heroImage.width }}"
+                         height="{{ view.heroImage.height }}"
+                         loading="lazy">
+                    <figcaption>
+                        <strong>Texte alternatif :</strong> {{ view.heroImage.altText }}
+                        <br>
+                        <span class="hero-image-preview__meta">
+                            {{ view.heroImage.width }}&nbsp;×&nbsp;{{ view.heroImage.height }}&nbsp;px —
+                            <code>{{ view.heroImage.mimeType }}</code>
+                        </span>
+                    </figcaption>
+                </figure>
+            </section>
+        {% endif %}
+
+        <form method="post"
+              action="{{ path('admin_article_hero_image', { id: view.id }) }}"
+              class="hero-image-form"
+              novalidate>
+            <input type="hidden" name="_csrf_token"
+                   value="{{ csrf_token('article_hero_image_set_' ~ view.id) }}">
+
+            <section class="card" aria-labelledby="hero-alt-heading">
+                <h2 id="hero-alt-heading">Texte alternatif</h2>
+                <p class="form-help">
+                    Décrit le contenu de l'image pour les lecteurs d'écran et les
+                    moteurs. Obligatoire, 300 caractères maximum. Ne redoublez pas
+                    le titre ni le nom du fichier — décrivez ce que montre l'image.
+                </p>
+
+                <div class="form-field">
+                    <label for="hero-alt-text">Texte alternatif</label>
+                    <input type="text"
+                           id="hero-alt-text"
+                           name="alt_text"
+                           value="{{ alt_value }}"
+                           maxlength="300"
+                           required
+                           aria-describedby="hero-alt-help{% if error_alt %} hero-alt-error{% endif %}"
+                           {% if error_alt %}aria-invalid="true"{% endif %}>
+                    <p id="hero-alt-help" class="form-help">
+                        Exemple : « Deux personnes travaillant côte à côte devant un écran
+                        montrant du code TypeScript ».
+                    </p>
+                    {% if error_alt %}
+                        <p id="hero-alt-error" class="form-error" role="alert">{{ error_alt }}</p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="card" aria-labelledby="hero-library-heading">
+                <h2 id="hero-library-heading">Bibliothèque de médias</h2>
+                {% if error_media %}
+                    <p class="form-error" role="alert">{{ error_media }}</p>
+                {% endif %}
+
+                {% if media_page.items is empty %}
+                    <p class="empty-state">
+                        Aucun média n'a encore été téléversé.
+                        <a href="{{ path('admin_media_upload') }}">Téléverser un média</a>.
+                    </p>
+                {% else %}
+                    <fieldset class="hero-image-grid" aria-describedby="hero-library-help">
+                        <legend class="visually-hidden">Sélectionner un média</legend>
+                        <p id="hero-library-help" class="form-help">
+                            Cochez l'image à rattacher, puis validez en bas de la page.
+                            La sélection est conservée entre les pages si vous validez
+                            avant de naviguer.
+                        </p>
+
+                        {% for item in media_page.items %}
+                            {% set input_id = 'media-' ~ item.id %}
+                            <label class="hero-image-grid__item" for="{{ input_id }}">
+                                <input type="radio"
+                                       id="{{ input_id }}"
+                                       name="media_id"
+                                       value="{{ item.id }}"
+                                       {% if selected_media_id == item.id %}checked{% endif %}>
+                                <img src="{{ path('admin_media_preview', { id: item.id }) }}"
+                                     alt=""
+                                     class="hero-image-grid__thumb"
+                                     width="160"
+                                     height="120"
+                                     loading="lazy">
+                                <span class="hero-image-grid__meta">
+                                    <span class="hero-image-grid__filename">{{ item.originalFilename }}</span>
+                                    <span class="hero-image-grid__dims">
+                                        {{ item.width }}&nbsp;×&nbsp;{{ item.height }}&nbsp;px
+                                    </span>
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+
+                    <nav class="pagination" aria-label="Pagination de la bibliothèque">
+                        <p class="pagination-summary">
+                            Page {{ media_page.page }} sur {{ media_page.lastPage() }} —
+                            {{ media_page.total }} média{{ media_page.total > 1 ? 's' : '' }}.
+                        </p>
+                        <ul class="pagination-links">
+                            {% if media_page.hasPrevious() %}
+                                <li>
+                                    <a href="{{ path('admin_article_hero_image', { id: view.id, page: media_page.page - 1 }) }}">
+                                        ← Précédent
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% if media_page.hasNext() %}
+                                <li>
+                                    <a href="{{ path('admin_article_hero_image', { id: view.id, page: media_page.page + 1 }) }}">
+                                        Suivant →
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="button-primary">
+                    Enregistrer cette image principale
+                </button>
+                <a class="button-link" href="{{ path('admin_article_edit', { id: view.id }) }}">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

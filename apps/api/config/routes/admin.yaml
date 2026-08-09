@@ -72,6 +72,23 @@ admin_article_restore:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+# Image principale d'un brouillon (Phase 9B). GET rend le chooser paginé
+# (radio + champ alt), POST applique la sélection. La route de retrait est
+# POST-only et déclenchée depuis l'écran d'édition.
+admin_article_hero_image:
+    path: /admin/articles/{id}/image
+    controller: App\Admin\Presentation\Http\AdminArticleHeroImageController::__invoke
+    methods: [GET, POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_article_hero_image_remove:
+    path: /admin/articles/{id}/image/remove
+    controller: App\Admin\Presentation\Http\AdminArticleHeroImageRemoveController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
 # Administration des médias éditoriaux (Phase 9A).
 # Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
 # En 9A, seules la liste, la création (formulaire + POST) et la prévisualisation

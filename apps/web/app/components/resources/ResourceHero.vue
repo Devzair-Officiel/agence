@@ -7,14 +7,22 @@ import type { ArticleDetail } from "~/types/editorial"
 /**
  * En-tête d'une page détail `/ressources/{slug}`.
  *
- * Contient le H1 unique de la page, l'eyebrow « Ressource » et le
- * bandeau de métadonnées (`ResourceMeta`). N'inclut PAS `contentHtml`,
- * qui est le domaine de `ResourceContent` — seule frontière de confiance
- * autorisée à utiliser `v-html` (ADR-011).
+ * Contient le H1 unique de la page, l'eyebrow « Ressource », le bandeau
+ * de métadonnées (`ResourceMeta`) et — depuis la Phase 9B — la vignette
+ * `hero_image` quand l'éditeur en a associée une. N'inclut PAS
+ * `contentHtml`, qui est le domaine de `ResourceContent` — seule
+ * frontière de confiance autorisée à utiliser `v-html` (ADR-011).
  *
  * Accessibilité :
  *   - `<section aria-labelledby="resource-hero-title">` référence le H1 ;
- *   - eyebrow reste un `<p>` typé, jamais un titre.
+ *   - eyebrow reste un `<p>` typé, jamais un titre ;
+ *   - la vignette porte l'`alt` éditorial ; si le back-office n'a pas
+ *     rempli d'image, on n'affiche RIEN (pas de placeholder, pas de
+ *     visuel de remplissage — cf. règle non négociable 11).
+ *
+ * Perf :
+ *   - LCP probable : `loading="eager"` + `fetchpriority="high"` ;
+ *   - `width`/`height` explicites depuis le contrat pour éviter tout CLS.
  */
 
 interface Props {
@@ -41,6 +49,18 @@ defineProps<Props>()
           :expertise-ids="article.expertiseIds"
         />
       </div>
+      <figure v-if="article.heroImage" class="resource-hero__figure">
+        <img
+          class="resource-hero__image"
+          :src="article.heroImage.url"
+          :alt="article.heroImage.alt"
+          :width="article.heroImage.width"
+          :height="article.heroImage.height"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        >
+      </figure>
     </BaseContainer>
   </section>
 </template>
@@ -90,6 +110,22 @@ defineProps<Props>()
 
 .resource-hero__meta {
   margin-top: var(--space-2);
+}
+
+.resource-hero__figure {
+  margin: var(--space-6) 0 0;
+  /* Ratio fluide contraint — le width/height inline garantit le CLS = 0 ;
+     ce max-width purement visuel évite qu'une très grande image ne casse
+     la lecture. */
+  max-width: 52rem;
+}
+
+.resource-hero__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  background-color: var(--background-secondary, transparent);
 }
 
 @media (min-width: 768px) {

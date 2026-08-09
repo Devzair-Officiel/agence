@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Editorial\Application\Query;
 
+use App\Editorial\Application\Media\MediaAssetReaderInterface;
 use App\Editorial\Application\View\ArticleSummaryView;
 use App\Editorial\Application\View\PaginationView;
+use App\Editorial\Domain\Article;
 use App\Editorial\Domain\ArticleRepositoryInterface;
 use App\Editorial\Domain\Clock\ClockInterface;
 
 /**
  * Retourne la page demandée d'articles publiés (dont `publishedAt <= now`).
+ *
+ * Depuis la Phase 9B, le handler résout aussi le descripteur média pour
+ * chaque article porteur d'image via `MediaAssetReaderInterface` (ACL
+ * applicative). La résolution est faite ici — pas dans la présentation —
+ * pour que la couche HTTP reste passive et que les tests d'ETag/JSON aient
+ * les mêmes données que le contrat runtime.
  *
  * @phpstan-type ListResult array{items: list<ArticleSummaryView>, pagination: PaginationView}
  */
@@ -19,6 +27,7 @@ final class ListPublishedArticlesHandler
     public function __construct(
         private readonly ArticleRepositoryInterface $repository,
         private readonly ClockInterface $clock,
+        private readonly MediaAssetReaderInterface $mediaReader,
     ) {
     }
 
@@ -41,14 +50,26 @@ final class ListPublishedArticlesHandler
             ];
         }
 
+        $articles = $this->repository->listPublished($query->page, $query->perPage, $now);
+
         $items = array_map(
-            static fn ($article): ArticleSummaryView => ArticleSummaryView::fromEntity($article),
-            $this->repository->listPublished($query->page, $query->perPage, $now),
+            fn (Article $article): ArticleSummaryView => ArticleSummaryView::fromEntity(
+                $article,
+                $this->resolveDescriptor($article),
+            ),
+            $articles,
         );
 
         return [
             'items' => array_values($items),
             'pagination' => $pagination,
         ];
+    }
+
+    private function resolveDescriptor(Article $article): ?\App\Editorial\Application\Media\MediaAssetDescriptor
+    {
+        $hero = $article->heroImage();
+
+        return $hero === null ? null : $this->mediaReader->findMetadata($hero->mediaAssetId());
     }
 }

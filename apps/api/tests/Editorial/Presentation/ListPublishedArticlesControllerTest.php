@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Editorial\Presentation;
 
+use App\Editorial\Domain\ArticleHeroImage;
 use App\Editorial\Infrastructure\Persistence\DoctrineArticleRepository;
 use App\Editorial\Presentation\Http\ListPublishedArticlesController;
+use App\EditorialMedia\Domain\MediaAssetRepositoryInterface;
 use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\EditorialDatabaseCleanup;
+use App\Tests\EditorialMedia\Support\MediaAssetBuilder;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -72,6 +75,67 @@ final class ListPublishedArticlesControllerTest extends WebTestCase
         self::assertArrayHasKey('expertise_ids', $data['items'][0]);
         self::assertArrayHasKey('published_at', $data['items'][0]);
         self::assertArrayNotHasKey('body_markdown', $data['items'][0]);
+        // Phase 9B : le champ hero_image doit toujours être présent, même
+        // s'il vaut null. Un consommateur front peut ainsi typer l'objet
+        // sans se soucier de la clé manquante.
+        self::assertArrayHasKey('hero_image', $data['items'][0]);
+        self::assertNull($data['items'][0]['hero_image']);
+    }
+
+    public function testListItemsExposeHeroImageWhenSet(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $articleRepo = self::getContainer()->get(DoctrineArticleRepository::class);
+        $mediaRepo = self::getContainer()->get(MediaAssetRepositoryInterface::class);
+
+        $asset = (new MediaAssetBuilder())
+            ->withDimensions(1200, 800)
+            ->build();
+        $mediaRepo->save($asset);
+        $em->flush();
+
+        $withHero = (new ArticleBuilder())
+            ->withSlug('article-liste-avec-hero')
+            ->withNow(new \DateTimeImmutable('2026-08-04T12:00:00+00:00'))
+            ->withHeroImage(ArticleHeroImage::create(
+                $asset->id(),
+                'Alt de la vignette de liste.',
+            ))
+            ->published()
+            ->build();
+        $withoutHero = (new ArticleBuilder())
+            ->withSlug('article-liste-sans-hero')
+            ->withNow(new \DateTimeImmutable('2026-08-01T12:00:00+00:00'))
+            ->published()
+            ->build();
+        $articleRepo->save($withHero);
+        $articleRepo->save($withoutHero);
+        $em->flush();
+
+        $client->request('GET', '/resources');
+
+        self::assertResponseStatusCodeSame(200);
+        $data = $this->decode($client);
+        self::assertCount(2, $data['items']);
+
+        // Ordre : publishedAt DESC, donc l'article avec hero (2026-08-04)
+        // arrive en premier.
+        self::assertSame('article-liste-avec-hero', $data['items'][0]['slug']);
+        self::assertIsArray($data['items'][0]['hero_image']);
+        self::assertSame(
+            '/api/media/'.$asset->id()->toRfc4122(),
+            $data['items'][0]['hero_image']['url'],
+        );
+        self::assertSame('Alt de la vignette de liste.', $data['items'][0]['hero_image']['alt']);
+        self::assertSame(1200, $data['items'][0]['hero_image']['width']);
+        self::assertSame(800, $data['items'][0]['hero_image']['height']);
+        self::assertSame('image/jpeg', $data['items'][0]['hero_image']['mime_type']);
+
+        self::assertSame('article-liste-sans-hero', $data['items'][1]['slug']);
+        self::assertNull($data['items'][1]['hero_image']);
     }
 
     public function testInvalidPageReturns400Validation(): void

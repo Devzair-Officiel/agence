@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Editorial\Infrastructure\Persistence;
 
+use App\Editorial\Application\Media\MediaAssetReaderInterface;
 use App\Editorial\Application\Query\AdminArticleEditView;
 use App\Editorial\Application\Query\AdminArticleListItem;
 use App\Editorial\Application\Query\AdminArticleReadRepositoryInterface;
@@ -19,11 +20,18 @@ use Symfony\Component\Uid\Uuid;
  * Tri stable : `updated_at DESC, id DESC`. On préfère `updated_at` à
  * `published_at` car l'admin voit tous les statuts (draft/archived n'ont pas
  * toujours de `publishedAt`).
+ *
+ * Depuis la Phase 9B, la lecture pour édition résout aussi le descripteur
+ * d'image principale via `MediaAssetReaderInterface` (port applicatif). Le
+ * cross-context passe ainsi par un adaptateur ANTI-CORRUPTION-LAYER
+ * (`EditorialMediaAssetLookup`) et non par une jointure Doctrine transverse :
+ * l'agrégat `Article` reste isolé du mapping `MediaAsset`.
  */
 final class DoctrineAdminArticleReadRepository implements AdminArticleReadRepositoryInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly MediaAssetReaderInterface $mediaReader,
     ) {
     }
 
@@ -66,6 +74,15 @@ final class DoctrineAdminArticleReadRepository implements AdminArticleReadReposi
             ->getRepository(Article::class)
             ->find($id);
 
-        return $article instanceof Article ? AdminArticleEditView::fromEntity($article) : null;
+        if (!$article instanceof Article) {
+            return null;
+        }
+
+        $heroImage = $article->heroImage();
+        $descriptor = $heroImage !== null
+            ? $this->mediaReader->findMetadata($heroImage->mediaAssetId())
+            : null;
+
+        return AdminArticleEditView::fromEntity($article, $descriptor);
     }
 }

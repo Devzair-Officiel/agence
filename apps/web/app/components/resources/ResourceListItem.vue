@@ -43,6 +43,23 @@ const publishedLabel = computed(() => {
 <template>
   <article class="resource-list-item">
     <NuxtLink :to="href" class="resource-list-item__link">
+      <!--
+        Vignette (Phase 9B) : optionnelle — pas de placeholder, pas de
+        visuel de remplissage quand l'éditeur n'a rien associé. Lazy
+        loading par défaut car les cartes hors du viewport LCP ne
+        justifient pas un fetch prioritaire.
+      -->
+      <div v-if="article.heroImage" class="resource-list-item__figure">
+        <img
+          class="resource-list-item__image"
+          :src="article.heroImage.url"
+          :alt="article.heroImage.alt"
+          :width="article.heroImage.width"
+          :height="article.heroImage.height"
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
       <p class="resource-list-item__meta">
         <span class="resource-list-item__author">{{ article.author.name }}</span>
         <span class="resource-list-item__separator" aria-hidden="true">·</span>
@@ -79,6 +96,21 @@ const publishedLabel = computed(() => {
   text-decoration: none;
   transition: border-color var(--duration-fast) var(--ease-out),
     transform var(--duration-fast) var(--ease-out);
+}
+
+.resource-list-item__figure {
+  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  aspect-ratio: 16 / 9;
+  background-color: var(--background-secondary, transparent);
+}
+
+.resource-list-item__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .resource-list-item__link:hover,

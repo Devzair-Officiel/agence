@@ -20,10 +20,15 @@ use App\Editorial\Application\View\PaginationView;
  * de `Last-Modified` est celle d'une ressource unique, ce qui ne colle
  * pas à un tri paginé. L'ETag faible suffit — c'est aussi la préférence
  * confirmée dans le brief Phase 8B1.
+ *
+ * Historique :
+ * - v1 : payload initial.
+ * - v2 : Phase 9B — ajout de `hero_image` par item. Le payload change,
+ *   l'ETag doit changer : d'où le bump.
  */
 final class ArticleListETag
 {
-    public const CONTRACT_VERSION = 'v1';
+    public const CONTRACT_VERSION = 'v2';
 
     /**
      * @param list<ArticleSummaryView> $items

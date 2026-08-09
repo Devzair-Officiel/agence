@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Editorial\Support;
 
 use App\Editorial\Domain\Article;
+use App\Editorial\Domain\ArticleHeroImage;
 use App\Editorial\Domain\ArticleSlug;
 use App\Editorial\Domain\Author;
 use App\Editorial\Domain\ExpertiseIdentifier;
@@ -46,6 +47,8 @@ final class ArticleBuilder
     private \DateTimeImmutable $now;
 
     private bool $publish = false;
+
+    private ?ArticleHeroImage $heroImage = null;
 
     public function __construct()
     {
@@ -115,6 +118,19 @@ final class ArticleBuilder
         return $clone;
     }
 
+    /**
+     * Associe (ou retire) une image principale. `null` remet le brouillon
+     * dans l'état sans image ; sinon on pose le VO qui sera appliqué au
+     * moment du build, avant d'éventuellement publier.
+     */
+    public function withHeroImage(?ArticleHeroImage $heroImage): self
+    {
+        $clone = clone $this;
+        $clone->heroImage = $heroImage;
+
+        return $clone;
+    }
+
     public function build(): Article
     {
         $article = Article::createDraft(
@@ -128,6 +144,10 @@ final class ArticleBuilder
             $this->expertises,
             $this->now,
         );
+
+        if ($this->heroImage !== null) {
+            $article->changeHeroImage($this->heroImage, $this->now);
+        }
 
         if ($this->publish) {
             $article->publish($this->now, $this->now);

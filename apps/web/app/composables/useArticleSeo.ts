@@ -30,11 +30,22 @@ export function useArticleSeo({ article, path }: UseArticleSeoArgs): void {
   const origin = normalizeSiteUrl(siteUrl)
   const canonical = buildCanonical({ siteUrl, path })
 
+  // Phase 9B — quand une image principale est associée, on la relaie à
+  // usePageSeo (Open Graph + Twitter Card) et on l'ajoute au JSON-LD
+  // BlogPosting sous forme absolue. Sans image, `usePageSeo` retombe
+  // sur `site.defaultOgImage` si configuré — jamais de placeholder ici.
+  const heroImageAbsoluteUrl = article.heroImage
+    ? `${origin}${article.heroImage.url}`
+    : null
+
   usePageSeo({
     title: article.seo.title,
     description: article.seo.description,
     path,
     type: "article",
+    ...(article.heroImage
+      ? { image: heroImageAbsoluteUrl as string, imageAlt: article.heroImage.alt }
+      : {}),
   })
 
   const blogPosting: Record<string, unknown> = {
@@ -51,6 +62,17 @@ export function useArticleSeo({ article, path }: UseArticleSeoArgs): void {
       name: article.author.name,
     },
     publisher: { "@id": `${origin}/#organization` },
+  }
+
+  if (heroImageAbsoluteUrl && article.heroImage) {
+    // schema.org `ImageObject` — les dimensions permettent aux crawlers
+    // et générateurs de résumés IA de valider le média sans le télécharger.
+    blogPosting.image = {
+      "@type": "ImageObject",
+      url: heroImageAbsoluteUrl,
+      width: article.heroImage.width,
+      height: article.heroImage.height,
+    }
   }
 
   const breadcrumb = {

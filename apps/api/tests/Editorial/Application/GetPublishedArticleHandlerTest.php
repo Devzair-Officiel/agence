@@ -13,6 +13,7 @@ use App\Editorial\Infrastructure\Markdown\MarkdownSecurityPolicy;
 use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\FixedClock;
 use App\Tests\Editorial\Support\InMemoryArticleRepository;
+use App\Tests\Editorial\Support\InMemoryMediaAssetLookup;
 use PHPUnit\Framework\TestCase;
 
 final class GetPublishedArticleHandlerTest extends TestCase
@@ -90,6 +91,7 @@ final class GetPublishedArticleHandlerTest extends TestCase
             $repository,
             $clock ?? new FixedClock(),
             new CommonMarkArticleRenderer(new MarkdownSecurityPolicy()),
+            new InMemoryMediaAssetLookup(),
         );
     }
 }

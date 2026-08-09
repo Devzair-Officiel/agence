@@ -30,3 +30,14 @@ editorial_detail:
     # avec slash. La validation stricte est faite dans le VO ArticleSlug.
     requirements:
         slug: '[a-z0-9\-]+'
+
+# Route publique de diffusion des médias éditoriaux (Phase 9B).
+# Servie uniquement si un article publié référence l'asset (voir
+# `PublicMediaGateInterface`). Caddy strippe `/api`, donc le chemin externe
+# est `/api/media/{id}` et Symfony reçoit `/media/{id}`.
+editorial_public_media:
+    path: /media/{id}
+    controller: App\Editorial\Presentation\Http\GetPublicArticleMediaController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'

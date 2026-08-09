@@ -25,6 +25,12 @@ trait EditorialDatabaseCleanup
 {
     private function clearEditorialTables(EntityManagerInterface $entityManager): void
     {
-        $entityManager->getConnection()->executeStatement('DELETE FROM editorial_article');
+        // Ordre imposé par la FK RESTRICT `editorial_article.hero_media_id →
+        // editorial_media_asset.id` introduite en Phase 9B : on doit d'abord
+        // libérer les articles avant de vider les médias, sinon la contrainte
+        // referentielle refuse la suppression.
+        $conn = $entityManager->getConnection();
+        $conn->executeStatement('DELETE FROM editorial_article');
+        $conn->executeStatement('DELETE FROM editorial_media_asset');
     }
 }

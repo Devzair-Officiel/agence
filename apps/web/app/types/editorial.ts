@@ -23,6 +23,24 @@ export interface ArticleSeo {
   description: string
 }
 
+/**
+ * Image principale d'un article (Phase 9B).
+ *
+ * Le contrat côté API expose déjà l'URL absolue relative au domaine
+ * (`/api/media/{uuid}`) — le front ne préfixe rien : Caddy sert
+ * indifféremment `/api/*` et les pages Nuxt sur le même domaine, un
+ * chemin absolu suffit. Les dimensions sont conservées telles quelles
+ * pour permettre au template de poser `<img width height>` et éviter
+ * tout Cumulative Layout Shift.
+ */
+export interface ArticleHeroImage {
+  url: string
+  alt: string
+  width: number
+  height: number
+  mimeType: string
+}
+
 /** Résumé d'article servi dans les listes paginées. */
 export interface ArticleSummary {
   id: string
@@ -33,6 +51,11 @@ export interface ArticleSummary {
   expertiseIds: readonly string[]
   publishedAt: string
   updatedAt: string
+  /**
+   * `null` explicite quand le back-office n'a pas encore associé d'image
+   * — le contrat API expose systématiquement la clé, jamais absente.
+   */
+  heroImage: ArticleHeroImage | null
 }
 
 /**

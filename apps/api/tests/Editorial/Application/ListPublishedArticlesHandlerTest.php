@@ -11,6 +11,7 @@ use App\Editorial\Domain\Exception\ArticleInvariantViolation;
 use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\FixedClock;
 use App\Tests\Editorial\Support\InMemoryArticleRepository;
+use App\Tests\Editorial\Support\InMemoryMediaAssetLookup;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -20,13 +21,16 @@ final class ListPublishedArticlesHandlerTest extends TestCase
 
     private FixedClock $clock;
 
+    private InMemoryMediaAssetLookup $mediaLookup;
+
     private ListPublishedArticlesHandler $handler;
 
     protected function setUp(): void
     {
         $this->repository = new InMemoryArticleRepository();
         $this->clock = new FixedClock('2026-09-01T00:00:00+00:00');
-        $this->handler = new ListPublishedArticlesHandler($this->repository, $this->clock);
+        $this->mediaLookup = new InMemoryMediaAssetLookup();
+        $this->handler = new ListPublishedArticlesHandler($this->repository, $this->clock, $this->mediaLookup);
     }
 
     public function testReturnsEmptyWhenNoArticle(): void

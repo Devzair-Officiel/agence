@@ -16,6 +16,14 @@ import {
 const VALID_AUTHOR = { name: "Devzair", type: "organization" }
 const VALID_DATE = "2026-01-15T10:00:00Z"
 
+const VALID_HERO_IMAGE = {
+  url: "/api/media/0193b1a0-1c7d-7000-8000-000000000001",
+  alt: "Équipe collaborant devant un écran.",
+  width: 1600,
+  height: 900,
+  mime_type: "image/jpeg",
+}
+
 function summary(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: "01H8ABCXYZ0000000000000000",
@@ -26,6 +34,7 @@ function summary(overrides: Record<string, unknown> = {}): Record<string, unknow
     expertise_ids: ["concevoir"],
     published_at: VALID_DATE,
     updated_at: VALID_DATE,
+    hero_image: null,
     ...overrides,
   }
 }
@@ -106,5 +115,60 @@ describe("mapArticleDetailResponse", () => {
     const raw = detail()
     delete raw.seo
     expect(() => mapArticleDetailResponse(raw)).toThrow(/seo/)
+  })
+})
+
+describe("mapping hero_image (Phase 9B)", () => {
+  it("mappe hero_image null en heroImage null (contrat par défaut)", () => {
+    const result = mapArticleDetailResponse(detail({ hero_image: null }))
+    expect(result.heroImage).toBeNull()
+  })
+
+  it("mappe hero_image complet en heroImage camelCase avec dimensions", () => {
+    const result = mapArticleDetailResponse(detail({ hero_image: VALID_HERO_IMAGE }))
+    expect(result.heroImage).toEqual({
+      url: "/api/media/0193b1a0-1c7d-7000-8000-000000000001",
+      alt: "Équipe collaborant devant un écran.",
+      width: 1600,
+      height: 900,
+      mimeType: "image/jpeg",
+    })
+  })
+
+  it("propage hero_image sur les items de liste", () => {
+    const raw = {
+      items: [summary({ hero_image: VALID_HERO_IMAGE })],
+      pagination: { page: 1, per_page: 6, total: 1, total_pages: 1 },
+    }
+    const result = mapArticleListResponse(raw)
+    expect(result.items[0]!.heroImage?.url).toBe(VALID_HERO_IMAGE.url)
+    expect(result.items[0]!.heroImage?.mimeType).toBe("image/jpeg")
+  })
+
+  it("refuse l'absence de la clé hero_image (contrat explicite null)", () => {
+    const raw = detail()
+    delete raw.hero_image
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/hero_image/)
+  })
+
+  it("refuse une url hors du pattern /api/media/{uuid}", () => {
+    const raw = detail({
+      hero_image: { ...VALID_HERO_IMAGE, url: "https://cdn.tiers.example/media/abc.jpg" },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/hero_image\.url/)
+  })
+
+  it("refuse une largeur non entière", () => {
+    const raw = detail({
+      hero_image: { ...VALID_HERO_IMAGE, width: 1600.5 },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/width/)
+  })
+
+  it("refuse un alt vide (a11y non négociable)", () => {
+    const raw = detail({
+      hero_image: { ...VALID_HERO_IMAGE, alt: "" },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/alt/)
   })
 })

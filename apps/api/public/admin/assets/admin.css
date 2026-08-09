@@ -761,3 +761,148 @@ dd {
     border: 1px solid #e5e7eb;
     background: #f9fafb;
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Image principale d'article (Phase 9B) — chooser SSR + prévisualisation.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.hero-image-preview {
+    margin: 0 0 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.hero-image-preview img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.hero-image-preview figcaption {
+    color: #374151;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.hero-image-preview__meta {
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.hero-image-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+.hero-image-actions .inline-form button {
+    margin-top: 0;
+}
+
+.hero-image-form .card {
+    margin-top: 1.5rem;
+}
+
+.hero-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.hero-image-grid legend {
+    padding: 0;
+}
+
+.hero-image-grid__item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 400;
+    margin: 0;
+}
+
+.hero-image-grid__item:hover,
+.hero-image-grid__item:focus-within {
+    border-color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.hero-image-grid__item input[type="radio"] {
+    margin-bottom: 0.5rem;
+    width: auto;
+}
+
+.hero-image-grid__thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    margin-bottom: 0.5rem;
+}
+
+.hero-image-grid__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-size: 0.8125rem;
+    color: #374151;
+}
+
+.hero-image-grid__filename {
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.hero-image-grid__dims {
+    color: #4b5563;
+}
+
+.form-field {
+    margin-bottom: 1rem;
+}
+
+.form-field input[type="text"] {
+    width: 100%;
+}
+
+.form-help {
+    margin: 0.25rem 0 0;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.form-error {
+    margin: 0.375rem 0 0;
+    color: #7f1d1d;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.preview-hero-image {
+    margin: 0 0 1.5rem;
+}
+
+.preview-hero-image img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}

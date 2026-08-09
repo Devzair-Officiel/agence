@@ -67,6 +67,7 @@ const validList = {
       expertise_ids: [],
       published_at: VALID_DATE,
       updated_at: VALID_DATE,
+      hero_image: null,
     },
   ],
   pagination: { page: 1, per_page: 6, total: 1, total_pages: 1 },

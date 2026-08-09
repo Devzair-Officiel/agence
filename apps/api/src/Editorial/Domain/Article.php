@@ -29,6 +29,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'editorial_article')]
 #[ORM\Index(name: 'idx_editorial_article_status_published_at', columns: ['status', 'published_at'])]
+#[ORM\Index(name: 'idx_editorial_article_hero_media_id', columns: ['hero_media_id'])]
 #[ORM\UniqueConstraint(name: 'uniq_editorial_article_slug', columns: ['slug'])]
 class Article
 {
@@ -70,6 +71,23 @@ class Article
      */
     #[ORM\Column(name: 'expertise_ids', type: Types::JSON, options: ['jsonb' => true])]
     private array $expertiseIds;
+
+    /**
+     * Image principale — référence stable vers `editorial_media_asset.id`.
+     * L'agrégat conserve un `Uuid` brut, jamais l'entité Doctrine `MediaAsset` :
+     * cela isole les deux contextes bornés `Editorial` et `EditorialMedia` et
+     * empêche `Article` de charger transitivement le média (invariant clé
+     * du chargement paresseux Doctrine et du contrôle de contrat public).
+     *
+     * La contrainte de cohérence pair (image / alt) est portée par le domaine
+     * (§ méthodes `changeHeroImage` et `assertHeroImageCoherence`) ET par la
+     * migration Doctrine 9B (CHECK constraint) — défense en profondeur.
+     */
+    #[ORM\Column(name: 'hero_media_id', type: 'uuid', nullable: true)]
+    private ?Uuid $heroMediaId = null;
+
+    #[ORM\Column(name: 'hero_image_alt', type: Types::STRING, length: 300, nullable: true)]
+    private ?string $heroImageAlt = null;
 
     #[ORM\Column(name: 'published_at', type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $publishedAt;
@@ -329,6 +347,78 @@ class Article
 
         $this->expertiseIds = $deduped;
         $this->updatedAt = $now;
+    }
+
+    /**
+     * Change (ou retire) l'image principale du brouillon.
+     *
+     * - `Draft` : mutation autorisée. Passer `null` retire l'image et son
+     *   texte alternatif ; passer un VO valide définit ou remplace l'image.
+     * - `Published`/`Archived` : refusés — l'invariant Draft-only s'applique
+     *   à toute modification de contenu, y compris l'image principale.
+     *
+     * No-op sémantique : si la nouvelle valeur est équivalente à l'actuelle
+     * (même mediaId + même alt, ou passage null → null), `updatedAt` reste
+     * intact et aucune écriture Doctrine n'est produite en aval — le handler
+     * applicatif s'appuie sur cette absence de mutation pour skipper le flush.
+     */
+    public function changeHeroImage(?ArticleHeroImage $heroImage, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        if ($this->heroImageEquals($heroImage)) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        if ($heroImage === null) {
+            $this->heroMediaId = null;
+            $this->heroImageAlt = null;
+        } else {
+            $this->heroMediaId = $heroImage->mediaAssetId();
+            $this->heroImageAlt = $heroImage->altText();
+        }
+
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Getter reconstruisant le VO à partir des colonnes plates. Renvoie
+     * `null` si aucun média n'est associé. L'invariant de cohérence
+     * (les deux colonnes null ou les deux non null) est garanti par le
+     * domaine et redoublé par la CHECK constraint DB — si l'une des deux
+     * colonnes est incohérente, on préfère lever une exception plutôt que
+     * de renvoyer un VO malformé (fail loud).
+     */
+    public function heroImage(): ?ArticleHeroImage
+    {
+        if ($this->heroMediaId === null && $this->heroImageAlt === null) {
+            return null;
+        }
+
+        if ($this->heroMediaId === null || $this->heroImageAlt === null) {
+            throw new ArticleInvariantViolation(
+                'Incohérence détectée : image principale et texte alternatif doivent être définis ensemble.',
+            );
+        }
+
+        return ArticleHeroImage::create($this->heroMediaId, $this->heroImageAlt);
+    }
+
+    private function heroImageEquals(?ArticleHeroImage $candidate): bool
+    {
+        $current = $this->heroImage();
+
+        if ($current === null && $candidate === null) {
+            return true;
+        }
+
+        if ($current === null || $candidate === null) {
+            return false;
+        }
+
+        return $current->equals($candidate);
     }
 
     public function id(): Uuid

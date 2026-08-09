@@ -44,6 +44,7 @@ final class AdminArticlePreviewView
         public readonly ?\DateTimeImmutable $publishedAt,
         public readonly \DateTimeImmutable $createdAt,
         public readonly \DateTimeImmutable $updatedAt,
+        public readonly ?AdminArticleHeroImageView $heroImage = null,
     ) {
     }
 
@@ -51,7 +52,10 @@ final class AdminArticlePreviewView
      * Enrichit une vue d'édition existante d'un `contentHtml` sécurisé.
      * Le handler `GetAdminArticlePreviewHandler` est le seul appelant légitime :
      * il charge l'article une fois via `AdminArticleReadRepositoryInterface`
-     * puis délègue le rendu Markdown à `CommonMarkArticleRenderer`.
+     * puis délègue le rendu Markdown à `CommonMarkArticleRenderer`. La vue
+     * d'édition ayant déjà résolu l'image principale via l'adaptateur admin,
+     * on la propage telle quelle — la prévisualisation reste rigoureusement
+     * cohérente avec l'écran d'édition.
      */
     public static function fromEditView(AdminArticleEditView $edit, string $contentHtml): self
     {
@@ -70,6 +74,7 @@ final class AdminArticlePreviewView
             publishedAt: $edit->publishedAt,
             createdAt: $edit->createdAt,
             updatedAt: $edit->updatedAt,
+            heroImage: $edit->heroImage,
         );
     }
 }

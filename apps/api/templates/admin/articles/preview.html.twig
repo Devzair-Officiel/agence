@@ -134,6 +134,19 @@
     <section class="card preview-content" aria-labelledby="preview-content-heading">
         <h2 id="preview-content-heading">Aperçu du contenu</h2>
 
+        {% if preview.heroImage %}
+            <figure class="preview-hero-image">
+                {# La route `admin_media_preview` est authentifiée (firewall admin)
+                   et envoie `X-Robots-Tag: noindex`. `alt`, `width`, `height`
+                   viennent tous du domaine — pas de recalcul côté template. #}
+                <img src="{{ path('admin_media_preview', { id: preview.heroImage.mediaId }) }}"
+                     alt="{{ preview.heroImage.altText }}"
+                     width="{{ preview.heroImage.width }}"
+                     height="{{ preview.heroImage.height }}"
+                     loading="eager">
+            </figure>
+        {% endif %}
+
         <p class="preview-content__intro">
             Chapô publié en tête de page :
         </p>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Editorial\Application\View;
 
+use App\Editorial\Application\Media\MediaAssetDescriptor;
 use App\Editorial\Domain\Article;
 use App\Editorial\Domain\ExpertiseIdentifier;
 
@@ -18,6 +19,11 @@ use App\Editorial\Domain\ExpertiseIdentifier;
  *     `CommonMarkArticleRenderer` de l'infra. C'est la représentation que
  *     le front public consomme (Symfony reste propriétaire de la frontière
  *     de confiance HTML — cf. ADR-011).
+ *
+ * Depuis la Phase 9B : `heroImage` (nullable) — image principale résolue via
+ * l'ACL applicative (aucune jointure cross-context Doctrine). Le contrat
+ * public expose `alt`, `url` publique, dimensions et mime — jamais l'UUID
+ * du média isolément.
  *
  * Le DTO reste un objet valeur pur : il ne connaît ni le renderer ni la
  * politique de sécurité. Le handler construit les deux et les injecte.
@@ -41,17 +47,27 @@ final class ArticleDetailView
         public readonly array $expertiseIds,
         public readonly string $publishedAt,
         public readonly string $updatedAt,
+        public readonly ?PublicArticleImageView $heroImage = null,
     ) {
     }
 
-    public static function fromEntity(Article $article, string $contentHtml): self
-    {
+    public static function fromEntity(
+        Article $article,
+        string $contentHtml,
+        ?MediaAssetDescriptor $heroDescriptor = null,
+    ): self {
         $publishedAt = $article->publishedAt();
         if ($publishedAt === null) {
             throw new \LogicException('Article publié sans publishedAt — invariant repository violé.');
         }
 
         $seo = $article->seo();
+
+        $heroVo = $article->heroImage();
+        $heroView = null;
+        if ($heroVo !== null && $heroDescriptor !== null && $heroVo->mediaAssetId()->equals($heroDescriptor->id)) {
+            $heroView = PublicArticleImageView::fromDescriptor($heroVo, $heroDescriptor);
+        }
 
         return new self(
             id: $article->id()->toRfc4122(),
@@ -67,6 +83,7 @@ final class ArticleDetailView
             expertiseIds: ExpertiseIdentifier::toList($article->expertises()),
             publishedAt: $publishedAt->format(\DateTimeInterface::ATOM),
             updatedAt: $article->updatedAt()->format(\DateTimeInterface::ATOM),
+            heroImage: $heroView,
         );
     }
 
@@ -93,6 +110,7 @@ final class ArticleDetailView
             'expertise_ids' => $this->expertiseIds,
             'published_at' => $this->publishedAt,
             'updated_at' => $this->updatedAt,
+            'hero_image' => $this->heroImage?->toArray(),
         ];
     }
 }

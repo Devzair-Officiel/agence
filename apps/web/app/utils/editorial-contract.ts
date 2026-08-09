@@ -16,6 +16,7 @@
 import type {
   ArticleAuthor,
   ArticleDetail,
+  ArticleHeroImage,
   ArticleListResult,
   ArticleSummary,
   AuthorType,
@@ -106,6 +107,47 @@ function requireStringArray(
   })
 }
 
+/**
+ * Le contrat API expose toujours `hero_image` : soit `null` (article
+ * sans vignette), soit un objet complet. Toute forme intermédiaire
+ * (clé manquante, champ partiel) est un contrat cassé — on refuse.
+ *
+ * URL contrainte au pattern `^/api/media/[0-9a-f-]{36}$` (les tirets
+ * de l'UUID v7 sont significatifs, on vérifie littéralement 36 chars).
+ * Le mimeType n'est pas restreint côté client : Symfony est autoritaire
+ * sur la liste, on relaie sans en faire une frontière de confiance.
+ */
+const HERO_IMAGE_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}$/u
+
+function mapHeroImage(raw: unknown): ArticleHeroImage | null {
+  if (raw === null || raw === undefined) return null
+  if (!isRecord(raw)) {
+    throw new EditorialContractError("hero_image doit être un objet ou null.")
+  }
+  const url = requireString(raw, "url", "hero_image.url")
+  if (!HERO_IMAGE_URL_PATTERN.test(url)) {
+    throw new EditorialContractError(
+      `hero_image.url ne suit pas /api/media/{uuid} (${url}).`,
+    )
+  }
+  return {
+    url,
+    alt: requireString(raw, "alt", "hero_image.alt"),
+    width: requireInteger(raw, "width", "hero_image.width", 1),
+    height: requireInteger(raw, "height", "hero_image.height", 1),
+    mimeType: requireString(raw, "mime_type", "hero_image.mime_type"),
+  }
+}
+
+function requireHeroImageKey(source: Record<string, unknown>): ArticleHeroImage | null {
+  if (!("hero_image" in source)) {
+    throw new EditorialContractError(
+      "hero_image est requis (null explicite quand aucune image).",
+    )
+  }
+  return mapHeroImage(source.hero_image)
+}
+
 function mapAuthor(raw: unknown): ArticleAuthor {
   if (!isRecord(raw)) {
     throw new EditorialContractError("author doit être un objet.")
@@ -131,6 +173,7 @@ function mapSummary(raw: unknown): ArticleSummary {
     expertiseIds: requireStringArray(raw, "expertise_ids", "expertise_ids"),
     publishedAt: requireIsoDate(raw, "published_at", "published_at"),
     updatedAt: requireIsoDate(raw, "updated_at", "updated_at"),
+    heroImage: requireHeroImageKey(raw),
   }
 }
 
@@ -182,5 +225,6 @@ export function mapArticleDetailResponse(raw: unknown): ArticleDetail {
     expertiseIds: requireStringArray(raw, "expertise_ids", "expertise_ids"),
     publishedAt: requireIsoDate(raw, "published_at", "published_at"),
     updatedAt: requireIsoDate(raw, "updated_at", "updated_at"),
+    heroImage: requireHeroImageKey(raw),
   }
 }
