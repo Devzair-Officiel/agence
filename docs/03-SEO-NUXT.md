@@ -43,9 +43,9 @@ Les longueurs ne doivent pas être forcées mécaniquement : l’objectif est la
 - éviter les chaînes et boucles de redirection ;
 - corriger les soft 404.
 
-### Politique crawlers IA (Phase 10B, DEC-096)
+### Politique crawlers IA (Phase 10B, DEC-096 + DEC-101)
 
-`robots.txt` déclare cinq groupes explicites lorsque
+`robots.txt` déclare six groupes explicites lorsque
 `NUXT_PUBLIC_SITE_INDEXABLE=true`. Le blocage global `Disallow: /` de
 `User-agent: *` en mode `indexable=false` reste prioritaire — un
 groupe `Allow` n'annule pas la politique préproduction.
@@ -57,9 +57,18 @@ groupe `Allow` n'annule pas la politique préproduction.
 | `Claude-SearchBot`| Allow /        | Surfaçage recherche Claude                               |
 | `ClaudeBot`       | Disallow /     | Entraînement des modèles Anthropic                       |
 | `PerplexityBot`   | Allow /        | Surfaçage recherche Perplexity                           |
+| `Google-Extended` | Disallow /     | Entraînement Gemini + grounding Gemini Apps / Vertex AI  |
 
 Chaque groupe `Allow /` inclut aussi `Disallow /admin` (l'administration
 éditoriale n'est jamais indexable, même en mode `indexable=true`).
+
+Précision `Google-Extended` (DEC-101) — la documentation officielle
+Google indique que ce token contrôle uniquement l'entraînement des
+futures générations Gemini et le grounding dans Gemini Apps / Vertex AI.
+Google précise explicitement que Google-Extended **n'affecte ni
+l'inclusion dans Google Search ni le classement**. Le refus laisse donc
+intactes la visibilité Google Search classique, AI Overviews et AI Mode,
+qui dépendent de l'index Search et de Googlebot.
 
 Agents volontairement **absents** de `robots.txt` :
 
@@ -68,10 +77,6 @@ Agents volontairement **absents** de `robots.txt` :
   indique que `robots.txt` ne s'applique pas à ces requêtes utilisateur
   (elles suivent la politique publique du site). Configurer un groupe
   donnerait une fausse impression de contrôle.
-- `Google-Extended` — **décision DEFERRED** (DEC-096). La directive
-  contrôle à la fois l'entraînement Gemini et le grounding dans
-  Gemini Apps / Vertex AI. Refuser Google-Extended refuserait aussi le
-  grounding — arbitrage à reprendre séparément.
 - `CCBot` — **UNCHANGED** (DEC-096). Common Crawl est un corpus web
   ouvert utilisé pour plusieurs usages, pas exclusivement
   l'entraînement IA. Une politique CCBot exige une décision distincte.
@@ -80,8 +85,8 @@ Agents volontairement **absents** de `robots.txt` :
   clair, hors périmètre courant.
 
 Test garde-fou : `apps/web/test/e2e/seo.spec.ts` (section « Politique
-crawlers IA (robots.txt, DEC-096) ») vérifie la présence des cinq
-groupes explicites **et** l'absence de tout groupe pour les agents
+crawlers IA (robots.txt, DEC-096 + DEC-101) ») vérifie la présence des
+six groupes explicites **et** l'absence de tout groupe pour les agents
 volontairement exclus. Toute PR qui ajoute un groupe casse le test —
 impose un DEC de mise à jour.
 

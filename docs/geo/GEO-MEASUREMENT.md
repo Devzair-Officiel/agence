@@ -1,9 +1,9 @@
 # GEO Measurement — Devzair
 
-Phase 10B, DEC-096. Ce document décrit **le plan** de mesure de la
-présence de Devzair dans les surfaces génératives et de ses référents
-IA. Aucun tracker, aucun endpoint analytics supplémentaire n'est
-branché à ce stade.
+Phase 10B, DEC-096 + DEC-101. Ce document décrit **le plan** de mesure
+de la présence de Devzair dans les surfaces génératives et de ses
+référents IA. Aucun tracker, aucun endpoint analytics supplémentaire
+n'est branché à ce stade.
 
 État courant :
 
@@ -11,6 +11,17 @@ branché à ce stade.
 AI referral implementation : DEFERRED
 Measurement plan            : DOCUMENTED
 ```
+
+Note DEC-101 — La visibilité sur les surfaces génératives Google Search
+(AI Overviews, AI Mode, snippets IA de Search) reste mesurable
+indépendamment de la politique `Google-Extended: Disallow /`. Ces
+surfaces exploitent l'index Google Search et Googlebot, pas le token
+`Google-Extended` qui contrôle l'entraînement Gemini et le grounding
+Gemini Apps / Vertex AI. Aucune métrique Gemini spécifique n'est
+inventée : la revue trimestrielle continue de consigner les surfaces
+observables réellement (Google standard + AI Overviews) sans postuler
+un canal Gemini distinct tant qu'aucun référent identifiable ne
+l'atteste.
 
 ## Objectifs
 

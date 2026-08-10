@@ -46,18 +46,31 @@ Pour chaque page :
 
 À appliquer uniquement si Devzair remplit réellement les conditions de présence ou de zone de service.
 
-**État Phase 10B (DEC-097).** Éligibilité : `UNDETERMINED`. `LocalBusiness`
-schema : `NOT JUSTIFIED`. Aucune adresse, téléphone, zone d'intervention,
-horaire, page ville ou `sameAs` local n'est publié tant que les données
-ne sont pas validées côté métier. `site.contact.email/phone/city` restent
-`null` dans `apps/web/app/config/site.ts` et le footer masque ces lignes
-tant que `hasContact === false`.
+**État Phase 10B — clôture (DEC-097 + DEC-100).**
 
-Le passage à `Local eligibility = VALIDATED` demande une DEC explicite
-qui liste les données réellement disponibles : adresse postale
-professionnelle utilisée, téléphone dédié entrant, zone documentable,
-Google Business Profile créé et vérifié. Avant cette DEC, ne rien
-publier de local.
+- `Eligibility reviewed = YES`
+- `Verified public local data = NONE`
+- `Local eligibility = UNDETERMINED` (aucune donnée permettant de
+  conclure `ELIGIBLE` ou `NOT ELIGIBLE`)
+- `LocalBusiness emission = NO`
+- `Reason = insufficient verified business data`
+- `Future reconsideration = requires explicit business validation`
+
+Aucune émission `LocalBusiness` (ni sous-type). Aucune `PostalAddress`,
+aucun `telephone`, aucun `areaServed`, aucun `openingHours`, aucune page
+locale, aucun Google Business Profile déclaré, aucun `sameAs` inventé.
+`site.contact.email/phone/city` restent `null` dans
+`apps/web/app/config/site.ts` et le footer masque ces lignes tant que
+`hasContact === false`.
+
+Cette clôture ne signifie pas que Devzair n'a pas d'activité locale, ni
+que Devzair ne sera jamais éligible Google Business Profile. Elle
+signifie uniquement que les données actuellement disponibles ne
+permettent pas de représenter publiquement une implantation locale
+vérifiée. Le passage à `Local eligibility = VALIDATED` demande une
+nouvelle DEC explicite qui liste les données réellement disponibles :
+adresse postale professionnelle utilisée, téléphone dédié entrant, zone
+documentable, Google Business Profile créé et vérifié.
 
 ### Socle
 
@@ -125,9 +138,9 @@ Le GEO ne repose pas sur une norme universelle garantissant une citation. Il com
 - surveiller les codes 403, 429 et erreurs de crawl ;
 - autoriser ou refuser séparément les robots selon la politique de Devzair.
 
-### Politique appliquée en Phase 10B (DEC-096)
+### Politique appliquée en Phase 10B (DEC-096 + DEC-101)
 
-Cinq groupes explicites, tirés uniquement de la documentation officielle
+Six groupes explicites, tirés uniquement de la documentation officielle
 des fournisseurs :
 
 - `OAI-SearchBot: Allow /` — surfaçage recherche ChatGPT.
@@ -135,15 +148,18 @@ des fournisseurs :
 - `Claude-SearchBot: Allow /` — surfaçage recherche Claude.
 - `ClaudeBot: Disallow /` — entraînement Anthropic, refusé.
 - `PerplexityBot: Allow /` — surfaçage recherche Perplexity.
+- `Google-Extended: Disallow /` — entraînement Gemini + grounding
+  Gemini Apps / Vertex AI, refusé (DEC-101).
 
-Politique **différée** ou **inchangée** :
+La documentation Google est explicite : Google-Extended n'affecte ni
+l'inclusion, ni le classement Google Search. Le refus ne bloque donc
+pas AI Overviews, AI Mode ni la recherche générative Google, qui
+reposent sur l'index Search et Googlebot.
 
-- `Google-Extended` — décision `DEFERRED`. La directive couvre à la
-  fois l'entraînement Gemini et le grounding dans Gemini Apps ; un
-  arbitrage exige une révision explicite.
-- `CCBot` — politique `UNCHANGED`. Common Crawl est un corpus web
-  ouvert utilisé pour plusieurs usages, pas exclusivement
-  l'entraînement IA.
+Politique **inchangée** :
+
+- `CCBot` — `UNCHANGED`. Common Crawl est un corpus web ouvert utilisé
+  pour plusieurs usages, pas exclusivement l'entraînement IA.
 
 Politique **non déclarée** dans `robots.txt` :
 

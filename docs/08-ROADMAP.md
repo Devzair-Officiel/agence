@@ -1311,50 +1311,54 @@ Les ressources et les expertises forment un maillage public cohérent,
 explorable et maintenable, sans duplication SEO ni contenu éditorial
 obsolète lié à une stratégie de rendu inadéquate.
 
-### Phase 10B — SEO local et GEO avancé (EN COURS — 2026-08-09)
+### Phase 10B — SEO local et GEO avancé (TERMINÉE — 2026-08-10)
 
-- [x] Politique crawlers IA robots.txt — cinq groupes explicites (DEC-096).
-      `OAI-SearchBot` Allow, `GPTBot` Disallow, `Claude-SearchBot` Allow,
-      `ClaudeBot` Disallow, `PerplexityBot` Allow. Google-Extended et CCBot
-      volontairement absents (DEFERRED / UNCHANGED). Fetchers user-triggered
-      volontairement absents.
-- [x] Éligibilité locale : `UNDETERMINED`, `LocalBusiness` `NOT JUSTIFIED`
-      (DEC-097). Aucune adresse, téléphone, zone, horaires, page ville ou
-      sameAs local publiés tant que les données ne sont pas validées.
-- [x] Vérifier le graphe des entités : `Organization` + `WebSite` en
+- [x] Politique crawlers IA robots.txt — six groupes explicites
+      (DEC-096 + DEC-101). `OAI-SearchBot` Allow, `GPTBot` Disallow,
+      `Claude-SearchBot` Allow, `ClaudeBot` Disallow, `PerplexityBot`
+      Allow, `Google-Extended` Disallow. Fetchers user-triggered
+      volontairement absents (robots.txt ne s'applique pas). CCBot
+      volontairement `UNCHANGED`.
+- [x] Éligibilité locale auditée — `Local eligibility = UNDETERMINED`,
+      `LocalBusiness = NOT EMITTED` (DEC-097 + DEC-100). Aucune donnée
+      publique vérifiée, aucune émission `LocalBusiness`, aucune
+      adresse/téléphone/zone/horaire, aucune page ville, aucun `sameAs`
+      inventé. Représentation locale différée jusqu'à validation métier
+      explicite.
+- [x] Google-Extended explicitement refusé (DEC-101) — la directive
+      contrôle l'entraînement Gemini et le grounding Gemini Apps /
+      Vertex AI ; Google précise qu'elle n'affecte ni l'inclusion ni le
+      classement Google Search. Google Search / AI Overviews / AI Mode
+      restent crawlables via Googlebot.
+- [x] Graphe des entités vérifié — `Organization` + `WebSite` en
       `@graph` avec `@id` stables, `Service.provider` et
       `BlogPosting.publisher` référencent l'`@id` Organization, aucun
       champ fictif (`address`, `aggregateRating`, `sameAs`).
-- [x] Étudier `llms.txt` : `STUDIED`, `NOT IMPLEMENTED` (DEC-098).
-      Réévaluable si un besoin non couvert par `robots.txt`,
-      `sitemap.xml`, HTML SSR et Schema.org émerge.
-- [x] Tester une liste stable de requêtes : `docs/geo/GEO-QUERY-SET.md`
-      (12 requêtes marque + expertises + problèmes prospects, aucune
-      requête géographique tant que l'éligibilité locale reste
-      UNDETERMINED).
-- [x] Mesurer les référents IA identifiables — plan documenté dans
-      `docs/geo/GEO-MEASUREMENT.md`. `AI referral implementation :
-      DEFERRED`, `measurement plan : DOCUMENTED`. Aucun tracker ajouté.
-- [ ] Sources et dates aux contenus — audit livré (4 articles sur 6
-      justifient des sources externes), modification effective en
-      attente d'une décision séparée sur le workflow republish (audit
-      complet dans le rapport Phase 10B).
-- [ ] Vérifier WAF et CDN — `NOT CONFIGURED` en dev/preprod, reporté
-      Phase 12.
-- [ ] Configurer les profils officiels — bloqué tant que
-      l'éligibilité locale reste UNDETERMINED (DEC-097).
-- [ ] Politique `Google-Extended` — décision DEFERRED (DEC-096) :
-      arbitrage à trancher séparément.
-- [ ] Harmoniser les informations d'entreprise — dépend de la
-      validation métier des données (adresse, téléphone, zone).
+- [x] Sources et dates éditoriales — quatre articles enrichis avec
+      références primaires (Google, web.dev, W3C, MDN, CISA). Cycle de
+      vie `publishedAt` verrouillé côté domaine (DEC-099).
+- [x] Query set GEO stable — `docs/geo/GEO-QUERY-SET.md` (12 requêtes
+      marque + expertises + problèmes prospects, aucune requête
+      géographique tant que l'éligibilité locale reste UNDETERMINED).
+- [x] Plan de mesure GEO documenté — `docs/geo/GEO-MEASUREMENT.md`.
+      `AI referral implementation : DEFERRED`, `measurement plan :
+      DOCUMENTED`. Aucun tracker ajouté. Visibilité Google Search AI
+      mesurable indépendamment de `Google-Extended` (DEC-101).
+- [x] `llms.txt` étudié et non retenu (DEC-098) — `STUDIED`,
+      `NOT IMPLEMENTED`. Réévaluable si un besoin non couvert par
+      `robots.txt`, `sitemap.xml`, HTML SSR et Schema.org émerge.
+- [x] WAF et CDN reportés — `NOT CONFIGURED` en dev/preprod, à
+      configurer en Phase production (hors périmètre 10B).
 
-### Critère de sortie 10B
+### Critère de sortie 10B (atteint)
 
 L'identité, les contenus et la politique des robots sont cohérents et
-vérifiables. Le sous-lot « sources articles » et la décision
-`Google-Extended` peuvent rester ouverts sans bloquer la clôture, dès
-lors qu'ils sont documentés par une DEC ou un rapport d'audit
-explicite.
+vérifiables. L'absence volontaire de `LocalBusiness` n'est pas un
+échec du critère : elle reflète l'état des données validées.
+`Google-Extended` est arbitré (DEC-101). Les profils officiels et
+l'harmonisation des informations d'entreprise restent explicitement
+conditionnés à une future validation métier des données locales — hors
+périmètre de clôture de Phase 10B.
 
 ---
 

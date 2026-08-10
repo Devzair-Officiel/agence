@@ -106,10 +106,10 @@ test.describe('Politique d\'indexation en mode non-indexable', () => {
   })
 })
 
-test.describe("Politique crawlers IA (robots.txt, DEC-096)", () => {
-  // Ces tests inspectent uniquement les cinq agents que nous configurons
-  // explicitement (OAI-SearchBot, GPTBot, Claude-SearchBot, ClaudeBot,
-  // PerplexityBot).
+test.describe("Politique crawlers IA (robots.txt, DEC-096 + DEC-101)", () => {
+  // Ces tests inspectent les six agents que nous configurons explicitement :
+  // OAI-SearchBot, GPTBot, Claude-SearchBot, ClaudeBot, PerplexityBot
+  // (DEC-096) et Google-Extended (DEC-101).
   //
   // Contexte : `@nuxtjs/robots` bascule automatiquement `robots.txt` sur
   // `User-agent: * / Disallow: /` lorsque `indexable=false`. Les groupes
@@ -193,23 +193,36 @@ test.describe("Politique crawlers IA (robots.txt, DEC-096)", () => {
     expect(group).toMatch(/Disallow:\s*\/admin/i)
   })
 
+  test('Google-Extended est configuré en disallow complet (DEC-101)', async ({
+    request,
+  }) => {
+    // Le token Google-Extended contrôle l'entraînement Gemini et le grounding
+    // dans Gemini Apps / Vertex AI. Il n'affecte NI l'inclusion NI le ranking
+    // Google Search (documentation officielle Google). Devzair refuse ce
+    // bundle pour rester cohérent avec le refus GPTBot / ClaudeBot.
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'Google-Extended')
+    expect(group, 'groupe Google-Extended présent').not.toBe('')
+    expect(group).toMatch(/Disallow:\s*\/\s*$/im)
+  })
+
   test("aucun groupe n'est déclaré pour les agents non retenus", async ({
     request,
   }) => {
     // Ces user-agents ne doivent PAS apparaître dans robots.txt : soit ils
     // sont user-triggered et ignorent robots.txt (ChatGPT-User, Claude-User,
-    // Perplexity-User), soit la décision les concernant est différée
-    // (Google-Extended), soit leur politique reste inchangée (CCBot).
-    // Ce test reste valable dans les deux modes (blocage global ou groupes
-    // par agent) puisqu'aucun groupe explicite ne doit apparaître dans
-    // l'un ou l'autre.
+    // Perplexity-User), soit leur politique reste inchangée (CCBot). Les
+    // agents anthropic-ai / Claude-Web ne sont pas documentés officiellement.
+    // Google-Extended a été retiré de cette liste — DEC-101 le déclare
+    // explicitement en Disallow /.
     const response = await request.get('/robots.txt')
     const body = await response.text()
     for (const unwanted of [
       'ChatGPT-User',
       'Claude-User',
       'Perplexity-User',
-      'Google-Extended',
       'CCBot',
       'anthropic-ai',
       'Claude-Web',
