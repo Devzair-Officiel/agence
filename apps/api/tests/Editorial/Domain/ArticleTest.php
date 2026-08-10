@@ -382,9 +382,10 @@ final class ArticleTest extends TestCase
         );
     }
 
-    public function testRestoreArchivedResetsToDraft(): void
+    public function testRestoreArchivedResetsToDraftAndKeepsHistoricalPublishedAt(): void
     {
-        $article = (new ArticleBuilder())->published()->build();
+        $publishedAt = new \DateTimeImmutable('2026-08-03T10:00:00+00:00');
+        $article = (new ArticleBuilder())->withNow($publishedAt)->published()->build();
         $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
         self::assertNotNull($article->publishedAt(), 'Sanity : archived article still keeps publishedAt.');
 
@@ -392,8 +393,84 @@ final class ArticleTest extends TestCase
         $article->restore($now);
 
         self::assertSame(ArticleStatus::Draft, $article->status());
-        self::assertNull($article->publishedAt(), 'restore() doit remettre publishedAt à null.');
+        self::assertSame(
+            $publishedAt->getTimestamp(),
+            $article->publishedAt()?->getTimestamp(),
+            'restore() doit conserver la date historique de première publication.',
+        );
         self::assertSame($now->getTimestamp(), $article->updatedAt()->getTimestamp());
+    }
+
+    public function testRepublicationPreservesFirstPublicationDate(): void
+    {
+        $firstPublish = new \DateTimeImmutable('2026-02-10T12:00:00+00:00');
+        $article = (new ArticleBuilder())->withNow($firstPublish)->published()->build();
+        self::assertSame($firstPublish->getTimestamp(), $article->publishedAt()?->getTimestamp());
+
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+        $article->rewriteBody("## Corps révisé\n\nCorrection éditoriale après relecture.", new \DateTimeImmutable('2026-08-06T09:00:00+00:00'));
+
+        $republishAt = new \DateTimeImmutable('2026-08-06T10:00:00+00:00');
+        $article->publish($republishAt, $republishAt);
+
+        self::assertSame(ArticleStatus::Published, $article->status());
+        self::assertSame(
+            $firstPublish->getTimestamp(),
+            $article->publishedAt()?->getTimestamp(),
+            'Une republication ne doit pas remplacer la date de première publication.',
+        );
+        self::assertSame(
+            $republishAt->getTimestamp(),
+            $article->updatedAt()->getTimestamp(),
+            'updatedAt doit refléter la republication.',
+        );
+    }
+
+    public function testNeverPublishedDraftGetsFirstPublicationDateOnFirstPublish(): void
+    {
+        $article = (new ArticleBuilder())->build();
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+        self::assertNull($article->publishedAt(), 'Un brouillon jamais publié ne doit pas porter de publishedAt.');
+
+        $firstPublish = new \DateTimeImmutable('2026-08-07T10:00:00+00:00');
+        $article->publish($firstPublish, $firstPublish);
+
+        self::assertSame(ArticleStatus::Published, $article->status());
+        self::assertSame(
+            $firstPublish->getTimestamp(),
+            $article->publishedAt()?->getTimestamp(),
+        );
+    }
+
+    public function testPublicationFutureGuardStillAppliesOnFirstPublication(): void
+    {
+        $now = new \DateTimeImmutable('2026-08-04T09:00:00+00:00');
+        $article = (new ArticleBuilder())->build();
+
+        $this->expectException(ArticleInvariantViolation::class);
+
+        $article->publish($now->modify('+1 second'), $now);
+    }
+
+    public function testRepublicationIgnoresFuturePublishedAtArgument(): void
+    {
+        $firstPublish = new \DateTimeImmutable('2026-02-10T12:00:00+00:00');
+        $article = (new ArticleBuilder())->withNow($firstPublish)->published()->build();
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+
+        $now = new \DateTimeImmutable('2026-08-06T10:00:00+00:00');
+        // Le paramètre publishedAt est ignoré en republication ; le futur guard
+        // ne concerne que la première publication.
+        $article->publish($now->modify('+30 days'), $now);
+
+        self::assertSame(ArticleStatus::Published, $article->status());
+        self::assertSame(
+            $firstPublish->getTimestamp(),
+            $article->publishedAt()?->getTimestamp(),
+        );
     }
 
     public function testRestoreDraftIsNoOp(): void

@@ -200,6 +200,63 @@ final class DoctrineArticleRepositoryTest extends KernelTestCase
         self::assertNull($this->repository->findById(Uuid::v7()));
     }
 
+    public function testDraftWithHistoricalPublishedAtRoundTrips(): void
+    {
+        // Article publié puis archivé puis restauré : le brouillon résultant
+        // conserve la date historique de première publication.
+        $firstPublish = new \DateTimeImmutable('2026-02-10T12:00:00+00:00');
+        $article = (new ArticleBuilder())
+            ->withSlug('brouillon-restaure-avec-historique')
+            ->withNow($firstPublish)
+            ->published()
+            ->build();
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+
+        $this->repository->save($article);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $found = $this->repository->findBySlug(
+            ArticleSlug::fromString('brouillon-restaure-avec-historique'),
+        );
+
+        self::assertNotNull($found);
+        self::assertSame(ArticleStatus::Draft, $found->status());
+        self::assertSame(
+            $firstPublish->getTimestamp(),
+            $found->publishedAt()?->getTimestamp(),
+        );
+    }
+
+    public function testDraftWithHistoricalPublishedAtStaysHiddenFromPublicListings(): void
+    {
+        // Verrouille l'invariant clé : la visibilité publique reste pilotée
+        // par le statut, jamais par publishedAt seul.
+        $firstPublish = new \DateTimeImmutable('2026-02-10T12:00:00+00:00');
+        $article = (new ArticleBuilder())
+            ->withSlug('brouillon-restaure-invisible')
+            ->withNow($firstPublish)
+            ->published()
+            ->build();
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+
+        $this->repository->save($article);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        $items = $this->repository->listPublished(1, 10, $this->now);
+        self::assertSame(0, $this->repository->countPublished($this->now));
+        self::assertSame([], $items);
+
+        $this->expectException(ArticleNotFoundException::class);
+        $this->repository->getPublishedBySlug(
+            ArticleSlug::fromString('brouillon-restaure-invisible'),
+            $this->now,
+        );
+    }
+
     public function testListPublishedFiltersByExpertiseUsingJsonbContainment(): void
     {
         // Trois articles publiés, deux avec « concevoir », un sans.

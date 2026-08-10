@@ -20,10 +20,16 @@ final class RestoreArticleHandlerTest extends TestCase
 {
     use EntityManagerStub;
 
-    public function testRestoresArchivedArticleToDraft(): void
+    public function testRestoresArchivedArticleToDraftAndKeepsHistoricalPublishedAt(): void
     {
         $id = Uuid::v7();
-        $article = (new ArticleBuilder())->withId($id)->withSlug('a-restaurer')->published()->build();
+        $publishedAt = new \DateTimeImmutable('2026-08-03T10:00:00+00:00');
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('a-restaurer')
+            ->withNow($publishedAt)
+            ->published()
+            ->build();
         $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
         $repository = new InMemoryArticleRepository();
         $repository->save($article);
@@ -37,9 +43,10 @@ final class RestoreArticleHandlerTest extends TestCase
 
         self::assertFalse($result->alreadyDraft);
         self::assertSame(ArticleStatus::Draft, $result->article->status());
-        self::assertNull(
-            $result->article->publishedAt(),
-            'Un article restauré perd sa date de publication.',
+        self::assertSame(
+            $publishedAt->getTimestamp(),
+            $result->article->publishedAt()?->getTimestamp(),
+            'Un brouillon issu d\'un article déjà publié doit conserver la date historique.',
         );
     }
 

@@ -36,9 +36,9 @@ Nous détaillons ce point dans un article dédié : [pourquoi le SEO doit être 
 
 ## Miser sur une base performante et accessible
 
-Un site professionnel doit être rapide, lisible et utilisable pour tout le monde. Ces trois exigences ne sont pas des raffinements d'ingénieur : elles influencent directement le taux de rebond, la conversion et le positionnement dans les résultats de recherche. Les indicateurs de performance (Core Web Vitals) sont d'ailleurs pris en compte par les moteurs, en particulier pour les recherches mobiles.
+Un site professionnel doit être rapide, lisible et utilisable pour tout le monde. Ces trois exigences ne sont pas des raffinements d'ingénieur : elles influencent le taux de rebond, la conversion et l'expérience de navigation. Google intègre par ailleurs les Core Web Vitals à son évaluation d'expérience de page, appliquée aussi bien sur mobile que sur ordinateur.
 
-L'accessibilité, elle, est une question de bonne pratique et de conformité. Elle est aussi, pragmatiquement, ce qui rend un site utilisable dans des conditions défavorables — mauvaise connexion, écran mal calibré, contexte bruyant, handicap. Un site accessible reste un meilleur site, même pour un utilisateur qui n'a aucun besoin spécifique. Nous traitons ces aspects dans notre travail de [construction technique](/expertises/construire), pas comme une option supplémentaire.
+L'accessibilité est un cadre normé, décrit par les recommandations WCAG du W3C, qui définissent des critères vérifiables pour rendre le web utilisable par le plus grand nombre. Elle est aussi, pragmatiquement, ce qui rend un site exploitable dans des conditions défavorables — mauvaise connexion, écran mal calibré, contexte bruyant, situation de handicap. Un site accessible reste un meilleur site, même pour un utilisateur qui n'a aucun besoin spécifique. Nous traitons ces aspects dans notre travail de [construction technique](/expertises/construire), pas comme une option supplémentaire.
 
 ## Préparer la maintenance dès le départ
 
@@ -57,3 +57,9 @@ Nous ne prétendons pas être seuls capables de faire ce travail. Nous pensons s
 Un site internet professionnel n'est pas un livrable ponctuel : c'est un outil qui doit exister dans le temps. Sa réussite dépend surtout de décisions prises en amont — objectifs, structure, référencement, performance, maintenance. Aucune de ces décisions ne peut être improvisée en fin de projet sans coûts supplémentaires.
 
 Si vous préparez un projet de site pour votre entreprise, il est utile d'en parler tôt, avant d'avoir arrêté un cahier des charges définitif. Une discussion à ce moment-là permet souvent d'éviter des impasses coûteuses. [Contactez-nous](/contact) si vous souhaitez échanger sur votre contexte : nous vous dirons franchement si nous sommes le bon partenaire pour votre projet.
+
+## Sources et références
+
+- Google Search Central — [Comprendre l'expérience de page dans les résultats Google](https://developers.google.com/search/docs/appearance/page-experience) : rôle des Core Web Vitals dans l'évaluation de l'expérience, sur mobile comme sur ordinateur.
+- web.dev — [Core Web Vitals](https://web.dev/articles/vitals) : définitions officielles LCP, CLS, INP et seuils de référence.
+- W3C Web Accessibility Initiative — [WCAG 2 Overview](https://www.w3.org/WAI/standards-guidelines/wcag/) : recommandations de référence pour l'accessibilité du web.

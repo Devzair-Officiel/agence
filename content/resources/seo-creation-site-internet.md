@@ -40,17 +40,17 @@ Nous préférons partir des questions réelles que se posent vos publics, y rép
 
 Certains éléments techniques sont difficilement rattrapables en fin de projet. Nous en citons quelques-uns parmi les plus fréquents :
 
-- Le rendu côté serveur (SSR) ou son absence : un site dont le contenu n'apparaît qu'après exécution d'un JavaScript client peut poser problème aux moteurs. Corriger cela après coup demande souvent un changement d'architecture.
-- La structure des URLs : les URLs choisies dès le départ deviennent des adresses stables. Les modifier plus tard implique des redirections, des pertes de signaux et des ruptures d'indexation.
+- Le rendu côté serveur (SSR) ou son absence : Google documente que ses robots exécutent JavaScript dans un second temps du crawl, avec des délais et des limites propres. Sans rendu côté serveur, le contenu clé peut être indexé plus tardivement ou incomplètement, et corriger cela après coup demande souvent un changement d'architecture.
+- La structure des URLs : les URLs choisies dès le départ deviennent des adresses stables. Google publie des recommandations explicites sur les migrations d'URLs (redirections 301, période de conservation, mise à jour des liens et du sitemap) pour limiter les pertes de signaux, mais ces migrations restent coûteuses et rarement sans impact.
 - Le balisage sémantique : un site où les titres `<h1>` sont désorganisés, où les listes sont des paragraphes et où les tableaux sont des divs coûte cher à rectifier une fois la production entamée.
 
 Ces choix techniques relèvent du [travail de construction](/expertises/construire) — et ils se décident au moment où l'on choisit le socle, pas au moment où l'on écrit la balise `title`.
 
 ## Les Core Web Vitals sans effet d'annonce
 
-Google publie régulièrement des indicateurs de performance (Largest Contentful Paint, Cumulative Layout Shift, Interaction to Next Paint) qui influencent le classement des pages, en particulier sur mobile. Ces indicateurs mesurent l'expérience réelle des visiteurs — combien de temps ils attendent avant que la page soit utilisable, si des éléments bougent sous leurs yeux, si les interactions répondent vite.
+Google publie trois indicateurs Core Web Vitals stables — Largest Contentful Paint, Cumulative Layout Shift et Interaction to Next Paint (ce dernier ayant remplacé First Input Delay en mars 2024) — utilisés dans l'évaluation de l'expérience de page, aussi bien sur mobile que sur ordinateur. Ces indicateurs approchent l'expérience réelle des visiteurs : temps d'attente avant que la page soit utilisable, stabilité visuelle du contenu, réactivité des interactions.
 
-Ils sont mesurés en production, sur les vrais visiteurs, pas en laboratoire. Cela veut dire qu'on ne peut pas « les préparer à la fin » : ils dépendent de choix techniques faits au départ (poids des ressources, priorisation du contenu principal, dimensionnement des images, stratégie de rendu). Un site conçu sans y penser peut mettre plusieurs mois à revenir à un score acceptable après optimisation.
+Les valeurs prises en compte proviennent du Chrome User Experience Report, agrégation sur 28 jours glissants des mesures collectées auprès des vrais visiteurs Chrome. Cela veut dire qu'on ne peut pas « les préparer à la fin » : ils dépendent de choix techniques faits au départ (poids des ressources, priorisation du contenu principal, dimensionnement des images, stratégie de rendu). Un site conçu sans y penser peut mettre plusieurs semaines à voir ses métriques de terrain se stabiliser après optimisation, puisque la fenêtre CrUX reste glissante.
 
 ## Le maillage interne, souvent négligé
 
@@ -69,3 +69,10 @@ Notre travail sur la [visibilité](/expertises/visibilite) est étroitement lié
 Le SEO n'est pas une couche que l'on applique à la fin. C'est un ensemble de décisions qui traversent tout le projet, et dont les plus structurantes se prennent au tout début. Un site conçu sans y penser peut être rattrapé en partie ; il n'atteindra que rarement le niveau qu'il aurait pu avoir avec un cadrage initial correct.
 
 Si vous préparez un projet de site et que le référencement fait partie de vos objectifs, il est utile d'en parler avant de fixer un cahier des charges. [Contactez-nous](/contact) pour échanger sur votre contexte : le bon moment pour en discuter, c'est maintenant, pas après la mise en ligne.
+
+## Sources et références
+
+- Google Search Central — [Bases du SEO pour JavaScript](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics) : comportement documenté du crawl et du rendu JavaScript par Googlebot.
+- Google Search Central — [Migrations de site avec changement d'URL](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes) : recommandations officielles sur les redirections 301, la durée de conservation et la préservation des signaux.
+- Google Search Central — [Comprendre l'expérience de page dans les résultats Google](https://developers.google.com/search/docs/appearance/page-experience) : place des Core Web Vitals dans l'évaluation d'expérience, sur mobile comme sur ordinateur.
+- web.dev — [Core Web Vitals](https://web.dev/articles/vitals) : définitions LCP, CLS, INP et seuils « good » / « needs improvement » / « poor ».

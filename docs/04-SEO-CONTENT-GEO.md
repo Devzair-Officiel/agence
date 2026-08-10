@@ -46,6 +46,19 @@ Pour chaque page :
 
 À appliquer uniquement si Devzair remplit réellement les conditions de présence ou de zone de service.
 
+**État Phase 10B (DEC-097).** Éligibilité : `UNDETERMINED`. `LocalBusiness`
+schema : `NOT JUSTIFIED`. Aucune adresse, téléphone, zone d'intervention,
+horaire, page ville ou `sameAs` local n'est publié tant que les données
+ne sont pas validées côté métier. `site.contact.email/phone/city` restent
+`null` dans `apps/web/app/config/site.ts` et le footer masque ces lignes
+tant que `hasContact === false`.
+
+Le passage à `Local eligibility = VALIDATED` demande une DEC explicite
+qui liste les données réellement disponibles : adresse postale
+professionnelle utilisée, téléphone dédié entrant, zone documentable,
+Google Business Profile créé et vérifié. Avant cette DEC, ne rien
+publier de local.
+
 ### Socle
 
 - nom, adresse éventuelle et téléphone cohérents ;
@@ -112,25 +125,57 @@ Le GEO ne repose pas sur une norme universelle garantissant une citation. Il com
 - surveiller les codes 403, 429 et erreurs de crawl ;
 - autoriser ou refuser séparément les robots selon la politique de Devzair.
 
-### Exemple de politique à décider
+### Politique appliquée en Phase 10B (DEC-096)
 
-```txt
-User-agent: OAI-SearchBot
-Allow: /
+Cinq groupes explicites, tirés uniquement de la documentation officielle
+des fournisseurs :
 
-User-agent: GPTBot
-# Décision distincte concernant l’utilisation potentielle pour l’entraînement
-Allow: /
-```
+- `OAI-SearchBot: Allow /` — surfaçage recherche ChatGPT.
+- `GPTBot: Disallow /` — entraînement OpenAI foundation, refusé.
+- `Claude-SearchBot: Allow /` — surfaçage recherche Claude.
+- `ClaudeBot: Disallow /` — entraînement Anthropic, refusé.
+- `PerplexityBot: Allow /` — surfaçage recherche Perplexity.
 
-- `OAI-SearchBot` concerne l’apparition dans la recherche ChatGPT.
-- `GPTBot` concerne une politique distincte liée à l’entraînement.
-- Toute décision doit être consignée dans le journal des décisions.
-- Les plages IP et noms d’agents doivent être vérifiés dans la documentation officielle avant configuration ou allowlist.
+Politique **différée** ou **inchangée** :
 
-### `llms.txt`
+- `Google-Extended` — décision `DEFERRED`. La directive couvre à la
+  fois l'entraînement Gemini et le grounding dans Gemini Apps ; un
+  arbitrage exige une révision explicite.
+- `CCBot` — politique `UNCHANGED`. Common Crawl est un corpus web
+  ouvert utilisé pour plusieurs usages, pas exclusivement
+  l'entraînement IA.
 
-Peut être étudié comme fichier expérimental d’orientation, mais ne doit pas être considéré comme un standard officiel, une garantie de citation ou un remplacement de robots.txt, du sitemap, du HTML et des données structurées.
+Politique **non déclarée** dans `robots.txt` :
+
+- Fetchers user-triggered (`ChatGPT-User`, `Claude-User`,
+  `Perplexity-User`) — la documentation officielle indique que
+  robots.txt ne s'applique pas. Ces requêtes suivent la politique
+  publique du site (indexable ou non selon
+  `NUXT_PUBLIC_SITE_INDEXABLE`).
+
+Toute évolution de cette politique doit passer par une nouvelle DEC.
+Voir `docs/03-SEO-NUXT.md §10.3` pour la matrice complète et le test
+garde-fou.
+
+### `llms.txt` — DEC-098 : `STUDIED = DONE`, `IMPLEMENTATION = NO`
+
+`llms.txt` n'est pas publié à ce stade. La spec ne remplace pas et
+n'apporte pas de couverture au-delà des quatre canaux Devzair
+existants :
+
+- `robots.txt` — politique crawlers ;
+- `sitemap.xml` — index de ressources ;
+- HTML SSR — contenu accessible aux moteurs et aux IA ;
+- Schema.org — sémantique structurée (`Organization`, `WebSite`,
+  `Service`, `BlogPosting`).
+
+La décision reste neutre : aucun engagement contre la spec, mais aucune
+maintenance additionnelle tant qu'un besoin non couvert n'est pas
+identifié. Réévaluable si (a) `llms.txt` devient lisible par un canal
+analytics identifiable, (b) Devzair a des entités validées (auteurs,
+adresses, coordonnées) à exposer explicitement pour l'attribution, ou
+(c) un cas d'usage concret impossible à porter par les quatre canaux
+existants apparaît.
 
 ## 13.4 Contenus favorables à la citation
 
@@ -176,19 +221,12 @@ Le GEO ne doit pas créer une seconde version du contenu réservée aux robots. 
 - ne jamais masquer ou injecter un contenu différent selon le user-agent ;
 - documenter la politique de chaque robot d’IA.
 
-### Politique initiale recommandée
+### Politique appliquée
 
-La décision définitive appartient au responsable du projet. Pour favoriser la présence dans ChatGPT Search tout en gardant un choix distinct pour l’entraînement :
-
-```txt
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: GPTBot
-Disallow: /
-```
-
-Cette politique peut être modifiée après décision explicite. `OAI-SearchBot` et `GPTBot` ont des fonctions distinctes. La configuration doit être testée sur l’URL publique de `robots.txt`.
+La politique en vigueur est décrite en §13.3 (DEC-096) et matérialisée
+dans `apps/web/nuxt.config.ts` (module `@nuxtjs/robots`). Toute
+évolution passe par une nouvelle DEC et un test garde-fou dans
+`apps/web/test/e2e/seo.spec.ts`.
 
 ### Éléments qui renforcent la citabilité
 

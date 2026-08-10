@@ -106,6 +106,138 @@ test.describe('Politique d\'indexation en mode non-indexable', () => {
   })
 })
 
+test.describe("Politique crawlers IA (robots.txt, DEC-096)", () => {
+  // Ces tests inspectent uniquement les cinq agents que nous configurons
+  // explicitement (OAI-SearchBot, GPTBot, Claude-SearchBot, ClaudeBot,
+  // PerplexityBot).
+  //
+  // Contexte : `@nuxtjs/robots` bascule automatiquement `robots.txt` sur
+  // `User-agent: * / Disallow: /` lorsque `indexable=false`. Les groupes
+  // par agent ne sont donc visibles qu'en mode indexable (production).
+  // Quand la suite tourne en préproduction, ces tests détectent le mode
+  // via le préambule `# START nuxt-robots (indexing disabled)` et se
+  // marquent `skip` — la politique reste vérifiée par
+  // `apps/web/nuxt.config.ts` et le test `robots.txt bloque tous les
+  // crawlers` couvre le contrat de préproduction.
+  //
+  // Les fetchers user-triggered (ChatGPT-User, Claude-User, Perplexity-User)
+  // ne sont volontairement pas testés : ils n'ont pas de groupe dédié et
+  // suivent la politique publique globale du site.
+
+  function extractGroup(body: string, userAgent: string): string {
+    const escaped = userAgent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = body.match(
+      new RegExp(
+        `User-agent:\\s*${escaped}\\s*\\n([\\s\\S]*?)(?=\\n\\s*User-agent:|\\n\\s*Sitemap:|$)`,
+        'i',
+      ),
+    )
+    return match ? match[1]! : ''
+  }
+
+  function isIndexingDisabled(body: string): boolean {
+    return /indexing disabled/i.test(body)
+  }
+
+  test('OAI-SearchBot est configuré en allow avec exclusion /admin', async ({
+    request,
+  }) => {
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'OAI-SearchBot')
+    expect(group, 'groupe OAI-SearchBot présent').not.toBe('')
+    expect(group).toMatch(/Allow:\s*\/\s*$/im)
+    expect(group).toMatch(/Disallow:\s*\/admin/i)
+  })
+
+  test('GPTBot est configuré en disallow complet', async ({ request }) => {
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'GPTBot')
+    expect(group, 'groupe GPTBot présent').not.toBe('')
+    expect(group).toMatch(/Disallow:\s*\/\s*$/im)
+  })
+
+  test('Claude-SearchBot est configuré en allow avec exclusion /admin', async ({
+    request,
+  }) => {
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'Claude-SearchBot')
+    expect(group, 'groupe Claude-SearchBot présent').not.toBe('')
+    expect(group).toMatch(/Allow:\s*\/\s*$/im)
+    expect(group).toMatch(/Disallow:\s*\/admin/i)
+  })
+
+  test('ClaudeBot est configuré en disallow complet', async ({ request }) => {
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'ClaudeBot')
+    expect(group, 'groupe ClaudeBot présent').not.toBe('')
+    expect(group).toMatch(/Disallow:\s*\/\s*$/im)
+  })
+
+  test('PerplexityBot est configuré en allow avec exclusion /admin', async ({
+    request,
+  }) => {
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(isIndexingDisabled(body), 'robots.txt en mode blocage global')
+    const group = extractGroup(body, 'PerplexityBot')
+    expect(group, 'groupe PerplexityBot présent').not.toBe('')
+    expect(group).toMatch(/Allow:\s*\/\s*$/im)
+    expect(group).toMatch(/Disallow:\s*\/admin/i)
+  })
+
+  test("aucun groupe n'est déclaré pour les agents non retenus", async ({
+    request,
+  }) => {
+    // Ces user-agents ne doivent PAS apparaître dans robots.txt : soit ils
+    // sont user-triggered et ignorent robots.txt (ChatGPT-User, Claude-User,
+    // Perplexity-User), soit la décision les concernant est différée
+    // (Google-Extended), soit leur politique reste inchangée (CCBot).
+    // Ce test reste valable dans les deux modes (blocage global ou groupes
+    // par agent) puisqu'aucun groupe explicite ne doit apparaître dans
+    // l'un ou l'autre.
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    for (const unwanted of [
+      'ChatGPT-User',
+      'Claude-User',
+      'Perplexity-User',
+      'Google-Extended',
+      'CCBot',
+      'anthropic-ai',
+      'Claude-Web',
+    ]) {
+      expect(
+        new RegExp(`User-agent:\\s*${unwanted}\\b`, 'i').test(body),
+        `${unwanted} ne doit pas apparaître dans robots.txt`,
+      ).toBe(false)
+    }
+  })
+
+  test('en mode indexable=false, le blocage global est prioritaire', async ({
+    request,
+  }) => {
+    // En préproduction, `@nuxtjs/robots` remplace la configuration par
+    // groupes par un blocage total (`User-agent: * / Disallow: /`) — c'est
+    // le comportement attendu. Ce test verrouille ce contrat côté
+    // préproduction et se marque `skip` en indexable pour ne pas dupliquer
+    // les assertions du groupe précédent.
+    const response = await request.get('/robots.txt')
+    const body = await response.text()
+    test.skip(!isIndexingDisabled(body), 'robots.txt en mode indexable=true')
+    expect(body).toMatch(/User-agent:\s*\*/i)
+    expect(body).toMatch(/Disallow:\s*\/\s*$/im)
+    expect(body).not.toMatch(/User-agent:\s*OAI-SearchBot/i)
+  })
+})
+
 test.describe('Sitemap', () => {
   test('/sitemap.xml répond en 200 avec un contenu XML', async ({ request }) => {
     const response = await request.get('/sitemap.xml')

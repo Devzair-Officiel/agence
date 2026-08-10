@@ -1311,23 +1311,50 @@ Les ressources et les expertises forment un maillage public cohérent,
 explorable et maintenable, sans duplication SEO ni contenu éditorial
 obsolète lié à une stratégie de rendu inadéquate.
 
-### Phase 10B — SEO local et GEO avancé (À VENIR)
+### Phase 10B — SEO local et GEO avancé (EN COURS — 2026-08-09)
 
-- [ ] Valider l’éligibilité locale.
-- [ ] Harmoniser les informations d’entreprise.
-- [ ] Configurer les profils officiels.
-- [ ] Définir la politique `OAI-SearchBot`.
-- [ ] Définir la politique `GPTBot`.
-- [ ] Vérifier WAF et CDN.
-- [ ] Ajouter sources et dates aux contenus.
-- [ ] Vérifier le graphe des entités.
-- [ ] Tester une liste stable de requêtes.
-- [ ] Mesurer les référents IA identifiables.
-- [ ] Étudier `llms.txt` sans le considérer obligatoire.
+- [x] Politique crawlers IA robots.txt — cinq groupes explicites (DEC-096).
+      `OAI-SearchBot` Allow, `GPTBot` Disallow, `Claude-SearchBot` Allow,
+      `ClaudeBot` Disallow, `PerplexityBot` Allow. Google-Extended et CCBot
+      volontairement absents (DEFERRED / UNCHANGED). Fetchers user-triggered
+      volontairement absents.
+- [x] Éligibilité locale : `UNDETERMINED`, `LocalBusiness` `NOT JUSTIFIED`
+      (DEC-097). Aucune adresse, téléphone, zone, horaires, page ville ou
+      sameAs local publiés tant que les données ne sont pas validées.
+- [x] Vérifier le graphe des entités : `Organization` + `WebSite` en
+      `@graph` avec `@id` stables, `Service.provider` et
+      `BlogPosting.publisher` référencent l'`@id` Organization, aucun
+      champ fictif (`address`, `aggregateRating`, `sameAs`).
+- [x] Étudier `llms.txt` : `STUDIED`, `NOT IMPLEMENTED` (DEC-098).
+      Réévaluable si un besoin non couvert par `robots.txt`,
+      `sitemap.xml`, HTML SSR et Schema.org émerge.
+- [x] Tester une liste stable de requêtes : `docs/geo/GEO-QUERY-SET.md`
+      (12 requêtes marque + expertises + problèmes prospects, aucune
+      requête géographique tant que l'éligibilité locale reste
+      UNDETERMINED).
+- [x] Mesurer les référents IA identifiables — plan documenté dans
+      `docs/geo/GEO-MEASUREMENT.md`. `AI referral implementation :
+      DEFERRED`, `measurement plan : DOCUMENTED`. Aucun tracker ajouté.
+- [ ] Sources et dates aux contenus — audit livré (4 articles sur 6
+      justifient des sources externes), modification effective en
+      attente d'une décision séparée sur le workflow republish (audit
+      complet dans le rapport Phase 10B).
+- [ ] Vérifier WAF et CDN — `NOT CONFIGURED` en dev/preprod, reporté
+      Phase 12.
+- [ ] Configurer les profils officiels — bloqué tant que
+      l'éligibilité locale reste UNDETERMINED (DEC-097).
+- [ ] Politique `Google-Extended` — décision DEFERRED (DEC-096) :
+      arbitrage à trancher séparément.
+- [ ] Harmoniser les informations d'entreprise — dépend de la
+      validation métier des données (adresse, téléphone, zone).
 
 ### Critère de sortie 10B
 
-L’identité, les contenus et la politique des robots sont cohérents et vérifiables.
+L'identité, les contenus et la politique des robots sont cohérents et
+vérifiables. Le sous-lot « sources articles » et la décision
+`Google-Extended` peuvent rester ouverts sans bloquer la clôture, dès
+lors qu'ils sont documentés par une DEC ou un rapport d'audit
+explicite.
 
 ---
 

@@ -36,7 +36,7 @@ La fiche Google Business Profile (l'ancienne fiche Google My Business) est le le
 
 Concrètement, une fiche efficace est renseignée en totalité, à jour, cohérente avec le site (mêmes coordonnées, mêmes horaires), enrichie de vraies photos, et animée par des publications régulières. Elle est aussi surveillée : les questions posées par les internautes, les modifications suggérées par Google, les changements d'horaires temporaires demandent une vigilance minimale.
 
-Un point souvent négligé : la cohérence entre votre fiche, votre site et vos autres présences en ligne. Google croise ces informations pour évaluer la fiabilité de la fiche. Une adresse écrite « Avenue des Tilleuls » d'un côté et « avenue des tilleuls » de l'autre suffit à créer une divergence détectable. Cette cohérence — parfois appelée NAP pour Nom, Adresse, Téléphone — est un travail simple mais essentiel.
+Un point souvent négligé : la cohérence entre votre fiche, votre site et vos autres présences en ligne. Google indique que le classement local repose sur trois composantes — pertinence, distance et notoriété — et invite à renseigner de manière complète et à jour les informations de l'établissement pour améliorer la pertinence. Une adresse écrite différemment d'un support à l'autre reste, en pratique, une divergence identifiable. Cette cohérence — parfois appelée NAP pour Nom, Adresse, Téléphone — est un travail simple mais utile.
 
 ## Les avis : ce qu'on peut faire, ce qu'on doit éviter
 
@@ -44,13 +44,13 @@ Les avis clients sont un signal fort pour la visibilité locale — ils rassuren
 
 Ce qui fonctionne : demander à ses clients réels, satisfaits, s'ils accepteraient de partager leur avis. Le faire au bon moment (à la fin d'une prestation qui s'est bien passée, pas au démarrage), leur donner un moyen simple de le faire, et ne rien attendre qui ressemble à un échange contre quelque chose.
 
-Ce qu'il faut éviter : acheter des avis, en solliciter en échange de remises, mettre en scène de faux clients. Ces pratiques sont détectées, sanctionnées, et laissent des traces durables. Elles finissent par nuire à la crédibilité de l'entreprise dont elles étaient supposées améliorer l'image.
+Ce qu'il faut éviter : acheter des avis, en solliciter en échange de remises, mettre en scène de faux clients. Les règles publiques de Google concernant les contenus contribués par les utilisateurs interdisent explicitement les avis fabriqués et les incitations, et prévoient la suppression des contenus concernés — voire des sanctions au niveau de la fiche. Ces pratiques finissent par nuire à la crédibilité de l'entreprise dont elles étaient supposées améliorer l'image.
 
 Répondre aux avis — positifs comme négatifs — a également un impact. Une réponse mesurée à un avis critique en dit plus long sur une entreprise qu'une centaine de commentaires enthousiastes.
 
 ## Contenu local : pages, quartiers, spécialités
 
-Une entreprise locale gagne beaucoup à produire du contenu ancré dans son territoire. Cela ne veut pas dire créer artificiellement une page par ville — une pratique répandue qui produit du contenu vide, mal perçue par les moteurs et par les visiteurs. Cela veut dire évoquer sincèrement les lieux, les quartiers, les spécificités locales quand cela a du sens pour votre activité.
+Une entreprise locale gagne beaucoup à produire du contenu ancré dans son territoire. Cela ne veut pas dire créer artificiellement une page par ville. Google classe cette pratique — générer un grand nombre de pages quasi identiques ciblant chacune une localité différente sans valeur propre — parmi les schémas de spam qualifiés de « doorway pages ». Cela veut dire, à l'inverse, évoquer sincèrement les lieux, les quartiers, les spécificités locales quand cela a du sens pour votre activité.
 
 Un exemple concret : un artisan qui intervient dans une agglomération peut légitimement présenter les particularités des différents secteurs qu'il couvre — bâti ancien dans le centre, pavillonnaire en périphérie, contraintes de circulation dans les quartiers piétonniers. Ces informations sont utiles à vos futurs clients, et elles ancrent naturellement votre site dans son territoire.
 
@@ -67,3 +67,9 @@ Nous inscrivons ensuite ce travail dans notre pôle [visibilité](/expertises/vi
 La visibilité locale d'une entreprise ne se décrète pas. Elle se construit à partir d'un site cohérent, d'une fiche d'établissement soignée, d'avis authentiques et d'un contenu qui parle réellement de son territoire. Aucun de ces leviers, pris isolément, ne fait de miracle. Combinés, ils rendent votre entreprise trouvable pour les personnes qui vous cherchent — et crédible pour celles qui hésitent.
 
 Nous ne promettons pas de position sur Google. Personne ne peut la promettre honnêtement. Nous pouvons en revanche vous aider à mettre en place ce qui a le plus de chances de fonctionner dans la durée. [Contactez-nous](/contact) si vous souhaitez que nous regardions ensemble votre présence locale actuelle.
+
+## Sources et références
+
+- Google Business Profile Help — [Améliorer votre classement local sur Google](https://support.google.com/business/answer/7091) : composantes officielles pertinence / distance / notoriété.
+- Google — [Règles concernant les contenus contribués par les utilisateurs pour Maps](https://support.google.com/contributionpolicy/answer/7422880) : interdiction des faux avis, des incitations et de l'usurpation d'identité.
+- Google Search Central — [Règles concernant le spam : pages satellites (doorway pages)](https://developers.google.com/search/docs/essentials/spam-policies#doorway-pages) : qualification officielle des pages ville quasi identiques.

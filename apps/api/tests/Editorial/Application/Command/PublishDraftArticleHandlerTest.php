@@ -41,6 +41,42 @@ final class PublishDraftArticleHandlerTest extends TestCase
         );
     }
 
+    public function testRepublishOfRestoredDraftPreservesFirstPublicationDate(): void
+    {
+        $id = Uuid::v7();
+        $firstPublish = new \DateTimeImmutable('2026-02-10T12:00:00+00:00');
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('republication')
+            ->withNow($firstPublish)
+            ->published()
+            ->build();
+        $article->archive(new \DateTimeImmutable('2026-08-05T00:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-06T00:00:00+00:00'));
+
+        $repository = new InMemoryArticleRepository();
+        $repository->save($article);
+        $handler = new PublishDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingFlush(),
+            new FixedClock('2026-08-06T10:00:00+00:00'),
+        );
+
+        $result = $handler(new PublishDraftArticle($id));
+
+        self::assertSame(ArticleStatus::Published, $result->article->status());
+        self::assertSame(
+            $firstPublish->getTimestamp(),
+            $result->article->publishedAt()?->getTimestamp(),
+            'La republication ne doit pas remplacer la date de première publication.',
+        );
+        self::assertSame(
+            '2026-08-06T10:00:00+00:00',
+            $result->article->updatedAt()->format(\DateTimeInterface::ATOM),
+            'updatedAt doit refléter la republication.',
+        );
+    }
+
     public function testRefusesFromArchivedRestoreFirst(): void
     {
         $id = Uuid::v7();

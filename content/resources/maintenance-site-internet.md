@@ -24,7 +24,7 @@ Cette dégradation est silencieuse. Rien ne « casse » de manière visible, ce 
 
 ## Sécurité et mises à jour techniques
 
-Le premier volet de la maintenance concerne la sécurité. Un site professionnel repose sur des couches logicielles — CMS, framework, bibliothèques, dépendances système — dont certaines reçoivent régulièrement des correctifs. Ces correctifs traitent souvent des vulnérabilités identifiées publiquement, ce qui signifie que les acteurs malveillants les connaissent aussi bien que vous. Le délai entre la publication d'une faille et son exploitation automatisée à grande échelle se compte parfois en jours.
+Le premier volet de la maintenance concerne la sécurité. Un site professionnel repose sur des couches logicielles — CMS, framework, bibliothèques, dépendances système — dont certaines reçoivent régulièrement des correctifs. Ces correctifs traitent souvent des vulnérabilités identifiées publiquement, ce qui signifie que les acteurs malveillants les connaissent aussi bien que vous. L'agence américaine CISA maintient un catalogue des vulnérabilités activement exploitées (Known Exploited Vulnerabilities Catalog) et assortit chaque entrée d'une échéance de remédiation courte pour les administrations fédérales — un signal utile pour estimer la fenêtre pendant laquelle une faille publiée reste critique à corriger.
 
 Un contrat de maintenance sérieux inclut donc le suivi de ces mises à jour, leur application dans un environnement de test avant la production, et une veille de sécurité proportionnée à la criticité du site. Cette veille ne consiste pas à tout mettre à jour aveuglément — certaines mises à jour introduisent des régressions — mais à décider en connaissance de cause ce qui doit être appliqué et quand.
 
@@ -42,7 +42,7 @@ Le plan de reprise va plus loin : que fait-on si le site est indisponible pendan
 
 Un site rapide en janvier peut devenir lent en juin sans qu'aucune ligne de code n'ait changé. Les raisons sont multiples : croissance du contenu (images, articles, produits), inflation des scripts tiers ajoutés au fil du temps (analytics, tag manager, chat, cartes), évolution des règles de Google, modification du comportement des navigateurs, changement d'infrastructure côté hébergeur. Un suivi régulier des indicateurs de performance permet d'agir avant que la dégradation devienne perceptible pour les visiteurs.
 
-Ce point rejoint ce que nous détaillons dans notre article sur le [SEO pensé dès la création du site](/ressources/seo-creation-site-internet) : les Core Web Vitals sont mesurés en continu, sur les vrais visiteurs. Un site qui glisse progressivement sous les seuils peut perdre des positions sans qu'aucun événement identifiable ne se produise. Rattraper ce genre de dérive après plusieurs mois est nettement plus coûteux que d'intervenir tôt.
+Ce point rejoint ce que nous détaillons dans notre article sur le [SEO pensé dès la création du site](/ressources/seo-creation-site-internet) : les Core Web Vitals utilisés par Google pour l'expérience de page proviennent du Chrome User Experience Report, une agrégation sur 28 jours glissants des mesures collectées auprès des vrais visiteurs Chrome ayant activé la remontée de statistiques. Un site qui glisse progressivement sous les seuils peut voir ses signaux d'expérience de page se dégrader sans qu'aucun événement identifiable ne se produise. Rattraper ce genre de dérive après plusieurs mois est nettement plus coûteux que d'intervenir tôt.
 
 ## Contenu et évolutions fonctionnelles
 
@@ -65,3 +65,9 @@ Ce cadre s'articule avec notre [travail de construction technique](/expertises/c
 Un site qui n'est pas maintenu se dégrade, même quand il semble aller bien. La maintenance couvre plusieurs dimensions — sécurité, sauvegardes, performance, contenus, évolutions — qui sont toutes nécessaires. Aucune n'est optionnelle si l'on veut qu'un site reste utile plusieurs années.
 
 Nous pensons que la question de la maintenance doit être posée dès la conception, pas après la mise en ligne. Anticiper le coût de possession d'un site est plus honnête envers vous — et produit de meilleures décisions dans la durée. Si votre site actuel a besoin d'un état des lieux ou si vous préparez un projet et souhaitez cadrer sa maintenance dès le départ, [contactez-nous](/contact). Nous vous dirons franchement ce qui mérite une intervention et ce qui peut attendre.
+
+## Sources et références
+
+- CISA — [Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) : catalogue public des vulnérabilités activement exploitées, échéances de remédiation associées.
+- Google Search Central — [Comprendre l'expérience de page dans les résultats Google](https://developers.google.com/search/docs/appearance/page-experience) : rôle des Core Web Vitals dans l'évaluation continue de l'expérience.
+- Chrome Developers — [Chrome User Experience Report (CrUX)](https://developer.chrome.com/docs/crux) : source des données de terrain utilisées par Google (fenêtre glissante de 28 jours, utilisateurs Chrome opt-in).

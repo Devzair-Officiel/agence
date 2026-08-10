@@ -16,9 +16,15 @@ use Symfony\Component\Uid\Uuid;
  *
  * Contraintes fondamentales :
  * - Statut `Published` implique `publishedAt` non nul. La réciproque n'est
- *   pas imposée : un article archivé conserve sa date historique de
- *   publication (statut `Archived`, `publishedAt` non nul reste valide).
- * - Publication toujours dans le passé ou dans l'instant présent (jamais dans le futur).
+ *   pas imposée : un article archivé ou un brouillon restauré depuis un
+ *   article précédemment publié conservent leur date historique de
+ *   première publication (`publishedAt` non nul est valide sur `Draft`
+ *   comme sur `Archived`).
+ * - `publishedAt` représente la date de première publication ; il n'est
+ *   plus modifié une fois défini. Les modifications ultérieures se lisent
+ *   sur `updatedAt`. Une republication après révision préserve donc
+ *   `BlogPosting.datePublished` et fait évoluer `dateModified`.
+ * - Publication (première) toujours dans le passé ou dans l'instant présent (jamais dans le futur).
  * - Slug unique — contrainte UNIQUE en base, appliquée par migration.
  * - Le contenu markdown est stocké tel quel ; le rendu HTML est délégué au front (Phase 8B).
  *
@@ -172,12 +178,21 @@ class Article
     }
 
     /**
-     * Publie l'article à la date `$publishedAt`, en horodatant `updatedAt`
-     * avec `$now`. `$now` doit venir d'un `ClockInterface`. L'entité refuse
-     * toute date de publication strictement supérieure à `$now` — cette
-     * défense en profondeur double le contrôle fait côté application
-     * (`PublishArticleBySlugHandler`) et protège contre un clock skew ou un
-     * bug d'appelant.
+     * Passe l'article au statut `Published`.
+     *
+     * Sémantique de `publishedAt` (date de première publication) :
+     * - si l'article n'a jamais été publié (`publishedAt` null), `$publishedAt`
+     *   devient la date de première publication ;
+     * - si l'article a déjà été publié puis archivé/restauré, la date
+     *   historique est conservée et `$publishedAt` est ignoré côté valeur
+     *   stockée — c'est une republication, pas une première publication.
+     *
+     * `updatedAt` reflète toujours l'opération courante (`$now`).
+     *
+     * L'agrégat refuse une date de première publication strictement supérieure
+     * à `$now` — défense en profondeur qui double le contrôle applicatif
+     * (`PublishArticleBySlugHandler`). Ce garde ne s'applique qu'en première
+     * publication : sur une republication, `$publishedAt` n'est pas retenu.
      *
      * Idempotent : renvoie silencieusement si l'article est déjà publié.
      */
@@ -187,14 +202,16 @@ class Article
             return;
         }
 
-        if ($publishedAt > $now) {
-            throw new ArticleInvariantViolation(
-                'La date de publication ne peut pas être postérieure à l\'instant présent.',
-            );
+        if ($this->publishedAt === null) {
+            if ($publishedAt > $now) {
+                throw new ArticleInvariantViolation(
+                    'La date de publication ne peut pas être postérieure à l\'instant présent.',
+                );
+            }
+            $this->publishedAt = $publishedAt;
         }
 
         $this->status = ArticleStatus::Published;
-        $this->publishedAt = $publishedAt;
         $this->updatedAt = $now;
     }
 
@@ -216,10 +233,11 @@ class Article
      * - `Draft` : idempotent, no-op silencieux.
      * - `Published` : refusé — pour éditer un article publié, il faut
      *   d'abord `archive()` puis `restore()`.
-     * - `Archived` : bascule vers `Draft` et remet `publishedAt` à `null`
-     *   (l'éventuelle date historique de publication est perdue à dessein :
-     *   un brouillon ne porte pas de date active ; une future publication
-     *   en assignera une nouvelle).
+     * - `Archived` : bascule vers `Draft`. La date historique de première
+     *   publication (`publishedAt`) est conservée si elle existe : un
+     *   brouillon issu d'un article déjà publié doit pouvoir être republié
+     *   en préservant `BlogPosting.datePublished` (SEO). La visibilité
+     *   publique reste pilotée par le statut, pas par `publishedAt`.
      */
     public function restore(\DateTimeImmutable $now): void
     {
@@ -234,7 +252,6 @@ class Article
         $this->assertMonotonicNow($now);
 
         $this->status = ArticleStatus::Draft;
-        $this->publishedAt = null;
         $this->updatedAt = $now;
     }
 

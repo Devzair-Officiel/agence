@@ -43,6 +43,49 @@ Les longueurs ne doivent pas être forcées mécaniquement : l’objectif est la
 - éviter les chaînes et boucles de redirection ;
 - corriger les soft 404.
 
+### Politique crawlers IA (Phase 10B, DEC-096)
+
+`robots.txt` déclare cinq groupes explicites lorsque
+`NUXT_PUBLIC_SITE_INDEXABLE=true`. Le blocage global `Disallow: /` de
+`User-agent: *` en mode `indexable=false` reste prioritaire — un
+groupe `Allow` n'annule pas la politique préproduction.
+
+| User-agent        | Politique      | Rôle documenté par le fournisseur                        |
+| ----------------- | -------------- | -------------------------------------------------------- |
+| `OAI-SearchBot`   | Allow /        | Surfaçage ChatGPT Search                                 |
+| `GPTBot`          | Disallow /     | Entraînement des modèles OpenAI foundation               |
+| `Claude-SearchBot`| Allow /        | Surfaçage recherche Claude                               |
+| `ClaudeBot`       | Disallow /     | Entraînement des modèles Anthropic                       |
+| `PerplexityBot`   | Allow /        | Surfaçage recherche Perplexity                           |
+
+Chaque groupe `Allow /` inclut aussi `Disallow /admin` (l'administration
+éditoriale n'est jamais indexable, même en mode `indexable=true`).
+
+Agents volontairement **absents** de `robots.txt` :
+
+- `ChatGPT-User`, `Claude-User`, `Perplexity-User` — fetchers
+  user-triggered. La documentation officielle des trois fournisseurs
+  indique que `robots.txt` ne s'applique pas à ces requêtes utilisateur
+  (elles suivent la politique publique du site). Configurer un groupe
+  donnerait une fausse impression de contrôle.
+- `Google-Extended` — **décision DEFERRED** (DEC-096). La directive
+  contrôle à la fois l'entraînement Gemini et le grounding dans
+  Gemini Apps / Vertex AI. Refuser Google-Extended refuserait aussi le
+  grounding — arbitrage à reprendre séparément.
+- `CCBot` — **UNCHANGED** (DEC-096). Common Crawl est un corpus web
+  ouvert utilisé pour plusieurs usages, pas exclusivement
+  l'entraînement IA. Une politique CCBot exige une décision distincte.
+- Agents non listés dans la documentation officielle des fournisseurs
+  (`anthropic-ai`, `Claude-Web`, `Claude-Code`) — pas de contrat public
+  clair, hors périmètre courant.
+
+Test garde-fou : `apps/web/test/e2e/seo.spec.ts` (section « Politique
+crawlers IA (robots.txt, DEC-096) ») vérifie la présence des cinq
+groupes explicites **et** l'absence de tout groupe pour les agents
+volontairement exclus. Toute PR qui ajoute un groupe casse le test —
+impose un DEC de mise à jour.
+
+
 ## 10.4 Canonicalisation et variantes
 
 - une seule version de domaine : HTTPS et choix clair entre domaine racine et `www` ;
@@ -345,7 +388,7 @@ Ne pas ajouter de module avant que le socle Nuxt passe `build`, `typecheck` et `
 [ADR-004](adr/ADR-004-modules-seo.md)) :
 
 - `@nuxtjs/robots` v5.7 — X-Robots-Tag global, meta robots, robots.txt
-  dynamique, règles OAI-SearchBot / GPTBot ;
+  dynamique, politique crawlers IA (voir §10.3 pour la matrice complète) ;
 - `@nuxtjs/sitemap` v7.6 — sitemap.xml généré à partir des routes Nuxt,
   exclusion automatique des pages noindex ;
 - Schema.org (Organization + WebSite) injecté à la main par
