@@ -1364,22 +1364,27 @@ périmètre de clôture de Phase 10B.
 
 ## Phase 11 — Sécurité, performance et accessibilité
 
-- [ ] Audit OWASP.
-- [ ] Revue des secrets.
-- [ ] Revue des dépendances.
-- [ ] CSP.
-- [ ] En-têtes.
-- [ ] Permissions.
-- [ ] Analyse des formulaires.
-- [ ] Contrôle des contenus HTML.
-- [ ] Audit WCAG 2.2 AA.
-- [ ] Navigation clavier.
-- [ ] Lecteur d’écran.
-- [ ] Mesures LCP, INP et CLS.
-- [ ] Budget JavaScript.
-- [ ] Optimisation des images.
-- [ ] Test de charge raisonnable.
-- [ ] Corrections.
+Phase 11A (audit passif) terminée le 2026-08-12. Phase 11B (sécurité
+applicative + supply-chain + durcissement HTTP) terminée le 2026-08-13
+sur DEV-061 / DEC-102. Phase 11C (accessibilité, performance, images)
+reste à ouvrir.
+
+- [ ] Audit OWASP (revue continue en Phase 12).
+- [ ] Revue des secrets (revue finale Phase 12).
+- [x] Revue des dépendances (nanoid H-01 patché, esbuild L-01 non-applicable Linux, bulletin Nuxt juillet 2026 patché en 4.5.1).
+- [x] CSP (Report-Only publique via Caddy, enforced stricte admin via subscriber Symfony — DEC-102).
+- [x] En-têtes (nosniff, Referrer-Policy, Permissions-Policy, X-Frame-Options, suppression X-Powered-By / Server côté Caddy et subscriber admin).
+- [x] Permissions (`camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()` public et admin).
+- [x] Analyse des formulaires (audit Phase 11A + rate limits `contact_ip`, `admin_write`, `admin_publish`, `admin_media_upload` déjà en place).
+- [x] Contrôle des contenus HTML (validator import + renderer strip + tests régression XSS étendus Phase 11B).
+- [ ] Audit WCAG 2.2 AA (audit dynamique — Phase 11C).
+- [ ] Navigation clavier (audit dynamique — Phase 11C).
+- [ ] Lecteur d’écran (audit dynamique — Phase 11C).
+- [ ] Mesures LCP, INP et CLS (Phase 11C avec build production HTTPS Phase 12).
+- [ ] Budget JavaScript (Phase 11C).
+- [ ] Optimisation des images (M-03 logos + variantes responsives — Phase 11C).
+- [ ] Test de charge raisonnable (Phase 11A a exécuté un run `ab` initial ; charge cible réaliste à définir Phase 12).
+- [ ] Corrections (au fil des phases 11C et 12).
 
 ### Critère de sortie
 

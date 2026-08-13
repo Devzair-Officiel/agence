@@ -19,17 +19,31 @@
 
     @api path /api/*
     handle @api {
+        # Endpoints JSON (contact, ressources, sitemap). Aucun HTML consommé
+        # par un navigateur ici, donc pas de CSP ni de X-Frame-Options : les
+        # en-têtes minimums suffisent (anti-sniffing + fuite d'implémentation).
+        # Les Cache-Control applicatifs (ETag éditorial, no-store contact)
+        # sont posés côté Symfony et ne sont pas surchargés.
+        header {
+            -X-Powered-By
+            -Server
+            X-Content-Type-Options nosniff
+            Referrer-Policy no-referrer
+        }
         # Strip /api prefix avant de forwarder à Symfony.
         uri strip_prefix /api
         reverse_proxy api:8000 {
             header_up X-Forwarded-Proto {scheme}
             header_up X-Forwarded-For {remote_host}
-            # `{http.request.host_port}` = valeur exacte du header Host (avec
-            # port si le client en a mis un). `{host}` seul strip le port,
-            # ce qui casse la reconstruction d'URL absolue par Symfony
-            # (redirection post-login `http://localhost/admin` inaccessible
-            # depuis :3001 en dev).
-            header_up X-Forwarded-Host {http.request.host_port}
+            # X-Forwarded-Host : Caddy le pose par défaut à partir du header
+            # `Host` reçu du client (préserve le port quand il est présent :
+            # `localhost:3001` en dev, `devzair.fr` en prod). L'ancien override
+            # `header_up X-Forwarded-Host {http.request.host_port}` était cassé :
+            # `{http.request.host_port}` (underscore) n'existe pas en Caddy 2.11,
+            # il était envoyé littéralement à Symfony qui rejetait la requête
+            # avec `BadRequestHttpException "Invalid Host"` (bug Phase 8C
+            # corrigé Phase 11B). Le comportement par défaut de Caddy suffit
+            # pour reconstruire les URLs absolues côté Symfony.
         }
     }
 
@@ -37,6 +51,24 @@
     # le firewall Symfony s'accroche sur ^/admin, il a besoin du préfixe.
     @admin path /admin /admin/*
     handle @admin {
+        # AdminSecurityHeadersSubscriber pose l'ensemble des en-têtes de
+        # sécurité sur les réponses HTML /admin/* (CSP stricte
+        # `default-src 'none'`, XFO, Referrer-Policy, Permissions-Policy,
+        # X-Robots-Tag, Cache-Control no-store, COOP, CORP). On n'écrase
+        # donc surtout PAS ces valeurs ici. En revanche, les assets statiques
+        # (`/admin/assets/*.css`) sont servis par le fpm sans passer par le
+        # cycle kernel.response et n'héritent d'aucune en-tête. Le préfixe
+        # `?` de Caddy (« set only if header absent ») joue ici le rôle de
+        # filet de sécurité : il ajoute nosniff / XFO / Referrer aux assets
+        # sans jamais surcharger les valeurs plus strictes du subscriber.
+        header {
+            -X-Powered-By
+            -Server
+            ?X-Content-Type-Options nosniff
+            ?X-Frame-Options DENY
+            ?Referrer-Policy no-referrer
+            ?X-Robots-Tag "noindex, nofollow"
+        }
         reverse_proxy api:8000 {
             # Caddy pose déjà X-Forwarded-Proto, X-Forwarded-For et
             # X-Forwarded-Host par défaut à partir de la requête cliente.
@@ -51,6 +83,37 @@
     }
 
     handle {
+        # Pages publiques Nuxt (marketing, ressources, expertises, contact).
+        # Phase 11B :
+        # - X-Content-Type-Options: bloque le MIME sniffing (défense en
+        #   profondeur contre les uploads détournés).
+        # - Referrer-Policy: `strict-origin-when-cross-origin` retire le
+        #   chemin lors des navigations cross-origin (fuite de URL internes).
+        # - Permissions-Policy: coupe explicitement les capteurs sensibles
+        #   (caméra, micro, géoloc) + les APIs comportementales tierces
+        #   (interest-cohort/FLoC, browsing-topics).
+        # - X-Frame-Options DENY: compat historique avec frame-ancestors CSP.
+        # - Content-Security-Policy-Report-Only: politique progressive
+        #   (Phase 11B). L'inventaire réel des ressources chargées par Nuxt
+        #   justifie `'unsafe-inline'` sur script-src (hydratation runtime
+        #   config `<script>window.__NUXT__.config={...}</script>`) et
+        #   style-src (CSS critique inline émis par le build Vite). Le mode
+        #   Report-Only permet de collecter les violations avant application
+        #   (Phase 11C ou plus tard, à basculer sur Content-Security-Policy
+        #   après stabilisation). Aucun endpoint /csp-report n'est publié —
+        #   les rapports sont visibles côté DevTools navigateur.
+        # HSTS, COOP et CORP restent volontairement absents : la mise sous
+        # HTTPS (Phase 12) est prérequise pour HSTS ; COOP/CORP nécessitent
+        # une revue d'impact sur les intégrations tierces avant activation.
+        header {
+            -X-Powered-By
+            -Server
+            X-Content-Type-Options nosniff
+            Referrer-Policy strict-origin-when-cross-origin
+            Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()"
+            X-Frame-Options DENY
+            Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        }
         reverse_proxy web:3000 {
             header_up X-Forwarded-Proto {scheme}
             header_up X-Forwarded-For {remote_host}

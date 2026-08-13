@@ -85,6 +85,33 @@ final class MarkdownContentValidatorTest extends TestCase
         $this->validator->validate($markdown);
     }
 
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function xssVectorProvider(): iterable
+    {
+        // Regression Phase 11B : chaque vecteur classiquement lu dans les
+        // audits XSS doit être rejeté en import — la validation est un
+        // simple « pas de HTML brut », donc tout tag structurel ou tout
+        // gestionnaire d'événement est bloqué avant même d'atteindre le
+        // renderer (défense en profondeur : le renderer strip aussi).
+        yield 'script tag' => ['<script>alert(1)</script>'];
+        yield 'img onerror' => ['<img src=x onerror="alert(1)">'];
+        yield 'iframe tag' => ['<iframe src="https://evil.example"></iframe>'];
+        yield 'style tag' => ['<style>body{background:url(evil)}</style>'];
+        yield 'div onclick' => ['<div onclick="alert(1)">boom</div>'];
+        yield 'svg onload' => ['<svg onload="alert(1)"></svg>'];
+    }
+
+    #[DataProvider('xssVectorProvider')]
+    public function testRejectsCommonXssVectorsAtImport(string $markdown): void
+    {
+        $this->expectException(MarkdownValidationException::class);
+        $this->expectExceptionMessageMatches('/HTML brut/');
+
+        $this->validator->validate($markdown);
+    }
+
     public function testRejectsEmptyUrl(): void
     {
         $this->expectException(MarkdownValidationException::class);

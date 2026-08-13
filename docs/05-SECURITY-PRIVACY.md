@@ -99,19 +99,69 @@ Si une administration existe :
 
 ## 14.7 En-têtes de sécurité
 
-Configurer et tester selon l’architecture :
+L'application distingue deux surfaces qui reçoivent chacune une politique
+propre. Le principe est de ne jamais laisser Caddy écraser une valeur
+plus stricte posée en amont.
 
-- `Content-Security-Policy` ;
-- `Strict-Transport-Security` après validation HTTPS complète ;
-- `X-Content-Type-Options: nosniff` ;
-- `Referrer-Policy` ;
-- `Permissions-Policy` ;
-- `frame-ancestors` dans CSP ;
-- `X-Frame-Options` comme compatibilité si nécessaire ;
-- type de contenu correct et UTF-8 ;
-- suppression des en-têtes révélant inutilement la technologie.
+**Site public (Nuxt via Caddy).** Configuration `infra/caddy/Caddyfile`,
+handle par défaut :
 
-La politique exacte doit être générée à partir des ressources réellement utilisées.
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()`
+- `X-Frame-Options: DENY` (compat historique de `frame-ancestors 'none'`)
+- `Content-Security-Policy-Report-Only` : politique construite depuis
+  l'inventaire réel Phase 11A (`default-src 'self'`, `script-src 'self'
+  'unsafe-inline'`, `style-src 'self' 'unsafe-inline'`, `img-src 'self'
+  data:`, `font-src 'self'`, `connect-src 'self'`, `frame-ancestors
+  'none'`, `base-uri 'self'`, `form-action 'self'`, `object-src 'none'`).
+  `upgrade-insecure-requests` n'est **pas** posé en Report-Only : le
+  navigateur émettrait un avertissement console (« directive ignored »)
+  qui polluerait la détection d'erreurs des tests E2E — la directive
+  sera réintroduite au moment de la bascule enforced (Phase 12 HTTPS).
+  `'unsafe-inline'` est requis par
+  l'hydratation runtime de Nuxt (`<script>window.__NUXT__.config={...}</script>`)
+  et par le CSS critique inline émis par Vite ; leur remplacement par un
+  système de nonce est différé et fera l'objet d'une décision dédiée
+  avant bascule vers `Content-Security-Policy` en mode enforced.
+- suppression des en-têtes de révélation d'implémentation
+  (`-X-Powered-By`, `-Server`).
+
+**Admin (Symfony sur `/admin/*`).** Politique définie par
+`App\Admin\Presentation\EventSubscriber\AdminSecurityHeadersSubscriber` :
+
+- CSP stricte : `default-src 'none'; script-src 'none'; style-src 'self';
+  img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri
+  'none'; frame-ancestors 'none'`.
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: no-referrer`, `Permissions-Policy` restrictive,
+  `X-Robots-Tag: noindex, nofollow`, `Cross-Origin-Opener-Policy: same-origin`,
+  `Cross-Origin-Resource-Policy: same-origin`, `Cache-Control: private,
+  no-store, no-cache, must-revalidate`, `Pragma: no-cache`.
+
+Caddy applique en plus, dans le handle `@admin`, un filet de sécurité en
+`?` (« set only if absent ») qui garantit `nosniff` / XFO / Referrer /
+X-Robots-Tag pour les assets statiques `/admin/assets/*.css` — ces
+fichiers ne passent pas par le cycle Symfony `kernel.response` et ne
+recevraient sinon aucun en-tête. Aucune de ces valeurs n'écrase la
+politique plus stricte du subscriber sur les pages HTML admin.
+
+**API JSON (`/api/*`).** Le handle `@api` ajoute uniquement `nosniff`
+et `Referrer-Policy: no-referrer` ; les `Cache-Control` applicatifs
+posés par Symfony (ETag éditorial, `no-store` sur contact) ne sont pas
+surchargés.
+
+**Différés.** `Strict-Transport-Security` est conditionné à la mise en
+production HTTPS (Phase 12). `Cross-Origin-Opener-Policy` /
+`Cross-Origin-Resource-Policy` publics sont différés en attente d'une
+revue d'impact sur les intégrations tierces potentielles (widgets
+Turnstile, embeds futurs). Aucun endpoint `report-to` /
+`csp-report` n'est publié : la collecte est laissée aux outils
+navigateur (DevTools) tant que la CSP publique reste `Report-Only`.
+
+La bascule `Content-Security-Policy-Report-Only` → `Content-Security-Policy`
+sera actée par une décision dédiée après stabilisation des rapports en
+préproduction (Phase 11C ou plus tard, cf. `docs/10-TRACKING.md` DEC-102).
 
 ## 14.8 Téléversement de fichiers
 
