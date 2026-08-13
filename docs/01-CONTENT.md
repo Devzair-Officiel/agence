@@ -98,13 +98,9 @@ Faire comprendre en quelques secondes :
    avec 5ᵉ carte pleine largeur pour éviter l'orpheline. Desktop ≥1024px :
    grille asymétrique 3+2 centrée.
 
-8. **FAQ éditoriale**
-   - questions réellement utiles ;
-   - réponses courtes puis approfondissement ;
-   - ne pas ajouter de balisage FAQ dans le seul but d’obtenir un résultat enrichi Google.
-
-9. **CTA final** — livré par `HomeCallToAction.vue` (Phase 5D)
-   Section ancrée `#contact`, huitième et dernière de l'accueil. Verbatim :
+8. **CTA final** — livré par `HomeCallToAction.vue` (Phase 5D)
+   Section ancrée `#contact`, huitième section de l'accueil, immédiatement
+   suivie de la FAQ éditoriale (cf. §9 et DEV-060). Verbatim :
    eyebrow `Parlons de votre projet`, H2 `Construisons une présence
    digitale à la hauteur de votre entreprise.`, paragraphe `Un premier
    échange nous permettra de comprendre votre besoin, de clarifier les
@@ -123,6 +119,16 @@ Faire comprendre en quelques secondes :
 
    Le formulaire de contact complet (validation serveur, anti-spam,
    e-mail transactionnel) est traité en Phase 6.
+
+9. **FAQ éditoriale** — livrée par `HomeFaq.vue` (DEV-060)
+   Section ancrée `#faq`, neuvième et dernière section de l'accueil, juste
+   avant le footer du layout. Sept questions-réponses natives
+   `<details>/<summary>`, groupe exclusif, première réponse ouverte,
+   clavier-accessible, responsive 320–1440 px, neutralisation
+   `prefers-reduced-motion`.
+   - questions réellement utiles ;
+   - réponses courtes puis approfondissement ;
+   - ne pas ajouter de balisage FAQ dans le seul but d’obtenir un résultat enrichi Google.
 
 ### H1 de travail
 

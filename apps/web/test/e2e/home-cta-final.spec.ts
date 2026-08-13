@@ -18,7 +18,9 @@ import { openMobileNavigation } from './support/mobile-nav'
 //
 // Cette suite couvre :
 //   - SSR : ancre, eyebrow, H2, paragraphe verbatim ;
-//   - position : la section reste la dernière fille directe de `.home-page` ;
+//   - position : la section CTA est l'avant-dernière fille directe de
+//     `.home-page`, immédiatement suivie de `#faq` (DEV-060 : `HomeFaq` ferme
+//     désormais le contenu éditorial, juste avant le footer du layout) ;
 //   - absence de tout formulaire embarqué (il vit sur `/contact`) ;
 //   - un unique CTA visible dans la section, pointant sur `/contact` ;
 //   - CTA hero primaire, header desktop, footer et menu mobile → `/contact` ;
@@ -50,16 +52,23 @@ test.describe('/ (home) — CTA final #contact', () => {
     )
   })
 
-  test('the #contact section is the last direct child of .home-page', async ({
+  test('the #contact section is the second-to-last direct child of .home-page, immediately followed by #faq', async ({
     page,
   }) => {
+    // Depuis DEV-060, la FAQ éditoriale (`HomeFaq`, ancre `#faq`) ferme le
+    // contenu de l'accueil. Le CTA final conserve son ancre `#contact` mais
+    // n'est plus la dernière section : il est désormais l'avant-dernière,
+    // immédiatement suivi de la FAQ. `home-sections-secondary.spec.ts`
+    // verrouille l'ordre complet des 9 sections ; on se contente ici de
+    // verrouiller le voisinage direct CTA → FAQ.
     await page.goto('/')
-    const lastSectionId = await page.evaluate(() => {
+    const trailingIds = await page.evaluate(() => {
       const sections = document.querySelectorAll('main .home-page > section')
+      const secondToLast = sections[sections.length - 2] as HTMLElement | undefined
       const last = sections[sections.length - 1] as HTMLElement | undefined
-      return last?.id ?? null
+      return { secondToLast: secondToLast?.id ?? null, last: last?.id ?? null }
     })
-    expect(lastSectionId).toBe('contact')
+    expect(trailingIds).toEqual({ secondToLast: 'contact', last: 'faq' })
   })
 
   test('exposes exactly one H2 with the exact editorial title', async ({ page }) => {
