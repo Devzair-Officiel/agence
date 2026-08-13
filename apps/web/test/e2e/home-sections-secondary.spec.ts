@@ -13,7 +13,7 @@ import { expect, test } from '@playwright/test'
 // `prefers-reduced-motion`. Aucune route inexistante n'est atteinte.
 
 test.describe('/ (home) — sections secondaires Phase 5C', () => {
-  test('renders the eight sections in the expected editorial order', async ({
+  test('renders the nine sections in the expected editorial order', async ({
     page,
   }) => {
     await page.goto('/')
@@ -23,9 +23,8 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       ) as HTMLElement[]
       return nodes.map((section) => section.className.split(/\s+/)[0])
     })
-    // Ordre éditorial complet — la 8e section CTA final est ajoutée en
-    // Phase 5D (ancre `#contact`). Toute nouvelle section devra être posée
-    // AVANT `home-cta` (celui-ci ferme la page).
+    // La FAQ ferme désormais le contenu éditorial, juste avant le footer du
+    // layout. Le CTA conserve son ancre historique `#contact`.
     expect(orderedSections).toEqual([
       'home-hero',
       'home-problems',
@@ -35,7 +34,48 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       'home-process',
       'home-trust',
       'home-cta',
+      'home-faq',
     ])
+  })
+
+  test('renders the FAQ as seven native disclosures immediately before the footer', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const faq = page.locator('section#faq')
+
+    await expect(faq).toHaveCount(1)
+    await expect(faq.locator('details')).toHaveCount(7)
+    await expect(faq.locator('summary')).toHaveCount(7)
+
+    const lastMainSection = page.locator('main .home-page > section').last()
+    await expect(lastMainSection).toHaveAttribute('id', 'faq')
+    await expect(page.locator('footer.site-footer')).toHaveCount(1)
+  })
+
+  test('the FAQ accordion opens a selected answer and closes the previous one', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const items = page.locator('#faq details')
+
+    await expect(items.nth(0)).toHaveAttribute('open', '')
+    await expect(items.nth(1)).not.toHaveAttribute('open', '')
+
+    await items
+      .nth(1)
+      .getByText(
+        'Pouvez-vous prendre en charge un projet digital dans sa globalité ?',
+      )
+      .click()
+
+    await expect(items.nth(0)).not.toHaveAttribute('open', '')
+    await expect(items.nth(1)).toHaveAttribute('open', '')
+    await expect(
+      items.nth(1).getByText(
+        'L’objectif est de construire un ensemble cohérent plutôt que de traiter séparément le site, l’image et la visibilité de l’entreprise.',
+      ),
+    ).toBeVisible()
   })
 
   test('exposes exactly one H1 and adds three new H2 (case / process / trust)', async ({

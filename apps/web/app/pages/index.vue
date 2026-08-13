@@ -2,6 +2,7 @@
 import HomeCallToAction from "~/components/home/HomeCallToAction.vue"
 import HomeConnectedApproach from "~/components/home/HomeConnectedApproach.vue"
 import HomeExpertisePillars from "~/components/home/HomeExpertisePillars.vue"
+import HomeFaq from "~/components/home/HomeFaq.vue"
 import HomeFeaturedCaseStudy from "~/components/home/HomeFeaturedCaseStudy.vue"
 import HomeHero from "~/components/home/HomeHero.vue"
 import HomeProblems from "~/components/home/HomeProblems.vue"
@@ -24,8 +25,8 @@ import HomeTrust from "~/components/home/HomeTrust.vue"
  *   7. Pourquoi Devzair   (HomeTrust)
  *   8. CTA final          (HomeCallToAction, ancre `#contact` → renvoie sur
  *                        la page dédiée `/contact` où vit le formulaire)
- *
- * Sections différées : FAQ éditoriale (Phase 6+).
+ *   9. FAQ                (HomeFaq, ancre `#faq`, dernière section avant le
+ *                        footer du layout)
  */
 
 usePageSeo({
@@ -47,5 +48,6 @@ usePageSeo({
     <HomeProcess />
     <HomeTrust />
     <HomeCallToAction />
+    <HomeFaq />
   </div>
 </template>
