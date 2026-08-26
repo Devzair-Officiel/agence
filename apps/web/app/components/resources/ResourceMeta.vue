@@ -3,6 +3,7 @@ import { computed } from "vue"
 import type { ArticleAuthor } from "~/types/editorial"
 import { expertisePillars } from "~/config/expertise-pillars"
 import { expertisePages } from "~/config/expertise-pages"
+import { formatEditorialDate } from "~/utils/editorial-date"
 
 /**
  * Bandeau de métadonnées d'un article éditorial.
@@ -35,26 +36,19 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-})
-
 interface ExpertiseLink {
   readonly id: string
   readonly label: string
   readonly route: string | null
 }
 
-function formatDate(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  return DATE_FORMATTER.format(date)
-}
-
-const publishedLabel = computed(() => formatDate(props.publishedAt))
-const updatedLabel = computed(() => formatDate(props.updatedAt))
+// Les deux dates sont formatées via `formatEditorialDate` : le TZ
+// `Europe/Paris` y est explicite, ce qui rend le SSR (Docker `UTC`) et
+// l'hydratation client (navigateur en heure locale) déterministes et
+// évite le warning « Hydration text content mismatch » sur les ISO à
+// cheval sur minuit UTC. Voir `app/utils/editorial-date.ts`.
+const publishedLabel = computed(() => formatEditorialDate(props.publishedAt))
+const updatedLabel = computed(() => formatEditorialDate(props.updatedAt))
 const showUpdated = computed(() => props.updatedAt !== props.publishedAt)
 
 const expertiseLinks = computed<readonly ExpertiseLink[]>(() => {

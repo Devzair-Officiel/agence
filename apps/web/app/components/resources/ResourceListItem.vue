@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { ArticleSummary } from "~/types/editorial"
+import { formatEditorialDate } from "~/utils/editorial-date"
 
 /**
  * Carte d'une entrée dans la liste `/ressources`.
@@ -25,19 +26,14 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-})
-
 const href = computed(() => `/ressources/${props.article.slug}`)
 
-const publishedLabel = computed(() => {
-  const date = new Date(props.article.publishedAt)
-  if (Number.isNaN(date.getTime())) return props.article.publishedAt
-  return DATE_FORMATTER.format(date)
-})
+// La date lisible est calée sur `Europe/Paris` via `formatEditorialDate`
+// pour garantir un rendu identique côté serveur (Docker, TZ système `UTC`)
+// et côté client (navigateur). Voir `app/utils/editorial-date.ts`.
+const publishedLabel = computed(() =>
+  formatEditorialDate(props.article.publishedAt),
+)
 </script>
 
 <template>

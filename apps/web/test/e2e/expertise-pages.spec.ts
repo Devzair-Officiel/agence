@@ -311,6 +311,59 @@ test.describe("Résolution stricte des slugs et sitemap", () => {
   })
 })
 
+test.describe("Hydratation SSR ↔ client sur /expertises/concevoir", () => {
+  // Garde-fou anti-régression pour un bug historique de mismatch éditorial
+  // (dates formatées sans `timeZone`) : le SSR (Docker/Nitro en `UTC`) et
+  // le client (navigateur en `Europe/Paris`) produisaient deux textes
+  // différents pour un même ISO à cheval sur minuit UTC, ce que Vue
+  // signale par un warning « Hydration text content mismatch » ou
+  // « Hydration completed but contains mismatches ».
+  //
+  // Méthode : brancher les listeners AVANT `page.goto` (sinon les
+  // premiers warnings émis pendant l'hydratation sont perdus), attendre
+  // le marqueur `data-hydrated="true"` posé par `SiteHeader.vue` puis
+  // `networkidle` pour laisser tous les composants finir leur hydratation,
+  // et échouer si un seul message contient un signal de mismatch.
+  test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({
+    page,
+  }) => {
+    const hydrationSignals: string[] = []
+    const capture = (message: string) => {
+      if (
+        message.includes("Hydration") ||
+        message.includes("hydration mismatch") ||
+        message.includes("contains mismatches")
+      ) {
+        hydrationSignals.push(message)
+      }
+    }
+    page.on("console", (msg) => {
+      if (msg.type() === "warning" || msg.type() === "error") {
+        capture(msg.text())
+      }
+    })
+    page.on("pageerror", (err) => capture(err.message))
+
+    await page.goto("/expertises/concevoir", { waitUntil: "networkidle" })
+    // Le marqueur `data-hydrated="true"` est posé dans `onMounted` par
+    // `SiteHeader.vue`. Sur viewport desktop le bouton menu mobile est
+    // masqué par CSS (`display: none`), donc `toBeVisible` échouerait ;
+    // on attend uniquement l'attribut, qui est indépendant de la
+    // visibilité et signale la fin d'hydratation du header.
+    const hydrationMarker = page.locator(
+      'button[aria-controls="mobile-navigation"]',
+    )
+    await expect(hydrationMarker).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    })
+
+    expect(
+      hydrationSignals,
+      `Vue a signalé un mismatch d'hydratation :\n${hydrationSignals.join("\n")}`,
+    ).toEqual([])
+  })
+})
+
 test.describe("Direction propre à /expertises/concevoir (Digital Blueprint)", () => {
   test("expose les cinq étapes de la méthode dans l'ordre exact", async ({
     request,
