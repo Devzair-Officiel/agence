@@ -1,25 +1,88 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from "vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
+import HomeCaseCard from "~/components/home/HomeCaseCard.vue"
+import { caseStudies } from "~/config/case-studies"
 
 /**
- * Section « Réalisations » — état honnête.
+ * Section « Réalisations » — vitrine home, format carrousel.
  *
- * Aucun projet Devzair n'est aujourd'hui documenté avec l'ensemble des
- * éléments exigés par `docs/01-CONTENT.md §7.6` (client autorisé, contexte,
- * résultats mesurables, méthode de mesure, période, visuels autorisés).
- * L'AGENTS.md rule 1 interdit d'inventer un client, un résultat ou un visuel.
+ * Un seul projet visible à la fois. Navigation :
+ *   - défilement horizontal natif (touch, molette horizontale, clavier
+ *     via le focus des boutons) grâce à `scroll-snap-type: x mandatory` ;
+ *   - trio prev · pagination · next sous le carrousel (chevrons SVG,
+ *     puces cliquables).
  *
- * Cette section publie donc la version « en préparation » validée par la
- * politique éditoriale Phase 5C : eyebrow, titre, paragraphe explicatif,
- * ancre `#realisations` opérationnelle. Ni faux bouton « Voir toutes les
- * réalisations », ni faux chiffre, ni skeleton loader. Le CTA hero
- * « Découvrir nos réalisations » atterrit ici et l'utilisateur comprend
- * immédiatement l'état réel.
+ * Les données viennent exclusivement de `app/config/case-studies.ts` —
+ * aucun contenu éditorial dupliqué ici. AGENTS.md rule 1 : seuls les
+ * projets réellement livrés avec accord client sont publiés.
  *
- * Le jour où DEV-003 sera livré, on remplacera le bloc `honest-state` par
- * la variante détaillée sans changer l'ancre ni le titre externe.
+ * Accessibilité :
+ *   - conteneur `aria-roledescription="carousel"` ;
+ *   - chaque slide `aria-roledescription="slide"` + `aria-label="i sur N"` ;
+ *   - la piste est un `<ul>` sémantique — les slides restent listables
+ *     par les lecteurs d'écran quelle que soit la position visuelle ;
+ *   - les slides inactives reçoivent `inert` + `aria-hidden` pour éviter
+ *     que le focus atterrisse hors du viewport lors d'une tabulation ;
+ *   - les boutons prev / next sont désactivés en début / fin (pas de wrap).
+ *
+ * L'ancre `id="realisations"` reste la cible du CTA hero et du lien de
+ * navigation « Réalisations ».
  */
+
+const track = ref<HTMLElement | null>(null)
+const current = ref(0)
+const total = caseStudies.length
+
+let observer: IntersectionObserver | null = null
+
+function goTo(index: number) {
+  const el = track.value
+  if (!el) return
+  const clamped = Math.max(0, Math.min(total - 1, index))
+  const slide = el.children.item(clamped) as HTMLElement | null
+  if (!slide) return
+  el.scrollTo({ left: slide.offsetLeft, behavior: "smooth" })
+}
+
+function prev() {
+  goTo(current.value - 1)
+}
+
+function next() {
+  goTo(current.value + 1)
+}
+
+onMounted(() => {
+  const el = track.value
+  if (!el || typeof IntersectionObserver === "undefined") return
+
+  // Un IntersectionObserver par slide met à jour l'index courant sans
+  // scroll listener bruyant : le navigateur nous prévient dès qu'une
+  // slide atteint > 50 % de visibilité dans la piste horizontale.
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          const index = Number(
+            (entry.target as HTMLElement).dataset.slideIndex,
+          )
+          if (!Number.isNaN(index)) current.value = index
+        }
+      }
+    },
+    { root: el, threshold: [0.5, 0.75, 1] },
+  )
+  for (const child of Array.from(el.children)) {
+    observer.observe(child)
+  }
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
+})
 </script>
 
 <template>
@@ -28,7 +91,7 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
     class="home-case"
     aria-labelledby="home-case-title"
   >
-    <BaseContainer class="home-case__container">
+    <BaseContainer width="wide" class="home-case__container">
       <header class="home-case__intro">
         <BaseEyebrow class="home-case__eyebrow">Réalisations</BaseEyebrow>
         <h2 id="home-case-title" class="home-case__title">
@@ -41,26 +104,169 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
         </p>
       </header>
 
-      <article
-        class="home-case__placeholder"
-        aria-labelledby="home-case-placeholder-title"
+      <div
+        class="home-case__carousel"
+        role="region"
+        aria-roledescription="carrousel"
+        aria-labelledby="home-case-title"
       >
-        <BaseEyebrow class="home-case__placeholder-eyebrow">
-          Études de cas en préparation
-        </BaseEyebrow>
-        <h3
-          id="home-case-placeholder-title"
-          class="home-case__placeholder-title"
+        <div class="home-case__viewport">
+          <ul
+            ref="track"
+            class="home-case__list"
+            aria-label="Réalisations Devzair"
+          >
+          <li
+            v-for="(study, index) in caseStudies"
+            :key="study.id"
+            class="home-case__item"
+            :data-slide-index="index"
+            :aria-hidden="index === current ? undefined : 'true'"
+            :inert="index === current ? undefined : true"
+            aria-roledescription="diapositive"
+            :aria-label="`${index + 1} sur ${total} — ${study.name}`"
+          >
+          <article
+            class="home-case__composition"
+            :aria-labelledby="`case-${study.id}-title`"
+          >
+            <div class="home-case__visual">
+              <HomeCaseCard :study="study" />
+            </div>
+
+            <div class="home-case__content">
+              <p class="home-case__project-eyebrow">
+                Projet Devzair · {{ study.name }}
+              </p>
+              <h3
+                :id="`case-${study.id}-title`"
+                class="home-case__project-title"
+              >
+                {{ study.name }}
+              </h3>
+              <p class="home-case__project-summary">
+                {{ study.longDescription }}
+              </p>
+              <ul class="home-case__tags" aria-label="Interventions Devzair">
+                <li
+                  v-for="tag in study.tags"
+                  :key="tag"
+                  class="home-case__tag"
+                >
+                  {{ tag }}
+                </li>
+              </ul>
+              <dl class="home-case__meta">
+                <div class="home-case__meta-row">
+                  <dt class="home-case__meta-label">Catégorie</dt>
+                  <dd class="home-case__meta-value">{{ study.category }}</dd>
+                </div>
+                <div v-if="study.year" class="home-case__meta-row">
+                  <dt class="home-case__meta-label">Année</dt>
+                  <dd class="home-case__meta-value">{{ study.year }}</dd>
+                </div>
+              </dl>
+              <NuxtLink
+                v-if="study.to"
+                :to="study.to"
+                class="home-case__cta"
+              >
+                Voir le projet
+                <span aria-hidden="true" class="home-case__cta-arrow">→</span>
+              </NuxtLink>
+              <a
+                v-else-if="study.href"
+                :href="study.href"
+                class="home-case__cta"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Voir le site
+                <span class="sr-only"> (nouvelle fenêtre)</span>
+                <span aria-hidden="true" class="home-case__cta-arrow">↗</span>
+              </a>
+            </div>
+          </article>
+          </li>
+          </ul>
+        </div>
+
+        <nav
+          v-if="total > 1"
+          class="home-case__controls"
+          aria-label="Navigation entre les réalisations"
         >
-          Nos réalisations détaillées seront bientôt disponibles.
-        </h3>
-        <p class="home-case__placeholder-description">
-          Nous préparons la publication d'études de cas détaillées, avec
-          l'accord de nos clients et des indicateurs vérifiables. Nous
-          préférons prendre le temps d'écrire des cas honnêtes plutôt que
-          d'aligner des logos ou des chiffres invérifiables.
-        </p>
-      </article>
+          <button
+            type="button"
+            class="home-case__nav-btn home-case__nav-btn--prev"
+            :disabled="current === 0"
+            aria-label="Réalisation précédente"
+            @click="prev"
+          >
+            <svg
+              class="home-case__nav-icon"
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M15 6l-6 6 6 6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.25"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+
+          <ol class="home-case__pagination">
+            <li
+              v-for="(study, index) in caseStudies"
+              :key="study.id"
+              class="home-case__pagination-item"
+            >
+              <button
+                type="button"
+                class="home-case__pagination-btn"
+                :aria-current="index === current ? 'true' : undefined"
+                :aria-label="`Aller à la réalisation ${study.name}`"
+                @click="goTo(index)"
+              >
+                <span class="home-case__pagination-dot" aria-hidden="true" />
+              </button>
+            </li>
+          </ol>
+
+          <button
+            type="button"
+            class="home-case__nav-btn home-case__nav-btn--next"
+            :disabled="current === total - 1"
+            aria-label="Réalisation suivante"
+            @click="next"
+          >
+            <svg
+              class="home-case__nav-icon"
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M9 6l6 6-6 6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.25"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </nav>
+      </div>
     </BaseContainer>
   </section>
 </template>
@@ -70,12 +276,21 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
   background-color: var(--background-primary);
   color: var(--text-primary);
   padding-block: var(--space-16);
+  /*
+   * Clip horizontal uniquement : borne l'overlay décoratif du pot
+   * (voir `.case-card__overlay`) qui déborde vers la droite pour créer
+   * son plan avant. `overflow-x: clip` évite la scrollbar horizontale
+   * qu'un `overflow-x: hidden` provoquerait, tout en laissant l'axe
+   * vertical libre pour l'ombre portée du pot.
+   */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .home-case__container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
+  gap: var(--space-12);
 }
 
 .home-case__intro {
@@ -109,53 +324,368 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
   max-width: 60ch;
 }
 
-.home-case__placeholder {
+.home-case__carousel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-8);
-  background-color: var(--surface-primary);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--radius-md);
-  max-width: 60rem;
+  gap: var(--space-6);
+  min-width: 0;
 }
 
-.home-case__placeholder-eyebrow {
-  margin-bottom: var(--space-1);
+/*
+ * Viewport = simple wrapper de la piste. Les flèches prev/next vivent
+ * désormais dans `.home-case__controls` sous le carrousel — plus rien
+ * n'est ancré ici en absolu.
+ */
+.home-case__viewport {
+  min-width: 0;
 }
 
-.home-case__placeholder-title {
+/*
+ * Piste horizontale : chaque enfant occupe 100 % de la largeur visible et
+ * s'aligne en `scroll-snap-align: start`. Le défilement natif (touch,
+ * molette horizontale, focus clavier des boutons prev/next) fait tout
+ * le travail — aucun listener JS de scroll n'est nécessaire. Une
+ * IntersectionObserver locale à la piste met à jour l'index courant
+ * pour synchroniser la pagination.
+ */
+.home-case__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  /*
+   * `position: relative` fait de la piste l'offsetParent de chaque
+   * slide → `slide.offsetLeft` retourne alors la position correcte à
+   * passer à `scrollTo()` dans `goTo()`. Sans ça, l'offset remonte
+   * jusqu'à un ancêtre positionné plus haut (voire le body) et la
+   * navigation par chevrons / pagination scrolle à la mauvaise position.
+   */
+  position: relative;
+  /*
+   * Piste = conteneur de scroll horizontal. `overflow-y: hidden` évite
+   * la scrollbar verticale que le spec CSS Overflow 3 impose dès que
+   * `overflow-x: auto` cohabite avec un `overflow-y: visible` (coerção
+   * en `auto`). Note : `overflow-y: clip` serait également coercé en
+   * `hidden`, donc `overflow-clip-margin` n'est pas exploitable ici —
+   * la respiration verticale du pot est gérée par le padding-bottom
+   * de `.case-card` (voir HomeCaseCard.vue), pas par l'overflow.
+   */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.home-case__list::-webkit-scrollbar {
+  display: none;
+}
+
+.home-case__item {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.home-case__composition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.home-case__visual {
+  min-width: 0;
+}
+
+.home-case__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.home-case__project-eyebrow {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+  margin: 0;
+}
+
+.home-case__project-title {
   font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading-medium);
-  font-size: clamp(1.125rem, 2vw, 1.375rem);
-  line-height: 1.3;
+  font-weight: var(--font-weight-heading);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
   margin: 0;
-  max-width: 34ch;
 }
 
-.home-case__placeholder-description {
+.home-case__project-summary {
   font-family: var(--font-family-body);
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-secondary);
   margin: 0;
-  max-width: 60ch;
+  max-width: 52ch;
+}
+
+.home-case__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.home-case__tag {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+  padding: 4px 10px;
+  border: 1px solid rgba(12, 91, 87, 0.35);
+  border-radius: var(--radius-pill);
+  background-color: rgba(12, 91, 87, 0.06);
+}
+
+.home-case__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+
+.home-case__meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-case__meta-label {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.home-case__meta-value {
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.home-case__cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.9375rem;
+  color: var(--action-on-primary);
+  background-color: var(--action-primary);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+  min-height: 44px;
+}
+
+.home-case__cta:hover {
+  background-color: var(--action-primary-hover);
+  transform: translateY(-1px);
+}
+
+.home-case__cta:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+}
+
+.home-case__cta-arrow {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.home-case__cta:hover .home-case__cta-arrow {
+  transform: translateX(3px);
+}
+
+/* Réservé au lecteur d'écran — même règle que le skip link. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Contrôles placés SOUS la piste : trio [prev · pagination · next].
+ * Le `<nav>` reste l'ancre sémantique pour les lecteurs d'écran ; le
+ * groupe est centré horizontalement pour se caler avec l'axe de la
+ * composition, quel que soit le breakpoint.
+ */
+.home-case__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+/*
+ * Flèches prev / next — chevrons SVG dans un pastille pleine couleur
+ * action. Choix appuyé (fond plein, ombre discrète, taille > touch min)
+ * pour affirmer la présence de la commande de navigation sous le
+ * carrousel.
+ *   - désactivées en bord de piste (pas de wrap) → contraste réduit ;
+ *   - `currentColor` sur le tracé SVG permet aux états hover / disabled
+ *     de piloter la couleur du chevron via `color`.
+ */
+.home-case__nav-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--action-primary);
+  color: var(--action-on-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out),
+    opacity var(--duration-base) var(--ease-out);
+}
+
+.home-case__nav-icon {
+  display: block;
+  width: 1.375rem;
+  height: 1.375rem;
+  pointer-events: none;
+}
+
+.home-case__nav-btn:hover:not(:disabled) {
+  background-color: var(--action-primary-hover);
+  transform: translateY(-1px);
+}
+
+.home-case__nav-btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+}
+
+.home-case__nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.home-case__pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-case__pagination-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /*
+   * Cible cliquable ≥ 44 px conservée (WCAG 2.2), la puce visuelle est
+   * plus petite et centrée grâce au padding transparent du bouton.
+   */
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.home-case__pagination-btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: 50%;
+}
+
+.home-case__pagination-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--border-strong);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.home-case__pagination-btn:hover .home-case__pagination-dot {
+  background-color: var(--action-primary-hover);
+}
+
+.home-case__pagination-btn[aria-current="true"] .home-case__pagination-dot {
+  background-color: var(--action-primary);
+  transform: scale(1.35);
 }
 
 @media (min-width: 768px) {
   .home-case {
     padding-block: var(--space-20);
   }
-
-  .home-case__placeholder {
-    padding: var(--space-10) var(--space-12);
-  }
 }
 
 @media (min-width: 1024px) {
   .home-case {
     padding-block: var(--space-24);
+  }
+
+  .home-case__composition {
+    display: grid;
+    grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+    align-items: center;
+    gap: var(--space-12);
+  }
+
+  .home-case__content {
+    gap: var(--space-5);
+  }
+}
+
+@media (min-width: 1440px) {
+  .home-case__composition {
+    gap: var(--space-16);
   }
 }
 </style>

@@ -81,10 +81,23 @@ describe("HomeExpertisePillars", () => {
     expect(srOnly.text()).toContain("horizontalement")
   })
 
-  it("does not introduce interactive controls (cards not focusable)", () => {
+  it("wraps each card title in a link to /expertises/{id} (stretched-link pattern)", () => {
     const wrapper = mount(HomeExpertisePillars)
+    // Aucun bouton, aucun tabindex custom : la carte reste sémantiquement
+    // un `<li>` et le seul élément interactif est le lien porté par le titre.
     expect(wrapper.findAll("button")).toHaveLength(0)
-    expect(wrapper.findAll("a")).toHaveLength(0)
     expect(wrapper.findAll("[tabindex]")).toHaveLength(0)
+
+    const links = wrapper.findAll(".home-pillars__card-link")
+    expect(links).toHaveLength(expertisePillars.length)
+
+    const sorted = [...expertisePillars].sort((a, b) => a.order - b.order)
+    for (const [index, pillar] of sorted.entries()) {
+      const link = links[index]!
+      expect(link.attributes("href")).toBe(`/expertises/${pillar.id}`)
+      // Le nom accessible du lien reste le libellé complet du pôle — court
+      // et unique, contrairement au contenu de toute la carte.
+      expect(link.text()).toBe(pillar.label)
+    }
   })
 })

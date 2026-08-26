@@ -91,24 +91,66 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
     expect(h2s).toContain('Ce qui fait la différence, concrètement.')
   })
 
-  test('the featured case study section publishes the honest-state placeholder', async ({
+  test('the featured case study section publishes the Nidemiel realisation', async ({
     page,
   }) => {
     await page.goto('/')
     const section = page.locator('section#realisations')
     await expect(section).toHaveCount(1)
+    // Le projet Nidemiel est publié comme première réalisation vitrine.
     await expect(
-      section.getByText('Études de cas en préparation'),
+      section.getByRole('heading', { level: 3, name: 'Nidemiel' }),
     ).toBeVisible()
+    // Visuel principal du projet, alt descriptif (non décoratif).
+    const projectImage = section.locator('img[src="/portfolio/nidemiel.png"]')
+    await expect(projectImage).toHaveCount(1)
+    await expect(projectImage).toHaveAttribute('alt', /Nidemiel/)
+    // Overlay pot de miel : purement décoratif, aria-hidden + alt vide.
+    const overlay = section.locator(
+      'img[src="/portfolio/nidemiel-honey-jar.png"]',
+    )
+    await expect(overlay).toHaveCount(1)
+    await expect(overlay).toHaveAttribute('alt', '')
+    await expect(overlay).toHaveAttribute('aria-hidden', 'true')
+    // La section est un carrousel : les seuls boutons sont les contrôles
+    // de navigation (prev / next + pagination). Aucun bouton n'est
+    // exposé DANS le contenu d'une réalisation.
     await expect(
-      section.getByRole('heading', {
-        level: 3,
-        name: 'Nos réalisations détaillées seront bientôt disponibles.',
-      }),
-    ).toBeVisible()
-    // Aucun bouton ni lien : rien qui redirige vers une route inexistante.
-    await expect(section.locator('a')).toHaveCount(0)
-    await expect(section.locator('button')).toHaveCount(0)
+      section.locator('.home-case__composition button'),
+    ).toHaveCount(0)
+    // Aucun lien vers une route inexistante (les projets sans `to` n'ont
+    // pas de page détail publiée — AGENTS.md rule 1).
+    const anchorHrefs = await section
+      .locator('a')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href')))
+    for (const href of anchorHrefs) {
+      expect(href).not.toBe('#')
+      expect(href).not.toBe('')
+    }
+  })
+
+  test('the case study carousel exposes prev/next and one pagination button per project', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const section = page.locator('section#realisations')
+    // Flèches posées aux extrémités latérales du viewport (hors du <nav>
+    // sémantique qui ne porte que la pagination).
+    const prev = section.locator('.home-case__nav-btn--prev')
+    const next = section.locator('.home-case__nav-btn--next')
+    await expect(prev).toHaveCount(1)
+    await expect(next).toHaveCount(1)
+    // Pagination sémantique : un <nav> distinct contenant la liste de puces.
+    const nav = section.locator(
+      'nav[aria-label="Navigation entre les réalisations"]',
+    )
+    await expect(nav).toHaveCount(1)
+    // Le nombre de puces reflète le nombre de projets configurés.
+    const dotCount = await nav.locator('.home-case__pagination-btn').count()
+    expect(dotCount).toBeGreaterThanOrEqual(2)
+    // En début de piste, le bouton précédent est désactivé, le suivant actif.
+    await expect(prev).toBeDisabled()
+    await expect(next).toBeEnabled()
   })
 
   test('renders exactly six process steps in an ordered list', async ({
@@ -184,12 +226,12 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
     const response = await request.get('/')
     expect(response.status()).toBe(200)
     const html = await response.text()
-    // Case study.
+    // Case study : titre édito + réalisation Nidemiel réelle rendue en SSR.
     expect(html).toContain(
       'Des solutions concrètes, pas seulement de belles interfaces.',
     )
-    expect(html).toContain('Études de cas en préparation')
-    expect(html).toContain('Nos réalisations détaillées seront bientôt disponibles.')
+    expect(html).toContain('Nidemiel')
+    expect(html).toContain('/portfolio/nidemiel.png')
     // Method — 6 labels.
     for (const label of [
       'Découverte',

@@ -35,14 +35,14 @@ interface Props {
   description?: string
   primary: CalloutLink
   secondary?: CalloutLink
-  tone?: "inverse" | "accent"
+  tone?: "light" | "inverse" | "accent"
 }
 
 const props = withDefaults(defineProps<Props>(), {
   eyebrow: undefined,
   description: undefined,
   secondary: undefined,
-  tone: "inverse",
+  tone: "light",
 })
 
 const generatedId = useId()
@@ -59,7 +59,7 @@ const titleId = computed(() => `editorial-callout-title-${generatedId}`)
       <div class="editorial-callout__text">
         <BaseEyebrow
           v-if="eyebrow"
-          tone="inverse"
+          :tone="tone === 'light' ? 'default' : 'inverse'"
           class="editorial-callout__eyebrow"
         >
           {{ eyebrow }}
@@ -96,7 +96,31 @@ const titleId = computed(() => `editorial-callout-title-${generatedId}`)
 
 <style scoped>
 .editorial-callout {
-  padding-block: var(--space-12) var(--space-14);
+  padding-block: var(--space-14) var(--space-16);
+}
+
+/*
+ * Tone `light` — fond sand chaud qui tranche nettement avec le footer
+ * navy-deep (contraste de luminosité, pas juste de teinte). Au lieu d'une
+ * bordure supérieure pleine largeur, on rend un court trait centré via un
+ * pseudo-élément : marqueur éditorial discret, sans effet de « boîte ».
+ */
+.editorial-callout[data-tone="light"] {
+  position: relative;
+  background-color: var(--color-sand);
+  color: var(--text-primary);
+}
+
+.editorial-callout[data-tone="light"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 49rem;
+  max-width: calc(100% - 2rem);
+  height: 2px;
+  background-color: rgba(12, 91, 87, 0.35);
 }
 
 .editorial-callout[data-tone="inverse"] {
@@ -133,7 +157,7 @@ const titleId = computed(() => `editorial-callout-title-${generatedId}`)
   font-size: clamp(1.5rem, 3vw, 2rem);
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--text-inverse);
+  color: inherit;
   margin: 0;
   max-width: 28ch;
 }
@@ -142,9 +166,17 @@ const titleId = computed(() => `editorial-callout-title-${generatedId}`)
   font-family: var(--font-family-body);
   font-size: clamp(0.9375rem, 1.2vw, 1rem);
   line-height: 1.6;
-  color: var(--text-inverse-muted);
   margin: 0;
   max-width: 56ch;
+}
+
+.editorial-callout[data-tone="light"] .editorial-callout__description {
+  color: var(--text-secondary);
+}
+
+.editorial-callout[data-tone="inverse"] .editorial-callout__description,
+.editorial-callout[data-tone="accent"] .editorial-callout__description {
+  color: var(--text-inverse-muted);
 }
 
 .editorial-callout__actions {
@@ -153,15 +185,28 @@ const titleId = computed(() => `editorial-callout-title-${generatedId}`)
   gap: var(--space-3);
 }
 
-.editorial-callout__actions :deep(.base-button[data-variant="secondary"]) {
+/*
+ * Overrides du bouton secondaire réservés aux tones sombres — sur `light`,
+ * la variante `secondary` par défaut du BaseButton (contour discret, texte
+ * sombre) fonctionne telle quelle.
+ */
+.editorial-callout[data-tone="inverse"] .editorial-callout__actions :deep(.base-button[data-variant="secondary"]),
+.editorial-callout[data-tone="accent"] .editorial-callout__actions :deep(.base-button[data-variant="secondary"]) {
   color: var(--color-cream);
   border-color: rgba(244, 241, 234, 0.28);
 }
 
-.editorial-callout__actions :deep(.base-button[data-variant="secondary"]:hover) {
+.editorial-callout[data-tone="inverse"] .editorial-callout__actions :deep(.base-button[data-variant="secondary"]:hover),
+.editorial-callout[data-tone="accent"] .editorial-callout__actions :deep(.base-button[data-variant="secondary"]:hover) {
   background-color: var(--color-cream);
   color: var(--color-navy);
   border-color: var(--color-cream);
+}
+
+@media (min-width: 768px) {
+  .editorial-callout {
+    padding-block: var(--space-16) var(--space-20);
+  }
 }
 
 @media (min-width: 900px) {

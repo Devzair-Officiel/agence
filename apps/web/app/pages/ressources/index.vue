@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
+import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
-import EditorialHero from "~/components/editorial/EditorialHero.vue"
 import ResourceEmptyState from "~/components/resources/ResourceEmptyState.vue"
 import ResourceExpertiseFilter from "~/components/resources/ResourceExpertiseFilter.vue"
 import ResourceListItem from "~/components/resources/ResourceListItem.vue"
 import ResourcePagination from "~/components/resources/ResourcePagination.vue"
+import ResourcesPointerTrail from "~/components/resources/ResourcesPointerTrail.vue"
 import { EXPERTISE_IDS, expertisePages } from "~/config/expertise-pages"
 import { useResourceList } from "~/composables/useResources"
 
@@ -49,7 +50,6 @@ import { useResourceList } from "~/composables/useResources"
 const PER_PAGE = 6
 
 const route = useRoute()
-const router = useRouter()
 
 // Parse `?page=` — on refuse tout ce qui n'est pas un entier ≥ 2. Sinon
 // on rebascule sur la page 1. Une valeur explicite `=1` déclenche la
@@ -76,7 +76,7 @@ function parseRequestedPage(): number {
   return parsed
 }
 
-const requestedPage = parseRequestedPage()
+const requestedPage = computed(parseRequestedPage)
 
 // Le filtre expertise est validé strictement contre l'allowlist. Une valeur
 // inconnue devient 404 : mieux vaut refuser explicitement une URL fabriquée
@@ -103,18 +103,18 @@ function parseRequestedExpertise(): string | null {
   return asString
 }
 
-const requestedExpertise = parseRequestedExpertise()
+const requestedExpertise = computed(parseRequestedExpertise)
 
 // Redirect canonique `?page=1` → `/ressources` (correction 6). Préserve
 // le filtre expertise s'il est présent.
-if (requestedPage === 1 && route.query.page !== undefined) {
-  const target = requestedExpertise
-    ? `/ressources?expertise=${requestedExpertise}`
+if (requestedPage.value === 1 && route.query.page !== undefined) {
+  const target = requestedExpertise.value
+    ? `/ressources?expertise=${requestedExpertise.value}`
     : "/ressources"
   await navigateTo(target, { redirectCode: 301 })
 }
 
-const { items, pagination } = await useResourceList({
+const { items, pagination, pending } = await useResourceList({
   page: requestedPage,
   perPage: PER_PAGE,
   expertise: requestedExpertise,
@@ -125,7 +125,10 @@ const { items, pagination } = await useResourceList({
 // transforme en 404 fatal — le canonical de la page N n'existe pas. Une
 // vue filtrée vide (total = 0) reste 200 (état valide, comme la liste
 // globale vide) : c'est le cas `isEmpty` géré plus bas.
-if (pagination.value.totalPages > 0 && requestedPage > pagination.value.totalPages) {
+if (
+  pagination.value.totalPages > 0 &&
+  requestedPage.value > pagination.value.totalPages
+) {
   throw createError({
     statusCode: 404,
     statusMessage: "Page introuvable",
@@ -134,8 +137,8 @@ if (pagination.value.totalPages > 0 && requestedPage > pagination.value.totalPag
 }
 
 const activeExpertisePage = computed(() =>
-  requestedExpertise
-    ? expertisePages.find((page) => page.id === requestedExpertise) ?? null
+  requestedExpertise.value
+    ? expertisePages.find((page) => page.id === requestedExpertise.value) ?? null
     : null,
 )
 
@@ -144,7 +147,9 @@ const activeExpertisePage = computed(() =>
 function buildPageHref(page: number): string {
   const params = new URLSearchParams()
   if (page > 1) params.set("page", String(page))
-  if (requestedExpertise) params.set("expertise", requestedExpertise)
+  if (requestedExpertise.value) {
+    params.set("expertise", requestedExpertise.value)
+  }
   const qs = params.toString()
   return qs ? `/ressources?${qs}` : "/ressources"
 }
@@ -153,7 +158,9 @@ const title = computed(() => {
   const base = activeExpertisePage.value
     ? `Ressources — ${activeExpertisePage.value.shortTitle}`
     : "Ressources"
-  return requestedPage === 1 ? base : `${base} — page ${requestedPage}`
+  return requestedPage.value === 1
+    ? base
+    : `${base} — page ${requestedPage.value}`
 })
 const description =
   "Nos analyses, méthodes et retours d'expérience sur le web, le design, les contenus et la visibilité — publiés au rythme de nos projets."
@@ -164,32 +171,62 @@ const description =
 //   - variantes filtrées ou paginées → `noindex, follow` : on ne les fait
 //     pas concurrencer la page canonique, mais on laisse le crawler suivre
 //     les liens vers les articles individuels (qui restent indexables).
-const isFiltered = computed(() => requestedExpertise !== null)
-const isPaginated = computed(() => requestedPage > 1)
+const isFiltered = computed(() => requestedExpertise.value !== null)
+const isPaginated = computed(() => requestedPage.value > 1)
 const shouldNoindex = computed(() => isFiltered.value || isPaginated.value)
+const robotsDirective = computed(() =>
+  shouldNoindex.value ? ("noindex, follow" as const) : undefined,
+)
 
 usePageSeo({
-  title: title.value,
+  title,
   description,
   path: "/ressources",
   type: "website",
-  robots: shouldNoindex.value ? "noindex, follow" : undefined,
+  robots: robotsDirective,
 })
 
 const isEmpty = computed(() => pagination.value.total === 0)
-
-void router
 </script>
 
 <template>
   <div class="resources-index">
-    <EditorialHero
-      eyebrow="Ressources"
-      title="Ce que nous apprenons, mis à disposition."
-      lead="Nous publions ici les analyses, méthodes et retours d'expérience qui ont émergé de nos projets. Aucune publication de remplissage : chaque ressource est écrite parce qu'elle avait quelque chose à documenter."
-    />
+    <!--
+      Hero éditorial spécifique aux ressources — fond cream (cohérent avec
+      les autres pages institutionnelles) avec une carte du monde en
+      pointillés en arrière-plan. L'image source est en dots blancs sur
+      fond noir : `filter: invert(1)` la retourne en dots sombres sur
+      blanc, puis `mix-blend-mode: multiply` fait disparaître le blanc
+      dans le cream et ne laisse voir que les dots. Un voile radial
+      allège les bords pour éviter tout effet « poster collé ».
+    -->
+    <section
+      class="resources-hero"
+      aria-labelledby="resources-hero-title"
+    >
+      <div class="resources-hero__backdrop" aria-hidden="true" />
+      <ResourcesPointerTrail />
+      <BaseContainer width="wide" class="resources-hero__container">
+        <BaseEyebrow class="resources-hero__eyebrow">
+          Ressources
+        </BaseEyebrow>
+        <h1 id="resources-hero-title" class="resources-hero__title">
+          Ce que nous apprenons,
+          <span class="resources-hero__title-emphasis">mis à disposition.</span>
+        </h1>
+        <p class="resources-hero__lead">
+          Nous publions ici les analyses, méthodes et retours d'expérience qui
+          ont émergé de nos projets. Aucune publication de remplissage : chaque
+          ressource est écrite parce qu'elle avait quelque chose à documenter.
+        </p>
+      </BaseContainer>
+    </section>
 
-    <section class="resources-index__section" aria-labelledby="resources-list-title">
+    <section
+      class="resources-index__section"
+      aria-labelledby="resources-list-title"
+      :aria-busy="pending"
+    >
       <BaseContainer class="resources-index__container">
         <header class="resources-index__header">
           <h2 id="resources-list-title" class="resources-index__title">
@@ -221,15 +258,31 @@ void router
         <ResourceEmptyState v-else-if="isEmpty" />
 
         <template v-else>
-          <ul class="resources-index__grid" role="list">
-            <li
-              v-for="article in items"
-              :key="article.id"
-              class="resources-index__grid-item"
-            >
-              <ResourceListItem :article="article" />
-            </li>
-          </ul>
+          <!--
+            Transition inter-pages : la clé sur `pagination.page` force
+            Vue à démonter/remonter le <ul>, ce qui déclenche le fade
+            croisé (mode `out-in` évite la superposition qui casserait
+            la mise en page grid). Le viewport `data-pending` grise
+            légèrement pendant le fetch pour indiquer que la nouvelle
+            page arrive, sans layout shift.
+          -->
+          <div class="resources-index__viewport" :data-pending="pending || undefined">
+            <Transition name="resources-page" mode="out-in">
+              <ul
+                :key="pagination.page"
+                class="resources-index__grid"
+                role="list"
+              >
+                <li
+                  v-for="article in items"
+                  :key="article.id"
+                  class="resources-index__grid-item"
+                >
+                  <ResourceListItem :article="article" />
+                </li>
+              </ul>
+            </Transition>
+          </div>
 
           <ResourcePagination
             :current-page="pagination.page"
@@ -254,6 +307,183 @@ void router
 .resources-index {
   display: flex;
   flex-direction: column;
+}
+
+/*
+ * Hero ressources — fond cream (cohérent avec les pages institutionnelles).
+ *   1. `__backdrop` : la carte du monde en pointillés sert de MASK
+ *      (image blanc / noir : blanc = visible). Le fond du backdrop est
+ *      peint en `--color-petrol` — les dots héritent donc directement
+ *      de la couleur de marque, aucune teinte parasite héritée du blend.
+ *      Deux masques combinés en `intersect` : la carte + un fondu radial
+ *      pour dissoudre les bords dans le cream.
+ *   2. `__container` : texte au-dessus, centré et respirant.
+ */
+.resources-hero {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - var(--site-header-height));
+  min-height: calc(100svh - var(--site-header-height));
+  overflow: hidden;
+  color: var(--text-primary);
+  background-color: var(--background-primary);
+  padding-block: var(--space-16) var(--space-16);
+}
+
+/*
+ * La carte occupe tout le premier écran, mais ne se termine pas sur une
+ * ligne horizontale. Ce voile reprend exactement le fond de la section
+ * suivante et dissout progressivement les pointillés dans le flux de page.
+ */
+.resources-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset-inline: 0;
+  bottom: -1px;
+  height: clamp(9rem, 28%, 18rem);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--background-primary) 100%
+  );
+  pointer-events: none;
+}
+
+.resources-hero__backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-devzair-blue);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+  -webkit-mask-image: url("/brand/world-dots.webp"),
+    radial-gradient(
+      ellipse 90% 95% at 50% 50%,
+      black 0%,
+      black 55%,
+      transparent 100%
+    );
+  mask-image: url("/brand/world-dots.webp"),
+    radial-gradient(
+      ellipse 90% 95% at 50% 50%,
+      black 0%,
+      black 55%,
+      transparent 100%
+    );
+  -webkit-mask-repeat: no-repeat, no-repeat;
+  mask-repeat: no-repeat, no-repeat;
+  -webkit-mask-position: center, center;
+  mask-position: center, center;
+  -webkit-mask-size: cover, cover;
+  mask-size: cover, cover;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  /*
+   * Modes distincts par couche :
+   *   - image (dots) → `luminance` : les pixels blancs deviennent visibles ;
+   *   - gradient radial → `alpha` : la couleur noire opaque = visible au
+   *     centre, `transparent` = caché sur les bords (fondu doux).
+   * Sans ceci, `luminance` sur le gradient rendrait `transparent` comme
+   * `rgba(0,0,0,0)` → luminance 0 → tout caché.
+   */
+  -webkit-mask-mode: luminance, alpha;
+  mask-mode: luminance, alpha;
+}
+
+.resources-hero__container {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+  max-width: 62rem;
+}
+
+/*
+ * Halo de lecture : la carte reste perceptible autour du contenu, tandis
+ * que sa densité baisse progressivement sous les titres et le paragraphe.
+ * Le masque radial évite l'apparence d'une carte rectangulaire rapportée.
+ */
+.resources-hero__container::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -4rem -2rem;
+  background-color: var(--background-primary);
+  opacity: 0.9;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 0%,
+    black 42%,
+    rgba(0, 0, 0, 0.78) 58%,
+    transparent 82%
+  );
+  mask-image: radial-gradient(
+    ellipse at center,
+    black 0%,
+    black 42%,
+    rgba(0, 0, 0, 0.78) 58%,
+    transparent 82%
+  );
+}
+
+.resources-hero__eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.resources-hero__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+.resources-hero__title-emphasis {
+  color: var(--color-petrol);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .resources-hero__title-emphasis {
+    background: linear-gradient(
+      120deg,
+      var(--color-petrol) 0%,
+      var(--color-devzair-blue) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+.resources-hero__lead {
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-size: clamp(1rem, 1.4vw, 1.0625rem);
+  line-height: 1.6;
+  color: var(--text-primary);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .resources-hero {
+    padding-block: var(--space-20) var(--space-20);
+  }
 }
 
 .resources-index__section {
@@ -309,6 +539,50 @@ void router
 .resources-index__filter-empty :where(a) {
   color: var(--color-petrol);
   font-weight: 600;
+}
+
+.resources-index__viewport {
+  position: relative;
+  transition: opacity 220ms var(--ease-out);
+}
+
+.resources-index__viewport[data-pending] {
+  opacity: 0.7;
+}
+
+/*
+ * Transition inter-pages (Vue `<Transition name="resources-page">`).
+ * Fade + très léger slide vertical, `mode="out-in"` orchestre le retrait
+ * complet avant l'entrée pour éviter un chevauchement dans la grid.
+ * Durée courte (280 ms) pour ne pas ralentir la navigation.
+ */
+.resources-page-enter-active,
+.resources-page-leave-active {
+  transition:
+    opacity 280ms var(--ease-out),
+    transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.resources-page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.resources-page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resources-index__viewport,
+  .resources-page-enter-active,
+  .resources-page-leave-active {
+    transition: none;
+  }
+  .resources-page-enter-from,
+  .resources-page-leave-to {
+    transform: none;
+  }
 }
 
 .resources-index__grid {

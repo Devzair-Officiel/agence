@@ -30,7 +30,7 @@ describe("/agence page", () => {
     const headings = wrapper.findAll("h1")
     expect(headings).toHaveLength(1)
     expect(headings[0]!.text()).toBe(
-      "Une agence digitale à taille humaine, pensée pour accompagner les entreprises dans leur globalité.",
+      "Une agence digitale à taille humaine.",
     )
   })
 
@@ -39,11 +39,20 @@ describe("/agence page", () => {
     expect(wrapper.text()).toContain("L'agence")
   })
 
-  it("publishes the introduction verbatim", () => {
+  it("publishes the hero lead verbatim", () => {
     const wrapper = mount(AgencePage)
     expect(wrapper.text()).toContain(
-      "Devzair réunit stratégie, design, développement, contenus et visibilité afin de construire des solutions digitales cohérentes, utiles et évolutives.",
+      "Une équipe réduite, un lien direct, un engagement dans la durée avec chaque entreprise accompagnée.",
     )
+  })
+
+  it("exposes the two hero pillars (Indépendante / Globale)", () => {
+    const wrapper = mount(AgencePage)
+    const text = wrapper.text()
+    expect(text).toContain("Indépendante")
+    expect(text).toContain("sans intermédiaire")
+    expect(text).toContain("Globale")
+    expect(text).toContain("tous les métiers reliés")
   })
 
   it("publishes the exact SEO title and description through usePageSeo", () => {

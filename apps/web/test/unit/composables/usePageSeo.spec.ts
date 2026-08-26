@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { computed, ref } from "vue"
 import { usePageSeo } from "~/composables/usePageSeo"
 
 // Contexte des tests :
@@ -106,6 +107,31 @@ describe("usePageSeo — page indexable", () => {
     expect(captures.seo).toMatchObject({
       ogImage: "https://cdn.example.com/x.png",
     })
+  })
+
+  it("conserve les métadonnées réactives pendant une navigation par query", () => {
+    const page = ref(1)
+    usePageSeo({
+      title: computed(() =>
+        page.value === 1 ? "Ressources" : `Ressources — page ${page.value}`,
+      ),
+      description: "Analyses Devzair",
+      path: "/ressources",
+      robots: computed(() =>
+        page.value > 1 ? ("noindex, follow" as const) : undefined,
+      ),
+    })
+
+    const title = captures.seo?.title
+    const robots = captures.seo?.robots
+    expect(title).toBeTypeOf("function")
+    expect(robots).toBeTypeOf("function")
+    expect((title as () => string)()).toBe("Ressources")
+    expect((robots as () => string | undefined)()).toBeUndefined()
+
+    page.value = 2
+    expect((title as () => string)()).toBe("Ressources — page 2")
+    expect((robots as () => string | undefined)()).toBe("noindex, follow")
   })
 })
 

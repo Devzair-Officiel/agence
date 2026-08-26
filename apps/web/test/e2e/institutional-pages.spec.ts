@@ -52,15 +52,13 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     })
 
     const { body } = await fetchSSR(request, "/agence")
-    expect(body).toContain(
-      "Une agence digitale à taille humaine, pensée pour accompagner les entreprises dans leur globalité.",
-    )
+    expect(body).toContain("Une agence digitale à taille humaine.")
 
     await page.goto("/agence")
     const headings = await page.locator("h1").all()
     expect(headings).toHaveLength(1)
     await expect(page.locator("h1")).toHaveText(
-      "Une agence digitale à taille humaine, pensée pour accompagner les entreprises dans leur globalité.",
+      "Une agence digitale à taille humaine.",
     )
     expect(consoleErrors).toEqual([])
   })
@@ -72,7 +70,7 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     // dépendre d'un détail d'encodage.
     expect(body).toMatch(/L(?:'|&#39;)agence/)
     expect(body).toContain(
-      "Devzair réunit stratégie, design, développement, contenus et visibilité afin de construire des solutions digitales cohérentes, utiles et évolutives.",
+      "Une équipe réduite, un lien direct, un engagement dans la durée avec chaque entreprise accompagnée.",
     )
   })
 
@@ -281,7 +279,7 @@ test.describe("Maillage inter-pages institutionnelles", () => {
     await page.locator('a[href="/agence"]').first().click()
     await expect(page).toHaveURL(/\/agence\/?$/)
     await expect(page.locator("h1")).toHaveText(
-      "Une agence digitale à taille humaine, pensée pour accompagner les entreprises dans leur globalité.",
+      "Une agence digitale à taille humaine.",
     )
   })
 

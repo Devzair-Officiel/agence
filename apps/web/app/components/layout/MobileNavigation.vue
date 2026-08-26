@@ -85,13 +85,12 @@ watch(isOpen, async (opened) => {
             <div class="mobile-navigation__brand">
               <img
                 class="mobile-navigation__logo"
-                src="/brand/logo.png"
-                alt=""
-                width="40"
-                height="40"
+                :alt="site.name"
+                src="/brand/logo_devzaire_agency.png"
+                width="56"
+                height="56"
                 decoding="async"
               />
-              <span class="mobile-navigation__brand-name">{{ site.name }}</span>
             </div>
             <button
               ref="closeButtonRef"
@@ -172,19 +171,9 @@ watch(isOpen, async (opened) => {
 
 .mobile-navigation__logo {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
-  border-radius: 10px;
-  background-color: var(--color-navy-deep);
-  padding: 4px;
-}
-
-.mobile-navigation__brand-name {
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
-  font-size: 1.125rem;
-  letter-spacing: -0.03em;
 }
 
 .mobile-navigation__close {

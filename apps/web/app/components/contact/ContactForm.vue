@@ -234,144 +234,171 @@ async function onSubmit(): Promise<void> {
       />
     </div>
 
-    <fieldset class="contact-form__grid" :disabled="form.isSubmitting.value">
+    <!--
+      Le <fieldset> englobant reste la source de vérité pour l'état
+      `disabled` pendant l'envoi (propagation native à tous les contrôles).
+      À l'intérieur, on découpe visuellement en 3 sections éditoriales
+      marquées par un eyebrow discret ; ce sont des `<div>` (pas des
+      `<section>`) pour ne pas polluer la hiérarchie sémantique du form.
+    -->
+    <fieldset class="contact-form__fieldset" :disabled="form.isSubmitting.value">
       <legend class="contact-form__sr-title">Vos informations</legend>
 
-      <ContactFormField
-        ref="nameFieldRef"
-        v-model="form.values.name"
-        class="contact-form__field contact-form__field--name"
-        label="Votre nom"
-        name="name"
-        type="text"
-        autocomplete="name"
-        required
-        placeholder="Jean Dupont"
-        :maxlength="120"
-        :minlength="2"
-        :error="form.fieldErrors.value.name"
-      />
-
-      <ContactFormField
-        ref="emailFieldRef"
-        v-model="form.values.email"
-        class="contact-form__field contact-form__field--email"
-        label="Votre adresse email"
-        name="email"
-        type="email"
-        autocomplete="email"
-        required
-        placeholder="vous@entreprise.fr"
-        :maxlength="254"
-        hint="Nous répondons à cette adresse — jamais partagée."
-        :error="form.fieldErrors.value.email"
-      />
-
-      <ContactFormField
-        v-model="form.values.company"
-        class="contact-form__field contact-form__field--company"
-        label="Société"
-        name="company"
-        type="text"
-        autocomplete="organization"
-        placeholder="Nom de votre entreprise"
-        optional-label
-        :maxlength="160"
-        :error="form.fieldErrors.value.company"
-      />
-
-      <ContactFormField
-        v-model="form.values.telephone"
-        class="contact-form__field contact-form__field--telephone"
-        label="Téléphone"
-        name="telephone"
-        type="tel"
-        autocomplete="tel"
-        placeholder="06 12 34 56 78"
-        optional-label
-        :maxlength="40"
-        pattern="[0-9 +().\-]{4,40}"
-        hint="Chiffres, espaces et + ( ) . - uniquement."
-        :error="form.fieldErrors.value.telephone"
-      />
-
-      <fieldset
-        class="contact-form__project"
-        :aria-describedby="form.fieldErrors.value.projectType ? 'contact-project-error' : undefined"
-      >
-        <legend class="contact-form__project-legend">Type de projet</legend>
-        <div class="contact-form__project-options">
-          <label
-            v-for="option in projectOptions"
-            :key="option.value"
-            class="contact-form__project-option"
-            :class="{ 'contact-form__project-option--full': option.full }"
-            :data-checked="form.values.projectType === option.value || undefined"
-          >
-            <input
-              v-model="form.values.projectType"
-              type="radio"
-              name="projectType"
-              class="contact-form__project-input"
-              :value="option.value"
-            >
-            <span class="contact-form__project-dot" aria-hidden="true" />
-            <span class="contact-form__project-label">{{ option.label }}</span>
-          </label>
-        </div>
-        <p
-          v-if="form.fieldErrors.value.projectType"
-          id="contact-project-error"
-          class="contact-form__project-error"
-        >
-          {{ form.fieldErrors.value.projectType }}
+      <div class="contact-form__section">
+        <p class="contact-form__section-eyebrow">
+          <span class="contact-form__section-index">01</span>
+          <span>Vous</span>
         </p>
-      </fieldset>
-
-      <ContactFormField
-        ref="messageFieldRef"
-        v-model="form.values.message"
-        class="contact-form__field contact-form__field--message"
-        label="Votre message"
-        name="message"
-        type="textarea"
-        required
-        :maxlength="4000"
-        :minlength="MESSAGE_MIN"
-        :rows="6"
-        placeholder="Décrivez votre besoin, votre contexte ou votre objectif…"
-        hint="20 caractères minimum."
-        :error="form.fieldErrors.value.message"
-      >
-        <template #label-append>
-          <span
-            class="contact-form__counter"
-            :data-reached="messageReached || undefined"
-            aria-hidden="true"
-          >{{ messageCountLabel }}</span>
-        </template>
-      </ContactFormField>
-
-      <div class="contact-form__consent" :data-invalid="Boolean(form.fieldErrors.value.consent) || undefined">
-        <label class="contact-form__consent-label">
-          <input
-            ref="consentInputRef"
-            v-model="form.values.consent"
-            type="checkbox"
-            name="consent"
-            class="contact-form__consent-input"
+        <div class="contact-form__grid">
+          <ContactFormField
+            ref="nameFieldRef"
+            v-model="form.values.name"
+            class="contact-form__field contact-form__field--name"
+            label="Votre nom"
+            name="name"
+            type="text"
+            autocomplete="name"
             required
-            :aria-invalid="Boolean(form.fieldErrors.value.consent) || undefined"
-          >
-          <span class="contact-form__consent-box" aria-hidden="true" />
-          <span class="contact-form__consent-text">
-            J'accepte que Devzair utilise ces informations pour répondre à ma
-            demande. Aucune donnée n'est transmise à un tiers.
-          </span>
-        </label>
-        <p v-if="form.fieldErrors.value.consent" class="contact-form__consent-error">
-          {{ form.fieldErrors.value.consent }}
+            placeholder="Jean Dupont"
+            :maxlength="120"
+            :minlength="2"
+            :error="form.fieldErrors.value.name"
+          />
+
+          <ContactFormField
+            ref="emailFieldRef"
+            v-model="form.values.email"
+            class="contact-form__field contact-form__field--email"
+            label="Votre adresse email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            placeholder="vous@entreprise.fr"
+            :maxlength="254"
+            hint="Nous répondons à cette adresse — jamais partagée."
+            :error="form.fieldErrors.value.email"
+          />
+
+          <ContactFormField
+            v-model="form.values.company"
+            class="contact-form__field contact-form__field--company"
+            label="Société"
+            name="company"
+            type="text"
+            autocomplete="organization"
+            placeholder="Nom de votre entreprise"
+            optional-label
+            :maxlength="160"
+            :error="form.fieldErrors.value.company"
+          />
+
+          <ContactFormField
+            v-model="form.values.telephone"
+            class="contact-form__field contact-form__field--telephone"
+            label="Téléphone"
+            name="telephone"
+            type="tel"
+            autocomplete="tel"
+            placeholder="06 12 34 56 78"
+            optional-label
+            :maxlength="40"
+            pattern="[0-9 +().\-]{4,40}"
+            hint="Chiffres, espaces et + ( ) . - uniquement."
+            :error="form.fieldErrors.value.telephone"
+          />
+        </div>
+      </div>
+
+      <div class="contact-form__section">
+        <p class="contact-form__section-eyebrow">
+          <span class="contact-form__section-index">02</span>
+          <span>Votre projet</span>
         </p>
+        <fieldset
+          class="contact-form__project"
+          :aria-describedby="form.fieldErrors.value.projectType ? 'contact-project-error' : undefined"
+        >
+          <legend class="contact-form__sr-title">Type de projet</legend>
+          <div class="contact-form__project-options">
+            <label
+              v-for="option in projectOptions"
+              :key="option.value"
+              class="contact-form__project-option"
+              :class="{ 'contact-form__project-option--full': option.full }"
+              :data-checked="form.values.projectType === option.value || undefined"
+            >
+              <input
+                v-model="form.values.projectType"
+                type="radio"
+                name="projectType"
+                class="contact-form__project-input"
+                :value="option.value"
+              >
+              <span class="contact-form__project-dot" aria-hidden="true" />
+              <span class="contact-form__project-label">{{ option.label }}</span>
+            </label>
+          </div>
+          <p
+            v-if="form.fieldErrors.value.projectType"
+            id="contact-project-error"
+            class="contact-form__project-error"
+          >
+            {{ form.fieldErrors.value.projectType }}
+          </p>
+        </fieldset>
+      </div>
+
+      <div class="contact-form__section">
+        <p class="contact-form__section-eyebrow">
+          <span class="contact-form__section-index">03</span>
+          <span>Votre message</span>
+        </p>
+        <ContactFormField
+          ref="messageFieldRef"
+          v-model="form.values.message"
+          class="contact-form__field contact-form__field--message"
+          label="Votre message"
+          name="message"
+          type="textarea"
+          required
+          :maxlength="4000"
+          :minlength="MESSAGE_MIN"
+          :rows="6"
+          placeholder="Décrivez votre besoin, votre contexte ou votre objectif…"
+          hint="20 caractères minimum."
+          :error="form.fieldErrors.value.message"
+        >
+          <template #label-append>
+            <span
+              class="contact-form__counter"
+              :data-reached="messageReached || undefined"
+              aria-hidden="true"
+            >{{ messageCountLabel }}</span>
+          </template>
+        </ContactFormField>
+
+        <div class="contact-form__consent" :data-invalid="Boolean(form.fieldErrors.value.consent) || undefined">
+          <label class="contact-form__consent-label">
+            <input
+              ref="consentInputRef"
+              v-model="form.values.consent"
+              type="checkbox"
+              name="consent"
+              class="contact-form__consent-input"
+              required
+              :aria-invalid="Boolean(form.fieldErrors.value.consent) || undefined"
+            >
+            <span class="contact-form__consent-box" aria-hidden="true" />
+            <span class="contact-form__consent-text">
+              J'accepte que Devzair utilise ces informations pour répondre à ma
+              demande. Aucune donnée n'est transmise à un tiers.
+            </span>
+          </label>
+          <p v-if="form.fieldErrors.value.consent" class="contact-form__consent-error">
+            {{ form.fieldErrors.value.consent }}
+          </p>
+        </div>
       </div>
 
       <div class="contact-form__honeypot" aria-hidden="true">
@@ -451,6 +478,51 @@ async function onSubmit(): Promise<void> {
   margin-bottom: var(--space-2);
 }
 
+.contact-form__fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.contact-form__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contact-form__section + .contact-form__section {
+  padding-top: var(--space-6);
+  border-top: 1px solid rgba(22, 25, 28, 0.08);
+}
+
+.contact-form__section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-body-strong);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-petrol);
+}
+
+.contact-form__section-index {
+  font-family: var(--font-family-mono, ui-monospace, "Space Mono", monospace);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-body-strong);
+  letter-spacing: 0.06em;
+  color: var(--color-devzair-blue, #2e86d9);
+  padding: 0.1875rem 0.4375rem;
+  border-radius: var(--radius-sm);
+  background: rgba(46, 134, 217, 0.1);
+}
+
 .contact-form__grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -517,30 +589,43 @@ async function onSubmit(): Promise<void> {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
-  padding: 0.875rem var(--space-4);
+  gap: var(--space-3);
+  padding: 1rem var(--space-5);
   background: #fcfbf8;
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(22, 25, 28, 0.12);
   border-radius: var(--radius-md);
   font-family: var(--font-family-body);
   font-size: 0.9375rem;
+  font-weight: var(--font-weight-body-strong);
   color: var(--text-primary);
   cursor: pointer;
   min-height: var(--touch-target-min);
   transition:
     border-color var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .contact-form__project-option:hover {
-  border-color: var(--color-petrol);
+  border-color: rgba(12, 91, 87, 0.4);
+  background: #f7f5f0;
+  transform: translateY(-1px);
 }
 
 .contact-form__project-option[data-checked] {
   border-color: var(--color-petrol);
-  background: #f1f5f3;
-  box-shadow: 0 0 0 3px rgba(12, 91, 87, 0.12);
+  background: #eef4f2;
+  box-shadow: 0 0 0 1px var(--color-petrol), 0 6px 16px -10px rgba(12, 91, 87, 0.4);
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-form__project-option,
+  .contact-form__project-option:hover {
+    transform: none;
+    transition: none;
+  }
 }
 
 /*
@@ -560,11 +645,13 @@ async function onSubmit(): Promise<void> {
 }
 
 .contact-form__project-dot {
+  position: relative;
   flex: none;
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
-  border: 2px solid rgba(22, 25, 28, 0.28);
+  border: 1.5px solid rgba(22, 25, 28, 0.3);
+  background: #ffffff;
   transition:
     border var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out);
@@ -578,7 +665,19 @@ async function onSubmit(): Promise<void> {
 }
 
 .contact-form__project-option[data-checked] .contact-form__project-dot {
-  border: 5px solid var(--color-petrol);
+  border-color: var(--color-petrol);
+  background: var(--color-petrol);
+}
+
+.contact-form__project-option[data-checked] .contact-form__project-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: #ffffff;
 }
 
 .contact-form__project-label {

@@ -21,14 +21,13 @@ const hasContact = computed(() =>
         <div class="site-footer__identity">
           <img
             class="site-footer__logo"
-            src="/brand/logo.png"
-            alt=""
-            width="40"
-            height="40"
+            :alt="site.name"
+            src="/brand/logo_devzaire_agency.png"
+            width="80"
+            height="80"
             loading="lazy"
             decoding="async"
           />
-          <span class="site-footer__brand-name">{{ site.name }}</span>
         </div>
         <p class="site-footer__description">{{ site.description }}</p>
       </div>
@@ -124,27 +123,16 @@ const hasContact = computed(() =>
 }
 
 .site-footer__identity {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
+  display: flex;
+  justify-content: center;
+  max-width: 34ch;
 }
 
 .site-footer__logo {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
-  border-radius: 10px;
-  background-color: var(--color-navy);
-  padding: 4px;
-}
-
-.site-footer__brand-name {
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
-  font-size: 1.1875rem;
-  letter-spacing: -0.03em;
-  color: var(--text-inverse);
 }
 
 .site-footer__description {
@@ -176,7 +164,8 @@ const hasContact = computed(() =>
 
 .site-footer__link {
   display: inline-flex;
-  min-height: var(--touch-target-min);
+  /* WCAG 2.2 SC 2.5.8 (24px min) au lieu du 44px --touch-target-min : les liens footer sont secondaires, on privilégie une liste compacte. */
+  min-height: var(--space-6);
   align-items: center;
   font-family: var(--font-family-body);
   font-size: 0.875rem;

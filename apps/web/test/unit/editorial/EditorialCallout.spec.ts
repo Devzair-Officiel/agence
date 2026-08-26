@@ -63,9 +63,9 @@ describe("EditorialCallout", () => {
     expect(wrapper.get("section").attributes("data-tone")).toBe("accent")
   })
 
-  it("defaults to data-tone=\"inverse\"", () => {
+  it("defaults to data-tone=\"light\"", () => {
     const wrapper = mountCallout()
-    expect(wrapper.get("section").attributes("data-tone")).toBe("inverse")
+    expect(wrapper.get("section").attributes("data-tone")).toBe("light")
   })
 
   it("uses aria-labelledby pointing at the H2 id", () => {

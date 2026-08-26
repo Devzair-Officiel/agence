@@ -57,23 +57,32 @@ interface GraphPillarPosition {
 const centerX = 280
 const centerY = 260
 // Placements calibrés pour :
-//   1. les labels ne touchent jamais le cercle du pôle
-//      (labelDx > rayon principal 24 + rayon anneau externe 33 = 33) ;
+//   1. les labels ne touchent jamais le cercle du pôle. L'anneau d'interaction
+//      (`pillar-outline`, r=38) apparaît au survol ET tout le groupe scale à
+//      1.15 → il faut au moins 8 unités de marge à l'état de repos pour
+//      qu'aucun bord ne passe sous le titre une fois amplifié (labelDx=46
+//      donne ~9 unités de gap visuel après scale) ;
 //   2. le bloc label + description reste centré verticalement sur le pôle
 //      (labelDy = -6 pour compenser la hauteur de 2 lignes de description).
 // Cas particulier Concevoir (haut) : le bloc est empilé au-dessus du cercle,
 // on remonte donc suffisamment pour éviter tout chevauchement avec le disque.
 const positions: readonly GraphPillarPosition[] = [
-  // Concevoir — haut
-  { pillarId: "concevoir", cx: 280, cy: 95, labelAnchor: "middle", labelDx: 0, labelDy: -68 },
+  // Concevoir — haut. labelDy = -78 (et pas -68) : la deuxième ligne de
+  // description tombait sinon à y=60, alors que le sommet de l'anneau
+  // d'interaction (r=38) est à y=57. L'anneau étant invisible au repos, la
+  // collision passait inaperçue — mais au survol l'anneau se colore et tout
+  // le groupe scale à 1.15, rendant l'intrusion visible. On remonte donc
+  // suffisamment pour que la description reste au-dessus du bord de l'anneau
+  // même après amplification.
+  { pillarId: "concevoir", cx: 280, cy: 95, labelAnchor: "middle", labelDx: 0, labelDy: -78 },
   // Construire — droite haut
-  { pillarId: "construire", cx: 437, cy: 209, labelAnchor: "start", labelDx: 40, labelDy: -6 },
+  { pillarId: "construire", cx: 437, cy: 209, labelAnchor: "start", labelDx: 46, labelDy: -6 },
   // Valoriser — droite bas
-  { pillarId: "valoriser", cx: 377, cy: 392, labelAnchor: "start", labelDx: 40, labelDy: -6 },
+  { pillarId: "valoriser", cx: 377, cy: 392, labelAnchor: "start", labelDx: 46, labelDy: -6 },
   // Visibilité — gauche bas
-  { pillarId: "visibilite", cx: 183, cy: 392, labelAnchor: "end", labelDx: -40, labelDy: -6 },
+  { pillarId: "visibilite", cx: 183, cy: 392, labelAnchor: "end", labelDx: -46, labelDy: -6 },
   // Faire évoluer — gauche haut
-  { pillarId: "faire-evoluer", cx: 123, cy: 209, labelAnchor: "end", labelDx: -40, labelDy: -6 },
+  { pillarId: "faire-evoluer", cx: 123, cy: 209, labelAnchor: "end", labelDx: -46, labelDy: -6 },
 ]
 
 interface GraphNode {
@@ -112,9 +121,9 @@ const nodes: readonly GraphNode[] = positions.map((position) => {
 })
 
 const centerHaloId = useId()
-const pillarHaloId = useId()
 const centerGlowId = useId()
 const centerGradientId = useId()
+const pillarHaloId = useId()
 
 /**
  * Navigation vers la page détaillée du pôle survolé, en respectant les
@@ -141,9 +150,17 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
     class="home-ecosystem-navigation"
     aria-label="Explorer les expertises Devzair"
   >
+    <!--
+      viewBox étendu de 100 unités vers le haut : le pilier « Concevoir »
+      (cy=95, halo r=48 pulsant jusqu'à ~53) était sinon écrasé contre le
+      bord supérieur, sans marge de fade. `overflow: visible` (voir CSS
+      plus bas) laisse en plus le halo déborder de la boîte HTML si besoin
+      — le parent `.home-hero` conserve `overflow: hidden` qui clippe
+      proprement au niveau section.
+    -->
     <svg
       class="home-ecosystem-graph"
-      viewBox="-56 0 664 520"
+      viewBox="-56 -100 664 620"
       xmlns="http://www.w3.org/2000/svg"
     >
     <defs>
@@ -152,20 +169,21 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
         <stop offset="55%" stop-color="var(--color-petrol)" stop-opacity="0.16" />
         <stop offset="100%" stop-color="var(--color-petrol)" stop-opacity="0" />
       </radialGradient>
-      <radialGradient :id="pillarHaloId" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="var(--color-devzair-blue)" stop-opacity="0.35" />
-        <stop offset="100%" stop-color="var(--color-devzair-blue)" stop-opacity="0" />
-      </radialGradient>
       <!-- Dégradé subtil du noeud central : haut plus clair, bas plus profond. -->
       <radialGradient :id="centerGradientId" cx="50%" cy="35%" r="65%">
         <stop offset="0%" stop-color="#0f6b66" />
         <stop offset="65%" stop-color="var(--color-petrol)" />
         <stop offset="100%" stop-color="#08403d" />
       </radialGradient>
-      <!-- Flou gaussien réutilisé pour la lueur diffuse. -->
+      <!-- Flou gaussien pour la lueur diffuse derrière le disque central. -->
       <filter :id="centerGlowId" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="6" />
       </filter>
+      <radialGradient :id="pillarHaloId" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--color-devzair-blue)" stop-opacity="0.55" />
+        <stop offset="60%" stop-color="var(--color-devzair-blue)" stop-opacity="0.18" />
+        <stop offset="100%" stop-color="var(--color-devzair-blue)" stop-opacity="0" />
+      </radialGradient>
     </defs>
 
     <!-- Arcs discrets d'arrière-plan, purement décoratifs. Rotation lente continue. -->
@@ -434,6 +452,13 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
   width: 100%;
   height: auto;
   max-width: 100%;
+  /*
+   * Le SVG root par défaut clippe son contenu à la boîte HTML : le halo
+   * du pilier haut aurait une coupe nette même si son centre reste dans
+   * le viewBox. `overflow: visible` laisse le fade s'étendre au-delà. Le
+   * clip final est assuré par `.home-hero { overflow: hidden }`.
+   */
+  overflow: visible;
 }
 
 /* Animation signature — tracés qui se dessinent du centre vers l'extérieur,
@@ -580,25 +605,42 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
 
 /* Lien pôle → page dédiée. Le focus visible est porté par l'anneau bleu
  * dédié (`.home-ecosystem-graph__pillar-outline`) ; on désactive donc le
- * focus ring natif du navigateur qui rendrait mal sur un élément SVG. */
+ * focus ring natif du navigateur qui rendrait mal sur un élément SVG.
+ * Le scale hover est porté ici (et non sur le `<g class="pillar">`) parce
+ * que ce dernier est en animation `forwards` d'intro qui verrouille son
+ * `transform` et empêche la surcharge par la règle hover. Le `<a>` SVG
+ * n'est jamais animé : le hover transform s'applique sans conflit. */
 .home-ecosystem-graph__pillar-link {
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-.home-ecosystem-graph__pillar-outline {
-  transition:
-    opacity var(--duration-base) var(--ease-out);
   transform-origin: center;
   transform-box: fill-box;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.home-ecosystem-graph__pillar-link:hover,
+.home-ecosystem-graph__pillar-link:focus-visible {
+  transform: scale(1.15);
+}
+
+/*
+ * Micro-interaction sur les piliers — pensée pour rester "sensible" sans
+ * s'imposer : au survol/focus, TOUT le groupe (halo, disque, anneaux,
+ * chiffre, libellé, description) grossit ensemble via un `transform: scale`
+ * appliqué sur le `<g>` parent, en plus des transitions de couleur du
+ * disque et du libellé. `transform-box: fill-box` + `transform-origin:
+ * center` scalent autour du centre visuel du groupe. `transform` et
+ * `opacity` restent composited-only (GPU-friendly).
+ */
+.home-ecosystem-graph__pillar-outline {
+  transition: opacity var(--duration-base) var(--ease-out);
 }
 
 .home-ecosystem-graph__pillar-disc,
 .home-ecosystem-graph__pillar-label,
 .home-ecosystem-graph__pillar-index {
-  transition:
-    fill var(--duration-base) var(--ease-out);
+  transition: fill var(--duration-base) var(--ease-out);
 }
 
 .home-ecosystem-graph__pillar-link:hover .home-ecosystem-graph__pillar-outline,

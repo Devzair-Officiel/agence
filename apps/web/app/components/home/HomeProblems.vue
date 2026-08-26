@@ -218,7 +218,10 @@ const problems: readonly HomeProblem[] = [
 
   .home-problems__intro {
     position: sticky;
-    top: var(--space-12);
+    /* Décalé sous le header sticky (89px) pour que l'eyebrow « Le constat »
+     * reste visible au scroll — sinon le haut du bloc intro passait derrière
+     * la barre de navigation collante. */
+    top: calc(var(--site-header-height) + var(--space-6));
   }
 
   .home-problems__item {

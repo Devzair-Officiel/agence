@@ -21,6 +21,8 @@
  * unitaires deviennent triviaux et le chemin canonique est explicite.
  */
 
+import type { MaybeRefOrGetter } from "vue"
+import { isRef, toValue } from "vue"
 import { buildAbsoluteAssetUrl, buildCanonical } from "~/utils/canonical"
 import { site } from "~/config/site"
 
@@ -33,7 +35,7 @@ export type PageSeoRobotsType =
 
 export interface PageSeoInput {
   /** Titre spécifique de la page (le template global ajoute « | Devzair »). */
-  title: string
+  title: MaybeRefOrGetter<string>
   /** Description propre à la page ; utilisée aussi en OG et Twitter. */
   description: string
   /** Chemin canonique : `/`, `/services`, `/ressources/mon-article`… */
@@ -53,7 +55,13 @@ export interface PageSeoInput {
    * Directive robots complète, si la page a un besoin très spécifique.
    * Prioritaire sur `noindex`. Éviter, sauf cas justifié.
    */
-  robots?: PageSeoRobotsType
+  robots?: MaybeRefOrGetter<PageSeoRobotsType | undefined>
+}
+
+function asReactiveMetaValue<T>(value: MaybeRefOrGetter<T>): T | (() => T) {
+  return isRef(value) || typeof value === "function"
+    ? () => toValue(value)
+    : value
 }
 
 export function usePageSeo(input: PageSeoInput): void {
@@ -61,7 +69,12 @@ export function usePageSeo(input: PageSeoInput): void {
   const siteUrl = config.public.siteUrl as string
 
   const isNoindex = input.noindex === true
-  const robotsDirective = input.robots ?? (isNoindex ? "noindex, nofollow" : undefined)
+  const robotsDirective = input.robots
+    ? asReactiveMetaValue(input.robots)
+    : isNoindex
+      ? "noindex, nofollow"
+      : undefined
+  const title = asReactiveMetaValue(input.title)
 
   // Un canonical sur une page noindex n'apporte rien : l'URL n'est pas
   // destinée aux résultats de recherche. On préfère l'omettre pour rester
@@ -74,9 +87,9 @@ export function usePageSeo(input: PageSeoInput): void {
   const twitterCard = imageUrl ? "summary_large_image" : "summary"
 
   useSeoMeta({
-    title: input.title,
+    title,
     description: input.description,
-    ogTitle: input.title,
+    ogTitle: title,
     ogDescription: input.description,
     ogType: input.type ?? "website",
     ogUrl,
@@ -85,7 +98,7 @@ export function usePageSeo(input: PageSeoInput): void {
     ogImage: imageUrl ?? undefined,
     ogImageAlt: imageUrl ? input.imageAlt : undefined,
     twitterCard,
-    twitterTitle: input.title,
+    twitterTitle: title,
     twitterDescription: input.description,
     twitterImage: imageUrl ?? undefined,
     ...(robotsDirective ? { robots: robotsDirective } : {}),

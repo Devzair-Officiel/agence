@@ -62,6 +62,35 @@ const timeline: readonly { title: string; detail: string }[] = [
   },
 ]
 
+/**
+ * Panneau éditorial à gauche du formulaire — aide le visiteur à préparer
+ * un message utile. Chaque bloc décrit une information à partager, jamais
+ * un engagement chiffré non validé (règle AGENTS.md §1). Le libellé
+ * « Budget indicatif » reste large : on ne promet ni fourchette ni offre.
+ */
+const prompts: readonly { title: string; detail: string }[] = [
+  {
+    title: "Votre contexte",
+    detail:
+      "Activité, marché, taille de l'équipe — ce qui nous aidera à comprendre où vous en êtes.",
+  },
+  {
+    title: "Votre objectif",
+    detail:
+      "Ce que vous cherchez à obtenir concrètement : refonte, visibilité, nouvelle plateforme, cadrage.",
+  },
+  {
+    title: "Vos contraintes",
+    detail:
+      "Échéance visée, existant technique, équipe interne — tout ce qui borne la mission.",
+  },
+  {
+    title: "Un ordre de grandeur",
+    detail:
+      "Budget indicatif si vous en avez un, pour évaluer ensemble ce qui est réaliste.",
+  },
+]
+
 usePageSeo({
   title: "Contact — parlons de votre projet",
   description:
@@ -73,10 +102,19 @@ usePageSeo({
 
 <template>
   <main class="contact-page">
-    <section class="contact-page__section" aria-labelledby="contact-page-title">
-      <BaseContainer class="contact-page__container">
+    <!--
+      Hero sombre — bandeau navy avec un faisceau lumineux conique
+      descendant depuis le haut-centre. Grille de points subtile en fond
+      pour texturer l'obscurité. Le titre et le lead se lisent au centre
+      du faisceau, comme sous un projecteur.
+    -->
+    <section
+      class="contact-page__hero-section"
+      aria-labelledby="contact-page-title"
+    >
+      <BaseContainer width="wide" class="contact-page__hero-container">
         <header class="contact-page__hero">
-          <BaseEyebrow class="contact-page__eyebrow">
+          <BaseEyebrow tone="inverse" class="contact-page__eyebrow">
             Parlons de votre projet
           </BaseEyebrow>
           <h1 id="contact-page-title" class="contact-page__title">
@@ -92,33 +130,63 @@ usePageSeo({
         </header>
 
         <!--
-          Frise « ce qui se passe ensuite » — un <ol> pour l'ordre
-          significatif, cartes horizontales sur desktop, empilées sur
-          mobile. Les pastilles numérotées sont aria-hidden car le texte
-          du <li> porte déjà l'information séquentielle.
+          Frise « ce qui se passe ensuite » — désormais dans le hero
+          sombre, elle prolonge le faisceau lumineux vers le bas et fait
+          la charnière visuelle avant le formulaire. Les cartes sont
+          traitées en verre translucide sur fond sombre.
         -->
         <ol class="contact-page__timeline" aria-label="Ce qui se passe ensuite">
           <li
             v-for="(step, index) in timeline"
             :key="step.title"
             class="contact-page__step"
+            :style="{ '--step-delay': `${index * 120}ms` }"
           >
-            <span class="contact-page__step-marker" aria-hidden="true">
-              {{ index + 1 }}
+            <span class="contact-page__step-number" aria-hidden="true">
+              {{ String(index + 1).padStart(2, "0") }}
             </span>
-            <div class="contact-page__step-body">
-              <p class="contact-page__step-title">{{ step.title }}</p>
-              <p class="contact-page__step-detail">{{ step.detail }}</p>
-            </div>
+            <p class="contact-page__step-title">{{ step.title }}</p>
+            <p class="contact-page__step-detail">{{ step.detail }}</p>
           </li>
         </ol>
+      </BaseContainer>
+    </section>
 
-        <div class="contact-page__form-card">
-          <ContactForm
-            :endpoint="contactEndpoint"
-            :turnstile-site-key="turnstileSiteKey"
-            :turnstile-enabled="turnstileEnabled"
-          />
+    <section class="contact-page__body-section">
+      <BaseContainer width="wide" class="contact-page__container">
+        <div class="contact-page__split">
+          <aside class="contact-page__aside" aria-labelledby="contact-page-prompts-title">
+            <p class="contact-page__aside-eyebrow">Préparer votre message</p>
+            <h2 id="contact-page-prompts-title" class="contact-page__aside-title">
+              Ce qu'il est utile de nous partager
+            </h2>
+            <p class="contact-page__aside-lead">
+              Un message précis permet un premier retour plus concret. Voici les
+              éléments que nous relisons en priorité.
+            </p>
+            <ul class="contact-page__prompts">
+              <li
+                v-for="prompt in prompts"
+                :key="prompt.title"
+                class="contact-page__prompt"
+              >
+                <p class="contact-page__prompt-title">{{ prompt.title }}</p>
+                <p class="contact-page__prompt-detail">{{ prompt.detail }}</p>
+              </li>
+            </ul>
+            <p class="contact-page__aside-note">
+              Vos informations restent chez nous. Aucune donnée transmise à un
+              tiers, aucun démarchage.
+            </p>
+          </aside>
+
+          <div class="contact-page__form-card">
+            <ContactForm
+              :endpoint="contactEndpoint"
+              :turnstile-site-key="turnstileSiteKey"
+              :turnstile-enabled="turnstileEnabled"
+            />
+          </div>
         </div>
       </BaseContainer>
     </section>
@@ -127,20 +195,53 @@ usePageSeo({
 
 <style scoped>
 .contact-page {
-  background-color: #ded9ce;
   color: var(--text-primary);
 }
 
-.contact-page__section {
-  padding-block: var(--space-12) var(--space-16);
-  min-height: calc(100svh - var(--site-header-height));
+/*
+ * Hero sombre — fond navy stratifié :
+ *   1. base linéaire (haut plus foncé → bas légèrement plus clair) ;
+ *   2. grille de points 32×32 très ténue, texture sans distraire ;
+ *   3. faisceau conique doux (halo large) émanant depuis le haut-centre ;
+ *   4. cœur du faisceau plus concentré, effet projecteur.
+ * Les 4 couches sont empilées dans un même background pour éviter tout
+ * pseudo-élément supplémentaire et garder le stacking simple.
+ */
+.contact-page__hero-section {
+  position: relative;
+  padding-block: var(--space-10) var(--space-12);
+  min-height: calc(85svh - var(--site-header-height));
+  display: flex;
+  background:
+    radial-gradient(
+      ellipse 45% 95% at 50% 0%,
+      rgba(220, 235, 255, 0.34) 0%,
+      rgba(220, 235, 255, 0.16) 30%,
+      rgba(220, 235, 255, 0.06) 55%,
+      transparent 80%
+    ),
+    radial-gradient(
+      ellipse 95% 120% at 50% -8%,
+      rgba(160, 195, 235, 0.18) 0%,
+      rgba(160, 195, 235, 0.06) 45%,
+      transparent 75%
+    ),
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(180deg, #07101c 0%, #0d1c2d 100%);
+  color: #f4f1ea;
+  overflow: hidden;
 }
 
-.contact-page__container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-10);
-  max-width: 1080px;
+.contact-page__hero-container {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  row-gap: var(--space-12);
+}
+
+.contact-page__hero-container > .contact-page__hero {
+  align-self: center;
 }
 
 /*
@@ -168,7 +269,7 @@ usePageSeo({
   font-size: clamp(2.25rem, 5vw, 3.25rem);
   line-height: 1.08;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: #f4f1ea;
   margin: 0;
   max-width: 22ch;
   text-wrap: balance;
@@ -182,8 +283,8 @@ usePageSeo({
   .contact-page__title-emphasis {
     background: linear-gradient(
       120deg,
-      var(--color-devzair-blue) 0%,
-      var(--color-petrol) 100%
+      #b8d4f0 0%,
+      var(--color-devzair-blue) 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
@@ -197,9 +298,135 @@ usePageSeo({
   font-family: var(--font-family-body);
   font-size: clamp(1rem, 1.4vw, 1.0625rem);
   line-height: 1.6;
-  color: var(--text-secondary);
+  color: rgba(244, 241, 234, 0.72);
   max-width: 58ch;
   text-wrap: pretty;
+}
+
+.contact-page__body-section {
+  background-color: #ded9ce;
+  padding-block: var(--space-12) var(--space-16);
+}
+
+.contact-page__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+/*
+ * Split desktop 2 colonnes : aside éditorial à gauche (contenu qui aide
+ * le visiteur à préparer un message utile), form à droite. Sur mobile,
+ * empilé — l'aside passe au-dessus pour ancrer l'intention avant l'action.
+ */
+.contact-page__split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .contact-page__split {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: var(--space-10);
+  }
+}
+
+@media (min-width: 1200px) {
+  .contact-page__split {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: var(--space-16);
+  }
+}
+
+.contact-page__aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+@media (min-width: 960px) {
+  .contact-page__aside {
+    position: sticky;
+    top: calc(var(--site-header-height) + var(--space-8));
+    padding-right: var(--space-4);
+  }
+}
+
+.contact-page__aside-eyebrow {
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-petrol);
+}
+
+.contact-page__aside-title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.contact-page__aside-lead {
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 40ch;
+}
+
+.contact-page__prompts {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contact-page__prompt {
+  position: relative;
+  padding-left: var(--space-5);
+  border-left: 2px solid rgba(12, 91, 87, 0.28);
+  padding-block: 0.125rem;
+}
+
+.contact-page__prompt-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading-medium);
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.contact-page__prompt-detail {
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.contact-page__aside-note {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(22, 25, 28, 0.12);
+  font-family: var(--font-family-body);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 42ch;
 }
 
 /*
@@ -224,62 +451,114 @@ usePageSeo({
   }
 }
 
+/*
+ * Cartes « étapes » — surface verre foncé (rgba blanc 3% + bordure fine
+ * ton froid). Un halo radial doux se dévoile au hover pour renforcer
+ * l'effet projecteur du hero. Le grand numéro mono en accent devzair-blue
+ * remplace la pastille carrée pour un rendu plus éditorial.
+ *
+ * Animation d'entrée : fade + slide-up séquencé via `--step-delay` (injecté
+ * par v-for). Respecte prefers-reduced-motion.
+ */
 .contact-page__step {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  padding: var(--space-4) var(--space-5);
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(22, 25, 28, 0.08);
-  border-radius: var(--radius-lg, 14px);
-}
-
-.contact-page__step-marker {
-  flex: none;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9px;
-  background: var(--color-petrol);
-  color: var(--color-cream);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-family-mono, ui-monospace, "Space Mono", monospace);
-  font-size: 0.8125rem;
-  font-weight: var(--font-weight-body-strong);
-}
-
-.contact-page__step-body {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.1875rem;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(184, 212, 240, 0) 0%,
+      rgba(184, 212, 240, 0) 100%
+    ),
+    rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 320ms ease,
+    background 320ms ease,
+    box-shadow 320ms ease;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: contact-step-enter 640ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: var(--step-delay, 0ms);
+  will-change: transform;
+}
+
+.contact-page__step:hover {
+  transform: translateY(-4px);
+  border-color: rgba(184, 212, 240, 0.28);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(184, 212, 240, 0.12) 0%,
+      rgba(184, 212, 240, 0) 70%
+    ),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: 0 18px 40px -24px rgba(120, 170, 220, 0.4);
+}
+
+@keyframes contact-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contact-page__step-number {
+  font-family: var(--font-family-mono, ui-monospace, "Space Mono", monospace);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-devzair-blue);
+  margin-bottom: var(--space-2);
 }
 
 .contact-page__step-title {
   margin: 0;
   font-family: var(--font-family-heading);
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: var(--font-weight-heading-medium);
+  font-size: 1.0625rem;
   line-height: 1.3;
-  color: var(--text-primary);
+  color: #f4f1ea;
 }
 
 .contact-page__step-detail {
   margin: 0;
   font-family: var(--font-family-body);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(244, 241, 234, 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-page__step {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    transition: none;
+  }
+  .contact-page__step:hover {
+    transform: none;
+  }
 }
 
 /*
- * Form card — surface cream élevée centrée, largeur maîtrisée pour
- * garder les lignes lisibles (ni trop étirées, ni trop compressées).
+ * Form card — surface cream élevée. En split desktop, elle occupe la
+ * colonne droite du grid ; sur mobile, elle prend toute la largeur
+ * disponible sous l'aside empilé au-dessus.
  */
 .contact-page__form-card {
   width: 100%;
-  max-width: 780px;
-  margin-inline: auto;
   background: #f8f5ef;
   border: 1px solid rgba(22, 25, 28, 0.14);
   border-radius: 20px;
@@ -294,7 +573,10 @@ usePageSeo({
 }
 
 @media (min-width: 960px) {
-  .contact-page__section {
+  .contact-page__hero-section {
+    padding-block: var(--space-12) var(--space-16);
+  }
+  .contact-page__body-section {
     padding-block: var(--space-16) var(--space-20);
   }
   .contact-page__container {

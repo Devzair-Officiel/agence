@@ -90,12 +90,15 @@ describe("HomeEcosystemGraph", () => {
     }
   })
 
-  it("uses an expanded viewBox that accommodates the widest lateral labels", () => {
+  it("uses an expanded viewBox that accommodates the widest lateral labels and the top halo", () => {
     const wrapper = mount(HomeEcosystemGraph)
-    // Marge latérale gauche portée à 32 unités SVG pour absorber la
-    // longueur des libellés des pôles gauches (Visibilité, Faire évoluer)
-    // qui débordaient à ≥1 px CSS aux points de rupture 320 / 390 (DEV-045).
-    expect(wrapper.get("svg").attributes("viewBox")).toBe("-56 0 664 520")
+    // Marge latérale gauche portée à 32 unités SVG pour absorber la longueur
+    // des libellés des pôles gauches (Visibilité, Faire évoluer) qui
+    // débordaient à ≥1 px CSS aux points de rupture 320 / 390 (DEV-045).
+    // Marge supérieure de 100 unités : le pilier « Concevoir » (cy=95, halo
+    // r=48 pulsant jusqu'à ~53) était sinon écrasé contre le bord haut, sans
+    // marge de fade — les piliers bas ont ~75px sous eux.
+    expect(wrapper.get("svg").attributes("viewBox")).toBe("-56 -100 664 620")
 
     const descriptionLines = wrapper.findAll(
       ".home-ecosystem-graph__pillar-description tspan",

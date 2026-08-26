@@ -20,9 +20,11 @@ import { expertisePillars } from "~/config/expertise-pillars"
  *
  * Accessibilité :
  *   - un H2 unique, un H3 par pôle ;
- *   - carte non focusable (aucun `tabindex`, aucun rôle interactif) : les
- *     cartes n'ont pas d'action ; les liens vers les pages détaillées
- *     arriveront en Phase 7 (services) ;
+ *   - chaque carte est un lien vers `/expertises/{id}` via le pattern
+ *     "stretched link" : seul le titre porte le `<NuxtLink>` (nom
+ *     accessible court, unique par carte), un `::after` étend la zone
+ *     cliquable à toute la carte. Aucun élément interactif imbriqué dans
+ *     le lien → pas de violation `nested-interactive` ;
  *   - la liste des services est une vraie `<ul>` sémantique ;
  *   - hint visuel + texte sr-only pour indiquer le geste de scroll sur
  *     mobile, sans être répétitif sur desktop (`@media` masque).
@@ -79,7 +81,14 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
           <span class="home-pillars__card-index" aria-hidden="true">
             {{ String(pillar.order).padStart(2, "0") }}
           </span>
-          <h3 class="home-pillars__card-title">{{ pillar.label }}</h3>
+          <h3 class="home-pillars__card-title">
+            <NuxtLink
+              :to="`/expertises/${pillar.id}`"
+              class="home-pillars__card-link"
+            >
+              {{ pillar.label }}
+            </NuxtLink>
+          </h3>
           <p class="home-pillars__card-tag">{{ pillar.description }}</p>
           <p class="home-pillars__card-description">
             {{ pillar.longDescription }}
@@ -189,6 +198,7 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
 }
 
 .home-pillars__card {
+  position: relative;
   flex: 0 0 min(85%, 22rem);
   scroll-snap-align: start;
   display: flex;
@@ -199,6 +209,51 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+/*
+ * Pattern "stretched link" : le titre porte le `<NuxtLink>` (nom accessible
+ * court), un pseudo-élément étend la zone cliquable à toute la carte. Les
+ * autres éléments restent sélectionnables au clic-glisser en dehors du
+ * texte du titre grâce à `z-index: 1` sur ::after — les éléments texte
+ * sous-jacents captent quand même le mouse-down d'une sélection.
+ */
+.home-pillars__card-link {
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.home-pillars__card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.home-pillars__card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-petrol);
+  box-shadow: var(--shadow-md);
+}
+
+.home-pillars__card:has(.home-pillars__card-link:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-pillars__card {
+    transition: none;
+  }
+  .home-pillars__card:hover {
+    transform: none;
+  }
 }
 
 .home-pillars__card-index {

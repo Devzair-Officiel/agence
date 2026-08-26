@@ -259,13 +259,31 @@ import HomeEcosystemGraph from "~/components/home/HomeEcosystemGraph.vue"
 
 .home-hero__visual-frame {
   position: relative;
+  isolation: isolate;
   border-radius: var(--radius-xl);
-  background:
-    radial-gradient(
-      circle at 50% 45%,
-      rgba(46, 134, 217, 0.14),
-      transparent 68%
-    );
+}
+
+/*
+ * Halo bleu porté par un pseudo-élément aux insets négatifs, PAS par un
+ * `background` du cadre : un background est bloqué à la boîte de l'élément
+ * et coupe net au bord. Le pseudo peut déborder de 25 %/20 % dans le fond
+ * navy, où il se perd naturellement. Le clip final est assuré par
+ * `.home-hero { overflow: hidden }` au niveau section.
+ * `isolation: isolate` sur le cadre garde le `z-index: -1` du pseudo à
+ * l'intérieur de la pile locale (derrière le SVG mais pas derrière
+ * `.home-hero__backdrop`).
+ */
+.home-hero__visual-frame::before {
+  content: "";
+  position: absolute;
+  inset: -25% -20%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse at 50% 55%,
+    rgba(46, 134, 217, 0.22),
+    transparent 65%
+  );
+  pointer-events: none;
 }
 
 @media (min-width: 560px) {

@@ -41,3 +41,8 @@ editorial_public_media:
     methods: [GET]
     requirements:
         id: '[0-9a-fA-F-]{36}'
+
+editorial_automated_draft_create:
+    path: /internal/editorial/articles/drafts
+    controller: App\Editorial\Presentation\Http\Api\CreateAutomatedDraftArticleController::__invoke
+    methods: [POST]

@@ -40,58 +40,6 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
     class="home-approach"
     aria-labelledby="home-approach-title"
   >
-    <!--
-      Décor de fond « circuit imprimé » — traces à angles droits, pads de
-      soudure et vias, en écho au logo Devzair. Purement décoratif :
-      `aria-hidden`, `pointer-events: none`, `preserveAspectRatio` calé pour
-      que le motif s'étende sur toute la largeur de la section sans se
-      déformer verticalement.
-    -->
-    <svg
-      class="home-approach__pcb"
-      viewBox="0 0 800 400"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-      focusable="false"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <!-- Traces principales : horizontales avec des ruptures à 90°. -->
-      <g
-        fill="none"
-        stroke="var(--color-devzair-blue)"
-        stroke-width="1.25"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M0 60 H200 L260 120 H420 L480 60 H620 L680 120 H800" />
-        <path d="M0 240 H120 L180 300 H360 L420 240 H560 L620 300 H800" />
-        <path d="M300 180 H500" />
-        <path d="M120 240 V180 H240" />
-        <path d="M620 300 V340 H720" />
-      </g>
-      <!-- Pads de soudure (composants raccordés). -->
-      <g fill="var(--color-devzair-blue)">
-        <circle cx="200" cy="60" r="4" />
-        <circle cx="420" cy="60" r="4" />
-        <circle cx="620" cy="60" r="4" />
-        <circle cx="120" cy="240" r="4" />
-        <circle cx="360" cy="240" r="4" />
-        <circle cx="560" cy="240" r="4" />
-        <circle cx="300" cy="180" r="3" />
-        <circle cx="500" cy="180" r="3" />
-        <circle cx="240" cy="180" r="3" />
-        <circle cx="720" cy="340" r="3" />
-      </g>
-      <!-- Vias (traversées de plan) : anneaux creux. -->
-      <g fill="none" stroke="var(--color-devzair-blue)" stroke-width="1">
-        <circle cx="260" cy="120" r="5" />
-        <circle cx="480" cy="60" r="5" />
-        <circle cx="680" cy="120" r="5" />
-        <circle cx="180" cy="300" r="5" />
-        <circle cx="420" cy="240" r="5" />
-        <circle cx="620" cy="300" r="5" />
-      </g>
-    </svg>
     <BaseContainer width="wide" class="home-approach__container">
       <header class="home-approach__intro">
         <BaseEyebrow tone="inverse" class="home-approach__eyebrow">
@@ -145,26 +93,36 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
   background-color: var(--background-inverse);
   color: var(--text-inverse);
   padding-block: var(--space-16) var(--space-20);
+  /*
+   * Cadrillage en pointillé : dots crème à faible opacité posés à intervalles
+   * réguliers, façon papier pointillé. Purement décoratif, rendu 100 % CSS
+   * (pas de SVG ni d'image). La grille de 28×28px reste discrète — le voile
+   * radial appliqué via `::before` en atténue l'intensité au centre pour
+   * garantir la lisibilité du texte.
+   *
+   * `background-attachment: fixed` verrouille le motif au viewport : au
+   * scroll, le texte défile mais les dots restent en place — effet
+   * parallaxe subtil, sans JS. iOS Safari ignore `fixed` (dégradation
+   * silencieuse : les dots scrollent normalement). Coupé sous
+   * `prefers-reduced-motion` pour éviter l'illusion de mouvement.
+   */
+  background-image:
+    radial-gradient(rgba(244, 241, 234, 0.14) 1px, transparent 1.5px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-approach {
+    background-attachment: scroll;
+  }
 }
 
 /*
- * Décor PCB en arrière-plan : couvre toute la section, très basse opacité
- * pour rester une note graphique et non un motif dominant. `preserveAspect
- * -Ratio` slice (défini côté SVG) recadre le motif sans le déformer.
- */
-.home-approach__pcb {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.09;
-  pointer-events: none;
-}
-
-/*
- * Voile radial pour concentrer la lisibilité du contenu au centre et
- * laisser le décor PCB respirer sur les bords sans venir mordre le texte.
+ * Voile radial d'appui — assombrit légèrement le centre pour renforcer le
+ * contraste texte / fond sans effacer le cadrillage en pointillé (opacité
+ * plafonnée à 55 % en `color-mix` plutôt que la version pleine navy
+ * précédente, qui écrasait complètement les dots au milieu de la section).
  */
 .home-approach::before {
   content: "";
@@ -173,8 +131,8 @@ const steps = [...expertisePillars].sort((a, b) => a.order - b.order)
   z-index: 0;
   background: radial-gradient(
     ellipse at center,
-    var(--background-inverse) 0%,
-    transparent 65%
+    color-mix(in srgb, var(--background-inverse) 55%, transparent) 0%,
+    transparent 60%
   );
   pointer-events: none;
 }

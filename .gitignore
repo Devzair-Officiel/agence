@@ -25,3 +25,10 @@ test-results/
 
 # Fichier local historique
 .env.local.dev
+
+# Claude Code — état local d'agent (verrous de boucle autonome, préférences
+# locales du poste). Toute config projet volontairement versionnée dans
+# `.claude/` (ex. `.claude/rules/`, `.claude/agents/`) reste trackable —
+# seules les entrées ci-dessous sont exclues.
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

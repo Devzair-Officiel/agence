@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import AgenceHero from "~/components/agence/AgenceHero.vue"
 import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
-import EditorialHero from "~/components/editorial/EditorialHero.vue"
 import EditorialSection from "~/components/editorial/EditorialSection.vue"
 
 /**
  * Page `/agence` — présentation éditoriale de Devzair (Phase 7A).
  *
  * Rôle strict d'orchestration :
- *   - un H1 unique (EditorialHero) qui pose la mission ;
+ *   - un H1 unique (AgenceHero, variante « portrait » avec visuel d'atelier)
+ *     qui pose la mission et les deux piliers synthétiques de l'agence ;
  *   - trois EditorialSection narratives : positionnement, fonctionnement,
  *     valeurs — sans faux organigramme, sans chiffre ni témoignage inventés
  *     (règle AGENTS.md §1, précisé par `docs/01-CONTENT.md §7.2`) ;
@@ -29,30 +30,48 @@ usePageSeo({
 
 <template>
   <div class="agence-page">
-    <EditorialHero
-      eyebrow="L'agence"
-      title="Une agence digitale à taille humaine, pensée pour accompagner les entreprises dans leur globalité."
-      lead="Devzair réunit stratégie, design, développement, contenus et visibilité afin de construire des solutions digitales cohérentes, utiles et évolutives."
-    />
+    <AgenceHero />
 
     <EditorialSection
+      class="agence-page__positionnement"
       tone="default"
       eyebrow="Positionnement"
       title="Une agence indépendante, engagée dans la durée avec chaque entreprise accompagnée."
       intro="Nous privilégions une relation directe, sans intermédiaire, entre l'équipe qui conçoit, celle qui construit et la personne qui décide côté client."
     >
-      <p class="agence-page__paragraph">
-        Notre positionnement repose sur trois principes : comprendre le
-        contexte avant de proposer, aligner chaque décision technique sur un
-        objectif éditorial et rendre le fonctionnement du projet lisible pour
-        toutes les parties prenantes.
-      </p>
-      <p class="agence-page__paragraph">
-        Cette exigence guide aussi les projets que nous acceptons. Nous
-        travaillons avec les entreprises et organisations qui souhaitent
-        piloter réellement leur présence digitale — pas déléguer un livrable
-        isolé.
-      </p>
+      <ol class="agence-page__principles" role="list">
+        <li class="agence-page__principle">
+          <span class="agence-page__principle-index" aria-hidden="true">01</span>
+          <p class="agence-page__principle-title">
+            Comprendre le contexte avant de proposer
+          </p>
+          <p class="agence-page__principle-text">
+            Chaque projet commence par une lecture attentive du métier, des
+            contraintes et des enjeux — avant toute recommandation technique
+            ou éditoriale.
+          </p>
+        </li>
+        <li class="agence-page__principle">
+          <span class="agence-page__principle-index" aria-hidden="true">02</span>
+          <p class="agence-page__principle-title">
+            Aligner décision technique et objectif éditorial
+          </p>
+          <p class="agence-page__principle-text">
+            Une architecture, un composant ou une balise n'ont de valeur que
+            s'ils servent un message clair et une audience identifiée.
+          </p>
+        </li>
+        <li class="agence-page__principle">
+          <span class="agence-page__principle-index" aria-hidden="true">03</span>
+          <p class="agence-page__principle-title">
+            Rendre le projet lisible pour toutes les parties prenantes
+          </p>
+          <p class="agence-page__principle-text">
+            Cadrage, arbitrages et livrables sont formulés dans un langage
+            partagé — pas dans un jargon réservé à l'agence.
+          </p>
+        </li>
+      </ol>
     </EditorialSection>
 
     <EditorialSection
@@ -164,6 +183,61 @@ usePageSeo({
   gap: var(--space-6);
 }
 
+.agence-page__positionnement :deep(.editorial-section__header) {
+  align-items: center;
+  text-align: center;
+  margin-inline: auto;
+}
+
+.agence-page__positionnement :deep(.editorial-section__title),
+.agence-page__positionnement :deep(.editorial-section__intro) {
+  max-width: none;
+}
+
+.agence-page__principles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+}
+
+.agence-page__principle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-default);
+}
+
+.agence-page__principle-index {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--color-petrol);
+}
+
+.agence-page__principle-title {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading-medium);
+  font-size: 1.125rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin: 0;
+  max-width: 28ch;
+}
+
+.agence-page__principle-text {
+  font-family: var(--font-family-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 44ch;
+}
+
 .agence-page__practice,
 .agence-page__value {
   display: flex;
@@ -204,6 +278,11 @@ usePageSeo({
   .agence-page__values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-5);
+  }
+
+  .agence-page__principles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
   }
 }
 

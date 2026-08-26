@@ -29,14 +29,13 @@ const onToggleMenu = () => {
       <NuxtLink to="/" class="site-header__brand" :aria-label="`${site.name} — Accueil`">
         <img
           class="site-header__logo"
-          src="/brand/logo.png"
+          src="/brand/logo_devzaire_agency.png"
           alt=""
-          width="40"
-          height="40"
+          width="56"
+          height="56"
           decoding="async"
           fetchpriority="high"
         />
-        <span class="site-header__brand-name">{{ site.name }}</span>
       </NuxtLink>
 
       <nav class="site-header__nav" aria-label="Navigation principale">
@@ -121,21 +120,9 @@ const onToggleMenu = () => {
 
 .site-header__logo {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
-  /* Cadre subtil pour asseoir le logo sur le fond cream du header. */
-  border-radius: 10px;
-  background-color: var(--color-navy);
-  padding: 4px;
-}
-
-.site-header__brand-name {
-  font-family: var(--font-family-heading);
-  font-weight: var(--font-weight-heading);
-  font-size: 1.3125rem;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
 }
 
 .site-header__nav {

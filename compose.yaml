@@ -108,6 +108,9 @@ services:
       EDITORIAL_MEDIA_STORAGE_DIR: ${EDITORIAL_MEDIA_STORAGE_DIR:-/app/var/editorial-media}
       ADMIN_MEDIA_UPLOAD_LIMIT: ${ADMIN_MEDIA_UPLOAD_LIMIT:-20}
       ADMIN_MEDIA_UPLOAD_INTERVAL: ${ADMIN_MEDIA_UPLOAD_INTERVAL:-10 minutes}
+      # Token partagé avec le workflow n8n pour l'endpoint automatisé de
+      # création de brouillon d'article. Vide = endpoint refuse tout.
+      N8N_EDITORIAL_TOKEN: ${N8N_EDITORIAL_TOKEN:-}
     env_file:
       - path: .env
         required: false

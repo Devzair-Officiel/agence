@@ -32,6 +32,89 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
     expect(headings[0]?.trim()).not.toBe('')
   })
 
+  test('le hero et sa carte occupent toute la hauteur disponible avec un fondu bas', async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1440, height: 1000 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await page.goto('/ressources')
+
+      const hero = page.locator('.resources-hero')
+      const backdrop = hero.locator('.resources-hero__backdrop')
+      const [heroBox, backdropBox] = await Promise.all([
+        hero.boundingBox(),
+        backdrop.boundingBox(),
+      ])
+      expect(heroBox).not.toBeNull()
+      expect(backdropBox).not.toBeNull()
+      expect(heroBox!.height).toBeGreaterThanOrEqual(
+        viewport.height - heroBox!.y - 1,
+      )
+      expect(backdropBox!.height).toBeCloseTo(heroBox!.height, 0)
+
+      const fade = await hero.evaluate((element) => {
+        const styles = getComputedStyle(element, '::after')
+        return {
+          backgroundImage: styles.backgroundImage,
+          height: Number.parseFloat(styles.height),
+        }
+      })
+      expect(fade.backgroundImage).toContain('linear-gradient')
+      expect(fade.height).toBeGreaterThan(heroBox!.height * 0.2)
+
+      const readingHalo = await hero
+        .locator('.resources-hero__container')
+        .evaluate((element) => {
+          const styles = getComputedStyle(element, '::before')
+          return {
+            maskImage: styles.maskImage || styles.webkitMaskImage,
+            opacity: Number.parseFloat(styles.opacity),
+          }
+        })
+      expect(readingHalo.maskImage).toContain('radial-gradient')
+      expect(readingHalo.opacity).toBeGreaterThanOrEqual(0.9)
+    }
+  })
+
+  test('la souris laisse une trace décorative temporaire sur la carte', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('/ressources')
+
+    const hero = page.locator('.resources-hero')
+    await expect(hero.locator('.resources-pointer-trail')).toHaveAttribute(
+      'data-pointer-trail-ready',
+      'true',
+    )
+    const heroBox = await hero.boundingBox()
+    expect(heroBox).not.toBeNull()
+
+    await page.mouse.move(heroBox!.x + 80, heroBox!.y + heroBox!.height * 0.3)
+    await page.mouse.move(
+      heroBox!.x + heroBox!.width * 0.75,
+      heroBox!.y + heroBox!.height * 0.65,
+      { steps: 8 },
+    )
+
+    const trailPoints = hero.locator('.resources-pointer-trail__point')
+    await expect.poll(() => trailPoints.count()).toBeGreaterThan(1)
+
+    const animationName = await trailPoints.first().evaluate(
+      (element) => getComputedStyle(element).animationName,
+    )
+    expect(animationName).toContain('resources-pointer-trail-fade')
+    await expect(trailPoints).toHaveCount(0, { timeout: 2_000 })
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.mouse.move(heroBox!.x + 100, heroBox!.y + 200)
+    await page.mouse.move(heroBox!.x + 600, heroBox!.y + 500, { steps: 5 })
+    await expect(trailPoints).toHaveCount(0)
+  })
+
   test('rend une grille paginée (max 6 items par page, tous les fixtures visibles)', async ({
     page,
   }) => {
@@ -97,6 +180,52 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
     // Le lien retour vers page 1 pointe vers "/ressources" (pas "?page=1").
     const firstPageLink = nav.locator('a[href="/ressources"]').first()
     await expect(firstPageLink).toHaveCount(1)
+  })
+
+  test('un clic de pagination recharge les données et met à jour la page courante', async ({
+    page,
+  }) => {
+    await page.goto('/ressources')
+    await page.locator('[data-pointer-trail-ready="true"]').waitFor()
+
+    const pagination = page.locator('nav[aria-label="Pagination des ressources"]')
+    const firstArticle = page.locator('article a[href^="/ressources/"]').first()
+    const firstPageArticleHref = await firstArticle.getAttribute('href')
+    const pageRoot = page.locator('.resources-index')
+    await pageRoot.evaluate((element) => {
+      element.setAttribute('data-pagination-instance', 'preserved')
+    })
+
+    const pageTwoLink = pagination.getByRole('link', { name: 'Aller à la page 2' })
+    await pageTwoLink.scrollIntoViewIfNeeded()
+
+    await pageTwoLink.click()
+
+    await expect(page).toHaveURL(/\/ressources\?page=2$/)
+    await expect(pagination.locator('span[aria-current="page"]')).toHaveText('2')
+    await expect(firstArticle).not.toHaveAttribute('href', firstPageArticleHref!)
+    await expect(pagination.locator('a[aria-current="page"]')).toHaveCount(0)
+    await expect(pageRoot).toHaveAttribute('data-pagination-instance', 'preserved')
+    await expect(page).toHaveTitle(/Ressources — page 2/)
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex, follow',
+    )
+    await expect
+      .poll(() => page.locator('#resources-list-title').evaluate(
+        (element) => Math.round(element.getBoundingClientRect().top),
+      ))
+      .toBe(105)
+
+    await pagination.getByRole('link', { name: 'Précédente' }).click()
+    await expect(page).toHaveURL(/\/ressources$/)
+    await expect(pagination.locator('span[aria-current="page"]')).toHaveText('1')
+    await expect(firstArticle).toHaveAttribute('href', firstPageArticleHref!)
+    await expect
+      .poll(() => page.locator('#resources-list-title').evaluate(
+        (element) => Math.round(element.getBoundingClientRect().top),
+      ))
+      .toBe(105)
   })
 
   test('?page=1 est redirigé en 301 vers /ressources (URL canonique unique)', async ({

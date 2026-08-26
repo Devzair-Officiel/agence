@@ -142,8 +142,9 @@ function onInput(event: Event): void {
 .contact-field__label {
   font-family: var(--font-family-body);
   font-weight: var(--font-weight-body-strong);
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
 }
 
 .contact-field__required {
@@ -161,36 +162,46 @@ function onInput(event: Event): void {
 .contact-field__control {
   font: inherit;
   font-family: var(--font-family-body);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--text-primary);
-  background-color: #fcfbf8;
-  border: 1px solid var(--border-default);
+  background-color: #ffffff;
+  border: 1px solid rgba(22, 25, 28, 0.14);
   border-radius: var(--radius-md);
-  padding: 0.8125rem var(--space-4);
+  padding: 0.9375rem var(--space-4);
   min-height: var(--touch-target-min);
-  transition: border-color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+  box-shadow: 0 1px 2px rgba(22, 25, 28, 0.04);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .contact-field__control::placeholder {
-  color: #a29d93;
+  color: #b3ada2;
+}
+
+.contact-field__control:hover:not(:focus-visible) {
+  border-color: rgba(22, 25, 28, 0.28);
 }
 
 textarea.contact-field__control {
-  min-height: 8.5rem;
+  min-height: 9rem;
   resize: vertical;
 }
 
 .contact-field__control:focus-visible {
   outline: none;
-  border-color: var(--color-petrol);
-  box-shadow: 0 0 0 3px rgba(46, 134, 217, 0.28);
+  border-color: var(--color-devzair-blue, #2e86d9);
+  box-shadow:
+    0 0 0 4px rgba(46, 134, 217, 0.16),
+    0 1px 2px rgba(22, 25, 28, 0.04);
+  background-color: #ffffff;
 }
 
 .contact-field[data-invalid="true"] .contact-field__control {
   border-color: var(--color-status-error);
-  box-shadow: 0 0 0 3px rgba(178, 58, 46, 0.2);
+  box-shadow: 0 0 0 4px rgba(178, 58, 46, 0.16);
 }
 
 .contact-field__hint {

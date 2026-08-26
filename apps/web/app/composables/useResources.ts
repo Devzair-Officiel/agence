@@ -16,20 +16,20 @@
  * la page d'erreur cohérente avec le SSR.
  */
 
-import type { ComputedRef } from "vue"
-import { computed } from "vue"
+import type { ComputedRef, MaybeRefOrGetter } from "vue"
+import { computed, toValue, watch } from "vue"
 import type { ArticleDetail, ArticleListResult, Pagination } from "~/types/editorial"
 
 export interface UseResourceListArgs {
-  page: number
-  perPage: number
+  page: MaybeRefOrGetter<number>
+  perPage: MaybeRefOrGetter<number>
   /**
    * Filtre optionnel par identifiant d'expertise. Doit appartenir à
    * `EXPERTISE_IDS` — le proxy Nitro renvoie 400 sur une valeur inconnue,
    * qui se propage ici en 503 fatal (défensif : la page appelante refuse
    * déjà les valeurs hors allowlist avant d'appeler ce composable).
    */
-  expertise?: string | null
+  expertise?: MaybeRefOrGetter<string | null>
 }
 
 interface EditorialErrorPayload {
@@ -48,29 +48,38 @@ function toStatusCode(error: unknown): number | null {
  * l'endpoint Nitro interne. Fatale → interrompt le rendu de la page
  * courante et déclenche le layout d'erreur avec le bon code HTTP.
  */
-function rethrowAsFatal(error: unknown, contextLabel: string): never {
+function asFatalError(error: unknown, contextLabel: string) {
   const code = toStatusCode(error)
   if (code === 404) {
-    throw createError({ statusCode: 404, statusMessage: `${contextLabel} introuvable`, fatal: true })
+    return createError({
+      statusCode: 404,
+      statusMessage: `${contextLabel} introuvable`,
+      fatal: true,
+    })
   }
   if (code === 502) {
-    throw createError({
+    return createError({
       statusCode: 502,
       statusMessage: `${contextLabel} — payload amont invalide`,
       fatal: true,
     })
   }
   // Toute autre situation (réseau, 5xx, timeout) → 503 côté Nuxt.
-  throw createError({
+  return createError({
     statusCode: 503,
     statusMessage: `${contextLabel} — service indisponible`,
     fatal: true,
   })
 }
 
+function rethrowAsFatal(error: unknown, contextLabel: string): never {
+  throw asFatalError(error, contextLabel)
+}
+
 export interface UseResourceListReturn {
   items: ComputedRef<ArticleListResult["items"]>
   pagination: ComputedRef<Pagination>
+  pending: ComputedRef<boolean>
 }
 
 /**
@@ -83,14 +92,21 @@ export interface UseResourceListReturn {
  * filtrée écrase la liste globale (ou l'inverse).
  */
 export async function useResourceList(args: UseResourceListArgs): Promise<UseResourceListReturn> {
-  const expertise = args.expertise ?? null
-  const key = `resources:list:${args.page}:${args.perPage}:${expertise ?? "-"}`
-  const { data, error } = await useAsyncData<ArticleListResult>(key, () =>
+  const page = computed(() => toValue(args.page))
+  const perPage = computed(() => toValue(args.perPage))
+  const expertise = computed(() =>
+    args.expertise === undefined ? null : toValue(args.expertise),
+  )
+  const key = computed(
+    () =>
+      `resources:list:${page.value}:${perPage.value}:${expertise.value ?? "-"}`,
+  )
+  const { data, error, pending } = await useAsyncData<ArticleListResult>(key, () =>
     $fetch<ArticleListResult>("/_editorial/list", {
       query: {
-        page: args.page,
-        per_page: args.perPage,
-        ...(expertise ? { expertise } : {}),
+        page: page.value,
+        per_page: perPage.value,
+        ...(expertise.value ? { expertise: expertise.value } : {}),
       },
     }),
   )
@@ -99,11 +115,26 @@ export async function useResourceList(args: UseResourceListArgs): Promise<UseRes
     rethrowAsFatal(error.value, "Liste des ressources")
   }
 
-  const resolved = data.value as ArticleListResult
+  // Une erreur lors d'une navigation SPA (ex. page devenue hors bornes)
+  // doit suivre le même contrat que le premier rendu SSR.
+  watch(error, (currentError) => {
+    if (currentError) {
+      showError(asFatalError(currentError, "Liste des ressources"))
+    }
+  })
 
   return {
-    items: computed(() => resolved.items),
-    pagination: computed(() => resolved.pagination),
+    items: computed(() => data.value?.items ?? []),
+    pagination: computed(
+      () =>
+        data.value?.pagination ?? {
+          page: page.value,
+          perPage: perPage.value,
+          total: 0,
+          totalPages: 0,
+        },
+    ),
+    pending: computed(() => pending.value),
   }
 }
 

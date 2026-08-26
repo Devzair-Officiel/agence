@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
-import EditorialHero from "~/components/editorial/EditorialHero.vue"
 import EditorialSection from "~/components/editorial/EditorialSection.vue"
 import ExpertiseOverviewCard from "~/components/expertise/ExpertiseOverviewCard.vue"
+import ExpertisesApproachDetails from "~/components/expertise/ExpertisesApproachDetails.vue"
+import ExpertisesHero from "~/components/expertise/ExpertisesHero.vue"
 import { expertisePages } from "~/config/expertise-pages"
 import { expertisePillars } from "~/config/expertise-pillars"
 
@@ -11,7 +12,9 @@ import { expertisePillars } from "~/config/expertise-pillars"
  * Page `/expertises` — vue d'ensemble des cinq pôles d'expertise.
  *
  * Rôle d'orchestration :
- *   - un H1 unique porté par EditorialHero ;
+ *   - un H1 unique porté par ExpertisesHero (variante typographique dédiée
+ *     à la page, distincte du HomeHero pour éviter la sensation de « déjà
+ *     vu » lorsqu'on arrive depuis l'accueil) ;
  *   - un EditorialSection narratif rappelant l'approche connectée (pas de
  *     duplication de HomeConnectedApproach : on ne réutilise pas la mise en
  *     page « parcours numéroté » de l'accueil, on cadre le sujet avec un
@@ -44,11 +47,7 @@ usePageSeo({
 
 <template>
   <div class="expertises-page">
-    <EditorialHero
-      eyebrow="Nos expertises"
-      title="Cinq pôles complémentaires pour construire une présence digitale cohérente."
-      lead="Chaque entreprise possède des besoins différents. Nous réunissons les expertises adaptées pour concevoir, construire, valoriser, rendre visible et faire évoluer votre projet."
-    />
+    <ExpertisesHero />
 
     <EditorialSection
       tone="subtle"
@@ -56,11 +55,7 @@ usePageSeo({
       title="Des pôles pensés comme un ensemble, pas comme des prestations isolées."
       intro="Design, développement, contenu et visibilité s'alimentent mutuellement. Traiter un pôle sans les autres génère des angles morts — nous les rendons visibles dès le cadrage."
     >
-      <p class="expertises-page__paragraph">
-        Selon votre besoin, un projet peut mobiliser un seul pôle ou plusieurs.
-        Le cadrage initial définit précisément ce qui est utile, ce qui peut
-        être différé et ce qui n'a pas de raison d'être dans votre contexte.
-      </p>
+      <ExpertisesApproachDetails />
     </EditorialSection>
 
     <EditorialSection
@@ -72,6 +67,7 @@ usePageSeo({
       <ul class="expertises-page__grid" role="list">
         <li
           v-for="pillar in expertisePillars"
+          :id="`pillar-${pillar.id}`"
           :key="pillar.id"
           class="expertises-page__grid-item"
         >
@@ -99,15 +95,6 @@ usePageSeo({
   flex-direction: column;
 }
 
-.expertises-page__paragraph {
-  font-family: var(--font-family-body);
-  font-size: 1rem;
-  line-height: 1.65;
-  color: var(--text-secondary);
-  margin: 0;
-  max-width: 60ch;
-}
-
 .expertises-page__grid {
   list-style: none;
   margin: 0;
@@ -119,6 +106,7 @@ usePageSeo({
 
 .expertises-page__grid-item {
   display: flex;
+  scroll-margin-top: calc(var(--site-header-height) + var(--space-4));
 }
 
 @media (min-width: 720px) {

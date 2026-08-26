@@ -99,6 +99,7 @@ const entries = computed<readonly Entry[]>(() => {
       :to="prevHref"
       class="resource-pagination__control"
       rel="prev"
+      aria-current-value="false"
     >
       <span aria-hidden="true">←</span>
       <span>Précédente</span>
@@ -133,6 +134,7 @@ const entries = computed<readonly Entry[]>(() => {
           :to="entry.href"
           class="resource-pagination__page"
           :aria-label="`Aller à la page ${entry.page}`"
+          aria-current-value="false"
         >{{ entry.page }}</NuxtLink>
       </li>
     </ol>
@@ -142,6 +144,7 @@ const entries = computed<readonly Entry[]>(() => {
       :to="nextHref"
       class="resource-pagination__control"
       rel="next"
+      aria-current-value="false"
     >
       <span>Suivante</span>
       <span aria-hidden="true">→</span>

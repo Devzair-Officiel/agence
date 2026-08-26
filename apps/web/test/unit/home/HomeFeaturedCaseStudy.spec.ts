@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { mount } from "@vue/test-utils"
 import HomeFeaturedCaseStudy from "~/components/home/HomeFeaturedCaseStudy.vue"
+import { caseStudies } from "~/config/case-studies"
 
 describe("HomeFeaturedCaseStudy", () => {
   it("exposes the #realisations anchor on the section root", () => {
@@ -18,38 +19,80 @@ describe("HomeFeaturedCaseStudy", () => {
     )
   })
 
-  it("publishes the honest-state placeholder title verbatim", () => {
+  it("carries the « Réalisations » eyebrow", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    const h3s = wrapper.findAll("h3")
-    expect(h3s).toHaveLength(1)
-    expect(h3s[0]!.text()).toBe(
-      "Nos réalisations détaillées seront bientôt disponibles.",
-    )
+    expect(wrapper.text()).toContain("Réalisations")
   })
 
-  it("carries the « Études de cas en préparation » eyebrow", () => {
+  it("renders one composition per configured case study", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    expect(wrapper.text()).toContain("Études de cas en préparation")
+    const items = wrapper.findAll(".home-case__item")
+    expect(items).toHaveLength(caseStudies.length)
   })
 
-  it("has no interactive control (no button, no link, no tabindex)", () => {
+  it("uses semantic list markup (ul > li) for the case studies", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    expect(wrapper.findAll("button")).toHaveLength(0)
-    expect(wrapper.findAll("a")).toHaveLength(0)
-    expect(wrapper.findAll("[tabindex]")).toHaveLength(0)
+    const list = wrapper.get(".home-case__list")
+    expect(list.element.tagName).toBe("UL")
+    expect(list.findAll(":scope > li")).toHaveLength(caseStudies.length)
   })
 
-  it("carries no fictional client name or numeric proof", () => {
+  it("renders the main project image with the configured alt (required, not decorative)", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    for (const study of caseStudies) {
+      const img = wrapper.find(`img[src="${study.imageSrc}"]`)
+      expect(img.exists()).toBe(true)
+      expect(img.attributes("alt")).toBe(study.imageAlt)
+      expect(img.attributes("alt")).not.toBe("")
+    }
+  })
+
+  it("renders the decorative overlay with empty alt + aria-hidden when configured", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    for (const study of caseStudies) {
+      if (!study.overlayImageSrc) continue
+      const overlay = wrapper.find(`img[src="${study.overlayImageSrc}"]`)
+      expect(overlay.exists()).toBe(true)
+      // Purement décoratif : jamais annoncé par un lecteur d'écran.
+      expect(overlay.attributes("alt")).toBe("")
+      expect(overlay.attributes("aria-hidden")).toBe("true")
+    }
+  })
+
+  it("renders each configured tag as a list item", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    for (const study of caseStudies) {
+      const rendered = wrapper.findAll(".home-case__tag").map((n) => n.text())
+      for (const tag of study.tags) {
+        expect(rendered).toContain(tag)
+      }
+    }
+  })
+
+  it("renders the long editorial description of each project", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    for (const study of caseStudies) {
+      expect(wrapper.text()).toContain(study.longDescription)
+    }
+  })
+
+  it("does not render a « Voir le projet » CTA when `to` is not set (no dead link)", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    for (const study of caseStudies) {
+      if (study.to) continue
+      // Aucun lien vers une page qui n'existe pas — AGENTS.md rule 1.
+      const anchors = wrapper.findAll("a")
+      for (const a of anchors) {
+        expect(a.attributes("href")).not.toBe("#")
+      }
+    }
+  })
+
+  it("carries no fictional client name or numeric proof (AGENTS.md rule 1)", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
     const text = wrapper.text()
+    // Pas de pourcentage d'amélioration inventé (trafic, conversion, etc.).
     expect(text).not.toMatch(/\d+\s?%/)
     expect(text).not.toMatch(/témoignage/i)
-    expect(text).not.toMatch(/étude de cas .+\balias/i)
-  })
-
-  it("does not render an image placeholder or skeleton loader", () => {
-    const wrapper = mount(HomeFeaturedCaseStudy)
-    expect(wrapper.findAll("img")).toHaveLength(0)
-    expect(wrapper.findAll(".skeleton")).toHaveLength(0)
   })
 })
