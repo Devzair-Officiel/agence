@@ -35,6 +35,7 @@ on:
       - 'scripts/e2e-admin-articles.sh'
       - 'scripts/e2e-admin-preview.sh'
       - 'scripts/e2e-admin-media.sh'
+      - 'scripts/e2e-9b-hero-image.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -49,6 +50,7 @@ on:
       - 'scripts/e2e-admin-articles.sh'
       - 'scripts/e2e-admin-preview.sh'
       - 'scripts/e2e-admin-media.sh'
+      - 'scripts/e2e-9b-hero-image.sh'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -193,6 +195,16 @@ jobs:
         # `e2e-9a-`, DELETE ciblé, `rm` fichier-par-fichier — voir en-tête.
         run: ./scripts/e2e-admin-media.sh load
 
+      - name: Ensure clean state for hero image lifecycle E2E (e2e-9b-*)
+        # La suite hero-image-lifecycle.spec.ts CRÉE via l'UI médias ET
+        # articles préfixés `e2e-9b-`. Ce `load` purge tout résidu d'un
+        # run précédent (avant même l'ouverture de Playwright), y compris
+        # les fichiers binaires du volume `api_var`. Le spec lui-même
+        # appelle ce script en `beforeAll`/`afterAll` — cette étape CI est
+        # une ceinture supplémentaire (bretelles) : si le `webServer`
+        # Playwright plante avant `beforeAll`, la base reste propre.
+        run: ./scripts/e2e-9b-hero-image.sh load
+
       - name: Run Playwright tests
         working-directory: apps/web
         env:
@@ -237,6 +249,18 @@ jobs:
         # `if: always()` pour ne jamais laisser de résidu après un échec.
         if: always()
         run: ./scripts/e2e-admin-media.sh clear
+
+      - name: Clear hero image lifecycle E2E assets (e2e-9b-*)
+        # Symétrique au load 9B : DELETE ciblé `slug LIKE 'e2e-9b-%'` sur
+        # `editorial_article`, DELETE ciblé `original_filename LIKE
+        # 'e2e-9b-%'` sur `editorial_media_asset`, et `rm` fichier-par-
+        # fichier des `storage_key` correspondants. `if: always()` pour
+        # ne jamais laisser d'article Published pointant sur un média
+        # supprimé (source du 404 /api/media/{uuid} qui polluait
+        # `ExpertiseRelatedResources`). Pas de `|| true` : un échec de
+        # purge doit faire rougir le job.
+        if: always()
+        run: ./scripts/e2e-9b-hero-image.sh clear
 
       - name: Collect docker compose logs (on failure)
         if: failure()

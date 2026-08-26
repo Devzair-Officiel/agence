@@ -1,3 +1,6 @@
+import { execFileSync } from 'node:child_process'
+import { resolve } from 'node:path'
+import process from 'node:process'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
@@ -26,6 +29,15 @@ import { expect, test } from '@playwright/test'
 // AVANT et APRÈS la suite. Le script supprime aussi les fichiers physiques
 // sur le volume `api_var` — indispensable pour ne pas laisser d'orphelins.
 //
+// Le `beforeAll` / `afterAll` ci-dessous invoquent ce script en local :
+// la suite est ainsi autonome (plus besoin d'un `load`/`clear` manuel
+// externe pour ne pas contaminer les autres specs qui suivent
+// alphabétiquement — `resources.spec.ts` en particulier). Le script bash
+// reste la seule source de vérité (aucun DELETE SQL dupliqué ici) ; en
+// CI, le workflow répète explicitement ces mêmes `load`/`clear` en
+// périmètre job pour garantir la propreté même si Playwright plante
+// avant `afterAll`.
+//
 // Serial obligatoire : le firewall Symfony applique un throttling par
 // email+IP, et le rate limiter media upload plafonne à 20 uploads / 10 min.
 
@@ -51,6 +63,25 @@ const TINY_PNG = Buffer.from(
     '91638001260624809b03000ca80044af72a26c0000000049454e44ae426082',
   'hex',
 )
+
+// Résolu depuis `apps/web` (cwd de Playwright — voir `playwright.config.ts`,
+// pas de `working-directory` custom) vers la racine monorepo, où
+// `scripts/e2e-9b-hero-image.sh` est checké-in. `execFileSync` sans shell :
+// pas d'injection possible, argv fixé. `process.cwd()` évite les subtilités
+// `__dirname` vs `import.meta.url` selon le mode CJS/ESM de Playwright.
+const CLEANUP_SCRIPT = resolve(
+  process.cwd(),
+  '..',
+  '..',
+  'scripts',
+  'e2e-9b-hero-image.sh',
+)
+
+function runCleanup(action: 'load' | 'clear'): void {
+  execFileSync(CLEANUP_SCRIPT, [action], {
+    stdio: 'inherit',
+  })
+}
 
 async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.goto(`${ADMIN_BASE_URL}/admin/login`)
@@ -180,6 +211,22 @@ async function restoreArticle(
 }
 
 test.describe.serial('Phase 9B — cycle complet image principale', () => {
+  // Purge préventive : garantit un état de départ propre même si un run
+  // précédent a crashé avant `afterAll`. Le script est idempotent : sans
+  // résidu, il ne fait rien de destructeur, seulement des DELETE ciblés
+  // `slug LIKE 'e2e-9b-%'` et `original_filename LIKE 'e2e-9b-%'`.
+  test.beforeAll(() => {
+    runCleanup('load')
+  })
+
+  // Purge symétrique : s'exécute même si un test précédent a échoué
+  // (Playwright appelle `afterAll` en toute circonstance). L'échec du
+  // script fait rougir la suite — pas de `|| true` masquant, pas de
+  // `try/catch` qui absorberait un résidu.
+  test.afterAll(() => {
+    runCleanup('clear')
+  })
+
   test('lifecycle : upload → hero → publish → verif public → archive → 404 → restore → 404', async ({
     page,
   }) => {
