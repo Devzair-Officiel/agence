@@ -311,6 +311,59 @@ test.describe("Résolution stricte des slugs et sitemap", () => {
   })
 })
 
+test.describe("Direction propre à /expertises/concevoir (Digital Blueprint)", () => {
+  test("expose les cinq étapes de la méthode dans l'ordre exact", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/concevoir")
+    const steps = ["Objectifs", "Structure", "Parcours", "Interface", "Système"]
+    let lastIndex = -1
+    for (const label of steps) {
+      const idx = body.indexOf(label)
+      expect(idx, `${label} présent en SSR`).toBeGreaterThanOrEqual(0)
+      expect(idx, `${label} après ${steps[steps.indexOf(label) - 1] ?? "start"}`).toBeGreaterThan(
+        lastIndex,
+      )
+      lastIndex = idx
+    }
+  })
+
+  test("porte les titres validés du brief éditorial", async ({ request }) => {
+    const { body } = await fetchSSR(request, "/expertises/concevoir")
+    expect(body).toMatch(/Avant de construire, il faut d(?:é|&#233;|&eacute;)cider\./)
+    expect(body).toMatch(/Du flou au syst(?:è|&#232;|&egrave;)me\./)
+    expect(body).toMatch(/Vous avez le projet\. Construisons d/)
+  })
+
+  test("expose les CTA validés du brief éditorial", async ({ page }) => {
+    await page.goto("/expertises/concevoir")
+    await expect(page.getByRole("link", { name: /Parler de votre projet/i }).first()).toBeVisible()
+    await expect(page.getByRole("link", { name: /D(?:é|e)couvrir Construire/i }).first()).toBeVisible()
+    await expect(page.locator('a[href="/expertises/construire"]').first()).toBeVisible()
+  })
+
+  test("rend le visuel blueprint comme purement décoratif (aria-hidden)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/concevoir")
+    const blueprint = page.locator(".concevoir-blueprint")
+    await expect(blueprint).toHaveCount(1)
+    await expect(blueprint).toHaveAttribute("aria-hidden", "true")
+    const svg = blueprint.locator("svg")
+    await expect(svg).toHaveAttribute("aria-hidden", "true")
+  })
+
+  test("rend la carte de processus dans une vraie liste ordonnée", async ({ page }) => {
+    await page.goto("/expertises/concevoir")
+    const list = page.locator(".concevoir-process__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".concevoir-process__item")
+    await expect(items).toHaveCount(5)
+    // Le premier item porte bien le titre de la première étape validée.
+    await expect(items.first().locator("h3")).toHaveText("Objectifs")
+  })
+})
+
 test.describe("Maillage inter-pages détaillées", () => {
   test("depuis `/expertises`, chaque carte mène à la page fille correspondante", async ({
     page,

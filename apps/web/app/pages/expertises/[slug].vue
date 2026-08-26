@@ -7,6 +7,7 @@ import ExpertiseDeliverables from "~/components/expertise/ExpertiseDeliverables.
 import ExpertisePageHero from "~/components/expertise/ExpertisePageHero.vue"
 import ExpertiseRelatedPillars from "~/components/expertise/ExpertiseRelatedPillars.vue"
 import ExpertiseRelatedResources from "~/components/expertise/ExpertiseRelatedResources.vue"
+import ConcevoirExpertisePage from "~/components/expertise/concevoir/ConcevoirExpertisePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { expertisePages } from "~/config/expertise-pages"
 
@@ -88,77 +89,90 @@ useExpertiseServiceSchema({
   path: resolvedPage.value.route,
   serviceType: resolvedPage.value.shortTitle,
 })
+
+// Direction visuelle propre à chaque pôle : `Concevoir` bascule sur son
+// gabarit dédié (Digital Blueprint) ; les quatre autres pôles restent sur
+// le gabarit générique historique tant qu'aucune direction propre n'a été
+// livrée pour eux. Ce branch conserve `[slug].vue` en simple aiguilleur.
+const isConcevoir = computed(() => resolvedPage.value.id === "concevoir")
 </script>
 
 <template>
   <div class="expertise-page">
     <SiteBreadcrumb :items="breadcrumbItems" />
 
-    <ExpertisePageHero
-      :eyebrow="resolvedPage.eyebrow"
-      :title="resolvedPage.title"
-      :introduction="resolvedPage.introduction"
+    <ConcevoirExpertisePage
+      v-if="isConcevoir"
+      :page="resolvedPage"
     />
 
-    <EditorialSection
-      tone="subtle"
-      eyebrow="À qui cela s'adresse"
-      :title="resolvedPage.needTitle"
-    >
-      <p class="expertise-page__paragraph">
-        {{ resolvedPage.needDescription }}
-      </p>
-    </EditorialSection>
+    <template v-else>
+      <ExpertisePageHero
+        :eyebrow="resolvedPage.eyebrow"
+        :title="resolvedPage.title"
+        :introduction="resolvedPage.introduction"
+      />
 
-    <EditorialSection
-      tone="default"
-      eyebrow="Notre approche"
-      :title="resolvedPage.approachTitle"
-    >
-      <p class="expertise-page__paragraph">
-        {{ resolvedPage.approachDescription }}
-      </p>
-    </EditorialSection>
+      <EditorialSection
+        tone="subtle"
+        eyebrow="À qui cela s'adresse"
+        :title="resolvedPage.needTitle"
+      >
+        <p class="expertise-page__paragraph">
+          {{ resolvedPage.needDescription }}
+        </p>
+      </EditorialSection>
 
-    <EditorialSection
-      tone="subtle"
-      eyebrow="Prestations"
-      title="Les livrables associés à ce pôle."
-      intro="Chaque livrable est cadré au démarrage. Le périmètre exact est arbitré avec vous en fonction de vos objectifs et de votre calendrier."
-    >
-      <ExpertiseDeliverables :deliverables="resolvedPage.deliverables" />
-    </EditorialSection>
+      <EditorialSection
+        tone="default"
+        eyebrow="Notre approche"
+        :title="resolvedPage.approachTitle"
+      >
+        <p class="expertise-page__paragraph">
+          {{ resolvedPage.approachDescription }}
+        </p>
+      </EditorialSection>
 
-    <EditorialSection
-      tone="default"
-      eyebrow="Bénéfices concrets"
-      title="Ce que vous obtenez à l'issue du projet."
-      intro="Des résultats vérifiables, décrits sans effet de manche. Nous ne promettons ni chiffre ni délai qu'un travail digital ne peut sérieusement garantir."
-    >
-      <ExpertiseBenefits :benefits="resolvedPage.benefits" />
-    </EditorialSection>
+      <EditorialSection
+        tone="subtle"
+        eyebrow="Prestations"
+        title="Les livrables associés à ce pôle."
+        intro="Chaque livrable est cadré au démarrage. Le périmètre exact est arbitré avec vous en fonction de vos objectifs et de votre calendrier."
+      >
+        <ExpertiseDeliverables :deliverables="resolvedPage.deliverables" />
+      </EditorialSection>
 
-    <EditorialSection
-      tone="subtle"
-      eyebrow="Aller plus loin"
-      title="Pôles connexes à explorer."
-      intro="Ce pôle prend tout son sens articulé avec d'autres domaines. Voici deux pôles qui se combinent naturellement avec celui-ci."
-    >
-      <ExpertiseRelatedPillars :pillar-ids="resolvedPage.relatedPillarIds" />
-    </EditorialSection>
+      <EditorialSection
+        tone="default"
+        eyebrow="Bénéfices concrets"
+        title="Ce que vous obtenez à l'issue du projet."
+        intro="Des résultats vérifiables, décrits sans effet de manche. Nous ne promettons ni chiffre ni délai qu'un travail digital ne peut sérieusement garantir."
+      >
+        <ExpertiseBenefits :benefits="resolvedPage.benefits" />
+      </EditorialSection>
 
-    <ExpertiseRelatedResources
-      :expertise-id="resolvedPage.id"
-      :expertise-label="resolvedPage.shortTitle"
-    />
+      <EditorialSection
+        tone="subtle"
+        eyebrow="Aller plus loin"
+        title="Pôles connexes à explorer."
+        intro="Ce pôle prend tout son sens articulé avec d'autres domaines. Voici deux pôles qui se combinent naturellement avec celui-ci."
+      >
+        <ExpertiseRelatedPillars :pillar-ids="resolvedPage.relatedPillarIds" />
+      </EditorialSection>
 
-    <EditorialCallout
-      eyebrow="Parler de votre projet"
-      title="Un besoin sur ce pôle ? Racontez-nous votre contexte."
-      description="Un échange court suffit pour cadrer si ce pôle correspond à votre situation et quelles étapes seraient utiles."
-      :primary="{ label: 'Nous contacter', to: '/contact' }"
-      :secondary="{ label: 'Voir tous les pôles', to: '/expertises' }"
-    />
+      <ExpertiseRelatedResources
+        :expertise-id="resolvedPage.id"
+        :expertise-label="resolvedPage.shortTitle"
+      />
+
+      <EditorialCallout
+        eyebrow="Parler de votre projet"
+        title="Un besoin sur ce pôle ? Racontez-nous votre contexte."
+        description="Un échange court suffit pour cadrer si ce pôle correspond à votre situation et quelles étapes seraient utiles."
+        :primary="{ label: 'Nous contacter', to: '/contact' }"
+        :secondary="{ label: 'Voir tous les pôles', to: '/expertises' }"
+      />
+    </template>
   </div>
 </template>
 
