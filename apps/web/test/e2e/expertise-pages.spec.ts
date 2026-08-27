@@ -417,6 +417,228 @@ test.describe("Direction propre à /expertises/concevoir (Digital Blueprint)", (
   })
 })
 
+test.describe("Direction propre à /expertises/construire (Product Assembly)", () => {
+  test("porte le H2 audience validé « Quand le projet doit devenir un outil. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/construire")
+    expect(body).toMatch(/Quand le projet doit devenir un outil\./)
+  })
+
+  test("porte le H2 approche validé « Construire par couches. Valider à chaque étape. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/construire")
+    expect(body).toMatch(
+      /Construire par couches\. Valider (?:à|&#224;|&agrave;) chaque (?:é|&#233;|&eacute;)tape\./,
+    )
+  })
+
+  test("expose les cinq étapes du pipeline dans l'ordre exact (Socle → Validation)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/construire")
+    const steps = ["Socle", "Interfaces", "Logique métier", "Connexions", "Validation"]
+    let lastIndex = -1
+    for (const label of steps) {
+      const idx = body.indexOf(label)
+      expect(idx, `${label} présent en SSR`).toBeGreaterThanOrEqual(0)
+      expect(
+        idx,
+        `${label} après ${steps[steps.indexOf(label) - 1] ?? "start"}`,
+      ).toBeGreaterThan(lastIndex)
+      lastIndex = idx
+    }
+  })
+
+  test("rend le pipeline de fabrication dans une vraie liste ordonnée", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    const list = page.locator(".construire-flow__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".construire-flow__item")
+    await expect(items).toHaveCount(5)
+    await expect(items.first().locator("h3")).toHaveText("Socle")
+  })
+
+  test("rend le visuel système comme purement décoratif (aria-hidden)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    const visual = page.locator(".construire-system")
+    await expect(visual).toHaveCount(1)
+    await expect(visual).toHaveAttribute("aria-hidden", "true")
+    const svg = visual.locator("svg")
+    await expect(svg).toHaveAttribute("aria-hidden", "true")
+  })
+
+  test("expose les trois situations d'audience Présenter / Vendre / Organiser", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/construire")
+    for (const verb of ["Présenter", "Vendre", "Organiser"]) {
+      expect(body).toContain(verb)
+    }
+  })
+
+  test("ne déborde pas à 1920 px (revue visuelle desktop dédiée)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    )
+    expect(overflow, "overflow @1920").toBeLessThanOrEqual(1)
+  })
+
+  test("sépare visuellement le panneau CTA du footer navy-deep", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    const panel = page.locator(".construire-callout__panel")
+    await expect(panel).toHaveCount(1)
+    const panelBg = await panel.evaluate((el) =>
+      window.getComputedStyle(el).backgroundColor,
+    )
+    const footer = page.locator("footer.site-footer")
+    await expect(footer).toBeVisible()
+    const footerBg = await footer.evaluate((el) =>
+      window.getComputedStyle(el).backgroundColor,
+    )
+    expect(panelBg, "panneau CTA et footer doivent avoir des fonds distincts").not.toBe(
+      footerBg,
+    )
+  })
+
+  test("rend le CTA secondaire cream lisible sur le panneau navy (computed styles)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    const btn = page
+      .locator('a[href="/expertises/concevoir"]')
+      .filter({ hasText: /D(?:é|e)couvrir Concevoir/i })
+      .first()
+    await btn.scrollIntoViewIfNeeded()
+
+    const rest = await btn.evaluate((el) => {
+      const cs = window.getComputedStyle(el)
+      return {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        borderTopColor: cs.borderTopColor,
+        borderTopWidth: cs.borderTopWidth,
+      }
+    })
+
+    const cream = "rgb(244, 241, 234)"
+
+    // Texte cream — pas d'ink sombre (l'ancienne valeur était rgb(22, 25, 28)).
+    expect(rest.color).toBe(cream)
+    // Fond transparent.
+    expect(rest.backgroundColor).toBe("rgba(0, 0, 0, 0)")
+    // Bordure cream franche — pas la border-strong ink à 28 % qui disparaissait
+    // sur le panneau navy.
+    expect(rest.borderTopColor).toBe(cream)
+    expect(rest.borderTopWidth).not.toBe("0px")
+
+    await btn.hover()
+    // Laisser la transition CSS (color/background) se poser avant lecture.
+    await page.waitForTimeout(200)
+    const hover = await btn.evaluate((el) => {
+      const cs = window.getComputedStyle(el)
+      return {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+      }
+    })
+    // Hover : fond cream + texte sombre (navy-elevated ≈ rgb(20, 30, 44) —
+    // on tolère le calcul RGB proche via un test structurel : pas cream, pas
+    // transparent).
+    expect(hover.backgroundColor).not.toBe("rgba(0, 0, 0, 0)")
+    expect(hover.color).not.toBe(cream)
+
+    await page.mouse.move(0, 0)
+    await btn.focus()
+    await page.waitForTimeout(100)
+    const focus = await btn.evaluate((el) => {
+      const cs = window.getComputedStyle(el)
+      return {
+        outlineColor: cs.outlineColor,
+        outlineWidth: cs.outlineWidth,
+        outlineStyle: cs.outlineStyle,
+      }
+    })
+    expect(focus.outlineColor).toBe(cream)
+    expect(focus.outlineStyle).toBe("solid")
+    expect(focus.outlineWidth).not.toBe("0px")
+  })
+
+  test("expose le CTA final validé « Vous avez le projet. Construisons le produit. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/construire")
+    expect(body).toMatch(
+      /Vous avez le projet\. Construisons le produit\./,
+    )
+  })
+
+  test("expose les CTA validés (Nous parler du projet + Découvrir Concevoir)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/construire")
+    await expect(
+      page.getByRole("link", { name: /Nous parler du projet/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /D(?:é|e)couvrir Concevoir/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/concevoir"]').first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/faire-evoluer"]').first(),
+    ).toBeVisible()
+  })
+
+  test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({
+    page,
+  }) => {
+    const hydrationSignals: string[] = []
+    const capture = (message: string) => {
+      if (
+        message.includes("Hydration") ||
+        message.includes("hydration mismatch") ||
+        message.includes("contains mismatches")
+      ) {
+        hydrationSignals.push(message)
+      }
+    }
+    page.on("console", (msg) => {
+      if (msg.type() === "warning" || msg.type() === "error") {
+        capture(msg.text())
+      }
+    })
+    page.on("pageerror", (err) => capture(err.message))
+
+    await page.goto("/expertises/construire", { waitUntil: "networkidle" })
+    const hydrationMarker = page.locator(
+      'button[aria-controls="mobile-navigation"]',
+    )
+    await expect(hydrationMarker).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    })
+
+    expect(
+      hydrationSignals,
+      `Vue a signalé un mismatch d'hydratation :\n${hydrationSignals.join("\n")}`,
+    ).toEqual([])
+  })
+})
+
 test.describe("Maillage inter-pages détaillées", () => {
   test("depuis `/expertises`, chaque carte mène à la page fille correspondante", async ({
     page,
@@ -429,12 +651,17 @@ test.describe("Maillage inter-pages détaillées", () => {
     )
   })
 
-  test("depuis une page fille, le callout secondaire retourne à /expertises", async ({
+  test("depuis Construire, un lien /expertises reste atteignable (breadcrumb ou footer)", async ({
     page,
   }) => {
     await page.goto("/expertises/construire")
-    // Le callout final propose un secondaire « Voir tous les pôles » → /expertises.
-    await page.locator('a[href="/expertises"]').last().click()
+    // Le callout Construire ne renvoie plus vers /expertises (secondaire =
+    // /expertises/concevoir, choix éditorial du brief pour refermer la
+    // boucle du cycle). Le lien vers l'ombrelle des pôles reste néanmoins
+    // atteignable ailleurs sur la page (breadcrumb en tête, footer en pied).
+    const links = page.locator('a[href="/expertises"]')
+    await expect(links.first()).toBeVisible()
+    await links.first().click()
     await expect(page).toHaveURL(/\/expertises\/?$/)
     await expect(page.locator("h1")).toHaveText(
       "Cinq pôles complémentaires pour construire une présence digitale cohérente.",
