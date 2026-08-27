@@ -829,6 +829,196 @@ test.describe("Direction propre à /expertises/valoriser (Editorial Studio)", ()
   })
 })
 
+test.describe("Direction propre à /expertises/visibilite (Search Territory / Signal Map)", () => {
+  test("porte le H2 audience validé « Trois territoires de visibilité. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    expect(body).toMatch(
+      /Trois territoires de visibilit(?:é|&#233;|&eacute;)\./,
+    )
+  })
+
+  test("porte le H2 approche validé « Le parcours d'un signal, de l'intention à la mesure. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    expect(body).toMatch(
+      /Le parcours d(?:'|&#39;|&apos;)un signal, de l(?:'|&#39;|&apos;)intention (?:à|&#224;|&agrave;) la mesure\./,
+    )
+  })
+
+  test("expose les cinq étapes du parcours dans l'ordre exact (Intentions → Mesure)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    const pathAnchor = body.search(
+      /Le parcours d(?:'|&#39;|&apos;)un signal/,
+    )
+    expect(pathAnchor, "ancre 'Le parcours d'un signal' trouvée").toBeGreaterThanOrEqual(0)
+    const pathSlice = body.slice(pathAnchor)
+    const steps = ["Intentions", "Fondations", "Pages", "Présence", "Mesure"]
+    let lastIndex = -1
+    for (const label of steps) {
+      const idx = pathSlice.indexOf(label)
+      expect(idx, `${label} présent dans la frise SSR`).toBeGreaterThanOrEqual(0)
+      expect(
+        idx,
+        `${label} après ${steps[steps.indexOf(label) - 1] ?? "start"}`,
+      ).toBeGreaterThan(lastIndex)
+      lastIndex = idx
+    }
+  })
+
+  test("rend la frise signal dans une vraie liste ordonnée", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    const list = page.locator(".visibilite-path__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".visibilite-path__item")
+    await expect(items).toHaveCount(5)
+    await expect(items.first().locator("h3")).toHaveText("Intentions")
+  })
+
+  test("rend le visuel territoire du hero comme purement décoratif (aria-hidden)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    const visual = page.locator(".visibilite-visual")
+    await expect(visual).toHaveCount(1)
+    await expect(visual).toHaveAttribute("aria-hidden", "true")
+  })
+
+  test("expose les trois zones d'audience (Être trouvé / Être présent localement / Rester visible)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    for (const fragment of [
+      "Être trouvé",
+      "Être présent localement",
+      "Rester visible dans la durée",
+    ]) {
+      expect(body).toContain(fragment)
+    }
+  })
+
+  test("expose les trois principes narratifs Durée / Pertinence / Proximité", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    for (const label of ["Durée", "Pertinence", "Proximité"]) {
+      expect(body).toContain(label)
+    }
+  })
+
+  test("rend les cinq couches de visibilité dans une <ol>, une par livrable", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    const stack = page.locator(".visibilite-layers__stack")
+    await expect(stack).toHaveCount(1)
+    const layers = stack.locator(".visibilite-layers__layer")
+    await expect(layers).toHaveCount(5)
+  })
+
+  test("ne déborde pas à 1920 px (revue visuelle desktop dédiée)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    )
+    expect(overflow, "overflow @1920").toBeLessThanOrEqual(1)
+  })
+
+  test("expose le nœud central Visibilité du bloc « Aller plus loin » comme non-cliquable", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    const center = page.locator(".visibilite-related__node--center")
+    await expect(center).toHaveCount(1)
+    await expect(center).toHaveAttribute("aria-hidden", "true")
+    const tag = await center.evaluate((el) => el.tagName)
+    expect(tag).toBe("DIV")
+  })
+
+  test("ordonne les pôles connexes Amont (Valoriser) / Aval (Faire évoluer) dans le rendu", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    const nodes = page.locator(".visibilite-related__node")
+    await expect(nodes).toHaveCount(3)
+    await expect(nodes.nth(0).locator("h3")).toHaveText("Valoriser")
+    await expect(nodes.nth(1).locator("h3")).toHaveText("Visibilité")
+    await expect(nodes.nth(2).locator("h3")).toHaveText("Faire évoluer")
+  })
+
+  test("expose le CTA final validé « Développer la visibilité … sans dépendre de la publicité payante. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/visibilite")
+    expect(body).toMatch(
+      /D(?:é|&#233;|&eacute;)velopper la visibilit(?:é|&#233;|&eacute;) de votre entreprise, sans d(?:é|&#233;|&eacute;)pendre[\s\S]{0,30}de la publicit(?:é|&#233;|&eacute;) payante\./,
+    )
+  })
+
+  test("expose les CTA validés (Parler de votre visibilité + Découvrir Faire évoluer)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/visibilite")
+    await expect(
+      page.getByRole("link", { name: /Parler de votre visibilit(?:é|e)/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /D(?:é|e)couvrir Faire (?:é|e)voluer/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/faire-evoluer"]').first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/valoriser"]').first(),
+    ).toBeVisible()
+  })
+
+  test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({
+    page,
+  }) => {
+    const hydrationSignals: string[] = []
+    const capture = (message: string) => {
+      if (
+        message.includes("Hydration") ||
+        message.includes("hydration mismatch") ||
+        message.includes("contains mismatches")
+      ) {
+        hydrationSignals.push(message)
+      }
+    }
+    page.on("console", (msg) => {
+      if (msg.type() === "warning" || msg.type() === "error") {
+        capture(msg.text())
+      }
+    })
+    page.on("pageerror", (err) => capture(err.message))
+
+    await page.goto("/expertises/visibilite", { waitUntil: "networkidle" })
+    const hydrationMarker = page.locator(
+      'button[aria-controls="mobile-navigation"]',
+    )
+    await expect(hydrationMarker).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    })
+
+    expect(
+      hydrationSignals,
+      `Vue a signalé un mismatch d'hydratation :\n${hydrationSignals.join("\n")}`,
+    ).toEqual([])
+  })
+})
+
 test.describe("Maillage inter-pages détaillées", () => {
   test("depuis `/expertises`, chaque carte mène à la page fille correspondante", async ({
     page,

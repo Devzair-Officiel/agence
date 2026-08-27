@@ -10,6 +10,7 @@ import ExpertiseRelatedResources from "~/components/expertise/ExpertiseRelatedRe
 import ConcevoirExpertisePage from "~/components/expertise/concevoir/ConcevoirExpertisePage.vue"
 import ConstruireExpertisePage from "~/components/expertise/construire/ConstruireExpertisePage.vue"
 import ValoriserExpertisePage from "~/components/expertise/valoriser/ValoriserExpertisePage.vue"
+import VisibiliteExpertisePage from "~/components/expertise/visibilite/VisibiliteExpertisePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { expertisePages } from "~/config/expertise-pages"
 
@@ -94,14 +95,16 @@ useExpertiseServiceSchema({
 
 // Direction visuelle propre à chaque pôle : `Concevoir` bascule sur son
 // gabarit dédié (Digital Blueprint), `Construire` sur le sien (Product
-// Assembly) et `Valoriser` sur le sien (Editorial Studio). Les deux autres
-// pôles restent sur le gabarit générique historique tant qu'aucune
-// direction propre n'a été livrée pour eux.
+// Assembly), `Valoriser` sur le sien (Editorial Studio) et `Visibilité` sur
+// le sien (Search Territory / Signal Map). `Faire évoluer` reste sur le
+// gabarit générique historique tant qu'aucune direction propre n'a été
+// livrée pour lui.
 // Ce branch conserve `[slug].vue` en simple aiguilleur : SEO, JSON-LD,
 // breadcrumb et guard 404 sont posés en amont, jamais dupliqués.
 const isConcevoir = computed(() => resolvedPage.value.id === "concevoir")
 const isConstruire = computed(() => resolvedPage.value.id === "construire")
 const isValoriser = computed(() => resolvedPage.value.id === "valoriser")
+const isVisibilite = computed(() => resolvedPage.value.id === "visibilite")
 </script>
 
 <template>
@@ -120,6 +123,11 @@ const isValoriser = computed(() => resolvedPage.value.id === "valoriser")
 
     <ValoriserExpertisePage
       v-else-if="isValoriser"
+      :page="resolvedPage"
+    />
+
+    <VisibiliteExpertisePage
+      v-else-if="isVisibilite"
       :page="resolvedPage"
     />
 
