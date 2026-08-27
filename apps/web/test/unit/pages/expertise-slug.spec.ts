@@ -63,6 +63,9 @@ describe("/expertises/[slug].vue — résolution", () => {
   })
 
   it("résout chaque slug publié et rend le H1 verbatim", async () => {
+    // Timeout élargi : cinq directions dédiées, cinq mounts complets avec
+    // `vi.resetModules` intercalé — le seuil 5 s par défaut est trop juste
+    // depuis que les cinq pôles ont leur gabarit propre.
     for (const page of expertisePages.filter((p) => p.status === "published")) {
       const wrapper = await mountWithSlug(page.slug)
       const h1 = wrapper.findAll("h1")
@@ -70,7 +73,7 @@ describe("/expertises/[slug].vue — résolution", () => {
       expect(h1[0]!.text()).toBe(page.title)
       wrapper.unmount()
     }
-  })
+  }, 30_000)
 
   it("lance createError({ statusCode: 404, fatal: true }) pour un slug inconnu", async () => {
     await expect(mountWithSlug("slug-inexistant")).rejects.toMatchObject({

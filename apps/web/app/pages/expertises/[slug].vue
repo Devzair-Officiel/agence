@@ -9,6 +9,7 @@ import ExpertiseRelatedPillars from "~/components/expertise/ExpertiseRelatedPill
 import ExpertiseRelatedResources from "~/components/expertise/ExpertiseRelatedResources.vue"
 import ConcevoirExpertisePage from "~/components/expertise/concevoir/ConcevoirExpertisePage.vue"
 import ConstruireExpertisePage from "~/components/expertise/construire/ConstruireExpertisePage.vue"
+import FaireEvoluerExpertisePage from "~/components/expertise/faire-evoluer/FaireEvoluerExpertisePage.vue"
 import ValoriserExpertisePage from "~/components/expertise/valoriser/ValoriserExpertisePage.vue"
 import VisibiliteExpertisePage from "~/components/expertise/visibilite/VisibiliteExpertisePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
@@ -93,18 +94,19 @@ useExpertiseServiceSchema({
   serviceType: resolvedPage.value.shortTitle,
 })
 
-// Direction visuelle propre à chaque pôle : `Concevoir` bascule sur son
-// gabarit dédié (Digital Blueprint), `Construire` sur le sien (Product
-// Assembly), `Valoriser` sur le sien (Editorial Studio) et `Visibilité` sur
-// le sien (Search Territory / Signal Map). `Faire évoluer` reste sur le
-// gabarit générique historique tant qu'aucune direction propre n'a été
-// livrée pour lui.
+// Direction visuelle propre à chaque pôle : les cinq pôles publiés basculent
+// désormais tous sur leur gabarit dédié — `Concevoir` (Digital Blueprint),
+// `Construire` (Product Assembly), `Valoriser` (Editorial Studio),
+// `Visibilité` (Search Territory / Signal Map) et `Faire évoluer` (Living
+// System / Continuous Care). Le fallback générique reste en place comme
+// filet de sécurité pour un futur pôle avant refonte dédiée.
 // Ce branch conserve `[slug].vue` en simple aiguilleur : SEO, JSON-LD,
 // breadcrumb et guard 404 sont posés en amont, jamais dupliqués.
 const isConcevoir = computed(() => resolvedPage.value.id === "concevoir")
 const isConstruire = computed(() => resolvedPage.value.id === "construire")
 const isValoriser = computed(() => resolvedPage.value.id === "valoriser")
 const isVisibilite = computed(() => resolvedPage.value.id === "visibilite")
+const isFaireEvoluer = computed(() => resolvedPage.value.id === "faire-evoluer")
 </script>
 
 <template>
@@ -128,6 +130,11 @@ const isVisibilite = computed(() => resolvedPage.value.id === "visibilite")
 
     <VisibiliteExpertisePage
       v-else-if="isVisibilite"
+      :page="resolvedPage"
+    />
+
+    <FaireEvoluerExpertisePage
+      v-else-if="isFaireEvoluer"
       :page="resolvedPage"
     />
 

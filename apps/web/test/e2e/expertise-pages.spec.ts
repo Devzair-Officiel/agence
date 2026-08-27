@@ -1019,6 +1019,260 @@ test.describe("Direction propre à /expertises/visibilite (Search Territory / Si
   })
 })
 
+test.describe("Direction propre à /expertises/faire-evoluer (Living System / Continuous Care)", () => {
+  test("porte le H2 audience validé « Quand la mise en ligne n'est que le début. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    expect(body).toMatch(
+      /Quand la mise en ligne n(?:'|&#39;|&apos;)est que le d(?:é|&#233;|&eacute;)but\./,
+    )
+  })
+
+  test("porte le H2 approche validé « Observer. Prioriser. Améliorer. Recommencer. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    expect(body).toMatch(
+      /Observer\. Prioriser\. Am(?:é|&#233;|&eacute;)liorer\. Recommencer\./,
+    )
+  })
+
+  test("expose les cinq étapes de la boucle dans l'ordre exact (Observer → Réévaluer)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    // Le H2 « Observer. Prioriser. Améliorer. Recommencer. » précède la <ol>
+    // et contient déjà « Observer » + « Prioriser ». On ancre après la classe
+    // `faire-evoluer-loop__list` pour comparer l'ordre des étapes de la liste
+    // seule, indépendamment du titre qui les évoque en amont.
+    const listAnchor = body.indexOf("faire-evoluer-loop__list")
+    expect(listAnchor, "ancre '.faire-evoluer-loop__list' trouvée").toBeGreaterThanOrEqual(0)
+    const loopSlice = body.slice(listAnchor)
+    const steps = ["Observer", "Maintenir", "Prioriser", "Livrer", "Réévaluer"]
+    let lastIndex = -1
+    for (const label of steps) {
+      const idx = loopSlice.indexOf(label)
+      expect(idx, `${label} présent dans la boucle SSR`).toBeGreaterThanOrEqual(0)
+      expect(
+        idx,
+        `${label} après ${steps[steps.indexOf(label) - 1] ?? "start"}`,
+      ).toBeGreaterThan(lastIndex)
+      lastIndex = idx
+    }
+  })
+
+  test("expose visuellement le retour cyclique « Réévaluer → recommencer »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    expect(body).toMatch(
+      /R(?:é|&#233;|&eacute;)(?:é|&#233;|&eacute;)valuer\s*(?:→|&#8594;|&rarr;)\s*recommencer/,
+    )
+  })
+
+  test("rend la boucle continue dans une vraie liste ordonnée avec cinq étapes", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    const list = page.locator(".faire-evoluer-loop__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".faire-evoluer-loop__step")
+    await expect(items).toHaveCount(5)
+    await expect(items.first().locator("h3")).toHaveText("Observer")
+    await expect(items.last().locator("h3")).toHaveText("Réévaluer")
+  })
+
+  test("rend le visuel cyclique du hero comme purement décoratif (aria-hidden)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    const visual = page.locator(".faire-evoluer-visual")
+    await expect(visual).toHaveCount(1)
+    await expect(visual).toHaveAttribute("aria-hidden", "true")
+    const svg = visual.locator("svg").first()
+    await expect(svg).toHaveAttribute("aria-hidden", "true")
+  })
+
+  test("expose les trois phases d'audience Maintenir / Comprendre / Adapter", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    for (const label of ["Maintenir", "Comprendre", "Adapter"]) {
+      expect(body).toContain(label)
+    }
+  })
+
+  test("expose les trois principes narratifs Santé / Clarté / Rythme", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    for (const label of ["Santé", "Clarté", "Rythme"]) {
+      expect(body).toContain(label)
+    }
+  })
+
+  test("expose les cinq cadences narratives (Continu / Mesuré / Cycle court / Priorisé / Point de situation)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    for (const label of [
+      "Continu",
+      "Mesuré",
+      "Cycle court",
+      "Priorisé",
+      "Point de situation",
+    ]) {
+      expect(body).toContain(label)
+    }
+  })
+
+  test("rend la partition des cadences dans une <ol> avec cinq entrées", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    const list = page.locator(".faire-evoluer-cadence__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".faire-evoluer-cadence__item")
+    await expect(items).toHaveCount(5)
+  })
+
+  test("n'expose ni faux dashboard, ni uptime, ni pourcentage inventé, ni SLA", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    expect(body).not.toMatch(/uptime/i)
+    expect(body).not.toMatch(/\b99\s*%/)
+    expect(body).not.toMatch(/\bSLA\b/i)
+    expect(body).not.toMatch(/dashboard/i)
+    expect(body).not.toMatch(/v\d+\.\d+\.\d+/)
+  })
+
+  test("ne déborde pas à 1920 px (revue visuelle desktop dédiée)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    )
+    expect(overflow, "overflow @1920").toBeLessThanOrEqual(1)
+  })
+
+  test("expose le nœud central Faire évoluer du bloc « Aller plus loin » comme non-cliquable", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    const center = page.locator(".faire-evoluer-related__node--center")
+    await expect(center).toHaveCount(1)
+    await expect(center).toHaveAttribute("aria-hidden", "true")
+    const tag = await center.evaluate((el) => el.tagName)
+    expect(tag).toBe("DIV")
+  })
+
+  test("ordonne les pôles connexes Amont (Construire) → Faire évoluer (centre) → Amont (Visibilité)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    const nodes = page.locator(".faire-evoluer-related__node")
+    await expect(nodes).toHaveCount(3)
+    await expect(nodes.nth(0).locator("h3")).toHaveText("Construire")
+    await expect(nodes.nth(1).locator("h3")).toHaveText("Faire évoluer")
+    await expect(nodes.nth(2).locator("h3")).toHaveText("Visibilité")
+  })
+
+  test("expose le CTA final validé « Votre site est en ligne. Gardons-le utile, fiable et capable d'évoluer. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/faire-evoluer")
+    expect(body).toMatch(
+      /Votre site est en ligne\. Gardons-le utile, fiable et capable d(?:'|&#39;|&apos;)(?:é|&#233;|&eacute;)voluer\./,
+    )
+  })
+
+  test("expose les CTA validés (Parler de votre suivi + Découvrir Construire)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/faire-evoluer")
+    await expect(
+      page.getByRole("link", { name: /Parler de votre suivi/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /D(?:é|e)couvrir Construire/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/construire"]').first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/visibilite"]').first(),
+    ).toBeVisible()
+  })
+
+  test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({
+    page,
+  }) => {
+    const hydrationSignals: string[] = []
+    const capture = (message: string) => {
+      if (
+        message.includes("Hydration") ||
+        message.includes("hydration mismatch") ||
+        message.includes("contains mismatches")
+      ) {
+        hydrationSignals.push(message)
+      }
+    }
+    page.on("console", (msg) => {
+      if (msg.type() === "warning" || msg.type() === "error") {
+        capture(msg.text())
+      }
+    })
+    page.on("pageerror", (err) => capture(err.message))
+
+    await page.goto("/expertises/faire-evoluer", { waitUntil: "networkidle" })
+    const hydrationMarker = page.locator(
+      'button[aria-controls="mobile-navigation"]',
+    )
+    await expect(hydrationMarker).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    })
+
+    expect(
+      hydrationSignals,
+      `Vue a signalé un mismatch d'hydratation :\n${hydrationSignals.join("\n")}`,
+    ).toEqual([])
+  })
+})
+
+test.describe("Cinq directions dédiées : aucune page ne retombe sur le gabarit générique", () => {
+  // Chaque pôle publié doit exposer sa signature CSS propre — présence d'un
+  // conteneur `.{slug}-page`. Le gabarit générique se distingue par la classe
+  // `.expertise-page__paragraph` que les cinq directions dédiées n'utilisent
+  // plus. Cette vérification empêche toute régression silencieuse si un
+  // futur refactor supprimait par erreur une branche `is<Pillar>`.
+  const SIGNATURES = [
+    { route: "/expertises/concevoir", selector: ".concevoir-page" },
+    { route: "/expertises/construire", selector: ".construire-page" },
+    { route: "/expertises/valoriser", selector: ".valoriser-page" },
+    { route: "/expertises/visibilite", selector: ".visibilite-page" },
+    { route: "/expertises/faire-evoluer", selector: ".faire-evoluer-page" },
+  ] as const
+
+  for (const s of SIGNATURES) {
+    test(`${s.route} rend son gabarit dédié (${s.selector}) et non le fallback générique`, async ({
+      page,
+    }) => {
+      await page.goto(s.route)
+      await expect(page.locator(s.selector)).toHaveCount(1)
+      // Le fallback rend un paragraphe `.expertise-page__paragraph` que les
+      // gabarits dédiés n'utilisent plus : sa présence indiquerait que la
+      // page a rétrogradé sur `<template v-else>`.
+      await expect(page.locator(".expertise-page__paragraph")).toHaveCount(0)
+    })
+  }
+})
+
 test.describe("Maillage inter-pages détaillées", () => {
   test("depuis `/expertises`, chaque carte mène à la page fille correspondante", async ({
     page,
