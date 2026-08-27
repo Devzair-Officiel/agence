@@ -639,6 +639,196 @@ test.describe("Direction propre à /expertises/construire (Product Assembly)", (
   })
 })
 
+test.describe("Direction propre à /expertises/valoriser (Editorial Studio)", () => {
+  test("porte le H2 audience validé « Quand votre savoir-faire mérite d'être mieux montré. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    expect(body).toMatch(
+      /Quand votre savoir-faire m(?:é|&#233;|&eacute;)rite d(?:'|&#39;|&apos;)(?:ê|&#234;|&ecirc;)tre mieux montr(?:é|&#233;|&eacute;)\./,
+    )
+  })
+
+  test("porte le H2 approche validé « De la matière au message. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    expect(body).toMatch(
+      /De la mati(?:è|&#232;|&egrave;)re au message\./,
+    )
+  })
+
+  test("expose les cinq étapes de la frise dans l'ordre exact (Observer → Décliner)", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    // « Structurer » apparaît aussi dans la section audience (Montrer /
+    // Expliquer / Structurer) située AVANT la frise. On restreint la
+    // vérification d'ordre à la portion du HTML qui suit le H2 de la frise
+    // (« De la matière au message. »).
+    const flowAnchor = body.search(/De la mati(?:è|&#232;|&egrave;)re au message/)
+    expect(flowAnchor, "ancre 'De la matière au message' trouvée").toBeGreaterThanOrEqual(0)
+    const flowSlice = body.slice(flowAnchor)
+    const steps = ["Observer", "Préparer", "Produire", "Structurer", "Décliner"]
+    let lastIndex = -1
+    for (const label of steps) {
+      const idx = flowSlice.indexOf(label)
+      expect(idx, `${label} présent dans la frise SSR`).toBeGreaterThanOrEqual(0)
+      expect(
+        idx,
+        `${label} après ${steps[steps.indexOf(label) - 1] ?? "start"}`,
+      ).toBeGreaterThan(lastIndex)
+      lastIndex = idx
+    }
+  })
+
+  test("rend la frise éditoriale dans une vraie liste ordonnée", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const list = page.locator(".valoriser-flow__list")
+    await expect(list).toHaveCount(1)
+    const items = list.locator(".valoriser-flow__item")
+    await expect(items).toHaveCount(5)
+    await expect(items.first().locator("h3")).toHaveText("Observer")
+  })
+
+  test("rend le visuel éditorial du hero comme purement décoratif (aria-hidden)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const visual = page.locator(".valoriser-visual")
+    await expect(visual).toHaveCount(1)
+    await expect(visual).toHaveAttribute("aria-hidden", "true")
+  })
+
+  test("expose les trois situations d'audience Montrer / Expliquer / Structurer", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    for (const verb of ["Montrer", "Expliquer", "Structurer"]) {
+      expect(body).toContain(verb)
+    }
+  })
+
+  test("expose les trois principes narratifs Voix / Image / Clarté", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    for (const label of ["Voix", "Image", "Clart"]) {
+      expect(body).toContain(label)
+    }
+  })
+
+  test("rend le content kit dans une <ol> avec cinq modules », un par livrable", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const board = page.locator(".valoriser-kit__board")
+    await expect(board).toHaveCount(1)
+    const modules = board.locator(".valoriser-kit__module")
+    await expect(modules).toHaveCount(5)
+  })
+
+  test("ne déborde pas à 1920 px (revue visuelle desktop dédiée)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    )
+    expect(overflow, "overflow @1920").toBeLessThanOrEqual(1)
+  })
+
+  test("expose le nœud central Valoriser du bloc « Aller plus loin » comme non-cliquable", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const center = page.locator(".valoriser-related__node--center")
+    await expect(center).toHaveCount(1)
+    await expect(center).toHaveAttribute("aria-hidden", "true")
+    // Le centre n'est pas un lien ; c'est un <div>.
+    const tag = await center.evaluate((el) => el.tagName)
+    expect(tag).toBe("DIV")
+  })
+
+  test("ordonne les pôles connexes Amont (Concevoir) / Aval (Visibilité) dans le rendu", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const nodes = page.locator(".valoriser-related__node")
+    await expect(nodes).toHaveCount(3)
+    // Ordre attendu : Concevoir (amont) → Valoriser (centre) → Visibilité (aval).
+    await expect(nodes.nth(0).locator("h3")).toHaveText("Concevoir")
+    await expect(nodes.nth(1).locator("h3")).toHaveText("Valoriser")
+    await expect(nodes.nth(2).locator("h3")).toHaveText("Visibilité")
+  })
+
+  test("expose le CTA final validé « Votre activité a de la valeur. Donnons-lui la forme qu'elle mérite. »", async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, "/expertises/valoriser")
+    expect(body).toMatch(
+      /Votre activit(?:é|&#233;|&eacute;) a de la valeur\. Donnons-lui la forme qu(?:'|&#39;|&apos;)elle m(?:é|&#233;|&eacute;)rite\./,
+    )
+  })
+
+  test("expose les CTA validés (Parler de vos contenus + Découvrir Visibilité)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    await expect(
+      page.getByRole("link", { name: /Parler de vos contenus/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /D(?:é|e)couvrir Visibilit(?:é|e)/i }).first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/visibilite"]').first(),
+    ).toBeVisible()
+    await expect(
+      page.locator('a[href="/expertises/concevoir"]').first(),
+    ).toBeVisible()
+  })
+
+  test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({
+    page,
+  }) => {
+    const hydrationSignals: string[] = []
+    const capture = (message: string) => {
+      if (
+        message.includes("Hydration") ||
+        message.includes("hydration mismatch") ||
+        message.includes("contains mismatches")
+      ) {
+        hydrationSignals.push(message)
+      }
+    }
+    page.on("console", (msg) => {
+      if (msg.type() === "warning" || msg.type() === "error") {
+        capture(msg.text())
+      }
+    })
+    page.on("pageerror", (err) => capture(err.message))
+
+    await page.goto("/expertises/valoriser", { waitUntil: "networkidle" })
+    const hydrationMarker = page.locator(
+      'button[aria-controls="mobile-navigation"]',
+    )
+    await expect(hydrationMarker).toHaveAttribute("data-hydrated", "true", {
+      timeout: 30_000,
+    })
+
+    expect(
+      hydrationSignals,
+      `Vue a signalé un mismatch d'hydratation :\n${hydrationSignals.join("\n")}`,
+    ).toEqual([])
+  })
+})
+
 test.describe("Maillage inter-pages détaillées", () => {
   test("depuis `/expertises`, chaque carte mène à la page fille correspondante", async ({
     page,
