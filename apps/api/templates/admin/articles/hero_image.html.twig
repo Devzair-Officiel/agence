@@ -23,25 +23,27 @@
 {% block title %}Image principale — {{ view.title }} — Administration Devzair{% endblock %}
 
 {% block body %}
-    <div class="page-header">
-        <p class="page-eyebrow">Article — {{ view.title }}</p>
-        <h1>Image principale du brouillon</h1>
-        <p class="page-meta">
-            Statut :
-            <span class="status-badge status-{{ view.status.value }}">
-                {% if view.status.value == 'draft' %}Brouillon
-                {% elseif view.status.value == 'published' %}Publié
-                {% else %}Archivé
-                {% endif %}
-            </span>
-        </p>
-    </div>
+<div class="admin-hero-page">
 
-    <nav class="preview-actions" aria-label="Navigation article">
-        <a class="button-link" href="{{ path('admin_article_edit', { id: view.id }) }}">
-            ← Retour à l'édition
-        </a>
-    </nav>
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Image principale</h1>
+            <p class="admin-page-header__subtitle">
+                {{ view.title }} —
+                <span class="status-badge status-{{ view.status.value }}">
+                    {%- if view.status.value == 'draft' %}Brouillon
+                    {%- elseif view.status.value == 'published' %}Publié
+                    {%- else %}Archivé
+                    {%- endif %}
+                </span>
+            </p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="button-link" href="{{ path('admin_article_edit', { id: view.id }) }}">
+                ← Retour à l'édition
+            </a>
+        </div>
+    </header>
 
     {% if view.status.value != 'draft' %}
         <section class="card" aria-labelledby="hero-locked-heading">
@@ -211,4 +213,6 @@
             </div>
         </form>
     {% endif %}
+
+</div>{# end .admin-hero-page #}
 {% endblock %}

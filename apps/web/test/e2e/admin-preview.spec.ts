@@ -88,8 +88,8 @@ test.describe.serial('Admin — prévisualisation éditoriale (Phase 8C4)', () =
     const uuid = await createDraft(page, slug, title)
 
     // Lien « Prévisualiser » visible depuis la page d'édition.
-    await expect(page.getByRole('link', { name: 'Prévisualiser cet article' })).toBeVisible()
-    await page.getByRole('link', { name: 'Prévisualiser cet article' }).click()
+    await expect(page.getByRole('link', { name: 'Prévisualiser', exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'Prévisualiser', exact: true }).click()
     await page.waitForURL(new RegExp(`/admin/articles/${uuid}/preview$`))
 
     // Bandeau « Prévisualisation privée » présent et badge draft affiché.

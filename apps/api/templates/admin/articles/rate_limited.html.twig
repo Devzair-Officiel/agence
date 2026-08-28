@@ -3,9 +3,21 @@
 {% block title %}Trop de requêtes — Administration Devzair{% endblock %}
 
 {% block body %}
-    <h1>Trop de requêtes</h1>
+<div class="admin-rate-limited-page">
 
-    <section class="card">
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Trop de requêtes</h1>
+            <p class="admin-page-header__subtitle">Limite de débit atteinte pour {{ action_label }}.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_articles_list') }}" class="button-link">
+                ← Retour aux articles
+            </a>
+        </div>
+    </header>
+
+    <div class="admin-editor-card">
         <p>
             Vous avez dépassé la limite d'actions rapides autorisées pour {{ action_label }}.
             C'est une protection contre les abus (voir en-tête <code>Retry-After</code>).
@@ -15,9 +27,7 @@
             Merci de patienter <strong>{{ retry_after_seconds }} seconde{{ retry_after_seconds > 1 ? 's' : '' }}</strong>
             avant de renvoyer votre demande.
         </p>
+    </div>
 
-        <p>
-            <a href="{{ path('admin_articles_list') }}" class="button-link">Retour à la liste des articles</a>
-        </p>
-    </section>
+</div>
 {% endblock %}

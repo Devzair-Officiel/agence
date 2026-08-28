@@ -194,109 +194,12 @@
 
             {# ── SEO, Expertises, Auteur (brouillon uniquement, form= attribute) #}
             {% if _is_draft %}
-
-                {# ── Référencement ─────────────────────────────────────────── #}
-                <fieldset class="admin-editor-card">
-                    <legend class="admin-editor-card__heading">Référencement</legend>
-
-                    <div class="field">
-                        <label for="article-seo-title">
-                            Titre SEO
-                            <span class="field-hint-inline">70 car. max.</span>
-                        </label>
-                        <input
-                            id="article-seo-title"
-                            type="text"
-                            name="seo_title"
-                            form="article-edit-form"
-                            value="{{ data.payload.seoTitle }}"
-                            maxlength="70"
-                            required
-                        >
-                        {% for message in errors.for('seo_title') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
-
-                    <div class="field">
-                        <label for="article-seo-description">
-                            Meta description
-                            <span class="field-hint-inline">180 car. max.</span>
-                        </label>
-                        <textarea
-                            id="article-seo-description"
-                            name="seo_description"
-                            rows="3"
-                            maxlength="180"
-                            required
-                            form="article-edit-form"
-                        >{{ data.payload.seoDescription }}</textarea>
-                        {% for message in errors.for('seo_description') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
-                </fieldset>
-
-                {# ── Expertises ───────────────────────────────────────────── #}
-                <fieldset class="admin-editor-card">
-                    <legend class="admin-editor-card__heading">Expertises</legend>
-
-                    {%- set _selected = data.payload.expertises -%}
-                    <div class="checkbox-grid">
-                        {% for pillar in _pillars %}
-                            <label class="checkbox">
-                                <input
-                                    type="checkbox"
-                                    name="expertises[]"
-                                    value="{{ pillar.id }}"
-                                    form="article-edit-form"
-                                    {{ pillar.id in _selected ? 'checked' : '' }}
-                                >
-                                <span>{{ pillar.label }}</span>
-                            </label>
-                        {% endfor %}
-                    </div>
-                    {% for message in errors.for('expertises') %}
-                        <p class="field-error">{{ message }}</p>
-                    {% endfor %}
-                </fieldset>
-
-                {# ── Auteur ───────────────────────────────────────────────── #}
-                <fieldset class="admin-editor-card">
-                    <legend class="admin-editor-card__heading">Auteur</legend>
-
-                    <div class="field">
-                        <label for="article-author-name">Nom affiché</label>
-                        <input
-                            id="article-author-name"
-                            type="text"
-                            name="author_name"
-                            form="article-edit-form"
-                            value="{{ data.payload.authorName }}"
-                            maxlength="120"
-                            required
-                        >
-                        {% for message in errors.for('author_name') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
-
-                    <div class="field">
-                        <label for="article-author-type">Type</label>
-                        <select id="article-author-type" name="author_type"
-                                form="article-edit-form" required>
-                            <option value="organization"
-                                    {{ data.payload.authorType == 'organization' ? 'selected' : '' }}>
-                                Devzair (institutionnel)
-                            </option>
-                            <option value="person"
-                                    {{ data.payload.authorType == 'person' ? 'selected' : '' }}>
-                                Personne nommée
-                            </option>
-                        </select>
-                    </div>
-                </fieldset>
-
+                {% include 'admin/articles/_fields_metadata.html.twig' with {
+                    form_id: 'article-edit-form',
+                    data: data,
+                    errors: errors,
+                    _pillars: _pillars,
+                } only %}
             {% endif %}{# end _is_draft sidebar fields #}
 
         </aside>{# end .admin-editor-sidebar #}
@@ -324,58 +227,11 @@
                         <div class="alert alert-error" role="alert">{{ message }}</div>
                     {% endfor %}
 
-                    {# Slug immuable — jamais en <input name="slug"> (invariant serveur) #}
-                    <div class="field">
-                        <label>Slug (URL publique — non modifiable)</label>
-                        <p class="field-readonly"><code>{{ data.payload.slug }}</code></p>
-                    </div>
-
-                    <div class="field">
-                        <label for="article-title">Titre</label>
-                        <input
-                            id="article-title"
-                            type="text"
-                            name="title"
-                            value="{{ data.payload.title }}"
-                            maxlength="180"
-                            required
-                        >
-                        {% for message in errors.for('title') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
-
-                    <div class="field">
-                        <label for="article-excerpt">Chapô (résumé court)</label>
-                        <textarea
-                            id="article-excerpt"
-                            name="excerpt"
-                            rows="3"
-                            maxlength="320"
-                            required
-                        >{{ data.payload.excerpt }}</textarea>
-                        {% for message in errors.for('excerpt') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
-
-                    <div class="field">
-                        <label for="article-body">Corps (Markdown)</label>
-                        <textarea
-                            id="article-body"
-                            name="body_markdown"
-                            class="admin-editor-markdown"
-                            rows="24"
-                            required
-                        >{{ data.payload.bodyMarkdown }}</textarea>
-                        <p class="field-hint">
-                            Markdown standard. HTML brut interdit ; les liens doivent utiliser
-                            <code>http</code>, <code>https</code> ou <code>mailto</code>.
-                        </p>
-                        {% for message in errors.for('body_markdown') %}
-                            <p class="field-error">{{ message }}</p>
-                        {% endfor %}
-                    </div>
+                    {% include 'admin/articles/_fields_main.html.twig' with {
+                        is_create: false,
+                        data: data,
+                        errors: errors,
+                    } only %}
 
                     {# Bouton visible uniquement sur mobile (le rail sticky prend le relai sur desktop) #}
                     <div class="form-actions admin-editor-save-mobile">

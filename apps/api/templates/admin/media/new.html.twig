@@ -3,9 +3,21 @@
 {% block title %}Téléverser un média — Administration Devzair{% endblock %}
 
 {% block body %}
-    <h1>Téléverser un média</h1>
+<div class="admin-media-upload-page">
 
-    <section class="card">
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Téléverser un média</h1>
+            <p class="admin-page-header__subtitle">Ajoutez une image à la bibliothèque éditoriale.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_media_list') }}" class="button-link">
+                ← Retour aux médias
+            </a>
+        </div>
+    </header>
+
+    <div class="admin-editor-card">
         {% if error_message %}
             <div class="alert alert-error" role="alert">
                 {{ error_message }}
@@ -41,5 +53,7 @@
                 <a href="{{ path('admin_media_list') }}" class="button-link">Annuler</a>
             </div>
         </form>
-    </section>
+    </div>
+
+</div>
 {% endblock %}

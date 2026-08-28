@@ -2118,3 +2118,96 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     color: var(--color-ink-muted);
     line-height: 1.4;
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Phase R6 — Prévisualisation deux colonnes, hero chooser :checked,
+   formulaire de création deux colonnes.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Prévisualisation ─────────────────────────────────────────────────── */
+.admin-preview-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.admin-preview-grid {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (min-width: 64em) {
+    .admin-preview-grid {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 2rem;
+    }
+}
+
+.admin-preview-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.admin-preview-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 64em) {
+    .admin-preview-sidebar {
+        position: sticky;
+        top: 1.5rem;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+    }
+}
+
+.admin-preview-header { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.admin-preview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0;
+    color: var(--color-ink);
+}
+
+.admin-preview-status { margin: 0; }
+
+.admin-preview-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ── Hero chooser — état :checked ────────────────────────────────────── */
+.hero-image-grid__item:has(input[type="radio"]:checked) {
+    border-color: var(--color-petrol);
+    background: #edf7f6;
+    box-shadow: 0 0 0 2px var(--color-petrol);
+}
+
+/* ── Page rate-limited ───────────────────────────────────────────────── */
+.admin-rate-limited-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Page upload média ───────────────────────────────────────────────── */
+.admin-media-upload-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Page hero image chooser ─────────────────────────────────────────── */
+.admin-hero-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}

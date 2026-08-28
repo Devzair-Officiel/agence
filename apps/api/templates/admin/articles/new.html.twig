@@ -2,17 +2,89 @@
 
 {% block title %}Nouveau brouillon — Administration Devzair{% endblock %}
 
-{% block body %}
-    <h1>Nouveau brouillon</h1>
+{%- set _pillars = [
+    { id: 'concevoir',     label: 'Concevoir' },
+    { id: 'construire',    label: 'Construire' },
+    { id: 'valoriser',     label: 'Valoriser' },
+    { id: 'visibilite',    label: 'Visibilité' },
+    { id: 'faire-evoluer', label: 'Faire évoluer' },
+] -%}
 
-    <section class="card">
-        {% include 'admin/articles/_form.html.twig' with {
-            data: data,
-            errors: errors,
-            csrf_id: 'article_create',
-            submit_url: path('admin_article_create'),
-            submit_label: 'Créer le brouillon',
-            is_create: true,
-        } only %}
-    </section>
+{% block body %}
+<div class="admin-editor-page">
+
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Nouveau brouillon</h1>
+            <p class="admin-page-header__subtitle">Créez un nouvel article éditorial.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_articles_list') }}" class="button-link">
+                ← Retour aux articles
+            </a>
+        </div>
+    </header>
+
+    {# ── Grille deux colonnes ─────────────────────────────────────────────── #}
+    {# Main en premier dans le DOM → ordre naturel sur mobile (Slug → Titre → Corps → Métadonnées). #}
+    <div class="admin-editor-grid">
+
+        {# ══════════════════════════════════════════════════════════════════
+           ZONE PRINCIPALE (premier dans le DOM — mobile-first)
+           ══════════════════════════════════════════════════════════════════ #}
+        <main class="admin-editor-main">
+            {#
+                Formulaire de création principal.
+                id="article-create-form" : les champs du rail latéral
+                (SEO, Expertises, Auteur) y sont associés via form=.
+                Aucun autre <form> ne peut s'imbriquer ici.
+            #}
+            <form id="article-create-form" class="article-form" method="post"
+                  action="{{ path('admin_article_create') }}" novalidate>
+                <input type="hidden" name="_csrf_token"
+                       value="{{ csrf_token('article_create') }}">
+
+                {% for message in errors.global %}
+                    <div class="alert alert-error" role="alert">{{ message }}</div>
+                {% endfor %}
+
+                {% include 'admin/articles/_fields_main.html.twig' with {
+                    is_create: true,
+                    data: data,
+                    errors: errors,
+                } only %}
+
+                {# Bouton visible uniquement sur mobile (le rail sticky prend le relai sur desktop) #}
+                <div class="form-actions admin-editor-save-mobile">
+                    <button type="submit">Créer le brouillon</button>
+                </div>
+            </form>
+        </main>
+
+        {# ══════════════════════════════════════════════════════════════════
+           RAIL LATÉRAL (second dans le DOM — après le contenu sur mobile)
+           ══════════════════════════════════════════════════════════════════ #}
+        <aside class="admin-editor-sidebar">
+
+            {# ── Actions ─────────────────────────────────────────────────── #}
+            <div class="admin-editor-card admin-editor-actions">
+                <button type="submit" form="article-create-form" class="button-primary">
+                    Créer le brouillon
+                </button>
+                <a href="{{ path('admin_articles_list') }}" class="button-link">Annuler</a>
+            </div>
+
+            {# ── SEO, Expertises, Auteur (associés au formulaire via form=) ─ #}
+            {% include 'admin/articles/_fields_metadata.html.twig' with {
+                form_id: 'article-create-form',
+                data: data,
+                errors: errors,
+                _pillars: _pillars,
+            } only %}
+
+        </aside>
+
+    </div>
+
+</div>
 {% endblock %}

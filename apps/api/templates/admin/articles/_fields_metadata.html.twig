@@ -1,0 +1,112 @@
+{#
+    Champs de métadonnées mutualisés (référencement, expertises, auteur).
+
+    Attend :
+      - `form_id`  : identifiant du formulaire principal — tous les champs portent
+                     l'attribut HTML `form={{ form_id }}` pour fonctionner hors `<form>` ;
+      - `data`     : DTO avec `data.payload.*` ;
+      - `errors`   : FormErrorBag ;
+      - `_pillars` : tableau [{id, label}] des piliers d'expertise.
+#}
+
+{# ── Référencement ─────────────────────────────────────────────────────── #}
+<fieldset class="admin-editor-card">
+    <legend class="admin-editor-card__heading">Référencement</legend>
+
+    <div class="field">
+        <label for="article-seo-title">
+            Titre SEO
+            <span class="field-hint-inline">70 car. max.</span>
+        </label>
+        <input
+            id="article-seo-title"
+            type="text"
+            name="seo_title"
+            form="{{ form_id }}"
+            value="{{ data.payload.seoTitle }}"
+            maxlength="70"
+            required
+        >
+        {% for message in errors.for('seo_title') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="field">
+        <label for="article-seo-description">
+            Meta description
+            <span class="field-hint-inline">180 car. max.</span>
+        </label>
+        <textarea
+            id="article-seo-description"
+            name="seo_description"
+            rows="3"
+            maxlength="180"
+            required
+            form="{{ form_id }}"
+        >{{ data.payload.seoDescription }}</textarea>
+        {% for message in errors.for('seo_description') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+</fieldset>
+
+{# ── Expertises ────────────────────────────────────────────────────────── #}
+<fieldset class="admin-editor-card">
+    <legend class="admin-editor-card__heading">Expertises</legend>
+
+    {%- set _selected = data.payload.expertises -%}
+    <div class="checkbox-grid">
+        {% for pillar in _pillars %}
+            <label class="checkbox">
+                <input
+                    type="checkbox"
+                    name="expertises[]"
+                    value="{{ pillar.id }}"
+                    form="{{ form_id }}"
+                    {{ pillar.id in _selected ? 'checked' : '' }}
+                >
+                <span>{{ pillar.label }}</span>
+            </label>
+        {% endfor %}
+    </div>
+    {% for message in errors.for('expertises') %}
+        <p class="field-error">{{ message }}</p>
+    {% endfor %}
+</fieldset>
+
+{# ── Auteur ────────────────────────────────────────────────────────────── #}
+<fieldset class="admin-editor-card">
+    <legend class="admin-editor-card__heading">Auteur</legend>
+
+    <div class="field">
+        <label for="article-author-name">Nom affiché</label>
+        <input
+            id="article-author-name"
+            type="text"
+            name="author_name"
+            form="{{ form_id }}"
+            value="{{ data.payload.authorName }}"
+            maxlength="120"
+            required
+        >
+        {% for message in errors.for('author_name') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="field">
+        <label for="article-author-type">Type</label>
+        <select id="article-author-type" name="author_type"
+                form="{{ form_id }}" required>
+            <option value="organization"
+                    {{ data.payload.authorType == 'organization' ? 'selected' : '' }}>
+                Devzair (institutionnel)
+            </option>
+            <option value="person"
+                    {{ data.payload.authorType == 'person' ? 'selected' : '' }}>
+                Personne nommée
+            </option>
+        </select>
+    </div>
+</fieldset>

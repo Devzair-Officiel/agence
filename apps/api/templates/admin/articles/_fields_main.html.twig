@@ -1,0 +1,83 @@
+{#
+    Champs principaux mutualisés (slug, titre, chapô, corps).
+
+    Attend :
+      - `is_create` : booléen — pilote l'affichage du champ slug éditable (create only) ;
+      - `data`      : DTO avec `data.payload.*` ;
+      - `errors`    : FormErrorBag.
+
+    Les champs ne portent PAS d'attribut `form=` car ils sont toujours imbriqués
+    directement dans leur `<form>` parent.
+#}
+{% if is_create %}
+    <div class="field">
+        <label for="article-slug">Slug (URL publique, immuable après création)</label>
+        <input
+            id="article-slug"
+            type="text"
+            name="slug"
+            value="{{ data.payload.slug }}"
+            autocapitalize="off"
+            autocomplete="off"
+            inputmode="url"
+            maxlength="120"
+            required
+        >
+        <p class="field-hint">Lettres minuscules, chiffres et tirets. Exemple : <code>audit-seo-technique</code>.</p>
+        {% for message in errors.for('slug') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="field">
+        <label>Slug (URL publique — non modifiable)</label>
+        <p class="field-readonly"><code>{{ data.payload.slug }}</code></p>
+    </div>
+{% endif %}
+
+<div class="field">
+    <label for="article-title">Titre</label>
+    <input
+        id="article-title"
+        type="text"
+        name="title"
+        value="{{ data.payload.title }}"
+        maxlength="180"
+        required
+    >
+    {% for message in errors.for('title') %}
+        <p class="field-error">{{ message }}</p>
+    {% endfor %}
+</div>
+
+<div class="field">
+    <label for="article-excerpt">Chapô (résumé court)</label>
+    <textarea
+        id="article-excerpt"
+        name="excerpt"
+        rows="3"
+        maxlength="320"
+        required
+    >{{ data.payload.excerpt }}</textarea>
+    {% for message in errors.for('excerpt') %}
+        <p class="field-error">{{ message }}</p>
+    {% endfor %}
+</div>
+
+<div class="field">
+    <label for="article-body">Corps (Markdown)</label>
+    <textarea
+        id="article-body"
+        name="body_markdown"
+        class="admin-editor-markdown"
+        rows="24"
+        required
+    >{{ data.payload.bodyMarkdown }}</textarea>
+    <p class="field-hint">
+        Markdown standard. HTML brut interdit ; les liens doivent utiliser
+        <code>http</code>, <code>https</code> ou <code>mailto</code>.
+    </p>
+    {% for message in errors.for('body_markdown') %}
+        <p class="field-error">{{ message }}</p>
+    {% endfor %}
+</div>

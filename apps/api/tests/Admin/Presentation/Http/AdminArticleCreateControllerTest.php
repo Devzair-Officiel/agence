@@ -93,6 +93,20 @@ final class AdminArticleCreateControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testNoNestedFormsOnCreatePage(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+
+        $crawler = $this->client->request('GET', '/admin/articles/new');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            0,
+            $crawler->filterXPath('//form//form')->count(),
+            'Aucun formulaire imbriqué ne doit figurer dans la page de création.',
+        );
+    }
+
     private function submitValidForm(): void
     {
         $this->submitForm($this->validPayload());
