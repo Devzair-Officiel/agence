@@ -12,9 +12,52 @@ describe("SiteFooter", () => {
     })
   }
 
+  // ── Sémantique ─────────────────────────────────────────────────────
+
   it("uses a <footer> semantic element", () => {
     expect(mountFooter().element.tagName).toBe("FOOTER")
   })
+
+  it("renders the nav landmark for footer navigation", () => {
+    const nav = mountFooter().find('nav[aria-label="Navigation du pied de page"]')
+    expect(nav.exists()).toBe(true)
+  })
+
+  it("renders column titles as h3 elements", () => {
+    const wrapper = mountFooter()
+    const h3s = wrapper.findAll("h3.site-footer__column-title")
+    expect(h3s.length).toBe(footerNavigation.length)
+    const titles = h3s.map((el) => el.text())
+    for (const group of footerNavigation) {
+      expect(titles).toContain(group.title)
+    }
+  })
+
+  // ── Colonne Marque ─────────────────────────────────────────────────
+
+  it("renders the logo link to / with aria-label", () => {
+    const wrapper = mountFooter()
+    const link = wrapper.find('a.site-footer__logo-link[href="/"]')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes("aria-label")).toBeTruthy()
+  })
+
+  it("renders the eyebrow containing 'Agence digitale'", () => {
+    const wrapper = mountFooter()
+    const eyebrow = wrapper.find(".site-footer__eyebrow")
+    expect(eyebrow.exists()).toBe(true)
+    expect(eyebrow.text().toLowerCase()).toContain("agence digitale")
+  })
+
+  it("renders the tagline with brand positioning text", () => {
+    const wrapper = mountFooter()
+    const tagline = wrapper.find(".site-footer__tagline")
+    expect(tagline.exists()).toBe(true)
+    expect(tagline.text()).toContain("Sites")
+    expect(tagline.text()).toContain("Visibilité")
+  })
+
+  // ── Expertises ─────────────────────────────────────────────────────
 
   it("renders all navigation links declared in footerNavigation", () => {
     const wrapper = mountFooter()
@@ -38,48 +81,42 @@ describe("SiteFooter", () => {
     }
   })
 
-  it("renders the /ressources link in the Ressources column", () => {
+  // ── Découvrir (y compris Ressources) ───────────────────────────────
+
+  it("renders /ressources inside the Découvrir group (not a separate group)", () => {
     const wrapper = mountFooter()
-    const resourcesGroup = footerNavigation.find((g) => g.title === "Ressources")
-    expect(resourcesGroup).toBeDefined()
+
+    // Le lien /ressources est bien présent
     const link = wrapper.find('a[href="/ressources"]')
     expect(link.exists()).toBe(true)
+
+    // Il n'existe pas de groupe "Ressources" séparé
+    const discoverGroup = footerNavigation.find((g) => g.title === "Découvrir")
+    expect(discoverGroup).toBeDefined()
+    const resourcesItem = discoverGroup!.items.find((i) => i.to === "/ressources")
+    expect(resourcesItem).toBeDefined()
+
+    const resourcesGroup = footerNavigation.find((g) => g.title === "Ressources")
+    expect(resourcesGroup).toBeUndefined()
   })
 
-  it("renders the nav landmark for footer navigation", () => {
-    const wrapper = mountFooter()
-    const nav = wrapper.find('nav[aria-label="Navigation du pied de page"]')
-    expect(nav.exists()).toBe(true)
+  it("has exactly 2 nav groups (Expertises + Découvrir)", () => {
+    expect(footerNavigation).toHaveLength(2)
+    expect(footerNavigation[0].title).toBe("Expertises")
+    expect(footerNavigation[1].title).toBe("Découvrir")
   })
 
-  it("renders column titles as h3 elements", () => {
-    const wrapper = mountFooter()
-    const h3s = wrapper.findAll("h3.site-footer__column-title")
-    expect(h3s.length).toBe(footerNavigation.length)
-    const titles = h3s.map((el) => el.text())
-    for (const group of footerNavigation) {
-      expect(titles).toContain(group.title)
-    }
+  // ── Éléments supprimés ─────────────────────────────────────────────
+
+  it("does NOT render the DEVZAIR wordmark", () => {
+    expect(mountFooter().find(".site-footer__wordmark").exists()).toBe(false)
   })
 
-  it("renders legal links when legalNavigation is non-empty", () => {
-    const wrapper = mountFooter()
-    if (legalNavigation.length === 0) {
-      expect(wrapper.find(".site-footer__legal-list").exists()).toBe(false)
-    } else {
-      for (const item of legalNavigation) {
-        expect(wrapper.find(`a[href="${item.to}"]`).exists()).toBe(true)
-      }
-    }
+  it("does NOT render decorative link arrows (.site-footer__link-arrow)", () => {
+    expect(mountFooter().find(".site-footer__link-arrow").exists()).toBe(false)
   })
 
-  it("renders the wordmark as aria-hidden and not focusable", () => {
-    const wrapper = mountFooter()
-    const wordmark = wrapper.find(".site-footer__wordmark")
-    expect(wordmark.exists()).toBe(true)
-    expect(wordmark.attributes("aria-hidden")).toBe("true")
-    expect(wordmark.attributes("tabindex")).toBeUndefined()
-  })
+  // ── Barre légale ───────────────────────────────────────────────────
 
   it("renders dynamic copyright year", () => {
     const wrapper = mountFooter()
@@ -90,27 +127,30 @@ describe("SiteFooter", () => {
 
   it("renders the back-to-top link with href #top", () => {
     const wrapper = mountFooter()
-    const link = wrapper.find('a[href="#top"]')
+    const link = wrapper.find('a[href="#top"].site-footer__back-to-top')
     expect(link.exists()).toBe(true)
-    expect(link.classes()).toContain("site-footer__back-to-top")
   })
 
-  it("does not render mailto or tel links when contact fields are null", () => {
+  it("does not render legal links when legalNavigation is empty", () => {
+    const wrapper = mountFooter()
+    if (legalNavigation.length === 0) {
+      expect(wrapper.find(".site-footer__legal-list").exists()).toBe(false)
+    } else {
+      for (const item of legalNavigation) {
+        expect(wrapper.find(`a[href="${item.to}"]`).exists()).toBe(true)
+      }
+    }
+  })
+
+  // ── Sécurité ───────────────────────────────────────────────────────
+
+  it("does not render mailto or tel links (no fake contact info)", () => {
     const wrapper = mountFooter()
     expect(wrapper.find('a[href^="mailto:"]').exists()).toBe(false)
     expect(wrapper.find('a[href^="tel:"]').exists()).toBe(false)
   })
 
-  it("has no link with a bare href=\"#\" (no dead anchors)", () => {
-    const wrapper = mountFooter()
-    const bareHash = wrapper.findAll('a[href="#"]')
-    expect(bareHash.length).toBe(0)
-  })
-
-  it("renders the logo link to / with aria-label", () => {
-    const wrapper = mountFooter()
-    const logoLink = wrapper.find('a[href="/"]')
-    expect(logoLink.exists()).toBe(true)
-    expect(logoLink.attributes("aria-label")).toBeTruthy()
+  it("has no bare href=\"#\" dead anchors", () => {
+    expect(mountFooter().findAll('a[href="#"]')).toHaveLength(0)
   })
 })

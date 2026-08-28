@@ -61,18 +61,13 @@ export const footerNavigation: readonly NavigationGroup[] = [
     items: expertisesFooterItems,
   },
   {
-    // Colonne Ressources — contient uniquement les routes réellement livrées.
-    // Pas de sous-pages statiques : la section est dynamique (articles CMS).
-    // À étendre quand des sous-pages seront publiées.
-    title: "Ressources",
-    items: [{ label: "Toutes les ressources", to: "/ressources", isRoute: true }],
-  },
-  {
+    // "Découvrir" regroupe les destinations générales du site.
+    // `/ressources` est ici — pas de groupe séparé (cf. brief Phase 7A correction).
     title: "Découvrir",
     items: [
       { label: "L'agence", to: "/agence", isRoute: true },
-      { label: "Nos expertises", to: "/expertises", isRoute: true },
       { label: "Réalisations", to: "/#realisations", isRoute: false },
+      { label: "Ressources", to: "/ressources", isRoute: true },
       { label: "Parler de votre projet", to: "/contact", isRoute: true },
     ],
   },

@@ -7,12 +7,16 @@ const currentYear = new Date().getFullYear()
 
 <template>
   <footer class="site-footer">
-    <!-- Corps : marque + colonnes de navigation -->
     <BaseContainer as="div" width="wide" class="site-footer__body">
       <div class="site-footer__grid">
-        <!-- Colonne marque -->
+
+        <!-- Zone 1 : Marque / Positionnement -->
         <div class="site-footer__brand">
-          <NuxtLink to="/" class="site-footer__logo-link" aria-label="Devzair — accueil">
+          <NuxtLink
+            to="/"
+            class="site-footer__logo-link"
+            aria-label="Devzair — accueil"
+          >
             <img
               class="site-footer__logo"
               alt=""
@@ -25,17 +29,19 @@ const currentYear = new Date().getFullYear()
           </NuxtLink>
           <p class="site-footer__eyebrow">Agence digitale</p>
           <p class="site-footer__tagline">
-            Sites. Applications.<br >Image. Visibilité.
+            Sites. Applications.<br>Image. Visibilité.
           </p>
           <p class="site-footer__description">
-            Nous construisons des présences digitales complètes pour les
-            entreprises qui veulent être visibles, crédibles et efficaces
-            en ligne.
+            Nous concevons des solutions digitales cohérentes pour aider
+            les entreprises à être visibles, crédibles et efficaces en ligne.
           </p>
         </div>
 
-        <!-- Colonnes de navigation groupées dans un seul landmark -->
-        <nav class="site-footer__nav" aria-label="Navigation du pied de page">
+        <!-- Zones 2 + 3 : Navigation (landmark unique) -->
+        <nav
+          class="site-footer__nav"
+          aria-label="Navigation du pied de page"
+        >
           <div
             v-for="group in footerNavigation"
             :key="group.title"
@@ -48,25 +54,13 @@ const currentYear = new Date().getFullYear()
                   :to="item.to"
                   :external="item.isRoute ? undefined : true"
                   class="site-footer__link"
-                >
-                  <span class="site-footer__link-label">{{ item.label }}</span>
-                  <span class="site-footer__link-arrow" aria-hidden="true">→</span>
-                </NuxtLink>
+                >{{ item.label }}</NuxtLink>
               </li>
             </ul>
           </div>
         </nav>
+
       </div>
-    </BaseContainer>
-
-    <!-- Séparateur graphique -->
-    <BaseContainer as="div" width="wide" class="site-footer__sep-wrap" aria-hidden="true">
-      <div class="site-footer__separator"/>
-    </BaseContainer>
-
-    <!-- Wordmark décoratif — signature visuelle Devzair -->
-    <BaseContainer as="div" width="wide" class="site-footer__wordmark-wrap">
-      <span class="site-footer__wordmark" aria-hidden="true">DEVZAIR</span>
     </BaseContainer>
 
     <!-- Barre légale -->
@@ -82,9 +76,7 @@ const currentYear = new Date().getFullYear()
             :to="item.to"
             :external="item.isRoute ? undefined : true"
             class="site-footer__legal-link"
-          >
-            {{ item.label }}
-          </NuxtLink>
+          >{{ item.label }}</NuxtLink>
         </li>
       </ul>
       <a href="#top" class="site-footer__back-to-top">
@@ -97,53 +89,65 @@ const currentYear = new Date().getFullYear()
 
 <style scoped>
 /* ------------------------------------------------------------------ *
- * Base du footer
+ * Fond et rythme vertical
  * ------------------------------------------------------------------ */
 
 .site-footer {
   background-color: var(--background-inverse-deep);
   color: var(--text-inverse-muted);
-  padding-top: var(--space-16);
+  padding-top: var(--space-14);
   margin-top: auto;
 }
 
 /* ------------------------------------------------------------------ *
- * Grille principale : marque (large) + nav
+ * Grille principale — mobile first : colonne unique
  * ------------------------------------------------------------------ */
 
 .site-footer__body {
-  padding-bottom: var(--space-12);
+  padding-bottom: var(--space-10);
 }
 
 .site-footer__grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-10);
 }
 
+/* Tablette : marque pleine largeur, nav 2 colonnes côte à côte */
+@media (min-width: 768px) {
+  .site-footer__nav {
+    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
+  }
+}
+
+/* Desktop : marque (40 %) + nav (60 %) en ligne */
 @media (min-width: 1024px) {
   .site-footer__grid {
     flex-direction: row;
     align-items: flex-start;
     gap: var(--space-16);
   }
+
+  .site-footer__brand {
+    flex: 0 0 40%;
+    max-width: 40%;
+  }
+
+  .site-footer__nav {
+    flex: 1;
+    /* Expertises ~ 56 % / Découvrir ~ 44 % de la zone nav */
+    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
+  }
 }
 
 /* ------------------------------------------------------------------ *
- * Colonne marque
+ * Zone 1 — Marque
  * ------------------------------------------------------------------ */
 
 .site-footer__brand {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-@media (min-width: 1024px) {
-  .site-footer__brand {
-    flex: 0 0 30%;
-    max-width: 30%;
-  }
 }
 
 .site-footer__logo-link {
@@ -155,33 +159,34 @@ const currentYear = new Date().getFullYear()
 
 .site-footer__logo {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
 }
 
 .site-footer__eyebrow {
+  /* Space Mono, tout en capitales — AA sur navy-deep : cream-subtle ≈ 5.2:1 */
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-mono);
   font-size: 0.625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1;
-  /* AA sur --background-inverse-deep : cream-subtle ≈ 5.2:1 */
   color: var(--color-cream-subtle);
 }
 
 .site-footer__tagline {
+  /* Typographie d'accroche — hiérarchie forte, sobre */
   font-family: var(--font-family-heading);
   font-weight: var(--font-weight-heading-medium);
-  font-size: clamp(1.0625rem, 1.8vw, 1.25rem);
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
   color: var(--text-inverse);
 }
 
 .site-footer__description {
-  max-width: 38ch;
+  max-width: 40ch;
   font-family: var(--font-family-body);
   font-size: 0.875rem;
   line-height: 1.65;
@@ -189,7 +194,7 @@ const currentYear = new Date().getFullYear()
 }
 
 /* ------------------------------------------------------------------ *
- * Colonnes de navigation
+ * Zones 2 + 3 — Navigation
  * ------------------------------------------------------------------ */
 
 .site-footer__nav {
@@ -198,20 +203,7 @@ const currentYear = new Date().getFullYear()
   gap: var(--space-8);
 }
 
-@media (min-width: 600px) {
-  .site-footer__nav {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
-  }
-}
-
-@media (min-width: 1024px) {
-  .site-footer__nav {
-    flex: 1;
-  }
-}
-
-/* Titre de colonne — override des styles globaux h3 */
+/* Titre de colonne — override styles globaux h3 */
 .site-footer__column-title {
   margin-bottom: var(--space-4);
   font-family: var(--font-family-mono);
@@ -220,6 +212,7 @@ const currentYear = new Date().getFullYear()
   letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1;
+  /* AA sur navy-deep — cream-subtle ≈ 5.2:1 */
   color: var(--color-cream-subtle);
 }
 
@@ -231,96 +224,45 @@ const currentYear = new Date().getFullYear()
   list-style: none;
 }
 
+/* Expertises en grille 2 colonnes uniquement sur grand écran
+   Ordre colonne : Concevoir → Construire → Valoriser / Visibilité → Faire évoluer */
+@media (min-width: 1024px) {
+  .site-footer__nav > .site-footer__column:first-child .site-footer__list {
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    column-gap: var(--space-6);
+  }
+}
+
 /* ------------------------------------------------------------------ *
- * Liens avec micro-interaction
+ * Liens — micro-interaction : underline pétrole au survol
  * ------------------------------------------------------------------ */
 
 .site-footer__link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
+  display: block;
   padding-block: var(--space-2);
-  /* WCAG 2.2 SC 2.5.8 : 24px min. On vise 40px pour un confort clavier. */
+  /* WCAG 2.2 SC 2.5.8 : cible ≥ 24 px. On vise 40 px pour le confort clavier. */
   min-height: 2.5rem;
   font-family: var(--font-family-body);
   font-size: 0.875rem;
+  line-height: 1.4;
   color: var(--color-cream-muted);
-  transition: color var(--duration-fast) var(--ease-out);
+  /* Underline initialement transparent — s'anime au hover vers pétrole */
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+  transition:
+    color 150ms var(--ease-out),
+    text-decoration-color 150ms var(--ease-out);
 }
 
 .site-footer__link:hover,
 .site-footer__link:focus-visible {
   color: var(--text-inverse);
-}
-
-.site-footer__link-label {
-  flex: 1;
-}
-
-.site-footer__link-arrow {
-  flex: 0 0 auto;
-  font-style: normal;
-  opacity: 0.3;
-  transition:
-    transform 150ms var(--ease-out),
-    opacity 150ms var(--ease-out);
-}
-
-.site-footer__link:hover .site-footer__link-arrow,
-.site-footer__link:focus-visible .site-footer__link-arrow {
-  transform: translateX(4px);
-  opacity: 1;
-}
-
-/* ------------------------------------------------------------------ *
- * Séparateur graphique
- * ------------------------------------------------------------------ */
-
-.site-footer__sep-wrap {
-  padding-bottom: 0;
-}
-
-.site-footer__separator {
-  position: relative;
-  height: 1px;
-  background-color: var(--border-inverse);
-}
-
-.site-footer__separator::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: var(--color-cream-subtle);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 4px var(--background-inverse-deep);
-}
-
-/* ------------------------------------------------------------------ *
- * Wordmark décoratif DEVZAIR
- * ------------------------------------------------------------------ */
-
-.site-footer__wordmark-wrap {
-  overflow: hidden;
-  padding-block: var(--space-3) var(--space-2);
-}
-
-.site-footer__wordmark {
-  display: block;
-  font-family: var(--font-family-heading);
-  font-weight: 700;
-  font-size: clamp(3.5rem, 17vw, 13rem);
-  letter-spacing: 0.08em;
-  line-height: 1;
-  color: var(--color-cream);
-  opacity: 0.05;
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
+  text-decoration-color: var(--color-petrol);
 }
 
 /* ------------------------------------------------------------------ *
@@ -356,7 +298,7 @@ const currentYear = new Date().getFullYear()
   font-family: var(--font-family-body);
   font-size: 0.75rem;
   color: var(--color-cream-subtle);
-  transition: color var(--duration-fast) var(--ease-out);
+  transition: color 150ms var(--ease-out);
 }
 
 .site-footer__legal-link:hover {
@@ -371,7 +313,7 @@ const currentYear = new Date().getFullYear()
   font-size: 0.75rem;
   color: var(--color-cream-subtle);
   min-height: 2rem;
-  transition: color var(--duration-fast) var(--ease-out);
+  transition: color 150ms var(--ease-out);
 }
 
 .site-footer__back-to-top:hover,
@@ -391,11 +333,12 @@ const currentYear = new Date().getFullYear()
 
 /* ------------------------------------------------------------------ *
  * prefers-reduced-motion — défense en profondeur
- * (la règle globale de animations.css tue déjà toutes les transitions)
  * ------------------------------------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
-  .site-footer__link-arrow,
+  .site-footer__link,
+  .site-footer__legal-link,
+  .site-footer__back-to-top,
   .site-footer__back-to-top-icon {
     transition: none;
   }
