@@ -953,10 +953,20 @@ Par écran et par phase :
 
 ### Phase R5 — Médiathèque
 
-- [ ] Les médias sont affichés en grille avec aperçu ≥ 160×160 px
-- [ ] Les informations fichier sont lisibles (nom, dimensions, poids)
-- [ ] La grille est responsive (§7.5)
-- [ ] L'upload fonctionne toujours
+- [x] Les médias sont affichés en grille avec aperçu (aspect-ratio 4/3, `object-fit: cover`)
+- [x] Les informations fichier sont lisibles (nom, dimensions, format humain, poids Kio/Mio, date)
+- [x] La grille est responsive : 2 cols (320–479 px), 3 cols (480–767 px), 4 cols (768–1279 px), 5 cols (1280–1439 px), 6 cols (≥ 1440 px)
+- [x] L'upload fonctionne toujours (CTA + route `admin_media_upload` inchangés)
+- [x] MIME affiché en format humain (JPEG, PNG, WebP) via map Twig locale
+- [x] Poids : Kio sous 1 Mio, Mio au-delà
+- [x] `loading="lazy"` + `width`/`height` natifs préservés
+- [x] Lien preview aria-label `Prévisualiser « filename »`
+- [x] État vide modernisé avec CTA
+- [x] Pagination conservée
+- [x] Tri backend `createdAt DESC` conservé
+- [x] `admin-media.spec.ts` vert (9/9) — fix sélecteur Médias + grille + breakpoints + Axe
+- [x] PHPUnit suite complète verte (577/577)
+- [x] Note R4 : duplication `edit.html.twig` / `_form.html.twig` à résoudre en R6
 
 ### Phase R6 — Création et prévisualisation
 
@@ -1034,8 +1044,11 @@ Par écran et par phase :
 - [x] Correctif R3 thead : `display: none` → visually-hidden clip pattern
 
 ### Phase R5 — Médiathèque
-- [ ] `media/list.html.twig` grille visuelle
-- [ ] Tests Playwright verts
+- [x] `media/list.html.twig` refonte complète (grille `ul[role="list"] > li`, cards, metadata)
+- [x] CSS R5 ajouté (`.admin-media-page`, `.admin-media-grid`, `.admin-media-card`, état vide)
+- [x] `AdminMediaListControllerTest` adapté (XPath table → XPath word-boundary card)
+- [x] `admin-media.spec.ts` refondu (9/9 tests : grille, metadata, breakpoints, focus, Axe)
+- [x] Défaut pré-existant corrigé (Médias link strict mode → scope `aside`)
 
 ### Phase R6 — Création et prévisualisation
 - [ ] `articles/new.html.twig` dans le nouveau shell

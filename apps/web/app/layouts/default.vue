@@ -13,7 +13,7 @@ useSiteSchema()
 </script>
 
 <template>
-  <div class="app-shell">
+  <div id="top" class="app-shell">
     <a href="#main-content" class="skip-link">Aller au contenu principal</a>
     <SiteHeader />
     <MobileNavigation />

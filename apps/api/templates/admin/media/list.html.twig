@@ -2,82 +2,100 @@
 
 {% block title %}Médias éditoriaux — Administration Devzair{% endblock %}
 
+{%- set _mime_labels = {
+    'image/jpeg': 'JPEG',
+    'image/png':  'PNG',
+    'image/webp': 'WebP',
+} -%}
+
 {% block body %}
-    <div class="page-header">
-        <h1>Médias éditoriaux</h1>
-        <a href="{{ path('admin_media_upload') }}" class="button-link button-primary">
-            Téléverser un média
-        </a>
-    </div>
+<div class="admin-media-page">
 
-    <section class="card">
-        {% if result.items is empty %}
-            <p class="empty-state">Aucun média n'a encore été téléversé.</p>
-        {% else %}
-            <table class="admin-table">
-                <caption class="visually-hidden">
-                    Liste des médias éditoriaux — page {{ result.page }} sur {{ result.lastPage() }},
-                    {{ result.total }} média{{ result.total > 1 ? 's' : '' }} au total.
-                </caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Aperçu</th>
-                        <th scope="col">Nom d'origine</th>
-                        <th scope="col">Type</th>
-                        <th scope="col">Dimensions</th>
-                        <th scope="col">Poids</th>
-                        <th scope="col">Téléversé le (UTC)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in result.items %}
-                        <tr>
-                            <td>
-                                <a href="{{ path('admin_media_preview', { id: item.id }) }}"
-                                   aria-label="Ouvrir la prévisualisation du média {{ item.originalFilename }}">
-                                    <img src="{{ path('admin_media_preview', { id: item.id }) }}"
-                                         alt=""
-                                         class="admin-media-thumb"
-                                         width="80"
-                                         height="80"
-                                         loading="lazy">
-                                </a>
-                            </td>
-                            <td>{{ item.originalFilename }}</td>
-                            <td><code>{{ item.mimeType.mime }}</code></td>
-                            <td>{{ item.width }}&nbsp;×&nbsp;{{ item.height }}&nbsp;px</td>
-                            <td>{{ (item.sizeBytes / 1024)|number_format(1, ',', ' ') }}&nbsp;Kio</td>
-                            <td>
-                                <time datetime="{{ item.createdAt|date('c') }}">
-                                    {{ item.createdAt|date('Y-m-d H:i') }}
-                                </time>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Médias éditoriaux</h1>
+            <p class="admin-page-header__subtitle">Gérez les images utilisées dans vos contenus.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_media_upload') }}" class="button-link button-primary">
+                + Téléverser un média
+            </a>
+        </div>
+    </header>
 
-            <nav class="pagination" aria-label="Pagination des médias">
-                <p class="pagination-summary">
-                    Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} média{{ result.total > 1 ? 's' : '' }}.
-                </p>
-                <ul class="pagination-links">
-                    {% if result.hasPrevious() %}
-                        <li>
-                            <a href="{{ path('admin_media_list', { page: result.page - 1 }) }}">
-                                ← Précédent
-                            </a>
-                        </li>
-                    {% endif %}
-                    {% if result.hasNext() %}
-                        <li>
-                            <a href="{{ path('admin_media_list', { page: result.page + 1 }) }}">
-                                Suivant →
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-    </section>
+    {% if result.items is empty %}
+        <div class="admin-media-empty empty-state">
+            <p class="admin-media-empty__text">Aucun média pour le moment.</p>
+            <p class="admin-media-empty__hint">
+                Téléversez votre première image pour l'utiliser dans vos contenus.
+            </p>
+            <a href="{{ path('admin_media_upload') }}" class="button-link button-primary">
+                + Téléverser un média
+            </a>
+        </div>
+    {% else %}
+        <ul class="admin-media-grid" role="list">
+            {% for item in result.items %}
+                {%- set _label       = 'Prévisualiser « ' ~ item.originalFilename ~ ' »' -%}
+                {%- set _mime_human  = _mime_labels[item.mimeType.value] ?? item.mimeType.value -%}
+                <li class="admin-media-card">
+                    <a href="{{ path('admin_media_preview', { id: item.id }) }}"
+                       class="admin-media-card__preview"
+                       aria-label="{{ _label }}">
+                        <img src="{{ path('admin_media_preview', { id: item.id }) }}"
+                             alt=""
+                             class="admin-media-card__image"
+                             width="{{ item.width }}"
+                             height="{{ item.height }}"
+                             loading="lazy">
+                    </a>
+                    <div class="admin-media-card__body">
+                        <p class="admin-media-card__filename">{{ item.originalFilename }}</p>
+                        <p class="admin-media-card__meta">
+                            <span class="admin-media-card__dimensions">
+                                {{- item.width }}&nbsp;×&nbsp;{{ item.height }}&nbsp;px
+                            </span>
+                            <span class="admin-media-card__type-weight">
+                                {{- _mime_human -}}
+                                &nbsp;·&nbsp;
+                                {%- if item.sizeBytes >= 1048576 -%}
+                                    {{- (item.sizeBytes / 1048576)|number_format(1, ',', ' ') -}}&nbsp;Mio
+                                {%- else -%}
+                                    {{- (item.sizeBytes / 1024)|number_format(1, ',', ' ') -}}&nbsp;Kio
+                                {%- endif -%}
+                            </span>
+                            <time class="admin-media-card__date"
+                                  datetime="{{ item.createdAt|date('c') }}">
+                                {{ item.createdAt|date('d/m/Y') }}
+                            </time>
+                        </p>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <nav class="pagination" aria-label="Pagination des médias">
+            <p class="pagination-summary">
+                Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} média{{ result.total > 1 ? 's' : '' }}.
+            </p>
+            <ul class="pagination-links">
+                {% if result.hasPrevious() %}
+                    <li>
+                        <a href="{{ path('admin_media_list', { page: result.page - 1 }) }}">
+                            ← Précédent
+                        </a>
+                    </li>
+                {% endif %}
+                {% if result.hasNext() %}
+                    <li>
+                        <a href="{{ path('admin_media_list', { page: result.page + 1 }) }}">
+                            Suivant →
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
 {% endblock %}

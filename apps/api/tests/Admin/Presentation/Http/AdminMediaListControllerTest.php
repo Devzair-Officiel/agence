@@ -62,7 +62,7 @@ final class AdminMediaListControllerTest extends WebTestCase
         );
     }
 
-    public function testAuthenticatedRendersMediaTableWithPagination(): void
+    public function testAuthenticatedRendersMediaGridWithPagination(): void
     {
         AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
         $this->seedMedia(22);
@@ -70,10 +70,10 @@ final class AdminMediaListControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/media');
 
         self::assertResponseIsSuccessful();
-        // Page 1 : 20 lignes exactement (per_page figé).
+        // Page 1 : 20 cartes exactement (per_page figé).
         self::assertSame(
             20,
-            $crawler->filterXPath('//table[contains(@class, "admin-table")]//tbody/tr')->count(),
+            $crawler->filterXPath("//*[contains(concat(' ', normalize-space(@class), ' '), ' admin-media-card ')]")->count(),
         );
         // Un lien « Suivant → » doit apparaître puisqu'il reste 2 médias.
         self::assertGreaterThan(
@@ -117,7 +117,7 @@ final class AdminMediaListControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             2,
-            $crawler->filterXPath('//table[contains(@class, "admin-table")]//tbody/tr')->count(),
+            $crawler->filterXPath("//*[contains(concat(' ', normalize-space(@class), ' '), ' admin-media-card ')]")->count(),
             'La page 2 doit contenir exactement les 2 médias restants.',
         );
     }

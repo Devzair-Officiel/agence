@@ -1149,7 +1149,8 @@ button:hover { background: #2a2f36; }
 }
 
 /* ────────────────────────────────────────────────────────────────────────
-   Médiathèque admin.
+   Médiathèque admin (legacy — conservé pour compatibilité).
+   La refonte R5 utilise .admin-media-grid / .admin-media-card ci-dessous.
    ──────────────────────────────────────────────────────────────────────── */
 
 .admin-media-thumb {
@@ -1963,4 +1964,157 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     font-weight: 400;
     color: var(--color-ink-subtle);
     margin-left: 0.375rem;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   R5 — Médiathèque visuelle
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ──────────────────────────────────────────────────────── */
+.admin-media-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── État vide ─────────────────────────────────────────────────────────── */
+.admin-media-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-md);
+}
+
+.admin-media-empty__text {
+    margin: 0;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.admin-media-empty__hint {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--color-ink-muted);
+}
+
+/* ── Grille responsive ─────────────────────────────────────────────────── */
+/*
+   Colonnage constaté (sidebar 252 px apparaît à ≥ 64 em) :
+   320 px            : 2 colonnes (~130 px chacune)
+   390 px            : 2 colonnes (~160 px chacune)
+   ≥ 30 rem (480 px) : 3 colonnes
+   ≥ 48 rem (768 px) : 4 colonnes (avec ou sans sidebar)
+   ≥ 80 em (1280 px) : 5 colonnes (workspace ~980 px après sidebar)
+   ≥ 90 em (1440 px) : 6 colonnes (workspace ~1140 px après sidebar)
+*/
+.admin-media-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+@media (min-width: 30rem) {
+    .admin-media-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (min-width: 48rem) {
+    .admin-media-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 80em) {
+    .admin-media-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 90em) {
+    .admin-media-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* ── Carte média ───────────────────────────────────────────────────────── */
+.admin-media-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-md);
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
+}
+
+.admin-media-card:hover,
+.admin-media-card:focus-within {
+    box-shadow: var(--admin-shadow-sm);
+}
+
+/* ── Zone aperçu (lien cliquable) ──────────────────────────────────────── */
+.admin-media-card__preview {
+    display: block;
+    overflow: hidden;
+    background: var(--color-cream);
+    aspect-ratio: 4 / 3;
+}
+
+.admin-media-card__preview:focus-visible {
+    outline: 2px solid var(--admin-focus-ring);
+    outline-offset: -2px;
+}
+
+.admin-media-card__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ── Corps de la carte ─────────────────────────────────────────────────── */
+.admin-media-card__body {
+    padding: 0.625rem 0.75rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.admin-media-card__filename {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    overflow-wrap: break-word;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+.admin-media-card__meta {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.admin-media-card__dimensions,
+.admin-media-card__type-weight,
+.admin-media-card__date {
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+    line-height: 1.4;
 }

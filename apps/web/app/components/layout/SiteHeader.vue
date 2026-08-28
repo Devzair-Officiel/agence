@@ -35,7 +35,7 @@ const onToggleMenu = () => {
           height="56"
           decoding="async"
           fetchpriority="high"
-        />
+        >
       </NuxtLink>
 
       <nav class="site-header__nav" aria-label="Navigation principale">

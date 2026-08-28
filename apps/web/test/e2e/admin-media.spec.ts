@@ -2,18 +2,13 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 // Phase 9A — Fondation média éditoriale (Symfony/Twig SSR).
+// Phase R5  — Refonte médiathèque visuelle (grille de cartes).
 //
 // Cette suite couvre le parcours ADMIN complet de téléversement d'un média :
 // login → bibliothèque vide → formulaire d'upload → POST d'une petite image
 // contrôlée générée à la volée → PRG vers la bibliothèque → apparition du
-// média dans la liste → ouverture de la prévisualisation privée → vérification
+// média dans la grille → ouverture de la prévisualisation privée → vérification
 // des en-têtes serveur (Content-Type, Cache-Control, X-Robots-Tag) → logout.
-//
-// Comme la Phase 8C3/8C4, les médias sont CRÉÉS via l'interface admin
-// elle-même (upload réel via `/admin/media/new`) — c'est précisément ce qu'on
-// veut tester. Le nettoyage repose sur le préfixe strict `e2e-9a-` purgé par
-// `scripts/e2e-admin-media.sh` (qui supprime aussi les fichiers physiques
-// sur le volume `api_var`, pas seulement les lignes en base).
 //
 // Serial + noms uniques par test : le firewall Symfony applique un throttling
 // par email+IP, et le rate limiter admin_media_upload plafonne à 20 uploads
@@ -31,11 +26,7 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const FILENAME_PREFIX = 'e2e-9a-'
 
 // PNG 4×4 pixels réellement produit par GD (`imagecreatetruecolor` +
-// `imagepng`) puis figé en hexadécimal. Le pipeline serveur ré-encode via
-// `imagecreatefrompng` : générer le fixture avec la même bibliothèque garantit
-// que le décodage passe (une PNG trop minimaliste ou avec un chunk IDAT non
-// standard fait échouer `imagecreatefrompng` et déclenche InvalidImageException).
-// Poids : ~100 octets ; largement en-deçà de 8 Mio et de 8000×8000 px.
+// `imagepng`) puis figé en hexadécimal.
 const TINY_PNG = Buffer.from(
   '89504e470d0a1a0a0000000d494844520000000400000004080200000026930929' +
     '000000097048597300000ec400000ec401952b0e1b0000001449444154089963e412' +
@@ -71,7 +62,7 @@ async function scanAxe(
   expect(blocking, `Axe serious/critical violations on ${label}`).toEqual([])
 }
 
-test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
+test.describe.serial('Admin — médias éditoriaux (Phase 9A / R5)', () => {
   test('anonyme : accès à /admin/media redirige vers /admin/login', async ({
     page,
   }) => {
@@ -83,12 +74,23 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
 
   test('bibliothèque accessible (Axe WCAG 2.2 AA)', async ({ page }) => {
     await login(page)
-    await page.getByRole('link', { name: 'Médias' }).click()
+    // Scope au <aside> pour éviter l'ambiguïté avec le lien KPI "Voir les médias →"
+    await page.locator('aside').getByRole('link', { name: 'Médias', exact: true }).click()
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/media`)
 
     await expect(
       page.getByRole('heading', { name: 'Médias éditoriaux', level: 1 }),
     ).toBeVisible()
+
+    // CTA upload présent dans le header
+    await expect(
+      page.getByRole('link', { name: /Téléverser un média/ }),
+    ).toBeVisible()
+
+    // État vide ou grille : l'un des deux doit être présent
+    const hasGrid = await page.locator('.admin-media-grid').count()
+    const hasEmpty = await page.locator('.admin-media-empty').count()
+    expect(hasGrid + hasEmpty, 'Grille ou état vide attendu').toBeGreaterThan(0)
 
     await scanAxe(page, '/admin/media')
   })
@@ -108,25 +110,25 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
     await scanAxe(page, '/admin/media/new')
   })
 
-  test('cycle complet : upload PNG → PRG → média visible → preview privée', async ({
+  test('cycle complet : upload PNG → PRG → média visible dans la grille → preview privée', async ({
     page,
   }) => {
     const filename = `${FILENAME_PREFIX}cycle-${Date.now()}.png`
 
     await login(page)
 
-    // --- Bibliothèque avant upload : état de départ propre --------------
+    // --- Bibliothèque avant upload : aucune carte avec ce nom ne doit exister.
     await page.goto(`${ADMIN_BASE_URL}/admin/media`)
     await expect(
-      page.getByRole('cell', { name: filename }),
+      page.locator('.admin-media-card', { hasText: filename }),
       'Aucun résidu ne doit exister pour ce nom (fixture: scripts/e2e-admin-media.sh load).',
     ).toHaveCount(0)
 
-    // --- Ouverture du formulaire d'upload -------------------------------
-    await page.getByRole('link', { name: 'Téléverser un média' }).click()
+    // --- Ouverture du formulaire d'upload
+    await page.getByRole('link', { name: /Téléverser un média/ }).first().click()
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/media/new`)
 
-    // --- Injection du binaire in-memory + soumission --------------------
+    // --- Injection du binaire in-memory + soumission
     await page.setInputFiles('input#media-file', {
       name: filename,
       mimeType: 'image/png',
@@ -139,14 +141,15 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/media`)
     await expect(page.locator('.alert-success')).toContainText(filename)
 
-    // --- Le média apparaît dans la table de la bibliothèque -------------
-    const row = page.getByRole('row').filter({ hasText: filename })
-    await expect(row).toBeVisible()
-    await expect(row).toContainText('image/png')
+    // --- Le média apparaît dans la grille de la bibliothèque
+    const card = page.locator('.admin-media-card', { hasText: filename })
+    await expect(card).toBeVisible()
+    // Type affiché en format humain (PNG, pas image/png)
+    await expect(card).toContainText('PNG')
 
-    // --- Ouverture de la prévisualisation privée ------------------------
-    const previewLink = row.getByRole('link', {
-      name: `Ouvrir la prévisualisation du média ${filename}`,
+    // --- Lien preview avec aria-label correct
+    const previewLink = card.getByRole('link', {
+      name: `Prévisualiser « ${filename} »`,
     })
     await expect(previewLink).toBeVisible()
     const previewHref = await previewLink.getAttribute('href')
@@ -155,8 +158,7 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
     )
 
     // On requête directement la preview via le request context (mêmes
-    // cookies de session que la page) pour inspecter les en-têtes bruts,
-    // ce que `page.goto` sur un binaire ne permet pas de faire proprement.
+    // cookies de session que la page) pour inspecter les en-têtes bruts.
     const previewResponse = await page.request.get(
       `${ADMIN_BASE_URL}${previewHref}`,
     )
@@ -165,15 +167,12 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
     const headers = previewResponse.headers()
     expect(headers['content-type']).toBe('image/png')
     expect(headers['content-disposition']).toBe('inline')
-    // Preview STRICTEMENT privée : jamais mise en cache partagé, jamais
-    // indexée, jamais embarquée dans un <iframe> tiers.
     expect(headers['cache-control']).toContain('private')
     expect(headers['cache-control']).toContain('no-store')
     expect(headers['x-robots-tag']).toBe('noindex, nofollow')
     expect(headers['x-frame-options']).toBe('DENY')
     expect(headers['x-content-type-options']).toBe('nosniff')
 
-    // Le corps doit démarrer par le magic byte PNG et être non-trivial.
     const body = await previewResponse.body()
     expect(body[0]).toBe(0x89)
     expect(body[1]).toBe(0x50)
@@ -182,11 +181,98 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
     expect(body.length).toBeGreaterThan(50)
   })
 
+  test('médiathèque R5 — structure grille et métadonnées', async ({ page }) => {
+    const filename = `${FILENAME_PREFIX}r5-meta-${Date.now()}.png`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/media/new`)
+    await page.setInputFiles('input#media-file', {
+      name: filename,
+      mimeType: 'image/png',
+      buffer: TINY_PNG,
+    })
+    await page.getByRole('button', { name: 'Téléverser' }).click()
+    await page.waitForURL(`${ADMIN_BASE_URL}/admin/media`)
+
+    // La grille est présente
+    await expect(page.locator('.admin-media-grid')).toBeVisible()
+
+    // La carte du média est visible avec ses métadonnées
+    const card = page.locator('.admin-media-card', { hasText: filename })
+    await expect(card).toBeVisible()
+
+    // Filename affiché dans la carte
+    await expect(card.locator('.admin-media-card__filename')).toContainText(filename)
+
+    // Dimensions présentes (TINY_PNG = 4×4)
+    await expect(card.locator('.admin-media-card__dimensions')).toBeVisible()
+
+    // Type humain (PNG) et poids présents
+    await expect(card.locator('.admin-media-card__type-weight')).toContainText('PNG')
+    await expect(card.locator('.admin-media-card__type-weight')).toContainText('Kio')
+
+    // Date présente (attribut datetime ISO-8601)
+    const timeEl = card.locator('.admin-media-card__date')
+    await expect(timeEl).toBeVisible()
+    const datetime = await timeEl.getAttribute('datetime')
+    expect(datetime, 'datetime ISO-8601').toMatch(/^\d{4}-\d{2}-\d{2}T/)
+
+    // L'image aperçu est présente
+    await expect(card.locator('.admin-media-card__image')).toBeVisible()
+
+    // Lien preview accessible
+    await expect(
+      card.getByRole('link', { name: `Prévisualiser « ${filename} »` }),
+    ).toBeVisible()
+
+    await scanAxe(page, '/admin/media (avec médias)')
+  })
+
+  test('médiathèque R5 — breakpoints sans débordement horizontal', async ({ page }) => {
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/media`)
+
+    const viewports = [
+      { width: 390,  height: 844  },
+      { width: 768,  height: 1024 },
+      { width: 1024, height: 768  },
+      { width: 1440, height: 900  },
+    ]
+
+    for (const vp of viewports) {
+      await page.setViewportSize(vp)
+      // Laisser le layout recalculer
+      await page.waitForTimeout(50)
+      const scrollWidth = await page.evaluate(() => document.body.scrollWidth)
+      expect(
+        scrollWidth,
+        `Pas de débordement horizontal à ${vp.width} px`,
+      ).toBeLessThanOrEqual(vp.width)
+    }
+  })
+
+  test('médiathèque R5 — 390 px : grille visible, focus clavier sur preview', async ({ page }) => {
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/media`)
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    const grid = page.locator('.admin-media-grid')
+    const hasGrid = await grid.count()
+    if (hasGrid > 0) {
+      await expect(grid).toBeVisible()
+      // Premier lien preview reçoit le focus clavier
+      const firstPreview = page.locator('.admin-media-card__preview').first()
+      await firstPreview.focus()
+      await expect(firstPreview).toBeFocused()
+    } else {
+      // État vide acceptable (DB propre)
+      await expect(page.locator('.admin-media-empty')).toBeVisible()
+    }
+  })
+
   test('preview anonyme : redirection vers /admin/login (aucune fuite binaire)', async ({
     page,
   }) => {
-    // Un UUID canonique mais absent en base — le firewall doit intercepter
-    // AVANT même la résolution de l'asset. Aucune image ne doit fuiter.
     const fakeUuid = '00000000-0000-0000-0000-000000000000'
     await page.goto(`${ADMIN_BASE_URL}/admin/media/${fakeUuid}/preview`, {
       waitUntil: 'domcontentloaded',
@@ -197,7 +283,6 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
   test('en-têtes de sécurité admin appliqués aux pages HTML médias', async ({
     request,
   }) => {
-    // Session HTTP directe pour lire les en-têtes bruts (pas de navigation).
     await request.post(`${ADMIN_BASE_URL}/admin/login`, {
       form: {
         _username: ADMIN_EMAIL,
@@ -231,12 +316,6 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A)', () => {
       ).toBe('nosniff')
     }
   })
-
 })
 
-// Le logout admin est déjà exercé de bout en bout par admin.spec.ts (login
-// puis clic sur le bouton « Se déconnecter » qui porte le token CSRF requis
-// par le firewall). Le dupliquer ici imposerait d'aller chercher un formulaire
-// de logout côté dashboard (aucun bouton n'est rendu dans _layout.html.twig
-// pour les pages de contenu) ou de fabriquer manuellement un POST avec token
-// CSRF — deux détours qui n'ajoutent rien à la validation du pipeline média.
+// Le logout admin est déjà exercé de bout en bout par admin.spec.ts.

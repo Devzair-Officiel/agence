@@ -216,7 +216,7 @@ async function onSubmit(): Promise<void> {
         ref="statusRef"
         variant="success"
         title="Message envoyé"
-        message="Nous revenons vers vous rapidement. Merci pour votre demande."
+        message="Votre demande a bien été transmise. Nous revenons vers vous rapidement."
         :request-id="form.successRequestId.value"
       />
     </div>

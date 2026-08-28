@@ -1,0 +1,39 @@
+DEVZAIR — Nouvelle demande de contact
+======================================
+
+Type de projet : {{ projectType.label() }}
+
+Une nouvelle demande vient d'être envoyée depuis devzair.fr.
+
+
+── CONTACT ──────────────────────────────────────────
+
+Nom        : {{ name }}
+Email      : {{ email }}
+Société    : {{ company ?? 'Non renseigné' }}
+Téléphone  : {{ telephone ?? 'Non renseigné' }}
+
+
+── PROJET ───────────────────────────────────────────
+
+Type       : {{ projectType.label() }}
+
+Message :
+──────────
+{{ message }}
+──────────
+
+
+── RÉFÉRENCE ────────────────────────────────────────
+
+Référence de la demande : #{{ shortId }}
+
+
+── INFORMATIONS TECHNIQUES ──────────────────────────
+
+Consentement : Oui
+Reçu le      : {{ receivedAtFormatted }}
+ID technique : {{ requestId }}
+
+─────────────────────────────────────────────────────
+Devzair · devzair.fr

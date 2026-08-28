@@ -14,6 +14,8 @@
  * (typiquement `/#realisations` tant que `/realisations` n'existe pas).
  */
 
+import { expertisePages } from "./expertise-pages"
+
 export interface NavigationItem {
   readonly label: string
   readonly to: string
@@ -47,14 +49,31 @@ export const primaryCta: NavigationItem = {
   isRoute: true,
 }
 
+// Les cinq pôles d'expertise publiés, dérivés de `expertise-pages.ts`
+// pour rester synchronisés automatiquement avec tout changement de statut.
+const expertisesFooterItems: readonly NavigationItem[] = expertisePages
+  .filter((p) => p.status === "published")
+  .map((p): NavigationItem => ({ label: p.shortTitle, to: p.route, isRoute: true }))
+
 export const footerNavigation: readonly NavigationGroup[] = [
+  {
+    title: "Expertises",
+    items: expertisesFooterItems,
+  },
+  {
+    // Colonne Ressources — contient uniquement les routes réellement livrées.
+    // Pas de sous-pages statiques : la section est dynamique (articles CMS).
+    // À étendre quand des sous-pages seront publiées.
+    title: "Ressources",
+    items: [{ label: "Toutes les ressources", to: "/ressources", isRoute: true }],
+  },
   {
     title: "Découvrir",
     items: [
       { label: "L'agence", to: "/agence", isRoute: true },
       { label: "Nos expertises", to: "/expertises", isRoute: true },
-      { label: "Ressources", to: "/ressources", isRoute: true },
       { label: "Réalisations", to: "/#realisations", isRoute: false },
+      { label: "Parler de votre projet", to: "/contact", isRoute: true },
     ],
   },
 ]

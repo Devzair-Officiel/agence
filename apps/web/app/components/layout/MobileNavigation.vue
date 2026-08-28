@@ -90,7 +90,7 @@ watch(isOpen, async (opened) => {
                 width="56"
                 height="56"
                 decoding="async"
-              />
+              >
             </div>
             <button
               ref="closeButtonRef"
