@@ -1397,7 +1397,9 @@ Aucun défaut critique connu et aucune barrière majeure sur les parcours princi
 ### Infrastructure Docker (terminée localement — 2026-08-28)
 
 - [x] `apps/web/Dockerfile.prod` — build Nuxt multi-stage, Nitro non-root.
+- [x] Variables SEO injectées au BUILD (`NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_SITE_INDEXABLE`, `NUXT_PUBLIC_API_BASE_URL`) avec contrôle bloquant du HTML pré-rendu.
 - [x] `apps/api/Dockerfile.prod` — FrankenPHP PHP 8.4, non-root, opcache prod.
+- [x] `APP_RUNTIME_OPTIONS={"disable_dotenv":true}` — corrige `PathException` (Symfony Runtime cherchait `/app/.env` absent en production). `cache:warmup` déplacé dans l'entrypoint avec les vraies vars Docker.
 - [x] `apps/api/docker/frankenphp/Caddyfile` — écoute :8000, trusted_proxies.
 - [x] `apps/api/docker/php/opcache.prod.ini` — validate_timestamps=0, JIT.
 - [x] `compose.prod.yaml` — sans Caddy, réseaux `devzair_internal` + `web` externe.

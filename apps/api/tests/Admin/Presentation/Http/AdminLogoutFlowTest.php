@@ -41,7 +41,7 @@ final class AdminLogoutFlowTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertResponseIsSuccessful();
 
-        $logoutForm = $crawler->selectButton('Se déconnecter')->form();
+        $logoutForm = $crawler->selectButton('Déconnexion')->form();
         $this->client->submit($logoutForm);
         self::assertResponseRedirects();
 

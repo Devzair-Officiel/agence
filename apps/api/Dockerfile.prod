@@ -10,7 +10,8 @@
 #   api_sessions → /app/var/sessions     (sessions filesystem admin)
 #   api_media    → /app/var/editorial-media  (médias éditoriaux)
 #
-# /app/var/cache/prod/ est cuit pendant le build (cache:warmup).
+# var/cache/prod/ est généré par docker-entrypoint.sh au démarrage du conteneur
+# (cache:warmup avec les vraies env vars Docker — voir docker/frankenphp/docker-entrypoint.sh).
 
 FROM dunglas/frankenphp:php8.4-alpine
 
@@ -84,6 +85,20 @@ EXPOSE 8000
 
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
+# En production, toutes les variables d'environnement proviennent du runtime
+# Docker (compose.prod.yaml / .env.prod injecté par l'opérateur). Le fichier
+# .env de Symfony est un outil de développement ; Symfony Runtime tente de le
+# charger même quand APP_ENV=prod est déjà défini dans le process, ce qui
+# lève PathException si le fichier est absent du conteneur.
+#
+# APP_RUNTIME_OPTIONS={"disable_dotenv":true} ordonne à Symfony Runtime de
+# court-circuiter intégralement le chargement DotEnv (Dotenv::bootEnv n'est
+# jamais appelé). bin/console et public/index.php lisent alors directement
+# $_SERVER / $_ENV alimenté par Docker — aucun .env n'est lu ni requis.
+#
+# Cette option est intentionnelle et propre à l'image de production.
+# Ne PAS l'ajouter dans compose.yaml (dev) ni dans Dockerfile.dev.
+ENV APP_RUNTIME_OPTIONS={"disable_dotenv":true}
 
 # start_period étendu à 60 s pour laisser le temps au cache:warmup de l'entrypoint.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD wget -q --spider --tries=1 http://localhost:8000/health || exit 1

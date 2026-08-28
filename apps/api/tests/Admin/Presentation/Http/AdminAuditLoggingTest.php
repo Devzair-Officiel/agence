@@ -87,7 +87,7 @@ final class AdminAuditLoggingTest extends WebTestCase
         ]);
         $this->client->submit($form);
         $crawler = $this->client->followRedirect();
-        $logoutForm = $crawler->selectButton('Se déconnecter')->form();
+        $logoutForm = $crawler->selectButton('Déconnexion')->form();
         $this->client->submit($logoutForm);
 
         $handler = $this->adminTestHandler();

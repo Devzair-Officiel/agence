@@ -3,35 +3,124 @@
 {% block title %}Tableau de bord — Administration Devzair{% endblock %}
 
 {% block body %}
-    <h1 class="page-title">Tableau de bord</h1>
+<div class="admin-dashboard">
 
-    <section class="card" aria-labelledby="account-heading">
-        <h2 id="account-heading">Compte connecté</h2>
+    {# ── En-tête ─────────────────────────────────────────────────────────── #}
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Tableau de bord</h1>
+            <p class="admin-page-header__subtitle">Vue d'ensemble de votre espace éditorial.</p>
+        </div>
 
-        <dl class="account-dl">
-            <dt>Nom affiché</dt>
-            <dd>{{ admin_user.displayName }}</dd>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_article_create') }}"
+               class="button-link button-primary">
+                + Nouveau brouillon
+            </a>
+            <a href="{{ path('admin_media_list') }}"
+               class="button-link">
+                Ajouter un média
+            </a>
+        </div>
+    </header>
 
-            <dt>Email</dt>
-            <dd>{{ admin_user.email.display }}</dd>
+    {# ── Grille KPI ──────────────────────────────────────────────────────── #}
+    <section aria-labelledby="kpi-heading">
+        <h2 id="kpi-heading" class="visually-hidden">Indicateurs éditoriaux</h2>
 
-            <dt>Dernière connexion</dt>
-            <dd>
-                {% if admin_user.lastLoginAt %}
-                    {{ admin_user.lastLoginAt|date('Y-m-d H:i:s T') }}
-                {% else %}
-                    Première connexion en cours.
-                {% endif %}
-            </dd>
-        </dl>
+        <div class="admin-dashboard-kpis">
+            <div class="admin-kpi-card">
+                <p class="admin-kpi-card__label">Publiés</p>
+                <p class="admin-kpi-card__value">{{ summary.published }}</p>
+                <a href="{{ path('admin_articles_list', {status: 'published'}) }}"
+                   class="admin-kpi-card__link">
+                    Voir les articles →
+                </a>
+            </div>
 
-        <form method="post" action="{{ path('admin_logout') }}" class="logout">
-            <input
-                type="hidden"
-                name="_csrf_token"
-                value="{{ csrf_token('logout') }}"
-            >
-            <button type="submit">Se déconnecter</button>
-        </form>
+            <div class="admin-kpi-card">
+                <p class="admin-kpi-card__label">Brouillons</p>
+                <p class="admin-kpi-card__value">{{ summary.drafts }}</p>
+                <a href="{{ path('admin_articles_list', {status: 'draft'}) }}"
+                   class="admin-kpi-card__link">
+                    Voir les brouillons →
+                </a>
+            </div>
+
+            <div class="admin-kpi-card">
+                <p class="admin-kpi-card__label">Archivés</p>
+                <p class="admin-kpi-card__value">{{ summary.archived }}</p>
+                <a href="{{ path('admin_articles_list', {status: 'archived'}) }}"
+                   class="admin-kpi-card__link">
+                    Voir les archives →
+                </a>
+            </div>
+
+            <div class="admin-kpi-card">
+                <p class="admin-kpi-card__label">Médias</p>
+                <p class="admin-kpi-card__value">{{ summary.mediaCount }}</p>
+                <a href="{{ path('admin_media_list') }}"
+                   class="admin-kpi-card__link">
+                    Voir les médias →
+                </a>
+            </div>
+        </div>
     </section>
+
+    {# ── Contenus récemment modifiés ─────────────────────────────────────── #}
+    <section class="admin-dashboard-recent" aria-labelledby="recent-heading">
+        <div class="admin-dashboard-recent__header">
+            <h2 class="admin-dashboard-recent__title" id="recent-heading">
+                Contenus récemment modifiés
+            </h2>
+            <a href="{{ path('admin_articles_list') }}"
+               class="admin-dashboard-recent__all">
+                Voir tous les articles →
+            </a>
+        </div>
+
+        {% if summary.recentArticles is empty %}
+            <div class="admin-recent-empty">
+                <p>Aucun article pour le moment.</p>
+                <p>Créez votre premier brouillon pour commencer.</p>
+                <div class="admin-recent-empty__cta">
+                    <a href="{{ path('admin_article_create') }}"
+                       class="button-link button-primary">
+                        Nouveau brouillon
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <ul class="admin-recent-list" aria-label="Articles récemment modifiés">
+                {% for article in summary.recentArticles %}
+                    <li class="admin-recent-item">
+                        <div class="admin-recent-item__main">
+                            <p class="admin-recent-item__title" title="{{ article.title }}">
+                                {{ article.title }}
+                            </p>
+                            <div class="admin-recent-item__meta">
+                                <span class="admin-recent-item__slug">/{{ article.slug }}</span>
+                                <span class="status-badge status-{{ article.status.value }}">
+                                    {{ article.status.value|capitalize }}
+                                </span>
+                                <time class="admin-recent-item__date"
+                                      datetime="{{ article.updatedAt|date('c') }}">
+                                    {{ article.updatedAt|date('d M Y, H:i') }}
+                                </time>
+                            </div>
+                        </div>
+
+                        <div class="admin-recent-item__actions">
+                            <a href="{{ path('admin_article_edit', {id: article.id}) }}"
+                               class="button-link button-small">
+                                Éditer
+                            </a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+</div>
 {% endblock %}
