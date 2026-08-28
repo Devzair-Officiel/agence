@@ -63,7 +63,7 @@ async function fillDraftForm(
 test.describe.serial('Admin — édition éditoriale (Phase 8C3)', () => {
   test('la liste vide est accessible (Axe WCAG 2.2 AA)', async ({ page }) => {
     await login(page)
-    await page.getByRole('link', { name: 'Articles' }).click()
+    await page.locator('aside').getByRole('link', { name: 'Articles', exact: true }).click()
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/articles`)
 
     await expect(page.getByRole('heading', { name: 'Articles', level: 1 })).toBeVisible()

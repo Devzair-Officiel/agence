@@ -145,10 +145,11 @@ test.describe.serial('Admin — dashboard éditorial (Phase R2)', () => {
   })
 
   test('les 4 cartes KPI sont visibles', async ({ page }) => {
-    await expect(page.getByText('Publiés')).toBeVisible()
-    await expect(page.getByText('Brouillons')).toBeVisible()
-    await expect(page.getByText('Archivés')).toBeVisible()
-    await expect(page.getByText('Médias')).toBeVisible()
+    const kpiSection = page.getByRole('region', { name: 'Indicateurs éditoriaux' })
+    await expect(kpiSection.getByText('Publiés', { exact: true })).toBeVisible()
+    await expect(kpiSection.getByText('Brouillons', { exact: true })).toBeVisible()
+    await expect(kpiSection.getByText('Archivés', { exact: true })).toBeVisible()
+    await expect(kpiSection.getByText('Médias', { exact: true })).toBeVisible()
   })
 
   test('les CTAs en-tête sont fonctionnels', async ({ page }) => {

@@ -922,13 +922,20 @@ Par écran et par phase :
 
 ### Phase R3 — Liste articles
 
-- [ ] Le titre est l'élément dominant de chaque ligne
-- [ ] Le slug est affiché sous le titre (petit, monospace)
-- [ ] Les badges de statut utilisent les tokens Devzair
-- [ ] Les actions secondaires sont regroupées proprement
-- [ ] Le CTA "Nouveau brouillon" est visible en haut de page
-- [ ] Les filtres de statut fonctionnent (GET avec query param)
-- [ ] `admin-editorial.spec.ts` reste vert
+- [x] Le titre est l'élément dominant de chaque ligne
+- [x] Le slug est affiché sous le titre (petit, monospace, `<code>`)
+- [x] Les badges de statut utilisent les tokens Devzair
+- [x] Les actions secondaires regroupées dans `<details>/<summary>` (aucun JS)
+- [x] Archiver : danger subtil (bordure rouge, fond transparent)
+- [x] Le CTA "+ Nouveau brouillon" visible dans l'en-tête de page
+- [x] Filtres par statut : `<nav aria-label>` + liens `aria-current="page"` (no tablist)
+- [x] Format date `d/m/Y · H:i`
+- [x] Colonne Slug supprimée — fusionnée dans la colonne Article
+- [x] Responsive mobile : `tr → blocks` via CSS + `data-label` (Option A)
+- [x] État vide avec CTA "+ Nouveau brouillon"
+- [x] `admin-editorial.spec.ts` vert (5/5) — correctif scoping `aside` sidebar
+- [x] `admin.spec.ts` vert (8/8) — correctifs `exact: true` KPI + scoping KPI section
+- [x] PHPUnit suite complète verte (576/576)
 
 ### Phase R4 — Éditeur deux colonnes
 
@@ -1008,9 +1015,11 @@ Par écran et par phase :
 - [x] Correctif sélecteurs CSRF dans `AdminArticleCreateControllerTest`, `AdminArticleAuditLoggingTest`, `AdminMediaUploadControllerTest`
 
 ### Phase R3 — Liste articles
-- [ ] `articles/list.html.twig` refonte
-- [ ] `articles/_row_actions.html.twig` refonte
-- [ ] Tests Playwright verts
+- [x] `articles/list.html.twig` refonte (header, nav filtres, table 4 col, empty state)
+- [x] `articles/_row_actions.html.twig` refonte (`<details>/<summary>`, danger-subtle)
+- [x] CSS R3 ajouté (`admin-article-filters`, `admin-actions-*`, `button-danger-subtle`, badges tokens, responsive mobile)
+- [x] PHPUnit suite verte (576/576)
+- [x] Playwright verts — `admin-editorial.spec.ts` (5/5), `admin.spec.ts` (8/8)
 
 ### Phase R4 — Éditeur deux colonnes
 - [ ] `articles/edit.html.twig` layout deux colonnes
