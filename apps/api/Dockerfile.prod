@@ -100,12 +100,19 @@ ENV APP_DEBUG=0
 # Ne PAS l'ajouter dans compose.yaml (dev) ni dans Dockerfile.dev.
 ENV APP_RUNTIME_OPTIONS='{"disable_dotenv":true}'
 
-# ── Vérification APP_RUNTIME_OPTIONS (JSON strict) ───────────────────────────
-# Vérifie que la valeur injectée dans le conteneur est du JSON valide avec
-# disable_dotenv=true, et que bin/console about fonctionne sans /app/.env.
+# ── Vérifications build-time (sans secrets) ───────────────────────────────────
+# Les variables de production (DATABASE_URL, APP_SECRET, MAILER_DSN, etc.)
+# ne sont jamais disponibles au BUILD — elles sont injectées uniquement au
+# RUNTIME par compose.prod.yaml / .env.prod. On ne peut donc pas exécuter
+# bin/console here. Le test Symfony complet (cache:warmup, about, healthcheck)
+# se fait au RUNTIME via docker-entrypoint.sh et le HEALTHCHECK.
+#
+# Ce RUN vérifie uniquement les invariants statiques de l'image :
+#   1. APP_RUNTIME_OPTIONS est du JSON strict avec disable_dotenv=true.
+#   2. /app/.env est absent (aucun secret embarqué dans l'image).
 RUN php -r '$o=json_decode(getenv("APP_RUNTIME_OPTIONS"),true); json_last_error()===JSON_ERROR_NONE&&!empty($o["disable_dotenv"])||die("ERROR: APP_RUNTIME_OPTIONS invalide: ".getenv("APP_RUNTIME_OPTIONS").PHP_EOL); echo "OK: APP_RUNTIME_OPTIONS JSON strict valide\n";' && \
-    php bin/console about --env=prod --no-debug && \
-    echo "OK: bin/console about fonctionne sans /app/.env"
+    test ! -f /app/.env || { echo "ERROR: /app/.env present dans l image — secrets interdits" && exit 1; } && \
+    echo "OK: /app/.env absent de l image"
 
 # start_period étendu à 60 s pour laisser le temps au cache:warmup de l'entrypoint.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD wget -q --spider --tries=1 http://localhost:8000/health || exit 1
