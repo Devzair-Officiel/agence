@@ -5,9 +5,11 @@ Dockerfile*
 README.md
 var/cache/*
 var/log/*
+var/sessions/*
 vendor/
 .env.local
 .env.*.local
 .phpunit.cache/
 .phpunit.result.cache
 tests/
+compose.override.yaml

@@ -1,0 +1,92 @@
+# Devzair — API Symfony 7.4 LTS production (Phase 12)
+#
+# Runtime : FrankenPHP (PHP 8.4-alpine) — migration depuis php -S confirmée
+# par ADR-006 au premier domaine persistant (Phase 8). FrankenPHP est le
+# runtime préféré, servi directement sur :8000 derrière le Caddy global du VPS.
+#
+# Ce Dockerfile ne doit JAMAIS être utilisé en dev.
+#
+# Volumes attendus au démarrage (voir compose.prod.yaml) :
+#   api_sessions → /app/var/sessions     (sessions filesystem admin)
+#   api_media    → /app/var/editorial-media  (médias éditoriaux)
+#
+# /app/var/cache/prod/ est cuit pendant le build (cache:warmup).
+
+FROM dunglas/frankenphp:php8.4-alpine
+
+# Extensions identiques à Dockerfile.dev + FrankenPHP utilise
+# install-php-extensions pour gérer les dépendances système automatiquement.
+RUN install-php-extensions \
+        exif \
+        gd \
+        intl \
+        opcache \
+        pdo_pgsql \
+        pgsql \
+        zip
+
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# ── Dépendances Composer (couche cachée) ─────────────────────────────────────
+# --no-autoloader : le classmap sera généré après COPY du code applicatif
+# pour inclure App\** dans l'autoloader (fix : App\Kernel not found).
+COPY composer.json composer.lock symfony.lock ./
+RUN APP_ENV=prod composer install \
+        --no-dev \
+        --no-autoloader \
+        --no-interaction \
+        --no-scripts \
+        --prefer-dist \
+        --no-progress
+
+# ── Code applicatif ───────────────────────────────────────────────────────────
+COPY . .
+
+# Génère le classmap-authoritative APRÈS que tout le code est présent.
+RUN APP_ENV=prod APP_DEBUG=0 composer dump-autoload \
+        --no-dev \
+        --classmap-authoritative \
+        --no-interaction
+
+# ── Configuration PHP ─────────────────────────────────────────────────────────
+COPY docker/php/editorial-media.ini /usr/local/etc/php/conf.d/zz-editorial-media.ini
+COPY docker/php/opcache.prod.ini    /usr/local/etc/php/conf.d/zz-opcache.ini
+
+# ── FrankenPHP Caddyfile + entrypoint ─────────────────────────────────────────
+COPY docker/frankenphp/Caddyfile            /etc/caddy/Caddyfile
+COPY docker/frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
+# ── Permissions non-root ──────────────────────────────────────────────────────
+# FrankenPHP (Caddy intégré) écrit dans /data et /config pour la gestion
+# des certificats. Avec auto_https off, seul /data/caddy est écrit.
+# Les sessions et médias sont sur volumes séparés (voir compose.prod.yaml).
+# var/cache est créé par l'entrypoint au démarrage avec les vraies env vars.
+RUN addgroup -g 1001 -S symfony && \
+    adduser  -u 1001 -S symfony -G symfony && \
+    mkdir -p \
+        /app/var/cache \
+        /app/var/sessions \
+        /app/var/log \
+        /app/var/editorial-media \
+        /data/caddy \
+        /config/caddy && \
+    chown -R symfony:symfony \
+        /app/var \
+        /data/caddy \
+        /config/caddy
+
+USER symfony
+
+EXPOSE 8000
+
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+
+# start_period étendu à 60 s pour laisser le temps au cache:warmup de l'entrypoint.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD wget -q --spider --tries=1 http://localhost:8000/health || exit 1
+
+ENTRYPOINT ["docker-entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

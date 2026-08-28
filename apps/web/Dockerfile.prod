@@ -1,0 +1,89 @@
+# Devzair — Nuxt 4 production (Phase 12)
+#
+# Multi-stage :
+#   builder  — npm ci + npm run build → génère .output/
+#   runtime  — copie uniquement .output/, démarre Nitro en non-root
+#
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  VARIABLES INJECTÉES AU BUILD — POURQUOI C'EST NÉCESSAIRE              ║
+# ║                                                                          ║
+# ║  Nuxt 4 pré-rend certaines pages lors de `npm run build`               ║
+# ║  (routeRules prerender: true — cf. nuxt.config.ts) :                   ║
+# ║    /   /agence   /contact   /expertises                                 ║
+# ║                                                                          ║
+# ║  useRuntimeConfig() est appelé pendant ce pré-rendu.                   ║
+# ║  Si NUXT_PUBLIC_SITE_URL n'est pas dans l'environnement du builder,    ║
+# ║  Nuxt utilise sa valeur par défaut ("http://localhost:3001") et         ║
+# ║  bake les URLs incorrectes dans le HTML statique :                      ║
+# ║    <link rel="canonical" href="http://localhost:3001/">                 ║
+# ║    <meta property="og:url" content="http://localhost:3001/">            ║
+# ║    JSON-LD Organization/WebSite avec http://localhost:3001              ║
+# ║    <meta name="robots" content="noindex, nofollow">                    ║
+# ║                                                                          ║
+# ║  Ces valeurs sont dans le HTML servi aux crawlers SEO. Elles ne        ║
+# ║  peuvent PAS être corrigées à runtime (pages statiques).               ║
+# ║                                                                          ║
+# ║  Solution : passer les 3 valeurs via ARG → ENV avant npm run build.    ║
+# ║  Elles ne sont PAS copiées dans le stage runtime (isolation).          ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+# ─── Stage 1 : build ────────────────────────────────────────────────────────
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+# Dépendances d'abord (couche cachée tant que package(-lock).json ne change pas).
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Code applicatif.
+COPY . .
+
+# Valeurs SEO nécessaires au pré-rendu. Fournies par compose.prod.yaml via
+# `build.args` (elles-mêmes lues depuis .env.prod). Valeurs de sécurité par
+# défaut intentionnellement incorrectes : le build échoue si elles ne sont
+# pas surchargées par le vrai domaine (voir le contrôle ci-dessous).
+ARG NUXT_PUBLIC_SITE_URL=http://localhost:3001
+ARG NUXT_PUBLIC_SITE_INDEXABLE=false
+ARG NUXT_PUBLIC_API_BASE_URL=/api
+
+ENV NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
+ENV NUXT_PUBLIC_SITE_INDEXABLE=$NUXT_PUBLIC_SITE_INDEXABLE
+ENV NUXT_PUBLIC_API_BASE_URL=$NUXT_PUBLIC_API_BASE_URL
+
+RUN npm run build
+
+# ── Contrôle reproductible du HTML pré-rendu ─────────────────────────────────
+# Vérifie que les pages pré-rendues contiennent la bonne URL (pas localhost).
+# Échoue le build si NUXT_PUBLIC_SITE_URL n'a pas été surchargé.
+RUN test -f .output/public/index.html || \
+      { echo "ERROR: .output/public/index.html absent — / n'est pas pré-rendue." && exit 1; } && \
+    grep -qF "${NUXT_PUBLIC_SITE_URL}" .output/public/index.html || \
+      { echo "ERROR: canonical/OG absent ou incorrect dans /. Attendu: ${NUXT_PUBLIC_SITE_URL}" && exit 1; } && \
+    ! grep -qF "localhost" .output/public/index.html || \
+      { echo "ERROR: 'localhost' trouvé dans le HTML pré-rendu de /. NUXT_PUBLIC_SITE_URL non surchargée ?" && exit 1; } && \
+    echo "SEO check OK — canonical et OG contiennent ${NUXT_PUBLIC_SITE_URL}"
+
+# ─── Stage 2 : runtime minimal ───────────────────────────────────────────────
+# Les ARG du stage builder ne sont PAS propagés ici (isolation multi-stage).
+# Les valeurs runtime sont injectées par compose.prod.yaml via `environment:`.
+FROM node:24-alpine AS runtime
+
+RUN addgroup -S nuxt && adduser -S nuxt -G nuxt
+
+WORKDIR /app
+
+# Seul .output est nécessaire en production.
+COPY --from=builder --chown=nuxt:nuxt /app/.output ./.output
+
+USER nuxt
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+ENV NITRO_HOST=0.0.0.0
+ENV NITRO_PORT=3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD wget -q --spider --tries=1 http://localhost:3000/_nitro/health || exit 1
+
+CMD ["node", ".output/server/index.mjs"]

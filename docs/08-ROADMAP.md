@@ -1394,18 +1394,34 @@ Aucun défaut critique connu et aucune barrière majeure sur les parcours princi
 
 ## Phase 12 — Préproduction et production
 
+### Infrastructure Docker (terminée localement — 2026-08-28)
+
+- [x] `apps/web/Dockerfile.prod` — build Nuxt multi-stage, Nitro non-root.
+- [x] `apps/api/Dockerfile.prod` — FrankenPHP PHP 8.4, non-root, opcache prod.
+- [x] `apps/api/docker/frankenphp/Caddyfile` — écoute :8000, trusted_proxies.
+- [x] `apps/api/docker/php/opcache.prod.ini` — validate_timestamps=0, JIT.
+- [x] `compose.prod.yaml` — sans Caddy, réseaux `devzair_internal` + `web` externe.
+- [x] `.env.prod.example` — template complet des variables de production.
+- [ ] Réseau Docker `web` vérifié sur le VPS (`docker network ls`).
+- [ ] Images buildées et testées sur le VPS.
+- [ ] Migrations Doctrine exécutées (`doctrine:migrations:migrate`).
+- [ ] Compte admin créé (`app:admin:create-user`).
+- [ ] Caddy global configuré pour `devzair.fr` (TLS auto, routing /api/* /admin/*).
+
+### Recette VPS (non démarrée)
+
 - [ ] Préproduction protégée.
 - [ ] Recette fonctionnelle.
 - [ ] Recette éditoriale.
 - [ ] Recette SEO.
-- [ ] Recette sécurité.
+- [ ] Recette sécurité (OWASP, revue secrets).
 - [ ] Recette confidentialité.
 - [ ] Recette analytics.
-- [ ] Sauvegarde et restauration.
-- [ ] Plan de rollback.
-- [ ] TLS.
+- [ ] Sauvegarde et restauration testées.
+- [ ] Plan de rollback validé.
+- [ ] TLS Let's Encrypt actif.
 - [ ] Redirections de domaine.
-- [ ] Smoke tests.
+- [ ] Smoke tests automatisés.
 - [ ] Soumission Search Console.
 - [ ] Soumission Bing Webmaster Tools.
 - [ ] Monitoring et alertes.
@@ -1413,7 +1429,10 @@ Aucun défaut critique connu et aucune barrière majeure sur les parcours princi
 
 ### Critère de sortie
 
-Verdict explicite `GO`, `GO CONDITIONNEL` ou `NO-GO`.
+Verdict explicite `GO`, `GO CONDITIONNEL` ou `NO-GO` après validation VPS complète.
+
+**La Phase 12 n'est pas terminée** tant que le déploiement VPS, TLS, migrations,
+smoke tests, sauvegarde et rollback n'ont pas été réellement vérifiés.
 
 ---
 

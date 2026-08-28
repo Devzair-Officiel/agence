@@ -1,4 +1,4 @@
-# Exclus du contexte de build Docker.
+# Exclus du contexte de build Docker (dev et prod).
 node_modules
 .nuxt
 .output
@@ -8,6 +8,7 @@ node_modules
 coverage
 playwright-report
 test-results
+test/
 .git
 .gitignore
 .env

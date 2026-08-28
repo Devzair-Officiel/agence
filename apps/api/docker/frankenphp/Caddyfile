@@ -1,0 +1,40 @@
+# Devzair API — FrankenPHP production (Phase 12)
+#
+# Ce Caddyfile configure le serveur PHP intégré de FrankenPHP.
+# Il ne gère pas TLS (terminé par le Caddy global du VPS) ni la logique
+# de routage /api/* vs /admin/* (portée par le Caddy global).
+#
+# Le conteneur reçoit des requêtes déjà pré-traitées :
+#   - /api/* → strip_prefix /api → FrankenPHP reçoit /contact, /health, etc.
+#   - /admin, /admin/* → FrankenPHP reçoit le préfixe intact (firewall Symfony)
+#   - /media/{id} → routé en /api/media/{id} côté Caddy global (strip_prefix)
+#
+# Trusted proxies : private_ranges couvre le réseau Docker « web » et
+# « devzair_internal » (172.x.x.x / 10.x.x.x). Symfony reconstruit les
+# URLs absolues à partir des X-Forwarded-* posés par le Caddy global.
+
+{
+    admin off
+    frankenphp
+    auto_https off
+
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+:8000 {
+    root * /app/public
+
+    encode zstd gzip
+
+    # php_server : sert les fichiers statiques de public/ directement,
+    # renvoie tout le reste vers /index.php (front controller Symfony).
+    php_server
+
+    log {
+        output stderr
+        format console
+        level WARN
+    }
+}

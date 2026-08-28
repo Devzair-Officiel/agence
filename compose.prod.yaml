@@ -1,0 +1,151 @@
+# Devzair — stack Docker Compose production (Phase 12)
+#
+# AUCUN service Caddy : le TLS et le routage sont assurés par le Caddy global
+# du VPS (réseau Docker externe « web » pré-créé sur l'hôte).
+#
+# Architecture réseau :
+#   Caddy global (réseau web)
+#     ├── devzair-agence-web:3000   → service web  (Nuxt/Nitro)
+#     └── devzair-agence-api:8000   → service api  (FrankenPHP/Symfony)
+#                                         └── postgres (réseau devzair_internal)
+#
+# Démarrage :
+#   docker compose -f compose.prod.yaml --env-file .env.prod up -d
+#
+# Migrations (première mise en production) :
+#   docker compose -f compose.prod.yaml exec api \
+#     php bin/console doctrine:migrations:migrate --no-interaction
+#
+# Rollback (image précédente) :
+#   docker compose -f compose.prod.yaml up -d --no-deps web api
+#   # ou : docker rollout (si Docker >= 4.38 avec rollback natif)
+
+name: devzair
+
+services:
+
+  # ── Nuxt / Nitro SSR ────────────────────────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.prod
+      # ARGs du stage builder : injectés dans le HTML des pages pré-rendues
+      # (/, /agence, /contact, /expertises). Sans eux, canonical = localhost.
+      # Doivent correspondre aux valeurs `environment:` ci-dessous.
+      args:
+        NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-https://devzair.fr}
+        NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-true}
+        NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+    expose:
+      - "3000"
+    # Aucun "ports:" : seul le Caddy global accède à ce service.
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL}
+      NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-true}
+      # Le navigateur appelle /api/… ; le Caddy global route vers api:8000.
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+      # SSR interne : Nitro appelle Symfony sans passer par le Caddy global.
+      # Symfony expose ses routes sans le préfixe /api (strip_prefix côté Caddy).
+      NUXT_EDITORIAL_API_BASE_URL: ${NUXT_EDITORIAL_API_BASE_URL:-http://api:8000}
+      NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY}
+      NUXT_PUBLIC_TURNSTILE_ENABLED: ${NUXT_PUBLIC_TURNSTILE_ENABLED:-true}
+    networks:
+      devzair_internal: {}
+      web:
+        aliases:
+          - devzair-agence-web
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Symfony / FrankenPHP ────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.prod
+    expose:
+      - "8000"
+    # Aucun "ports:" : seul le Caddy global accède à ce service.
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: ${APP_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      MAILER_DSN: ${MAILER_DSN}
+      CONTACT_FROM_EMAIL: ${CONTACT_FROM_EMAIL}
+      CONTACT_FROM_NAME: ${CONTACT_FROM_NAME}
+      CONTACT_RECIPIENT: ${CONTACT_RECIPIENT}
+      TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-true}
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET}
+      CONTACT_RATE_LIMIT: ${CONTACT_RATE_LIMIT:-5}
+      CONTACT_RATE_INTERVAL: ${CONTACT_RATE_INTERVAL:-10 minutes}
+      CONTACT_ORIGIN_ALLOWLIST: ${CONTACT_ORIGIN_ALLOWLIST}
+      # REMOTE_ADDR : Symfony fait confiance au seul upstream direct (Caddy global).
+      # Ne pas mettre une plage IP fixe : l'IP du conteneur Caddy peut changer.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-REMOTE_ADDR}
+      TRUSTED_HEADERS: ${TRUSTED_HEADERS:-x-forwarded-for,x-forwarded-proto,x-forwarded-host,x-forwarded-port}
+      ADMIN_SESSION_LIFETIME: ${ADMIN_SESSION_LIFETIME:-28800}
+      EDITORIAL_MEDIA_STORAGE_DIR: ${EDITORIAL_MEDIA_STORAGE_DIR:-/app/var/editorial-media}
+      ADMIN_MEDIA_UPLOAD_LIMIT: ${ADMIN_MEDIA_UPLOAD_LIMIT:-20}
+      ADMIN_MEDIA_UPLOAD_INTERVAL: ${ADMIN_MEDIA_UPLOAD_INTERVAL:-10 minutes}
+      N8N_EDITORIAL_TOKEN: ${N8N_EDITORIAL_TOKEN:-}
+    volumes:
+      # Sessions admin : persistance inter-redémarrages du conteneur.
+      # /app/var/cache/prod est cuit dans l'image (cache:warmup au build).
+      - api_sessions:/app/var/sessions
+      # Médias éditoriaux : nécessaire à la diffusion publique (ADR-013).
+      - api_media:/app/var/editorial-media
+    networks:
+      devzair_internal: {}
+      web:
+        aliases:
+          - devzair-agence-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── PostgreSQL 17-alpine ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Réseau privé uniquement : postgres ne rejoint JAMAIS le réseau « web ».
+    # Le Caddy global ne peut donc pas l'atteindre directement.
+    networks:
+      devzair_internal: {}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+# ── Volumes persistants ──────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  api_sessions:
+  api_media:
+  # Pas de web_node_modules ni de web_nuxt_cache : tout est cuit dans l'image.
+  # Pas de api_vendor : vendor est dans l'image (composer install --no-dev).
+  # Pas de api_var global : seuls les sous-répertoires nécessaires sont montés.
+
+# ── Réseaux ──────────────────────────────────────────────────────────────────
+networks:
+  devzair_internal:
+    # Réseau privé : pas de passerelle Internet, isolation entre services.
+    # postgres est uniquement sur ce réseau → jamais joignable depuis web.
+    internal: true
+    name: devzair_internal
+  web:
+    # Réseau Docker externe pré-créé sur le VPS par `docker network create web`.
+    # Le Caddy global est sur ce réseau et atteint web et api via leurs aliases.
+    external: true
+    name: web
