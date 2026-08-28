@@ -95,8 +95,8 @@ test.describe.serial('Admin — authentification (Phase 8C1)', () => {
     }
     expect(dashboardBlocking, 'Axe serious/critical violations on /admin').toEqual([])
 
-    // Logout via le formulaire POST (le bouton porte le token CSRF).
-    await page.getByRole('button', { name: 'Se déconnecter' }).click()
+    // Logout via le formulaire POST dans la sidebar (le bouton porte le token CSRF).
+    await page.locator('.admin-sidebar__logout-btn').click()
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/login`)
     await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible()
 
@@ -132,5 +132,57 @@ test.describe.serial('Admin — authentification (Phase 8C1)', () => {
     expect(headers['x-content-type-options']).toBe('nosniff')
     expect(headers['referrer-policy']).toBe('no-referrer')
     expect(headers['x-robots-tag']).toBe('noindex, nofollow')
+  })
+})
+
+test.describe.serial('Admin — dashboard éditorial (Phase R2)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${ADMIN_BASE_URL}/admin/login`)
+    await page.getByLabel('Adresse email').fill(ADMIN_EMAIL)
+    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD)
+    await page.getByRole('button', { name: 'Se connecter' }).click()
+    await page.waitForURL(`${ADMIN_BASE_URL}/admin`)
+  })
+
+  test('les 4 cartes KPI sont visibles', async ({ page }) => {
+    await expect(page.getByText('Publiés')).toBeVisible()
+    await expect(page.getByText('Brouillons')).toBeVisible()
+    await expect(page.getByText('Archivés')).toBeVisible()
+    await expect(page.getByText('Médias')).toBeVisible()
+  })
+
+  test('les CTAs en-tête sont fonctionnels', async ({ page }) => {
+    const newDraft = page.getByRole('link', { name: '+ Nouveau brouillon' })
+    const addMedia = page.getByRole('link', { name: 'Ajouter un média' })
+
+    await expect(newDraft).toBeVisible()
+    await expect(addMedia).toBeVisible()
+
+    await expect(newDraft).toHaveAttribute('href', /\/admin\/articles\/new/)
+    await expect(addMedia).toHaveAttribute('href', /\/admin\/media/)
+  })
+
+  test('la section contenus récents est présente (liste ou état vide)', async ({ page }) => {
+    const section = page.getByRole('region', { name: /contenus récemment modifiés/i })
+    await expect(section).toBeVisible()
+
+    const hasList = await page.locator('.admin-recent-list').count()
+    const hasEmpty = await page.locator('.admin-recent-empty').count()
+    expect(hasList + hasEmpty).toBeGreaterThan(0)
+  })
+
+  test('dashboard R2 est accessible (Axe WCAG 2.2 AA)', async ({ page }) => {
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    )
+    if (blocking.length > 0) {
+      console.log(
+        blocking
+          .map((v) => `- [${v.impact}] ${v.id}: ${v.help}`)
+          .join('\n'),
+      )
+    }
+    expect(blocking, 'Axe serious/critical violations on /admin (R2)').toEqual([])
   })
 })
