@@ -19,6 +19,7 @@ Cette documentation est volontairement modulaire. Un agent ne doit pas tout lire
 | `10-TRACKING.md` | Registre, décisions et changements | Avant et après une tâche |
 | `11-SOURCES.md` | Sources officielles | Vérification d’une règle externe |
 | `adr/README.md` | Modèle des décisions d’architecture | Toute décision structurante |
+| `DEPLOIEMENT-PROD.md` | Runbook de déploiement VPS (build, recreate, migrations) | Mise en production |
 
 ## Principe de chargement
 
