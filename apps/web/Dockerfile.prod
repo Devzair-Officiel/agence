@@ -46,23 +46,41 @@ COPY . .
 ARG NUXT_PUBLIC_SITE_URL=http://localhost:3001
 ARG NUXT_PUBLIC_SITE_INDEXABLE=false
 ARG NUXT_PUBLIC_API_BASE_URL=/api
+# Turnstile : site-key PUBLIQUE uniquement — jamais TURNSTILE_SECRET ici.
+# /contact est pré-rendue avec prerender:true ; useRuntimeConfig() est résolu
+# au build. Sans ces ARGs, le HTML embarque turnstileEnabled:false et
+# turnstileSiteKey:"", et Turnstile reste inactif même en production.
+ARG NUXT_PUBLIC_TURNSTILE_SITE_KEY
+ARG NUXT_PUBLIC_TURNSTILE_ENABLED=false
 
 ENV NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
 ENV NUXT_PUBLIC_SITE_INDEXABLE=$NUXT_PUBLIC_SITE_INDEXABLE
 ENV NUXT_PUBLIC_API_BASE_URL=$NUXT_PUBLIC_API_BASE_URL
+ENV NUXT_PUBLIC_TURNSTILE_SITE_KEY=$NUXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NUXT_PUBLIC_TURNSTILE_ENABLED=$NUXT_PUBLIC_TURNSTILE_ENABLED
 
 RUN npm run build
 
-# ── Contrôle reproductible du HTML pré-rendu ─────────────────────────────────
-# Vérifie que les pages pré-rendues contiennent la bonne URL (pas localhost).
-# Échoue le build si NUXT_PUBLIC_SITE_URL n'a pas été surchargé.
+# ── Contrôles reproductibles du HTML pré-rendu ───────────────────────────────
+# / — URL canonique correcte, aucun localhost.
 RUN test -f .output/public/index.html || \
       { echo "ERROR: .output/public/index.html absent — / n'est pas pré-rendue." && exit 1; } && \
     grep -qF "${NUXT_PUBLIC_SITE_URL}" .output/public/index.html || \
-      { echo "ERROR: canonical/OG absent ou incorrect dans /. Attendu: ${NUXT_PUBLIC_SITE_URL}" && exit 1; } && \
+      { echo "ERROR: canonical/OG absent dans /. Attendu: ${NUXT_PUBLIC_SITE_URL}" && exit 1; } && \
     ! grep -qF "localhost" .output/public/index.html || \
-      { echo "ERROR: 'localhost' trouvé dans le HTML pré-rendu de /. NUXT_PUBLIC_SITE_URL non surchargée ?" && exit 1; } && \
+      { echo "ERROR: 'localhost' dans le HTML pré-rendu de /. NUXT_PUBLIC_SITE_URL non surchargée ?" && exit 1; } && \
     echo "SEO check OK — canonical et OG contiennent ${NUXT_PUBLIC_SITE_URL}"
+
+# /contact — Turnstile activé avec site-key non vide.
+# TURNSTILE_SECRET n'est jamais déclaré comme ARG ici : le backend Symfony
+# l'injecte exclusivement dans le service api (compose.prod.yaml).
+RUN test -f .output/public/contact/index.html || \
+      { echo "ERROR: .output/public/contact/index.html absent — /contact n'est pas pré-rendue." && exit 1; } && \
+    ! grep -qF 'turnstileEnabled:false' .output/public/contact/index.html || \
+      { echo "ERROR: turnstileEnabled:false dans /contact. NUXT_PUBLIC_TURNSTILE_ENABLED non surchargée ?" && exit 1; } && \
+    ! grep -qF 'turnstileSiteKey:""' .output/public/contact/index.html || \
+      { echo "ERROR: turnstileSiteKey vide dans /contact. NUXT_PUBLIC_TURNSTILE_SITE_KEY non surchargée ?" && exit 1; } && \
+    echo "Turnstile check OK — turnstileEnabled:true et site-key presente dans /contact"
 
 # ─── Stage 2 : runtime minimal ───────────────────────────────────────────────
 # Les ARG du stage builder ne sont PAS propagés ici (isolation multi-stage).
@@ -84,6 +102,6 @@ ENV NODE_ENV=production
 ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD wget -q --spider --tries=1 http://localhost:3000/_nitro/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD wget -q --spider --tries=1 http://127.0.0.1:3000/ || exit 1
 
 CMD ["node", ".output/server/index.mjs"]

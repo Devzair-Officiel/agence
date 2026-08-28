@@ -1398,6 +1398,8 @@ Aucun défaut critique connu et aucune barrière majeure sur les parcours princi
 
 - [x] `apps/web/Dockerfile.prod` — build Nuxt multi-stage, Nitro non-root.
 - [x] Variables SEO injectées au BUILD (`NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_SITE_INDEXABLE`, `NUXT_PUBLIC_API_BASE_URL`) avec contrôle bloquant du HTML pré-rendu.
+- [x] Variables Turnstile injectées au BUILD (`NUXT_PUBLIC_TURNSTILE_SITE_KEY`, `NUXT_PUBLIC_TURNSTILE_ENABLED`) — /contact est pré-rendue, les valeurs runtime seules ne suffisent pas. Contrôle bloquant ajouté sur `/contact/index.html`.
+- [x] HEALTHCHECK Nuxt corrigé : `localhost` → `127.0.0.1` (évite la résolution IPv6 `::1`), route `/_nitro/health` (404) → `/` (200).
 - [x] `apps/api/Dockerfile.prod` — FrankenPHP PHP 8.4, non-root, opcache prod.
 - [x] `APP_RUNTIME_OPTIONS={"disable_dotenv":true}` — corrige `PathException` (Symfony Runtime cherchait `/app/.env` absent en production). `cache:warmup` déplacé dans l'entrypoint avec les vraies vars Docker.
 - [x] `apps/api/docker/frankenphp/Caddyfile` — écoute :8000, trusted_proxies.

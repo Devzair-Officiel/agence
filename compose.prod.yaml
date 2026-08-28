@@ -30,12 +30,16 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile.prod
       # ARGs du stage builder : injectés dans le HTML des pages pré-rendues
-      # (/, /agence, /contact, /expertises). Sans eux, canonical = localhost.
+      # (/, /agence, /contact, /expertises). Sans eux, canonical = localhost
+      # et Turnstile reste désactivé sur /contact (prerender:true).
       # Doivent correspondre aux valeurs `environment:` ci-dessous.
+      # ⚠  Seule la site-key PUBLIQUE Turnstile est ici — jamais TURNSTILE_SECRET.
       args:
         NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-https://devzair.fr}
         NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-true}
         NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
+        NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY}
+        NUXT_PUBLIC_TURNSTILE_ENABLED: ${NUXT_PUBLIC_TURNSTILE_ENABLED:-true}
     expose:
       - "3000"
     # Aucun "ports:" : seul le Caddy global accède à ce service.

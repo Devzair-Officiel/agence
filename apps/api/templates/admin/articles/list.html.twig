@@ -3,33 +3,75 @@
 {% block title %}Articles — Administration Devzair{% endblock %}
 
 {% block body %}
-    <div class="page-header">
-        <h1>Articles</h1>
-        <a href="{{ path('admin_article_create') }}" class="button-link button-primary">
-            Nouveau brouillon
-        </a>
-    </div>
+<div class="admin-articles-page">
 
-    <section class="card">
-        <form method="get" action="{{ path('admin_articles_list') }}" class="filter-form">
-            <label for="filter-status">Filtrer par statut</label>
-            <select id="filter-status" name="status">
-                <option value="">Tous</option>
-                {% for status in status_options %}
-                    <option value="{{ status.value }}" {{ current_status == status ? 'selected' : '' }}>
-                        {% if status.value == 'draft' %}Brouillons
-                        {% elseif status.value == 'published' %}Publiés
-                        {% else %}Archivés
-                        {% endif %}
-                    </option>
-                {% endfor %}
-            </select>
-            <button type="submit">Appliquer</button>
-        </form>
+    {# ── En-tête ─────────────────────────────────────────────────────────── #}
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Articles</h1>
+            <p class="admin-page-header__subtitle">Gérez les contenus éditoriaux de Devzair.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_article_create') }}"
+               class="button-link button-primary">
+                + Nouveau brouillon
+            </a>
+        </div>
+    </header>
 
-        {% if result.items is empty %}
-            <p class="empty-state">Aucun article ne correspond à ce filtre.</p>
-        {% else %}
+    {# ── Filtres nav ─────────────────────────────────────────────────────── #}
+    <nav class="admin-article-filters" aria-label="Filtrer les articles par statut">
+        <ul role="list">
+            <li>
+                <a href="{{ path('admin_articles_list') }}"
+                   class="admin-article-filter{% if current_status is null %} admin-article-filter--active{% endif %}"
+                   {% if current_status is null %}aria-current="page"{% endif %}>
+                    Tous
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_articles_list', {status: 'published'}) }}"
+                   class="admin-article-filter{% if current_status is not null and current_status.value == 'published' %} admin-article-filter--active{% endif %}"
+                   {% if current_status is not null and current_status.value == 'published' %}aria-current="page"{% endif %}>
+                    Publiés
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_articles_list', {status: 'draft'}) }}"
+                   class="admin-article-filter{% if current_status is not null and current_status.value == 'draft' %} admin-article-filter--active{% endif %}"
+                   {% if current_status is not null and current_status.value == 'draft' %}aria-current="page"{% endif %}>
+                    Brouillons
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('admin_articles_list', {status: 'archived'}) }}"
+                   class="admin-article-filter{% if current_status is not null and current_status.value == 'archived' %} admin-article-filter--active{% endif %}"
+                   {% if current_status is not null and current_status.value == 'archived' %}aria-current="page"{% endif %}>
+                    Archivés
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    {# ── Tableau / état vide ─────────────────────────────────────────────── #}
+    {% if result.items is empty %}
+        <div class="admin-articles-empty">
+            <p class="admin-articles-empty__msg">
+                {%- if current_status is not null -%}
+                    Aucun article ne correspond à ce filtre.
+                {%- else -%}
+                    Aucun article pour le moment.
+                {%- endif -%}
+            </p>
+            {% if current_status is null %}
+                <a href="{{ path('admin_article_create') }}"
+                   class="button-link button-primary">
+                    + Nouveau brouillon
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="admin-table-scroll">
             <table class="admin-table">
                 <caption class="visually-hidden">
                     Liste des articles — page {{ result.page }} sur {{ result.lastPage() }},
@@ -37,19 +79,20 @@
                 </caption>
                 <thead>
                     <tr>
-                        <th scope="col">Titre</th>
-                        <th scope="col">Slug</th>
+                        <th scope="col">Article</th>
                         <th scope="col">Statut</th>
-                        <th scope="col">Mis à jour (UTC)</th>
+                        <th scope="col">Modifié</th>
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in result.items %}
                         <tr>
-                            <td>{{ item.title }}</td>
-                            <td><code>{{ item.slug }}</code></td>
-                            <td>
+                            <td class="admin-article-cell" data-label="Article">
+                                <p class="admin-article-title">{{ item.title }}</p>
+                                <code class="admin-article-slug">{{ item.slug }}</code>
+                            </td>
+                            <td data-label="Statut">
                                 <span class="status-badge status-{{ item.status.value }}">
                                     {% if item.status.value == 'draft' %}Brouillon
                                     {% elseif item.status.value == 'published' %}Publié
@@ -57,40 +100,42 @@
                                     {% endif %}
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Modifié">
                                 <time datetime="{{ item.updatedAt|date('c') }}">
-                                    {{ item.updatedAt|date('Y-m-d H:i') }}
+                                    {{ item.updatedAt|date('d/m/Y · H:i') }}
                                 </time>
                             </td>
-                            <td>
+                            <td data-label="Actions">
                                 {% include 'admin/articles/_row_actions.html.twig' with { item: item } only %}
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
 
-            <nav class="pagination" aria-label="Pagination des articles">
-                <p class="pagination-summary">
-                    Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} article{{ result.total > 1 ? 's' : '' }}.
-                </p>
-                <ul class="pagination-links">
-                    {% if result.hasPrevious() %}
-                        <li>
-                            <a href="{{ path('admin_articles_list', { page: result.page - 1, status: current_status ? current_status.value : null }) }}">
-                                ← Précédent
-                            </a>
-                        </li>
-                    {% endif %}
-                    {% if result.hasNext() %}
-                        <li>
-                            <a href="{{ path('admin_articles_list', { page: result.page + 1, status: current_status ? current_status.value : null }) }}">
-                                Suivant →
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-    </section>
+        <nav class="pagination" aria-label="Pagination des articles">
+            <p class="pagination-summary">
+                Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} article{{ result.total > 1 ? 's' : '' }}.
+            </p>
+            <ul class="pagination-links">
+                {% if result.hasPrevious() %}
+                    <li>
+                        <a href="{{ path('admin_articles_list', { page: result.page - 1, status: current_status ? current_status.value : null }) }}">
+                            ← Précédent
+                        </a>
+                    </li>
+                {% endif %}
+                {% if result.hasNext() %}
+                    <li>
+                        <a href="{{ path('admin_articles_list', { page: result.page + 1, status: current_status ? current_status.value : null }) }}">
+                            Suivant →
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
 {% endblock %}
