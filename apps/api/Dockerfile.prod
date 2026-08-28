@@ -98,7 +98,14 @@ ENV APP_DEBUG=0
 #
 # Cette option est intentionnelle et propre à l'image de production.
 # Ne PAS l'ajouter dans compose.yaml (dev) ni dans Dockerfile.dev.
-ENV APP_RUNTIME_OPTIONS={"disable_dotenv":true}
+ENV APP_RUNTIME_OPTIONS='{"disable_dotenv":true}'
+
+# ── Vérification APP_RUNTIME_OPTIONS (JSON strict) ───────────────────────────
+# Vérifie que la valeur injectée dans le conteneur est du JSON valide avec
+# disable_dotenv=true, et que bin/console about fonctionne sans /app/.env.
+RUN php -r '$o=json_decode(getenv("APP_RUNTIME_OPTIONS"),true); json_last_error()===JSON_ERROR_NONE&&!empty($o["disable_dotenv"])||die("ERROR: APP_RUNTIME_OPTIONS invalide: ".getenv("APP_RUNTIME_OPTIONS").PHP_EOL); echo "OK: APP_RUNTIME_OPTIONS JSON strict valide\n";' && \
+    php bin/console about --env=prod --no-debug && \
+    echo "OK: bin/console about fonctionne sans /app/.env"
 
 # start_period étendu à 60 s pour laisser le temps au cache:warmup de l'entrypoint.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD wget -q --spider --tries=1 http://localhost:8000/health || exit 1
