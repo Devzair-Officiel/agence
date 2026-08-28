@@ -3,50 +3,57 @@
 {% block title %}Connexion — Administration Devzair{% endblock %}
 
 {% block body %}
-    <h1>Administration</h1>
+    <div class="login-container">
+        <header class="login-header">
+            <strong class="admin-brand-name">DEVZAIR</strong>
+            <span class="admin-brand-sub">Administration</span>
+        </header>
 
-    <section class="card" aria-labelledby="login-heading">
-        <h2 id="login-heading">Connexion</h2>
+        <section class="card login-card" aria-labelledby="login-heading">
+            <h1 class="login-heading" id="login-heading">Connexion</h1>
 
-        {% if error %}
-            <div class="alert-error" role="alert">
-                Identifiants invalides ou compte indisponible.
-            </div>
-        {% endif %}
+            {% if error %}
+                <div class="alert-error" role="alert">
+                    Identifiants invalides ou compte indisponible.
+                </div>
+            {% endif %}
 
-        <form method="post" action="{{ path('admin_login') }}" novalidate>
-            <div class="field">
-                <label for="admin-email">Adresse email</label>
+            <form method="post" action="{{ path('admin_login') }}" novalidate>
+                <div class="field">
+                    <label for="admin-email">Adresse email</label>
+                    <input
+                        id="admin-email"
+                        type="email"
+                        name="email"
+                        value="{{ last_email }}"
+                        autocomplete="username"
+                        autocapitalize="off"
+                        inputmode="email"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="admin-password">Mot de passe</label>
+                    <input
+                        id="admin-password"
+                        type="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+
                 <input
-                    id="admin-email"
-                    type="email"
-                    name="email"
-                    value="{{ last_email }}"
-                    autocomplete="username"
-                    autocapitalize="off"
-                    inputmode="email"
-                    required
+                    type="hidden"
+                    name="_csrf_token"
+                    value="{{ csrf_token('authenticate') }}"
                 >
-            </div>
 
-            <div class="field">
-                <label for="admin-password">Mot de passe</label>
-                <input
-                    id="admin-password"
-                    type="password"
-                    name="password"
-                    autocomplete="current-password"
-                    required
-                >
-            </div>
-
-            <input
-                type="hidden"
-                name="_csrf_token"
-                value="{{ csrf_token('authenticate') }}"
-            >
-
-            <button type="submit">Se connecter</button>
-        </form>
-    </section>
+                <div class="form-actions">
+                    <button type="submit" class="button-primary">Se connecter</button>
+                </div>
+            </form>
+        </section>
+    </div>
 {% endblock %}

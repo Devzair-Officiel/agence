@@ -9,26 +9,162 @@
     <link rel="stylesheet" href="/admin/assets/admin.css">
 </head>
 <body>
-    {% if is_granted('ROLE_ADMIN') %}
-        <header class="admin-topbar">
-            <nav class="admin-nav" aria-label="Navigation administration">
-                <a href="{{ path('admin_dashboard') }}">Tableau de bord</a>
-                <a href="{{ path('admin_articles_list') }}">Articles</a>
-                <a href="{{ path('admin_media_list') }}">Médias</a>
-            </nav>
-        </header>
-    {% endif %}
+{% set _is_admin = is_granted('ROLE_ADMIN') %}
 
-    <main>
+{% if _is_admin %}
+    {# ── Détection de la section active (route courante) ─────────────────── #}
+    {% set _route = app.request.attributes.get('_route') %}
+    {% set _nav_dashboard = _route == 'admin_dashboard' %}
+    {% set _nav_articles  = 'admin_article' in _route %}
+    {% set _nav_media     = 'admin_media'   in _route %}
+
+    {# ── Lien d'évitement (visible au focus clavier) ──────────────────────── #}
+    <a class="admin-skip-link" href="#admin-main">Aller au contenu principal</a>
+
+    {# ── Topbar mobile (masquée ≥ 1024 px) ───────────────────────────────── #}
+    <header class="admin-topbar-mobile" role="banner">
+        <div class="admin-topbar-mobile__brand" aria-hidden="true">
+            <strong class="admin-brand-name">DEVZAIR</strong>
+            <span class="admin-brand-sub">Admin</span>
+        </div>
+
+        <details class="admin-mobile-menu">
+            <summary class="admin-mobile-menu__toggle">Menu</summary>
+
+            <div class="admin-mobile-menu__panel">
+                <ul class="admin-mobile-menu__list">
+                    <li>
+                        <a href="{{ path('admin_dashboard') }}"
+                           class="admin-mobile-menu__link{% if _nav_dashboard %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_dashboard %}aria-current="page"{% endif %}>
+                            Tableau de bord
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_articles_list') }}"
+                           class="admin-mobile-menu__link{% if _nav_articles %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_articles %}aria-current="page"{% endif %}>
+                            Articles
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_media_list') }}"
+                           class="admin-mobile-menu__link{% if _nav_media %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_media %}aria-current="page"{% endif %}>
+                            Médias
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="admin-mobile-menu__footer">
+                    <a href="/" target="_blank" rel="noopener noreferrer"
+                       class="admin-mobile-menu__site-link">
+                        Voir le site ↗
+                    </a>
+                    <form method="post" action="{{ path('admin_logout') }}"
+                          class="admin-mobile-menu__logout-form">
+                        <input type="hidden" name="_csrf_token"
+                               value="{{ csrf_token('logout') }}">
+                        <button type="submit" class="admin-mobile-menu__logout-btn">
+                            Déconnexion
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </details>
+    </header>
+
+    {# ── Shell desktop : sidebar persistante + workspace ─────────────────── #}
+    <div class="admin-shell">
+
+        {# Sidebar (masquée < 1024 px) #}
+        <aside class="admin-sidebar" aria-label="Barre latérale d'administration">
+
+            <div class="admin-sidebar__header">
+                <strong class="admin-brand-name">DEVZAIR</strong>
+                <span class="admin-brand-sub">Administration</span>
+            </div>
+
+            <nav class="admin-sidebar__nav" aria-label="Navigation">
+                <ul class="admin-sidebar__list">
+                    <li>
+                        <a href="{{ path('admin_dashboard') }}"
+                           class="admin-sidebar__link{% if _nav_dashboard %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_dashboard %}aria-current="page"{% endif %}>
+                            Tableau de bord
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_articles_list') }}"
+                           class="admin-sidebar__link{% if _nav_articles %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_articles %}aria-current="page"{% endif %}>
+                            Articles
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_media_list') }}"
+                           class="admin-sidebar__link{% if _nav_media %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_media %}aria-current="page"{% endif %}>
+                            Médias
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="admin-sidebar__footer">
+                <div class="admin-sidebar__user">
+                    <span class="admin-sidebar__user-name">{{ app.user.displayName }}</span>
+                </div>
+                <a href="/" target="_blank" rel="noopener noreferrer"
+                   class="admin-sidebar__site-link">
+                    Voir le site ↗
+                </a>
+                <form method="post" action="{{ path('admin_logout') }}"
+                      class="admin-sidebar__logout-form">
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('logout') }}">
+                    <button type="submit" class="admin-sidebar__logout-btn">
+                        Déconnexion
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        {# Zone de travail principale #}
+        <main class="admin-workspace" id="admin-main" tabindex="-1">
+            <div class="admin-workspace__inner">
+
+                {% for level, messages in app.flashes(['success', 'info', 'error']) %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ level }}"
+                             role="{{ level == 'error' ? 'alert' : 'status' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+{% else %}
+    {# ── Layout non-authentifié (page de connexion) ───────────────────────── #}
+    <main class="admin-auth-wrapper">
         {% for level, messages in app.flashes(['success', 'info', 'error']) %}
             {% for message in messages %}
-                <div class="alert alert-{{ level }}" role="{{ level == 'error' ? 'alert' : 'status' }}">
+                <div class="alert alert-{{ level }}"
+                     role="{{ level == 'error' ? 'alert' : 'status' }}">
                     {{ message }}
                 </div>
             {% endfor %}
         {% endfor %}
+{% endif %}
 
-        {% block body %}{% endblock %}
+{% block body %}{% endblock %}
+
+{% if _is_admin %}
+            </div>
+        </main>
+
+    </div>
+{% else %}
     </main>
+{% endif %}
 </body>
 </html>

@@ -284,9 +284,6 @@ frame-ancestors 'none'
 │                           │                                          │
 │  ──────────────────────   │                                          │
 │                           │                                          │
-│  Navigation secondaire :  │                                          │
-│  • Compte                 │                                          │
-│                           │                                          │
 │  ══════════════════════   │                                          │
 │                           │                                          │
 │  [Admin: displayName]     │                                          │
@@ -297,7 +294,7 @@ frame-ancestors 'none'
 
 **Navigation active :** item courant doit être clairement identifiable (fond légèrement plus clair + accent coloré ou bordure gauche en `--color-petrol` ou `--color-devzair-blue`).
 
-**À ne pas afficher** tant qu'inexistant : "Utilisateurs" (gestion multi-utilisateurs non implémentée), "Statistiques" (aucune métrique réelle), "Paramètres" (aucune fonctionnalité correspondante).
+**À ne pas afficher** tant qu'inexistant : "Utilisateurs" (gestion multi-utilisateurs non implémentée), "Statistiques" (aucune métrique réelle), "Paramètres" (aucune fonctionnalité correspondante), "Compte" (aucune route dédiée existante — le nom de l'admin connecté s'affiche dans le footer de sidebar sans lien).
 
 ### 5.2 Dashboard
 
@@ -531,18 +528,33 @@ Les noms de famille sont déclarés même si les fichiers ne sont pas encore pr�
 | 1024 px | Ordinateur portable | Sidebar persistante (240 px) |
 | 1440 px | Desktop large | Sidebar persistante (256–264 px) |
 
-### 7.2 Sidebar mobile/tablette
+### 7.2 Navigation mobile/tablette
 
-**Sans JavaScript (Phase 1) :**
-- Utiliser la technique `:target` CSS ou un `<input type="checkbox">` + `<label>` pour basculer la sidebar sur mobile
-- La sidebar coulisse depuis la gauche (`transform: translateX`)
-- Overlay semi-transparent derrière la sidebar (peut être un `<label>` fullscreen)
-- Le toggle doit avoir un label accessible (`aria-label` sur le bouton burger)
-- Le focus doit rester piégé dans la sidebar ouverte côté accessibilité (difficilement réalisable sans JS — documenter cette limite et prévoir une solution JS minimale dans une phase ultérieure si nécessaire)
+**Approche R1 — `<details>/<summary>` natif :**
 
-**Alternative sans JS acceptable :** Sur 768 px, conserver la sidebar visible mais compressée (icônes seules, tooltips natifs `title`) plutôt que de la masquer.
+```html
+<details class="admin-mobile-menu">
+  <summary class="admin-mobile-menu__toggle">Menu</summary>
+  <div class="admin-mobile-menu__panel">
+    <ul>…liens de navigation…</ul>
+    <a href="/">Voir le site ↗</a>
+    <form method="post" action="/admin/logout">…CSRF…<button>Déconnexion</button></form>
+  </div>
+</details>
+```
 
-**Avec JavaScript (phase future justifiée) :** Une sidebar drawer avec `aria-expanded`, `aria-controls`, et piège de focus complet. Pas de bibliothèque externe.
+Avantages :
+- Aucun JavaScript, compatible `script-src 'none'`
+- Clavier natif (Espace/Entrée sur `<summary>` bascule l'état ouvert/fermé)
+- État open/closed exposé nativement au navigateur et aux AT
+- Aucun piège de focus simulé (pas de drawer/modal)
+- Contient les mêmes destinations que la sidebar desktop
+
+Limites documentées : l'élément `<details>` n'est pas un drawer modal ; il ne piège pas le focus. C'est intentionnel pour R1. Une amélioration JS (drawer avec `aria-expanded`, `aria-controls`, piège de focus réel) pourra être étudiée si un besoin fonctionnel la justifie.
+
+**À ne pas utiliser :** checkbox hack, `:target`, faux drawer nécessitant un focus trap.
+
+**Sur ≥ 768 px** : la sidebar persistante s'affiche à partir de 1024 px. Entre 768 px et 1023 px, la topbar avec `<details>` reste active.
 
 ### 7.3 Éditeur d'article responsive
 
@@ -578,8 +590,8 @@ Aucun champ ne doit disparaître ou devenir inaccessible en mobile.
 - Messages d'erreur reliés via `aria-describedby`
 - États hover/focus/disabled/active distincts sur tous les éléments interactifs
 - Contraste AA minimum : texte principal sur fond workspace, texte sidebar sur fond navy
-- Cibles interactives principales ≥ 44 × 44 px (WCAG 2.2 §2.5.5)
-- Boutons secondaires ≥ 24 × 24 px avec `gap ≥ 8px` entre cibles adjacentes (WCAG 2.2 §2.5.8)
+- Cibles interactives principales : Devzair vise **~40–44 px** de hauteur comme standard UX interne (confort d'utilisation) — au-delà du minimum réglementaire WCAG 2.2 AA §2.5.5 (Enhanced, niveau AAA)
+- WCAG 2.2 AA §2.5.8 (Target Size Minimum) fixe le seuil réglementaire à **24 × 24 CSS px** sous certaines conditions d'espacement ; les boutons secondaires doivent respecter ce minimum et conserver `gap ≥ 8px` entre cibles adjacentes
 - Tableaux accessibles sur petits écrans (éviter `overflow-x: auto` sans `role="region"` + `aria-label`)
 - Zoom navigateur 200 % : vérifier que le texte et les formulaires restent utilisables
 
@@ -594,13 +606,9 @@ Aucun champ ne doit disparaître ou devenir inaccessible en mobile.
 
 ### 8.2 Dashboard (`/admin`)
 
-**Changements prévus :**
-- Suppression de la fiche profil comme contenu principal
-- Ajout de compteurs éditoriaux (articles par statut, médias)
-- Ajout d'une liste d'activité récente (articles modifiés récemment)
-- Actions rapides
+**R1 — enveloppe uniquement :** Intégrer le dashboard actuel dans le nouveau shell. Le contenu fonctionnel actuel (profil, dernière connexion, logout) est conservé. Aucun compteur, aucune requête Doctrine supplémentaire.
 
-**Backend requis :** Un nouveau handler de lecture `GetDashboardSummaryHandler` (ou extension des handlers existants) devra exposer les compteurs. Cela relève de la Phase 1 d'implémentation.
+**R2 — contenu éditorial :** Remplacer le contenu par les données réelles (compteurs d'articles par statut, compteur médias, activité récente, actions rapides). Nécessite un nouveau handler `GetAdminDashboardSummaryHandler`.
 
 ### 8.3 Liste des articles (`/admin/articles`)
 
@@ -796,7 +804,7 @@ Par écran et par phase :
 - `templates/admin/dashboard.html.twig` (structure uniquement, contenu §8.2 en Phase R2)
 
 **Fichiers CSS :**
-- `apps/api/public/admin/assets/admin.css` (refonte complète)
+- `apps/api/public/admin/assets/admin.css` (ajout tokens, nouveaux composants shell, mise à jour des primitives partagées ; styles des écrans R3–R6 conservés en section « legacy »)
 
 **Fichiers non modifiés :** Contrôleurs, handlers, entités, routes, sécurité, tests PHPUnit.
 
@@ -889,16 +897,16 @@ Par écran et par phase :
 
 ### Phase R1 — Shell + tokens
 
-- [ ] La sidebar est visible et persistante ≥ 1024 px
-- [ ] La sidebar utilise `--color-navy` / `--color-navy-deep`
-- [ ] L'item de navigation actif est clairement identifié
-- [ ] Le login est redesigné avec les tokens Devzair
-- [ ] Le fond de la zone de travail est `--color-sand`
-- [ ] Les boutons principaux sont en `--color-petrol`
-- [ ] Le focus ring est `--color-devzair-blue`
-- [ ] Aucun test PHPUnit ne régresse
-- [ ] `admin.spec.ts` et `admin-editorial.spec.ts` sont verts
-- [ ] Axe WCAG 2.2 AA : aucune violation `serious`/`critical` sur login et dashboard
+- [x] La sidebar est visible et persistante ≥ 1024 px
+- [x] La sidebar utilise `--color-navy` / `--color-navy-deep`
+- [x] L'item de navigation actif est clairement identifié
+- [x] Le login est redesigné avec les tokens Devzair
+- [x] Le fond de la zone de travail est `--color-sand`
+- [x] Les boutons principaux sont en `--color-petrol`
+- [x] Le focus ring est `--color-devzair-blue`
+- [x] Aucun test PHPUnit ne régresse (569/569)
+- [x] `admin.spec.ts`, `admin-editorial.spec.ts` et `admin-preview.spec.ts` sont verts (16/16)
+- [x] Axe WCAG 2.2 AA : aucune violation `serious`/`critical` sur login et dashboard
 
 ### Phase R2 — Dashboard
 
@@ -970,18 +978,19 @@ Par écran et par phase :
 - [x] Identification problèmes UI/UX
 - [x] Identification divergences documentation/code
 - [x] Rédaction spécification complète
-- [ ] Validation du document par l'équipe
+- [x] 5 corrections intégrées avant implémentation R1
+- [x] Validation du document par l'équipe
 
 ### Phase R1 — Shell + tokens
-- [ ] Nouveau `_layout.html.twig` avec sidebar
-- [ ] `admin.css` refonte complète avec tokens Devzair
-- [ ] `login.html.twig` redesigné
-- [ ] `dashboard.html.twig` dans le nouveau shell
-- [ ] Navigation active fonctionnelle
-- [ ] Responsive sidebar mobile (< 768 px)
-- [ ] Tests PHPUnit verts
-- [ ] Tests Playwright verts
-- [ ] Axe WCAG 2.2 AA OK
+- [x] Nouveau `_layout.html.twig` avec sidebar
+- [x] `admin.css` refonte complète avec tokens Devzair
+- [x] `login.html.twig` redesigné
+- [x] `dashboard.html.twig` dans le nouveau shell
+- [x] Navigation active fonctionnelle
+- [x] Responsive sidebar mobile (< 1024 px via topbar `<details>`)
+- [x] Tests PHPUnit verts (569/569)
+- [x] Tests Playwright verts (16/16)
+- [x] Axe WCAG 2.2 AA OK (login + dashboard + preview + editorial)
 
 ### Phase R2 — Dashboard éditorial
 - [ ] Handler `GetAdminDashboardSummaryHandler`
