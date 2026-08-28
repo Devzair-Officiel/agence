@@ -38,7 +38,7 @@ final class AdminArticleCreateControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/articles/new');
 
         self::assertResponseIsSuccessful();
-        self::assertGreaterThan(0, $crawler->filterXPath('//input[@name="_csrf_token"]')->count());
+        self::assertGreaterThan(0, $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]')->count());
         self::assertGreaterThan(0, $crawler->filterXPath('//input[@name="slug"]')->count());
     }
 
@@ -101,7 +101,7 @@ final class AdminArticleCreateControllerTest extends WebTestCase
     private function submitForm(array $payload): void
     {
         $crawler = $this->client->request('GET', '/admin/articles/new');
-        $token = $crawler->filterXPath('//input[@name="_csrf_token"]')->attr('value');
+        $token = $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]')->attr('value');
         \assert(\is_string($token) && $token !== '');
         $this->client->request('POST', '/admin/articles/new', $payload + ['_csrf_token' => $token]);
     }

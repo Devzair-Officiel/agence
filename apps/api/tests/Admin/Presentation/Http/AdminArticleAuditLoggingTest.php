@@ -42,7 +42,7 @@ final class AdminArticleAuditLoggingTest extends WebTestCase
         AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client, self::EMAIL);
 
         $crawler = $this->client->request('GET', '/admin/articles/new');
-        $token = $crawler->filterXPath('//input[@name="_csrf_token"]')->attr('value');
+        $token = $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]')->attr('value');
         \assert(\is_string($token));
 
         $this->client->request('POST', '/admin/articles/new', [
@@ -73,7 +73,7 @@ final class AdminArticleAuditLoggingTest extends WebTestCase
         // Slug volontairement invalide (majuscules interdites) — la validation
         // du VO déclenche `ArticleInvariantViolation` → `actionFailed`.
         $crawler = $this->client->request('GET', '/admin/articles/new');
-        $token = $crawler->filterXPath('//input[@name="_csrf_token"]')->attr('value');
+        $token = $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]')->attr('value');
         \assert(\is_string($token));
 
         $secret = "## SecretMarkdownContent\n\n<script>alert('exfil')</script>";

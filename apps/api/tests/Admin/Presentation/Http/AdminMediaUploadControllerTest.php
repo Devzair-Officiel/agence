@@ -87,7 +87,7 @@ final class AdminMediaUploadControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/media/new');
 
         self::assertResponseIsSuccessful();
-        $csrfInput = $crawler->filterXPath('//input[@name="_csrf_token"]');
+        $csrfInput = $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]');
         self::assertGreaterThan(0, $csrfInput->count());
         self::assertNotSame('', $csrfInput->attr('value'));
     }
@@ -261,7 +261,7 @@ final class AdminMediaUploadControllerTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', '/admin/media/new');
         self::assertResponseIsSuccessful();
-        $token = $crawler->filterXPath('//input[@name="_csrf_token"]')->attr('value');
+        $token = $crawler->filterXPath('//form[contains(@class,"article-form")]//input[@name="_csrf_token"]')->attr('value');
         self::assertIsString($token);
         self::assertNotSame('', $token);
 

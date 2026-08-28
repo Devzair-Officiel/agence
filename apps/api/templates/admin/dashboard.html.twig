@@ -17,7 +17,7 @@
                class="button-link button-primary">
                 + Nouveau brouillon
             </a>
-            <a href="{{ path('admin_media_list') }}"
+            <a href="{{ path('admin_media_upload') }}"
                class="button-link">
                 Ajouter un média
             </a>
@@ -79,6 +79,7 @@
             </a>
         </div>
 
+        {%- set _status_fr = {'draft': 'Brouillon', 'published': 'Publié', 'archived': 'Archivé'} -%}
         {% if summary.recentArticles is empty %}
             <div class="admin-recent-empty">
                 <p>Aucun article pour le moment.</p>
@@ -101,11 +102,11 @@
                             <div class="admin-recent-item__meta">
                                 <span class="admin-recent-item__slug">/{{ article.slug }}</span>
                                 <span class="status-badge status-{{ article.status.value }}">
-                                    {{ article.status.value|capitalize }}
+                                    {{ _status_fr[article.status.value] ?? article.status.value|capitalize }}
                                 </span>
                                 <time class="admin-recent-item__date"
                                       datetime="{{ article.updatedAt|date('c') }}">
-                                    {{ article.updatedAt|date('d M Y, H:i') }}
+                                    {{ article.updatedAt|date('d/m/Y · H:i') }}
                                 </time>
                             </div>
                         </div>

@@ -95,8 +95,8 @@ test.describe.serial('Admin — authentification (Phase 8C1)', () => {
     }
     expect(dashboardBlocking, 'Axe serious/critical violations on /admin').toEqual([])
 
-    // Logout via le formulaire POST dans la sidebar (le bouton porte le token CSRF).
-    await page.locator('.admin-sidebar__logout-btn').click()
+    // Logout via la sidebar : scoped sur <aside> pour éviter l'ambiguïté avec le menu mobile.
+    await page.locator('aside').getByRole('button', { name: 'Déconnexion' }).click()
     await page.waitForURL(`${ADMIN_BASE_URL}/admin/login`)
     await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible()
 
@@ -159,7 +159,7 @@ test.describe.serial('Admin — dashboard éditorial (Phase R2)', () => {
     await expect(addMedia).toBeVisible()
 
     await expect(newDraft).toHaveAttribute('href', /\/admin\/articles\/new/)
-    await expect(addMedia).toHaveAttribute('href', /\/admin\/media/)
+    await expect(addMedia).toHaveAttribute('href', /\/admin\/media\/new$/)
   })
 
   test('la section contenus récents est présente (liste ou état vide)', async ({ page }) => {

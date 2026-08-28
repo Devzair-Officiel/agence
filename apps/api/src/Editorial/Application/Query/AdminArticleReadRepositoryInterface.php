@@ -25,6 +25,12 @@ use Symfony\Component\Uid\Uuid;
 interface AdminArticleReadRepositoryInterface
 {
     /**
+     * Retourne une page d'articles triés par `updatedAt DESC, id DESC`.
+     *
+     * Ce tri est garanti par le contrat : les appelants peuvent en dépendre
+     * (ex. liste des 5 contenus récents sur le dashboard R2). Le tri
+     * secondaire par `id` assure la stabilité à horodatages identiques.
+     *
      * @param int<1, max> $page
      * @param int<1, max> $perPage
      *

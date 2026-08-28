@@ -814,17 +814,19 @@ Par écran et par phase :
 ### Phase R2 — Dashboard éditorial
 
 **Périmètre :**
-- Nouveau handler de lecture `GetAdminDashboardSummaryHandler` (compteurs articles par statut, compteur médias, liste des N derniers articles modifiés)
+- Nouveau handler de lecture `GetAdminDashboardSummaryHandler` (compteurs articles par statut, compteur médias, liste des 5 derniers articles modifiés)
 - Nouveau template de dashboard avec les données réelles
 - Actions rapides
 
 **Fichiers Symfony modifiés/créés :**
-- `src/Admin/Application/Query/GetAdminDashboardSummary(Handler).php`
-- `src/Admin/Infrastructure/ReadModel/` (implémentation Doctrine de la requête)
+- `src/Admin/Application/Query/AdminDashboardSummary.php` (DTO résultat)
+- `src/Admin/Application/Query/GetAdminDashboardSummaryHandler.php` (agrège les ports existants)
 - `templates/admin/dashboard.html.twig`
 - `src/Admin/Presentation/Http/AdminDashboardController.php` (appel du nouveau handler)
 
-**Tests à ajouter :** Handler test (PHPUnit), assertions Playwright sur les compteurs SSR.
+**Décision d'implémentation :** Le handler réutilise les repositories de lecture existants (`AdminArticleReadRepositoryInterface` et `MediaAssetRepositoryInterface`) — aucune requête Doctrine dédiée n'a été ajoutée.
+
+**Tests ajoutés :** Handler test PHPUnit (7 cas), describe Playwright R2 (4 tests), sélecteurs CSRF scopés corrigés dans 3 fichiers de test.
 
 ### Phase R3 — Liste des articles
 
@@ -910,13 +912,13 @@ Par écran et par phase :
 
 ### Phase R2 — Dashboard
 
-- [ ] Le dashboard affiche le nombre d'articles publiés, de brouillons et d'archives
-- [ ] Le dashboard affiche le nombre de médias
-- [ ] La liste d'activité récente est présente
-- [ ] Les compteurs proviennent de données réelles (pas hardcodés)
-- [ ] La fiche profil admin n'est plus le contenu principal
-- [ ] Les tests handler dashboard sont verts (PHPUnit)
-- [ ] Les compteurs sont présents dans le HTML SSR (Playwright)
+- [x] Le dashboard affiche le nombre d'articles publiés, de brouillons et d'archives
+- [x] Le dashboard affiche le nombre de médias
+- [x] La liste d'activité récente est présente (5 articles, `updatedAt DESC`)
+- [x] Les compteurs proviennent de données réelles (pas hardcodés)
+- [x] La fiche profil admin n'est plus le contenu principal
+- [x] Les tests handler dashboard sont verts (PHPUnit 7/7)
+- [ ] Les compteurs sont présents dans le HTML SSR (Playwright — tests écrits, non exécutés sur serveur live)
 
 ### Phase R3 — Liste articles
 
@@ -993,12 +995,17 @@ Par écran et par phase :
 - [x] Axe WCAG 2.2 AA OK (login + dashboard + preview + editorial)
 
 ### Phase R2 — Dashboard éditorial
-- [ ] Handler `GetAdminDashboardSummaryHandler`
-- [ ] Implémentation Doctrine de la requête
-- [ ] `dashboard.html.twig` avec données réelles
-- [ ] `AdminDashboardController` mis à jour
-- [ ] Tests PHPUnit handler
-- [ ] Tests Playwright dashboard
+- [x] Handler `GetAdminDashboardSummaryHandler` + DTO `AdminDashboardSummary`
+- [x] Réutilisation des repositories de lecture existants (pas de requête Doctrine dédiée)
+- [x] `dashboard.html.twig` avec données réelles (KPI × 4, contenus récents × 5, empty state)
+- [x] `AdminDashboardController` mis à jour
+- [x] Tests PHPUnit handler (7/7 verts)
+- [x] Tests Playwright dashboard (4 tests — `admin.spec.ts`)
+- [x] PHPUnit suite complète verte (576/576) — baseline R2.1
+- [x] CTA "Ajouter un média" pointe vers `admin_media_upload`
+- [x] Statuts affichés en français (Brouillon / Publié / Archivé)
+- [x] Format date neutre français (`d/m/Y · H:i`)
+- [x] Correctif sélecteurs CSRF dans `AdminArticleCreateControllerTest`, `AdminArticleAuditLoggingTest`, `AdminMediaUploadControllerTest`
 
 ### Phase R3 — Liste articles
 - [ ] `articles/list.html.twig` refonte
