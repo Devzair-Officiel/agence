@@ -939,14 +939,17 @@ Par écran et par phase :
 
 ### Phase R4 — Éditeur deux colonnes
 
-- [ ] Sur ≥ 1024 px : layout deux colonnes (`grid-template-columns: minmax(0, 1fr) 340px`)
-- [ ] La colonne latérale est sticky sur desktop
-- [ ] Le bloc Publication est le premier élément de la sidebar
-- [ ] Sur < 768 px : layout colonne unique avec Publication EN PREMIER
-- [ ] Tous les champs existent et sont soumettables
-- [ ] Les validations serveur fonctionnent (messages d'erreur visibles)
-- [ ] Les CSRF tokens sont présents dans tous les formulaires
-- [ ] `admin-editorial.spec.ts` reste vert intégralement
+- [x] Sur ≥ 1024 px : layout deux colonnes (`grid-template-columns: minmax(0, 1fr) 340px`)
+- [x] La colonne latérale est sticky sur desktop
+- [x] Le bloc Publication est le premier élément de la sidebar
+- [x] Sur < 768 px : layout colonne unique avec Publication EN PREMIER
+- [x] Tous les champs existent et sont soumettables
+- [x] Les validations serveur fonctionnent (messages d'erreur visibles)
+- [x] Les CSRF tokens sont présents dans tous les formulaires
+- [x] Aucun formulaire imbriqué (`//form//form` count = 0) — PHPUnit `testNoNestedFormsOnDraftEditPage`
+- [x] `admin-editorial.spec.ts` vert (9/9) — correctifs sélecteurs `code.admin-editor-slug` / `code.admin-article-slug` / `p.admin-article-title`
+- [x] `admin.spec.ts` vert (8/8)
+- [x] PHPUnit suite complète verte (577/577)
 
 ### Phase R5 — Médiathèque
 
@@ -1022,10 +1025,13 @@ Par écran et par phase :
 - [x] Playwright verts — `admin-editorial.spec.ts` (5/5), `admin.spec.ts` (8/8)
 
 ### Phase R4 — Éditeur deux colonnes
-- [ ] `articles/edit.html.twig` layout deux colonnes
-- [ ] `articles/_form.html.twig` réorganisé
-- [ ] Responsive mobile (Publication en premier)
-- [ ] Tests Playwright verts intégralement
+- [x] `articles/edit.html.twig` layout deux colonnes (sidebar DOM-first, `form=` attribute, locked state)
+- [x] CSS R4 ajouté (`.admin-editor-grid`, `.admin-editor-sidebar`, `.admin-editor-main`, `.admin-publication-card`, `.admin-editor-markdown`, `.admin-editor-locked`, etc.)
+- [x] Aucun formulaire imbriqué (`testNoNestedFormsOnDraftEditPage` PHPUnit)
+- [x] Responsive mobile : Publication avant Markdown (ordre DOM + CSS `order`)
+- [x] PHPUnit suite verte (577/577)
+- [x] Playwright verts — `admin-editorial.spec.ts` (9/9), `admin.spec.ts` (8/8)
+- [x] Correctif R3 thead : `display: none` → visually-hidden clip pattern
 
 ### Phase R5 — Médiathèque
 - [ ] `media/list.html.twig` grille visuelle

@@ -111,6 +111,21 @@ final class AdminArticleEditControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(409);
     }
 
+    public function testNoNestedFormsOnDraftEditPage(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('no-nested-forms-draft');
+
+        $crawler = $this->client->request('GET', '/admin/articles/'.$article->id()->toRfc4122().'/edit');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            0,
+            $crawler->filterXPath('//form//form')->count(),
+            'Aucun formulaire imbriqué ne doit figurer dans la page d\'édition.',
+        );
+    }
+
     public function testInvalidUuidReturns404(): void
     {
         AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);

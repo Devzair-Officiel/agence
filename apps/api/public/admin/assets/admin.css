@@ -1453,7 +1453,22 @@ button:hover { background: #2a2f36; }
 @media (max-width: 40rem) {
     .admin-table-scroll { overflow-x: visible; }
 
-    .admin-table thead { display: none; }
+    /*
+     * thead masqué visuellement mais conservé dans l'arbre d'accessibilité.
+     * display:none retirerait les <th> de l'arbre AT — on utilise le clip
+     * (même technique que .visually-hidden) pour préserver la sémantique.
+     */
+    .admin-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
     .admin-table,
     .admin-table tbody { display: block; }
 
@@ -1692,4 +1707,260 @@ button:hover { background: #2a2f36; }
     .admin-recent-item {
         grid-template-columns: 1fr;
     }
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Éditeur d'article (Phase R4).
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Page ─────────────────────────────────────────────────────────────── */
+.admin-editor-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Grille deux colonnes ──────────────────────────────────────────────── */
+.admin-editor-grid {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (min-width: 64em) {
+    .admin-editor-grid {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 2rem;
+    }
+
+    /* DOM : sidebar en premier (mobile-first). Desktop : main à gauche, sidebar à droite. */
+    .admin-editor-main    { order: 1; }
+    .admin-editor-sidebar { order: 2; }
+
+    .admin-editor-sidebar {
+        position: sticky;
+        top: 1.5rem;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+    }
+}
+
+/* ── Rail (sidebar) ────────────────────────────────────────────────────── */
+.admin-editor-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Cards du rail ─────────────────────────────────────────────────────── */
+.admin-editor-card {
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+}
+
+fieldset.admin-editor-card {
+    border: 1px solid var(--border-default);
+    margin: 0;
+}
+
+.admin-editor-card__heading,
+.admin-publication-card__heading {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-subtle);
+    margin: 0 0 0.875rem;
+    padding: 0;
+}
+
+fieldset.admin-editor-card .admin-editor-card__heading {
+    padding: 0 0.25rem;
+}
+
+/* ── Bloc Publication ──────────────────────────────────────────────────── */
+.admin-publication-card__status { margin-bottom: 0.625rem; }
+
+.admin-publication-card__meta {
+    margin: 0 0 0.875rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.75rem;
+    align-items: baseline;
+    font-size: 0.8125rem;
+}
+
+.admin-publication-card__meta dt {
+    font-weight: 600;
+    color: var(--color-ink-subtle);
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.admin-publication-card__meta dd {
+    margin: 0;
+    color: var(--color-ink-muted);
+}
+
+.admin-publication-card__note {
+    margin: 0 0 0.875rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    line-height: 1.45;
+}
+
+.admin-publication-card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-publication-card__actions .inline-form { display: block; }
+
+.admin-publication-card__actions .button-small {
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+/* ── Actions (Enregistrer / Prévisualiser) ─────────────────────────────── */
+.admin-editor-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-editor-actions button,
+.admin-editor-actions .button-link {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+}
+
+/* ── Image principale (rail compact) ──────────────────────────────────── */
+.admin-editor-hero__figure {
+    margin: 0 0 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.admin-editor-hero__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
+    background: var(--color-cream);
+}
+
+.admin-editor-hero__caption {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-size: 0.8125rem;
+}
+
+.admin-editor-hero__alt {
+    color: var(--color-ink);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-editor-hero__dims { color: var(--color-ink-subtle); }
+
+.admin-editor-hero__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-editor-hero__locked,
+.admin-editor-hero__empty {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+}
+
+/* ── Zone principale (main) ────────────────────────────────────────────── */
+.admin-editor-main { min-width: 0; }
+
+.admin-editor-main .article-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Textarea Markdown : mono + hauteur généreuse */
+.admin-editor-markdown {
+    font-family: var(--font-mono) !important;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    min-height: 480px;
+    resize: vertical;
+}
+
+@media (min-width: 64em) {
+    .admin-editor-markdown { min-height: 600px; }
+}
+
+/* Excerpt et SEO : font normale (non-mono) */
+#article-excerpt,
+#article-seo-description {
+    font-family: var(--font-sans);
+    resize: vertical;
+}
+
+/* Bouton save mobile : masqué sur desktop (le rail sticky prend le relai) */
+.admin-editor-save-mobile { display: flex; }
+
+@media (min-width: 64em) {
+    .admin-editor-save-mobile { display: none; }
+}
+
+/* ── État verrouillé (Published / Archived) ────────────────────────────── */
+.admin-editor-locked {
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 2rem 1.5rem;
+}
+
+.admin-editor-locked__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+    color: var(--color-ink);
+}
+
+.admin-editor-locked__body {
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+/* ── Slug dans l'en-tête ───────────────────────────────────────────────── */
+.admin-editor-slug {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    background: none;
+    padding: 0;
+    color: var(--color-ink-subtle);
+    border-radius: 0;
+}
+
+/* ── Hint inline (caractères max, libellé secondaire) ─────────────────── */
+.field-hint-inline {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-ink-subtle);
+    margin-left: 0.375rem;
 }

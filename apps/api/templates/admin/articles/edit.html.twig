@@ -1,146 +1,412 @@
 {% extends 'admin/_layout.html.twig' %}
 
-{% block title %}Édition — {{ view.title }} — Administration Devzair{% endblock %}
+{% block title %}{{ view.title }} — Modifier — Administration Devzair{% endblock %}
+
+{%- set _status_fr = {'draft': 'Brouillon', 'published': 'Publié', 'archived': 'Archivé'} -%}
+{%- set _is_draft     = view.status.value == 'draft' -%}
+{%- set _is_published = view.status.value == 'published' -%}
+{%- set _pillars = [
+    { id: 'concevoir',     label: 'Concevoir' },
+    { id: 'construire',    label: 'Construire' },
+    { id: 'valoriser',     label: 'Valoriser' },
+    { id: 'visibilite',    label: 'Visibilité' },
+    { id: 'faire-evoluer', label: 'Faire évoluer' },
+] -%}
 
 {% block body %}
-    <div class="page-header">
-        <h1>Édition du brouillon</h1>
-        <p class="page-meta">
-            Statut :
-            <span class="status-badge status-{{ view.status.value }}">
-                {% if view.status.value == 'draft' %}Brouillon
-                {% elseif view.status.value == 'published' %}Publié
-                {% else %}Archivé
-                {% endif %}
-            </span>
-            {% if view.publishedAt %}
-                — publié le
-                <time datetime="{{ view.publishedAt|date('c') }}">
-                    {{ view.publishedAt|date('Y-m-d H:i') }} UTC
-                </time>
-            {% endif %}
-            — dernière modification
-            <time datetime="{{ view.updatedAt|date('c') }}">
-                {{ view.updatedAt|date('Y-m-d H:i') }} UTC
-            </time>
-        </p>
-    </div>
+<div class="admin-editor-page">
 
-    <nav class="preview-actions" aria-label="Prévisualisation">
-        <a class="button-link" href="{{ path('admin_article_preview', { id: view.id }) }}">
-            Prévisualiser cet article
-        </a>
-    </nav>
-
-    <section class="card" aria-labelledby="lifecycle-heading">
-        <h2 id="lifecycle-heading">Cycle de vie</h2>
-
-        <div class="lifecycle-actions">
-            {% if view.status.value == 'draft' %}
-                <form method="post" action="{{ path('admin_article_publish', { id: view.id }) }}" class="inline-form">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_publish_' ~ view.id) }}">
-                    <button type="submit" class="button-primary">Publier ce brouillon</button>
-                </form>
-
-                <form method="post" action="{{ path('admin_article_archive', { id: view.id }) }}" class="inline-form">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ view.id) }}">
-                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
-                </form>
-            {% elseif view.status.value == 'published' %}
-                <p class="lifecycle-note">
-                    Article publié. L'édition libre est verrouillée pour préserver l'URL et la cohérence
-                    du contenu affiché. Pour retirer l'article du site public, utilisez « Archiver ».
-                </p>
-
-                <form method="post" action="{{ path('admin_article_archive', { id: view.id }) }}" class="inline-form">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_archive_' ~ view.id) }}">
-                    <button type="submit" class="button-danger">Archiver et retirer du site public</button>
-                </form>
-            {% else %}
-                <p class="lifecycle-note">
-                    Article archivé. Pour reprendre l'édition, restaurez-le en brouillon.
-                </p>
-
-                <form method="post" action="{{ path('admin_article_restore', { id: view.id }) }}" class="inline-form">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('article_restore_' ~ view.id) }}">
-                    <button type="submit">Restaurer comme brouillon</button>
-                </form>
-            {% endif %}
+    {# ── En-tête ─────────────────────────────────────────────────────────── #}
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Modifier l'article</h1>
+            <p class="admin-page-header__subtitle">
+                <code class="admin-editor-slug">{{ view.slug }}</code>
+            </p>
         </div>
-    </section>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_articles_list') }}" class="button-link">
+                ← Retour aux articles
+            </a>
+        </div>
+    </header>
 
-    <section class="card" aria-labelledby="hero-image-heading">
-        <h2 id="hero-image-heading">Image principale</h2>
+    {# ── Grille : sidebar (DOM en premier → mobile en haut) + main ───────── #}
+    <div class="admin-editor-grid">
 
-        {% if view.heroImage %}
-            <figure class="hero-image-preview">
-                <img src="{{ path('admin_media_preview', { id: view.heroImage.mediaId }) }}"
-                     alt="{{ view.heroImage.altText }}"
-                     width="{{ view.heroImage.width }}"
-                     height="{{ view.heroImage.height }}"
-                     loading="lazy">
-                <figcaption>
-                    <strong>Texte alternatif :</strong> {{ view.heroImage.altText }}
-                    <br>
-                    <span class="hero-image-preview__meta">
-                        {{ view.heroImage.width }}&nbsp;×&nbsp;{{ view.heroImage.height }}&nbsp;px —
-                        <code>{{ view.heroImage.mimeType }}</code>
+        {# ══════════════════════════════════════════════════════════════════
+           RAIL LATÉRAL
+           Premier dans le DOM → Publication visible avant le Markdown sur mobile.
+           Sur desktop : CSS order le déplace visuellement à droite.
+           ══════════════════════════════════════════════════════════════════ #}
+        <aside class="admin-editor-sidebar">
+
+            {# ── Bloc Publication ────────────────────────────────────────── #}
+            <div class="admin-editor-card admin-publication-card">
+                <h2 class="admin-publication-card__heading">Publication</h2>
+
+                <div class="admin-publication-card__status">
+                    <span class="status-badge status-{{ view.status.value }}">
+                        {{ _status_fr[view.status.value] ?? view.status.value|capitalize }}
                     </span>
-                </figcaption>
-            </figure>
-
-            {% if view.status.value == 'draft' %}
-                <div class="hero-image-actions">
-                    <a class="button-link" href="{{ path('admin_article_hero_image', { id: view.id }) }}">
-                        Modifier l'image ou le texte alternatif
-                    </a>
-
-                    <form method="post"
-                          action="{{ path('admin_article_hero_image_remove', { id: view.id }) }}"
-                          class="inline-form">
-                        <input type="hidden" name="_csrf_token"
-                               value="{{ csrf_token('article_hero_image_remove_' ~ view.id) }}">
-                        <button type="submit" class="button-danger">
-                            Retirer l'image principale
-                        </button>
-                    </form>
                 </div>
-            {% else %}
-                <p class="lifecycle-note">
-                    L'image principale ne peut être modifiée qu'à l'état « brouillon ».
-                </p>
-            {% endif %}
-        {% else %}
-            <p>Aucune image principale n'est rattachée à ce brouillon.</p>
 
-            {% if view.status.value == 'draft' %}
-                <p>
-                    <a class="button-link button-primary"
-                       href="{{ path('admin_article_hero_image', { id: view.id }) }}">
-                        Choisir une image dans la bibliothèque
-                    </a>
-                </p>
-            {% endif %}
-        {% endif %}
-    </section>
+                <dl class="admin-publication-card__meta">
+                    {% if _is_draft %}
+                        <dt>Modifié le</dt>
+                        <dd>
+                            <time datetime="{{ view.updatedAt|date('c') }}">
+                                {{ view.updatedAt|date('d/m/Y · H:i') }}
+                            </time>
+                        </dd>
+                    {% elseif _is_published %}
+                        {% if view.publishedAt %}
+                            <dt>Publié le</dt>
+                            <dd>
+                                <time datetime="{{ view.publishedAt|date('c') }}">
+                                    {{ view.publishedAt|date('d/m/Y · H:i') }}
+                                </time>
+                            </dd>
+                        {% endif %}
+                        <dt>Modifié le</dt>
+                        <dd>
+                            <time datetime="{{ view.updatedAt|date('c') }}">
+                                {{ view.updatedAt|date('d/m/Y · H:i') }}
+                            </time>
+                        </dd>
+                    {% endif %}
+                </dl>
 
-    <section class="card" aria-labelledby="form-heading">
-        <h2 id="form-heading">Contenu</h2>
-
-        {% if view.status.value != 'draft' %}
-            <div class="alert alert-info" role="status">
-                L'édition libre n'est autorisée qu'à l'état « brouillon ». Restaurez l'article
-                en brouillon si vous devez modifier son contenu.
+                <div class="admin-publication-card__actions">
+                    {% if _is_draft %}
+                        <form method="post"
+                              action="{{ path('admin_article_publish', { id: view.id }) }}"
+                              class="inline-form">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('article_publish_' ~ view.id) }}">
+                            <button type="submit" class="button-small button-primary">
+                                Publier ce brouillon
+                            </button>
+                        </form>
+                        <form method="post"
+                              action="{{ path('admin_article_archive', { id: view.id }) }}"
+                              class="inline-form">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('article_archive_' ~ view.id) }}">
+                            <button type="submit" class="button-small button-danger-subtle">
+                                Archiver et retirer du site public
+                            </button>
+                        </form>
+                    {% elseif _is_published %}
+                        <p class="admin-publication-card__note">
+                            Article publié. L'édition du contenu est verrouillée.
+                        </p>
+                        <form method="post"
+                              action="{{ path('admin_article_archive', { id: view.id }) }}"
+                              class="inline-form">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('article_archive_' ~ view.id) }}">
+                            <button type="submit" class="button-small button-danger-subtle">
+                                Archiver et retirer du site public
+                            </button>
+                        </form>
+                    {% else %}
+                        <p class="admin-publication-card__note">
+                            Article archivé.
+                        </p>
+                        <form method="post"
+                              action="{{ path('admin_article_restore', { id: view.id }) }}"
+                              class="inline-form">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('article_restore_' ~ view.id) }}">
+                            <button type="submit" class="button-small">
+                                Restaurer comme brouillon
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
-        {% else %}
-            {% include 'admin/articles/_form.html.twig' with {
-                data: data,
-                errors: errors,
-                csrf_id: 'article_edit_' ~ view.id,
-                submit_url: path('admin_article_edit', { id: view.id }),
-                submit_label: 'Enregistrer les modifications',
-                is_create: false,
-            } only %}
-        {% endif %}
-    </section>
+
+            {# ── Actions : Enregistrer + Prévisualiser ───────────────────── #}
+            <div class="admin-editor-card admin-editor-actions">
+                {#
+                    Le bouton est hors du <form id="article-edit-form"> ;
+                    l'attribut form= l'associe au formulaire d'édition
+                    sans imbriquer des formulaires.
+                #}
+                {% if _is_draft %}
+                    <button type="submit" form="article-edit-form" class="button-primary">
+                        Enregistrer les modifications
+                    </button>
+                {% endif %}
+                <a href="{{ path('admin_article_preview', { id: view.id }) }}"
+                   class="button-link">
+                    Prévisualiser
+                </a>
+            </div>
+
+            {# ── Image principale ─────────────────────────────────────────── #}
+            <div class="admin-editor-card admin-editor-hero">
+                <h2 class="admin-editor-card__heading">Image principale</h2>
+
+                {% if view.heroImage %}
+                    <figure class="admin-editor-hero__figure">
+                        <img class="admin-editor-hero__image"
+                             src="{{ path('admin_media_preview', { id: view.heroImage.mediaId }) }}"
+                             alt="{{ view.heroImage.altText }}"
+                             width="{{ view.heroImage.width }}"
+                             height="{{ view.heroImage.height }}"
+                             loading="lazy">
+                        <figcaption class="admin-editor-hero__caption">
+                            <span class="admin-editor-hero__alt">{{ view.heroImage.altText }}</span>
+                            <span class="admin-editor-hero__dims">
+                                {{ view.heroImage.width }}&nbsp;×&nbsp;{{ view.heroImage.height }}&nbsp;px
+                            </span>
+                        </figcaption>
+                    </figure>
+
+                    {% if _is_draft %}
+                        <div class="admin-editor-hero__actions">
+                            <a href="{{ path('admin_article_hero_image', { id: view.id }) }}"
+                               class="button-link button-small">Modifier</a>
+                            {# Formulaire séparé — ne s'imbrique pas dans article-edit-form #}
+                            <form method="post"
+                                  action="{{ path('admin_article_hero_image_remove', { id: view.id }) }}"
+                                  class="inline-form">
+                                <input type="hidden" name="_csrf_token"
+                                       value="{{ csrf_token('article_hero_image_remove_' ~ view.id) }}">
+                                <button type="submit" class="button-small button-danger-subtle">Retirer</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <p class="admin-editor-hero__locked">
+                            Modifiable uniquement à l'état brouillon.
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p class="admin-editor-hero__empty">Aucune image principale.</p>
+                    {% if _is_draft %}
+                        <a href="{{ path('admin_article_hero_image', { id: view.id }) }}"
+                           class="button-link button-small">Choisir une image</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {# ── SEO, Expertises, Auteur (brouillon uniquement, form= attribute) #}
+            {% if _is_draft %}
+
+                {# ── Référencement ─────────────────────────────────────────── #}
+                <fieldset class="admin-editor-card">
+                    <legend class="admin-editor-card__heading">Référencement</legend>
+
+                    <div class="field">
+                        <label for="article-seo-title">
+                            Titre SEO
+                            <span class="field-hint-inline">70 car. max.</span>
+                        </label>
+                        <input
+                            id="article-seo-title"
+                            type="text"
+                            name="seo_title"
+                            form="article-edit-form"
+                            value="{{ data.payload.seoTitle }}"
+                            maxlength="70"
+                            required
+                        >
+                        {% for message in errors.for('seo_title') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="article-seo-description">
+                            Meta description
+                            <span class="field-hint-inline">180 car. max.</span>
+                        </label>
+                        <textarea
+                            id="article-seo-description"
+                            name="seo_description"
+                            rows="3"
+                            maxlength="180"
+                            required
+                            form="article-edit-form"
+                        >{{ data.payload.seoDescription }}</textarea>
+                        {% for message in errors.for('seo_description') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                {# ── Expertises ───────────────────────────────────────────── #}
+                <fieldset class="admin-editor-card">
+                    <legend class="admin-editor-card__heading">Expertises</legend>
+
+                    {%- set _selected = data.payload.expertises -%}
+                    <div class="checkbox-grid">
+                        {% for pillar in _pillars %}
+                            <label class="checkbox">
+                                <input
+                                    type="checkbox"
+                                    name="expertises[]"
+                                    value="{{ pillar.id }}"
+                                    form="article-edit-form"
+                                    {{ pillar.id in _selected ? 'checked' : '' }}
+                                >
+                                <span>{{ pillar.label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% for message in errors.for('expertises') %}
+                        <p class="field-error">{{ message }}</p>
+                    {% endfor %}
+                </fieldset>
+
+                {# ── Auteur ───────────────────────────────────────────────── #}
+                <fieldset class="admin-editor-card">
+                    <legend class="admin-editor-card__heading">Auteur</legend>
+
+                    <div class="field">
+                        <label for="article-author-name">Nom affiché</label>
+                        <input
+                            id="article-author-name"
+                            type="text"
+                            name="author_name"
+                            form="article-edit-form"
+                            value="{{ data.payload.authorName }}"
+                            maxlength="120"
+                            required
+                        >
+                        {% for message in errors.for('author_name') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="article-author-type">Type</label>
+                        <select id="article-author-type" name="author_type"
+                                form="article-edit-form" required>
+                            <option value="organization"
+                                    {{ data.payload.authorType == 'organization' ? 'selected' : '' }}>
+                                Devzair (institutionnel)
+                            </option>
+                            <option value="person"
+                                    {{ data.payload.authorType == 'person' ? 'selected' : '' }}>
+                                Personne nommée
+                            </option>
+                        </select>
+                    </div>
+                </fieldset>
+
+            {% endif %}{# end _is_draft sidebar fields #}
+
+        </aside>{# end .admin-editor-sidebar #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           ZONE PRINCIPALE
+           Deuxième dans le DOM → après la sidebar sur mobile.
+           Sur desktop : CSS order le place à gauche (colonne 1fr).
+           ══════════════════════════════════════════════════════════════════ #}
+        <main class="admin-editor-main">
+
+            {% if _is_draft %}
+                {#
+                    Formulaire d'édition principal.
+                    id="article-edit-form" : les champs du rail latéral
+                    (SEO, Expertises, Auteur) y sont associés via form=.
+                    Aucun autre <form> ne peut s'imbriquer ici.
+                #}
+                <form id="article-edit-form" class="article-form" method="post"
+                      action="{{ path('admin_article_edit', { id: view.id }) }}" novalidate>
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('article_edit_' ~ view.id) }}">
+
+                    {% for message in errors.global %}
+                        <div class="alert alert-error" role="alert">{{ message }}</div>
+                    {% endfor %}
+
+                    {# Slug immuable — jamais en <input name="slug"> (invariant serveur) #}
+                    <div class="field">
+                        <label>Slug (URL publique — non modifiable)</label>
+                        <p class="field-readonly"><code>{{ data.payload.slug }}</code></p>
+                    </div>
+
+                    <div class="field">
+                        <label for="article-title">Titre</label>
+                        <input
+                            id="article-title"
+                            type="text"
+                            name="title"
+                            value="{{ data.payload.title }}"
+                            maxlength="180"
+                            required
+                        >
+                        {% for message in errors.for('title') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="article-excerpt">Chapô (résumé court)</label>
+                        <textarea
+                            id="article-excerpt"
+                            name="excerpt"
+                            rows="3"
+                            maxlength="320"
+                            required
+                        >{{ data.payload.excerpt }}</textarea>
+                        {% for message in errors.for('excerpt') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        <label for="article-body">Corps (Markdown)</label>
+                        <textarea
+                            id="article-body"
+                            name="body_markdown"
+                            class="admin-editor-markdown"
+                            rows="24"
+                            required
+                        >{{ data.payload.bodyMarkdown }}</textarea>
+                        <p class="field-hint">
+                            Markdown standard. HTML brut interdit ; les liens doivent utiliser
+                            <code>http</code>, <code>https</code> ou <code>mailto</code>.
+                        </p>
+                        {% for message in errors.for('body_markdown') %}
+                            <p class="field-error">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                    {# Bouton visible uniquement sur mobile (le rail sticky prend le relai sur desktop) #}
+                    <div class="form-actions admin-editor-save-mobile">
+                        <button type="submit">Enregistrer les modifications</button>
+                    </div>
+                </form>
+
+            {% elseif _is_published %}
+
+                <div class="admin-editor-locked">
+                    <h2 class="admin-editor-locked__title">Contenu verrouillé</h2>
+                    <p class="admin-editor-locked__body">
+                        Cet article est publié. Pour modifier son contenu, archivez-le
+                        puis restaurez-le en brouillon.
+                    </p>
+                </div>
+
+            {% else %}
+
+                <div class="admin-editor-locked">
+                    <h2 class="admin-editor-locked__title">Article archivé</h2>
+                    <p class="admin-editor-locked__body">
+                        Restaurez cet article comme brouillon pour reprendre l'édition.
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </main>{# end .admin-editor-main #}
+
+    </div>{# end .admin-editor-grid #}
+
+</div>{# end .admin-editor-page #}
 {% endblock %}

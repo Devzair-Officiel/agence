@@ -84,6 +84,45 @@ test.describe.serial('Admin — édition éditoriale (Phase 8C3)', () => {
     expect(blocking, 'Axe serious/critical violations on /admin/articles').toEqual([])
   })
 
+  test('liste articles — 390 px responsive (correctif R3 mobile)', async ({ page }) => {
+    // Crée un article pour que la liste ne soit pas vide.
+    const slug = `${SLUG_PREFIX}mobile-r3-${Date.now()}`
+    const title = `E2E mobile R3 — ${slug}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, title)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    // Repasse en vue mobile 390 px.
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles`)
+
+    // Titre et slug visibles dans la liste.
+    await expect(page.locator('p.admin-article-title', { hasText: title })).toBeVisible()
+    await expect(page.locator('code.admin-article-slug', { hasText: slug })).toBeVisible()
+
+    // Badge de statut présent.
+    await expect(page.locator('.status-badge.status-draft').first()).toBeVisible()
+
+    // Aucun débordement horizontal global.
+    const scrollWidth = await page.evaluate(() => document.body.scrollWidth)
+    expect(scrollWidth, 'Pas de débordement horizontal à 390 px').toBeLessThanOrEqual(390)
+
+    // Axe WCAG 2.2 AA — 0 violation serious/critical.
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    )
+    if (blocking.length > 0) {
+      console.log(
+        blocking.map((v) => `- [${v.impact}] ${v.id}: ${v.help}`).join('\n'),
+      )
+    }
+    expect(blocking, 'Axe serious/critical violations on /admin/articles (390px)').toEqual([])
+  })
+
   test('création d\'un brouillon → redirection vers /edit et apparition dans la liste', async ({
     page,
   }) => {
@@ -105,18 +144,114 @@ test.describe.serial('Admin — édition éditoriale (Phase 8C3)', () => {
 
     // PRG : le POST redirige vers /admin/articles/{uuid}/edit.
     await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
-    await expect(page.getByRole('heading', { name: 'Édition du brouillon' })).toBeVisible()
+
+    // R4 : H1 = "Modifier l'article" (indépendant du statut).
+    await expect(page.getByRole('heading', { name: 'Modifier l\'article', level: 1 })).toBeVisible()
 
     // Le badge affiche bien « Brouillon » et le slug est en lecture seule.
     await expect(page.locator('.status-badge.status-draft')).toContainText('Brouillon')
-    await expect(page.locator('code', { hasText: slug })).toBeVisible()
+    await expect(page.locator('code.admin-editor-slug', { hasText: slug })).toBeVisible()
     // Le champ input[name=slug] doit être absent (immuabilité côté serveur).
     await expect(page.locator('input[name="slug"]')).toHaveCount(0)
 
     // Retour à la liste : l'article apparaît sur la première page.
     await page.goto(`${ADMIN_BASE_URL}/admin/articles?status=draft`)
     await expect(page.getByRole('cell', { name: title })).toBeVisible()
-    await expect(page.locator('code', { hasText: slug })).toBeVisible()
+    await expect(page.locator('code.admin-article-slug', { hasText: slug })).toBeVisible()
+  })
+
+  test('éditeur R4 — structure et accessibilité sur un brouillon', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r4-structure-${Date.now()}`
+    const title = `E2E R4 structure — ${slug}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, title)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    // H1 R4.
+    await expect(page.getByRole('heading', { name: 'Modifier l\'article', level: 1 })).toBeVisible()
+
+    // Section Publication visible (bloc rail).
+    await expect(page.locator('.admin-publication-card')).toBeVisible()
+    await expect(page.locator('.status-badge.status-draft')).toContainText('Brouillon')
+
+    // Titre, slug readonly, Markdown.
+    await expect(page.getByLabel('Titre', { exact: true })).toBeVisible()
+    await expect(page.locator('code.admin-editor-slug', { hasText: slug })).toBeVisible()
+    await expect(page.locator('input[name="slug"]')).toHaveCount(0)
+    await expect(page.getByLabel('Corps (Markdown)')).toBeVisible()
+
+    // Chapô, SEO, Expertises, Auteur.
+    await expect(page.getByLabel('Chapô (résumé court)')).toBeVisible()
+    await expect(page.getByLabel(/Titre SEO/)).toBeVisible()
+    await expect(page.getByLabel(/Meta description/)).toBeVisible()
+    await expect(page.getByRole('checkbox', { name: 'Concevoir' })).toBeVisible()
+    await expect(page.getByLabel('Nom affiché')).toBeVisible()
+
+    // Bouton Enregistrer présent (rail ou mobile).
+    await expect(page.getByRole('button', { name: 'Enregistrer les modifications' }).first()).toBeVisible()
+
+    // Lien Prévisualiser.
+    await expect(page.getByRole('link', { name: 'Prévisualiser' })).toBeVisible()
+
+    // Axe WCAG 2.2 AA — 0 violation serious/critical.
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    )
+    if (blocking.length > 0) {
+      console.log(
+        blocking.map((v) => `- [${v.impact}] ${v.id}: ${v.help}`).join('\n'),
+      )
+    }
+    expect(blocking, 'Axe serious/critical violations on /admin/articles/{id}/edit (draft)').toEqual([])
+  })
+
+  test('éditeur R4 — layout 1440 px : main à gauche, sidebar à droite', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r4-layout-${Date.now()}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, `E2E layout ${slug}`)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.setViewportSize({ width: 1440, height: 900 })
+
+    const main    = page.locator('.admin-editor-main')
+    const sidebar = page.locator('.admin-editor-sidebar')
+
+    const mainBox    = await main.boundingBox()
+    const sidebarBox = await sidebar.boundingBox()
+
+    expect(mainBox,    'main introuvable').not.toBeNull()
+    expect(sidebarBox, 'sidebar introuvable').not.toBeNull()
+
+    // main à gauche, sidebar à droite (x de main < x de sidebar).
+    expect(mainBox!.x, 'main doit être à gauche de la sidebar').toBeLessThan(sidebarBox!.x)
+  })
+
+  test('éditeur R4 — ordre DOM mobile 390 px : Publication avant Markdown', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r4-mobile-${Date.now()}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, `E2E mobile order ${slug}`)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    const pubBox  = await page.locator('.admin-publication-card').boundingBox()
+    const mdBox   = await page.locator('.admin-editor-markdown').boundingBox()
+
+    expect(pubBox,  'bloc Publication introuvable').not.toBeNull()
+    expect(mdBox,   'textarea Markdown introuvable').not.toBeNull()
+
+    // Publication doit apparaître visuellement au-dessus du Markdown sur mobile.
+    expect(pubBox!.y, 'Publication doit être au-dessus du Markdown à 390 px').toBeLessThan(mdBox!.y)
   })
 
   test('édition d\'un brouillon existant : modification du titre persistée', async ({ page }) => {
@@ -133,7 +268,7 @@ test.describe.serial('Admin — édition éditoriale (Phase 8C3)', () => {
     // Modification du titre uniquement — les autres champs restent renseignés
     // grâce au rendu serveur du formulaire.
     await page.getByLabel('Titre', { exact: true }).fill(updatedTitle)
-    await page.getByRole('button', { name: 'Enregistrer les modifications' }).click()
+    await page.getByRole('button', { name: 'Enregistrer les modifications' }).first().click()
 
     // Après enregistrement, on reste sur la page d'édition (PRG en place).
     await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
