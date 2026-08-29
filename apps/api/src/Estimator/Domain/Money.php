@@ -22,7 +22,7 @@ final class Money
         $currency = strtoupper(trim($currency));
 
         if (!preg_match('/^[A-Z]{3}$/', $currency)) {
-            throw EstimatorInvariantViolation::invalidMoney(sprintf('la devise "%s" n\'est pas un code ISO 4217 valide.', $currency));
+            throw EstimatorInvariantViolation::invalidMoney(sprintf('la devise "%s" n\'est pas un code devise à 3 lettres valide.', $currency));
         }
 
         return new self($amountMinor, $currency);

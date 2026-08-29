@@ -40,4 +40,9 @@ final class EstimatorInvariantViolation extends \DomainException
     {
         return new self(sprintf('Données d\'entrée invalides : %s', $reason));
     }
+
+    public static function invalidResult(string $reason): self
+    {
+        return new self(sprintf('Résultat d\'estimation invalide : %s', $reason));
+    }
 }
