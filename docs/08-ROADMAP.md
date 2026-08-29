@@ -1459,6 +1459,191 @@ smoke tests, sauvegarde et rollback n'ont pas été réellement vérifiés.
 
 ---
 
+## Programme Estimateur — Module `/estimer-mon-projet`
+
+Source de vérité détaillée : `docs/12-PROJECT-ESTIMATOR.md`.
+
+Ce programme est un **sous-projet indépendant** dont le développement peut être conduit en parallèle des phases globales restantes (9B, 10A2, 11C, 12).
+Sa **mise en production** reste soumise aux gates habituelles : sécurité, privacy, QA, recette et GO explicite.
+Elle ne présuppose pas que Phase 12 soit terminée, mais une recette de déploiement coordonnée est requise lors de EST-9.
+Il n'interfère pas avec les phases 1–13 et ne les renumérote pas.
+
+### EST-0 — Cadrage et documentation
+
+**État actuel : TERMINÉE**
+
+- [x] Créer `docs/12-PROJECT-ESTIMATOR.md` (source de vérité fonctionnelle, 24 sections).
+- [x] Documenter les principes validés, le parcours, les branches conditionnelles, l'écran résultat et l'architecture cible.
+- [x] Mettre à jour `docs/08-ROADMAP.md`.
+- [x] Mettre à jour `docs/10-TRACKING.md` (DEV-064 à DEV-073).
+- [x] Identifier et classer toutes les questions ouvertes (Q-01 à Q-14) par phase bloquante.
+
+**Critère de sortie :** La source de vérité est complète, tous les montants inconnus sont marqués À VALIDER, les questions ouvertes sont classées par phase bloquante, aucun code applicatif n'a été écrit.
+
+**Statut : atteint.**
+
+---
+
+### EST-1 — Domaine + moteur d'estimation (Symfony)
+
+**État actuel : À FAIRE**
+
+EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite aucune grille tarifaire réelle.
+
+#### EST-1A — Contrat métier
+
+- [ ] DTO `ProjectEstimateInput` (types, enums `ProjectType`, value objects, validation métier).
+- [ ] DTO `EstimateResult` (fourchette, lignes détaillées, `pricingVersion`, hypothèses).
+- [ ] Invariants métier (cohérence input/output, règles de composition sans montant).
+- [ ] Fixtures tarifaires explicitement marquées **TEST** — aucune valeur Devzair réelle.
+- [ ] PHPUnit domaine.
+
+**Dépendances :** EST-0 terminé.
+**Critère de sortie :** Le contrat métier est défini, typé, testé avec fixtures TEST. Aucune grille Devzair réelle. EST-1A peut démarrer sans Q-01.
+
+#### EST-1B — Calibration + moteur
+
+- [ ] Service `ProjectEstimationEngine` (calcul autoritaire).
+- [ ] Interface `PricingRepositoryInterface` + implémentation statique versionnée.
+- [ ] Première grille Devzair réelle (Q-01 — **BLOQUANT**).
+- [ ] Règles MIN/MAX par type de projet et option.
+- [ ] PHPUnit moteur.
+
+**Dépendances :** EST-1A, Q-01 validé par l'équipe Devzair.
+**Critère de sortie :** Le moteur calcule des fourchettes MIN/MAX réelles pour chaque type de projet.
+
+#### EST-1C — API HTTP
+
+- [ ] Contrôleur `POST /api/estimate`.
+- [ ] Validation HTTP de l'input (payload invalide → 400).
+- [ ] Origin allowlist stricte.
+- [ ] Rate limiting (token bucket par IP).
+- [ ] Mapping d'erreurs (400, 429, 413), `X-Request-Id` UUID v7.
+- [ ] PHPUnit fonctionnels (happy path, validation, rate limit, payload trop grand).
+
+**Dépendances :** EST-1B.
+**Critère de sortie :** `POST /api/estimate` retourne un `EstimateResult` valide et versionné pour chaque type de projet, avec les garanties de sécurité HTTP.
+
+---
+
+### EST-2 — Shell UX du configurateur (Nuxt)
+
+**État actuel : À FAIRE**
+
+- [ ] Page `/estimer-mon-projet`.
+- [ ] Orchestrateur `ProjectEstimator.vue`.
+- [ ] Navigation entre étapes, indicateur de progression, gestion du focus.
+- [ ] Accessibilité WCAG 2.2 AA de base.
+- [ ] Vitest et Playwright.
+
+**Critère de sortie :** Shell navigable, accessible, responsive. Aucun questionnaire ni calcul fonctionnel requis.
+
+**Dépendances :** EST-1 (contrat API).
+
+---
+
+### EST-3 — Questionnaires conditionnels
+
+**État actuel : À FAIRE**
+
+- [ ] Composants de step par type de projet (site vitrine, e-commerce, application, refonte, objectif-first).
+- [ ] Arbre de décision « Je ne sais pas encore ».
+- [ ] Logique conditionnelle dans `useEstimator`.
+- [ ] Vitest et Playwright.
+
+**Critère de sortie :** Les cinq branches de questionnaire sont complètes, accessibles et testées.
+
+**Dépendances :** EST-2.
+
+---
+
+### EST-4 — Calcul + écran résultat
+
+**État actuel : À FAIRE**
+
+- [ ] Connexion questionnaire → API Symfony.
+- [ ] Composant `EstimateResult.vue`.
+- [ ] Affichage fourchette MIN / MAX, résumé, investissement initial / récurrent.
+- [ ] Vitest et Playwright.
+
+**Critère de sortie :** Un parcours complet aboutit à un résultat affiché, cohérent, accessible et non contractuel.
+
+**Dépendances :** EST-3, EST-1.
+
+---
+
+### EST-5 — Modalités de paiement / récurrent
+
+**État actuel : À FAIRE**
+
+- [ ] Section modalités envisageables (règlement standard, échelonné, solution adaptée).
+- [ ] Simulation de répartition du montant (sans paiement réel).
+- [ ] Mentions de non-engagement.
+
+**Critère de sortie :** Les modalités sont affichées avec avertissements. Aucune confusion possible avec un paiement réel.
+
+**Dépendances :** EST-4.
+
+---
+
+### EST-6 — Lead qualifié + persistence / API
+
+**État actuel : À FAIRE**
+
+- [ ] Formulaire de contact final (email, nom, brief).
+- [ ] Endpoint Symfony de réception du lead.
+- [ ] Persistence PostgreSQL.
+- [ ] Notification email à Devzair.
+- [ ] Mise à jour `docs/05-SECURITY-PRIVACY.md`.
+
+**Critère de sortie :** Un lead est transmis, reçu, persisté, sans PII dans les logs.
+
+**Dépendances :** EST-5. Durée de conservation validée (Q-02).
+
+---
+
+### EST-7 — Parcours partenariat
+
+**État actuel : À FAIRE**
+
+- [ ] Formulaire partenariat (9 sections du §13 de la source de vérité).
+- [ ] Transmission à l'équipe Devzair.
+- [ ] Accusé de réception (sans réponse favorable automatique).
+
+**Critère de sortie :** Parcours distinct, accessible, sans calcul automatique de conditions.
+
+**Dépendances :** EST-6. Critères d'éligibilité validés (Q-04).
+
+---
+
+### EST-8 — Administration tarifaire
+
+**État actuel : À FAIRE**
+
+- [ ] CRUD sur les lignes tarifaires.
+- [ ] Gestion des versions tarifaires.
+- [ ] Interface Twig SSR (back-office existant).
+
+**Critère de sortie :** L'administrateur peut modifier une grille et créer une version sans intervention technique.
+
+**Dépendances :** EST-1, Phase 8C (administration authentifiée existante).
+
+---
+
+### EST-9 — Intégration site + QA + lancement
+
+**État actuel : À FAIRE**
+
+- [ ] Intégration dans la navigation principale.
+- [ ] Sitemap, SEO, pré-rendu ou SSR (selon Q-08 et Q-13).
+- [ ] Recette QA complète (fonctionnelle, accessibilité, sécurité, RGPD).
+
+**Critère de sortie :** L'outil est publié, indexable si décidé, accessible, sécurisé, conforme RGPD, lié depuis la navigation.
+
+**Dépendances :** EST-8 ou accord de déploiement sans administration.
+
+---
+
 ## Règle de maintenance
 
 Ce fichier doit être modifié uniquement lorsque les règles de son domaine évoluent.  
