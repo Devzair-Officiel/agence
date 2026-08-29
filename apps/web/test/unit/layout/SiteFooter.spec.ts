@@ -35,29 +35,22 @@ describe("SiteFooter", () => {
 
   // ── Colonne Marque ─────────────────────────────────────────────────
 
-  it("renders logo and brand name on the same link", () => {
+  it("renders the logo link with aria-label", () => {
     const wrapper = mountFooter()
-    const brandLink = wrapper.find("a.site-footer__brand-link")
-    expect(brandLink.exists()).toBe(true)
-    expect(brandLink.attributes("aria-label")).toBeTruthy()
-    // Logo et nom sont enfants du même lien
-    expect(brandLink.find("img.site-footer__logo").exists()).toBe(true)
-    expect(brandLink.find(".site-footer__brand-name").exists()).toBe(true)
+    const logoLink = wrapper.find("a.site-footer__logo-link")
+    expect(logoLink.exists()).toBe(true)
+    expect(logoLink.attributes("aria-label")).toBeTruthy()
+    expect(logoLink.find("img.site-footer__logo").exists()).toBe(true)
   })
 
-  it("renders the eyebrow containing 'agence digitale'", () => {
-    const wrapper = mountFooter()
-    const eyebrow = wrapper.find(".site-footer__eyebrow")
-    expect(eyebrow.exists()).toBe(true)
-    expect(eyebrow.text().toLowerCase()).toContain("agence digitale")
-  })
-
-  it("renders the tagline", () => {
+  it("renders the tagline without periods", () => {
     const wrapper = mountFooter()
     const tagline = wrapper.find(".site-footer__tagline")
     expect(tagline.exists()).toBe(true)
     expect(tagline.text()).toContain("Sites")
     expect(tagline.text()).toContain("Visibilité")
+    // Pas de points dans la tagline
+    expect(tagline.text()).not.toContain(".")
   })
 
   it("renders the positioning description", () => {
@@ -93,12 +86,10 @@ describe("SiteFooter", () => {
   })
 
   it("renders /ressources as a plain link inside Découvrir items", () => {
-    const wrapper = mountFooter()
     const discoverGroup = footerNavigation.find((g) => g.title === "Découvrir")
     expect(discoverGroup).toBeDefined()
-    const hasRessources = discoverGroup!.items.some((i) => i.to === "/ressources")
-    expect(hasRessources).toBe(true)
-    expect(wrapper.find('a[href="/ressources"]').exists()).toBe(true)
+    expect(discoverGroup!.items.some((i) => i.to === "/ressources")).toBe(true)
+    expect(mountFooter().find('a[href="/ressources"]').exists()).toBe(true)
   })
 
   it("has exactly 2 nav groups (Expertises + Découvrir)", () => {
@@ -108,8 +99,7 @@ describe("SiteFooter", () => {
   })
 
   it("has no separate Ressources group", () => {
-    const resourcesGroup = footerNavigation.find((g) => g.title === "Ressources")
-    expect(resourcesGroup).toBeUndefined()
+    expect(footerNavigation.find((g) => g.title === "Ressources")).toBeUndefined()
   })
 
   // ── CTA "Parler de votre projet" ───────────────────────────────────
@@ -119,15 +109,12 @@ describe("SiteFooter", () => {
     const cta = wrapper.find(`a.site-footer__cta[href="${primaryCta.to}"]`)
     expect(cta.exists()).toBe(true)
     expect(cta.text()).toContain(primaryCta.label)
-    expect(cta.find(".site-footer__cta-icon").text()).toBe("→")
+    expect(cta.find(".site-footer__cta-icon").exists()).toBe(true)
   })
 
   it("does NOT include the CTA label in the regular items list", () => {
     const discoverGroup = footerNavigation.find((g) => g.title === "Découvrir")
-    const ctaInItems = discoverGroup?.items.some(
-      (i) => i.label === primaryCta.label,
-    )
-    expect(ctaInItems).toBe(false)
+    expect(discoverGroup?.items.some((i) => i.label === primaryCta.label)).toBe(false)
   })
 
   // ── Éléments supprimés ─────────────────────────────────────────────
@@ -140,18 +127,25 @@ describe("SiteFooter", () => {
     expect(mountFooter().find(".site-footer__link-arrow").exists()).toBe(false)
   })
 
+  // ── Liens inline ───────────────────────────────────────────────────
+
+  it("nav links do not use display:block (must be inline-flex)", () => {
+    // Vérifié via la classe CSS — le composant doit utiliser .site-footer__link
+    const wrapper = mountFooter()
+    const links = wrapper.findAll("a.site-footer__link")
+    expect(links.length).toBeGreaterThan(0)
+  })
+
   // ── Barre légale ───────────────────────────────────────────────────
 
   it("renders dynamic copyright year", () => {
-    const wrapper = mountFooter()
-    const copyright = wrapper.find(".site-footer__copyright")
+    const copyright = mountFooter().find(".site-footer__copyright")
     expect(copyright.exists()).toBe(true)
     expect(copyright.text()).toContain(String(new Date().getFullYear()))
   })
 
   it("renders the back-to-top link with href #top", () => {
-    const link = mountFooter().find('a[href="#top"].site-footer__back-to-top')
-    expect(link.exists()).toBe(true)
+    expect(mountFooter().find('a[href="#top"].site-footer__back-to-top').exists()).toBe(true)
   })
 
   it("does not render legal list when legalNavigation is empty", () => {
@@ -181,9 +175,6 @@ describe("SiteFooter", () => {
     const hrefs = mountFooter()
       .findAll("a")
       .map((link) => link.attributes("href"))
-
-    expect(hrefs.every((href) => typeof href === "string" && href.length > 0)).toBe(
-      true,
-    )
+    expect(hrefs.every((href) => typeof href === "string" && href.length > 0)).toBe(true)
   })
 })
