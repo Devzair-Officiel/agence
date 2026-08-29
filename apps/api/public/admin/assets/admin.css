@@ -688,25 +688,7 @@ button:hover { background: #2a2f36; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   16. Mise en page des pages
-   ───────────────────────────────────────────────────────────────────────── */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-}
-
-.page-meta {
-    color: #4b5563;
-    font-size: 0.9375rem;
-    margin: 0;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   17. Badges de statut
+   16. Badges de statut
    ───────────────────────────────────────────────────────────────────────── */
 .status-badge {
     display: inline-block;
@@ -905,27 +887,6 @@ button:hover { background: #2a2f36; }
     color: #7c2d12;
 }
 
-.page-eyebrow {
-    margin: 0 0 0.25rem;
-    color: #4b5563;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.preview-title {
-    margin: 0 0 0.5rem;
-    word-break: break-word;
-}
-
-.preview-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
 .preview-metadata,
 .preview-seo {
     margin: 0;
@@ -981,15 +942,6 @@ button:hover { background: #2a2f36; }
     padding: 0.0625rem 0.25rem;
     border-radius: 3px;
     font-size: 0.875rem;
-}
-
-.preview-content__intro {
-    margin: 0 0 0.5rem;
-    color: #4b5563;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
 }
 
 .preview-content__excerpt {
@@ -1146,21 +1098,6 @@ button:hover { background: #2a2f36; }
     .preview-seo dt:first-child {
         margin-top: 0;
     }
-}
-
-/* ────────────────────────────────────────────────────────────────────────
-   Médiathèque admin (legacy — conservé pour compatibilité).
-   La refonte R5 utilise .admin-media-grid / .admin-media-card ci-dessous.
-   ──────────────────────────────────────────────────────────────────────── */
-
-.admin-media-thumb {
-    display: block;
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(22, 25, 28, 0.1);
-    background: var(--color-cream);
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -1986,8 +1923,8 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     padding: 3rem 1.5rem;
     text-align: center;
     background: var(--color-cream-elevated);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius-md);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
 }
 
 .admin-media-empty__text {
@@ -2052,15 +1989,18 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     display: flex;
     flex-direction: column;
     background: var(--color-cream-elevated);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius-md);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    transition: box-shadow 0.15s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .admin-media-card { transition: border-color 0.15s ease; }
 }
 
 .admin-media-card:hover,
 .admin-media-card:focus-within {
-    box-shadow: var(--admin-shadow-sm);
+    border-color: var(--color-petrol);
 }
 
 /* ── Zone aperçu (lien cliquable) ──────────────────────────────────────── */
@@ -2072,7 +2012,7 @@ fieldset.admin-editor-card .admin-editor-card__heading {
 }
 
 .admin-media-card__preview:focus-visible {
-    outline: 2px solid var(--admin-focus-ring);
+    outline: 2px solid var(--color-devzair-blue);
     outline-offset: -2px;
 }
 

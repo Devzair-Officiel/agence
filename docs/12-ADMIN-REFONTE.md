@@ -1050,20 +1050,29 @@ Par écran et par phase :
 - [x] `admin-media.spec.ts` refondu (9/9 tests : grille, metadata, breakpoints, focus, Axe)
 - [x] Défaut pré-existant corrigé (Médias link strict mode → scope `aside`)
 
-### Phase R6 — Création et prévisualisation
-- [ ] `articles/new.html.twig` dans le nouveau shell
-- [ ] `articles/preview.html.twig` dans le nouveau shell
-- [ ] `articles/hero_image.html.twig` grille visuelle
-- [ ] `articles/rate_limited.html.twig` dans le nouveau shell
-- [ ] `media/rate_limited.html.twig` dans le nouveau shell
-- [ ] Tests Playwright verts
+### Phase R6 — Création et prévisualisation (commit `0117641`)
+- [x] `articles/_fields_main.html.twig` + `_fields_metadata.html.twig` — fragments mutualisés (suppression duplication `_form.html.twig`)
+- [x] `articles/new.html.twig` reécrit en grille deux-colonnes (`admin-editor-grid`, main premier dans le DOM)
+- [x] `articles/preview.html.twig` redesigné — layout lecture deux-colonnes, dates `d/m/Y · H:i`, labels expertises humanisés
+- [x] `articles/hero_image.html.twig` — en-tête `admin-page-header` harmonisé
+- [x] `articles/rate_limited.html.twig` + `media/rate_limited.html.twig` — `admin-page-header` harmonisé
+- [x] `media/new.html.twig` — en-tête `admin-page-header` harmonisé
+- [x] CSS R6 : `.admin-preview-grid`, `:checked` hero chooser, pages utilitaires
+- [x] Fix dette R4 : `admin-preview.spec.ts` sélecteur `'Prévisualiser'` `exact:true`
+- [x] PHPUnit : +1 `testNoNestedFormsOnCreatePage` (596/596)
+- [x] Playwright 33/33
 
-### Phase R7 — Accessibilité finale
-- [ ] Audit Axe complet tous les écrans
-- [ ] Recette clavier manuelle
-- [ ] Recette zoom 200 %
-- [ ] Recette breakpoints
-- [ ] Documentation accessibilité mise à jour
+### Phase R7 — Audit final et polish (2026-08-29)
+- [x] PASS A — Audit CSS : 4 variables `--admin-*` non définies identifiées (R5 dette)
+- [x] PASS B — Variables `--admin-border → --border-default`, `--admin-radius-md → --radius-md`, `--admin-focus-ring → --color-devzair-blue`
+- [x] Suppression hover `box-shadow: var(--admin-shadow-sm)` → `border-color: var(--color-petrol)` sobre
+- [x] Transition `prefers-reduced-motion` ajoutée sur `.admin-media-card`
+- [x] CSS legacy supprimé : `.page-header`, `.page-meta`, `.page-eyebrow`, `.preview-title`, `.preview-actions`, `.preview-content__intro`, `.admin-media-thumb`
+- [x] Wording "uploads" → "téléversements" dans `media/rate_limited.html.twig`
+- [x] PHPUnit final : 596/596
+- [x] Playwright final : 33/33 (admin.spec.ts 8/8, admin-editorial.spec.ts 9/9, admin-media.spec.ts 9/9, admin-preview.spec.ts 7/7)
+- [x] `|raw` unique dans le codebase admin confirmé : `preview.html.twig` sur `contentHtml`
+- [x] Aucune variable CSS non définie résiduelle
 
 ---
 
@@ -1091,3 +1100,82 @@ Symfony 7.4, PostgreSQL 17 et la stack Docker complète sont opérationnels.
 ```
 
 **Note :** La refonte UI/UX de l'administration (Phases R0–R7) est une nouvelle initiative en parallèle du reste de la roadmap.
+
+---
+
+## Rapport d'audit final R7 — 2026-08-29
+
+### Git
+- **SHA baseline R6 :** `0117641`
+- **Branche :** `main`
+- **Statut :** 1 commit R7 (`fix(admin): audit CSS, polish R7`) en avance sur `origin/main`
+
+### Baselines
+| Suite | Entrée R7 | Sortie R7 |
+|---|---|---|
+| PHPUnit | 596/596 | **596/596** |
+| admin.spec.ts | 8/8 | **8/8** |
+| admin-editorial.spec.ts | 9/9 | **9/9** |
+| admin-media.spec.ts | 9/9 | **9/9** |
+| admin-preview.spec.ts | 7/7 | **7/7** |
+| **Total Playwright** | **33/33** | **33/33** |
+
+### Problèmes identifiés (PASS A)
+
+| Sévérité | Problème | Fichier | Correction |
+|---|---|---|---|
+| CRITIQUE | `--admin-border` non définie | admin.css l.1989, 2055 | → `--border-default` |
+| CRITIQUE | `--admin-radius-md` non définie | admin.css l.1990, 2056 | → `--radius-md` |
+| CRITIQUE | `--admin-shadow-sm` non définie | admin.css l.2063 | → supprimée (hover border-color) |
+| CRITIQUE | `--admin-focus-ring` non définie | admin.css l.2075 | → `--color-devzair-blue` |
+| MINEUR | Classes CSS mortes (7 classes) | admin.css | Supprimées |
+| MINEUR | Transition sans `prefers-reduced-motion` | admin.css | Encapsulée |
+| MINEUR | "uploads" dans UI (mot anglais) | media/rate_limited.html.twig | → "téléversements" |
+
+### Variables CSS non définies (R5 dette) — corrigées
+Toutes les 4 variables `--admin-*` introduites en R5 sans définition ont été remplacées par les tokens source officiels.
+
+### CSS legacy supprimé
+| Classe | Raison |
+|---|---|
+| `.page-header` | Remplacé par `.admin-page-header` (R3) |
+| `.page-meta` | Orpheline depuis R3 |
+| `.page-eyebrow` | Orpheline depuis R6 (preview redesigné) |
+| `.preview-title` | Orpheline depuis R6 (→ `.admin-preview-title`) |
+| `.preview-actions` | Orpheline depuis R6 |
+| `.preview-content__intro` | Orpheline depuis R6 |
+| `.admin-media-thumb` | Legacy pré-R5, jamais utilisée |
+
+### Audit `|raw`
+- **Unique occurrence :** `preview.html.twig` → `preview.contentHtml|raw`
+- **Justification :** `CommonMarkArticleRenderer` + `MarkdownSecurityPolicy` (ADR-010/011)
+- **Résultat :** CONFORME
+
+### Audit CSRF
+Tous les identifiants CSRF inchangés et conformes :
+`article_create`, `article_edit_{uuid}`, `article_publish_{uuid}`, `article_archive_{uuid}`, `article_restore_{uuid}`, `article_hero_image_set_{uuid}`, `article_hero_image_remove_{uuid}`, `media_upload`
+
+### Audit formulaires imbriqués
+- `edit` : 0 form imbriqué (PHPUnit `testNoNestedFormsOnDraftEditPage`)
+- `new` : 0 form imbriqué (PHPUnit `testNoNestedFormsOnCreatePage`)
+- Pattern `form=` HTML5 pour associer les champs sidebar sans imbrication
+
+### Audit dates
+Tous les templates admin utilisent `d/m/Y · H:i` avec `<time datetime="...c">`. Aucun UTC visible.
+
+### Audit accessibilité automatisé (Playwright Axe WCAG 2.2 AA)
+Les suites admin-editorial.spec.ts, admin-preview.spec.ts et admin-media.spec.ts incluent des scans Axe sur les écrans principaux. 0 violation serious/critical à la clôture de R7.
+
+### Dettes résiduelles documentées
+| Dette | Impact | Recommandation |
+|---|---|---|
+| Ordre clavier Edit R4 (sidebar DOM-first) | Sur desktop, focus passe Publication → Titre → Corps → SEO. Cohérent visuellement mais tab-order DOM-first. | Acceptable pour admin interne. Surveiller les retours utilisateur. |
+| `_form.html.twig` encore présent | Fragment hérité, plus utilisé par new/edit (R6). | Peut être supprimé lors d'une future session. |
+| 320 px médiathèque 2 colonnes | ~130 px par carte. Lisible mais dense. | Si remontée UX négative, passer à 1 colonne sous 30rem. |
+
+### Fichiers modifiés (R7)
+```
+apps/api/public/admin/assets/admin.css
+apps/api/templates/admin/media/rate_limited.html.twig
+docs/12-ADMIN-REFONTE.md
+```
