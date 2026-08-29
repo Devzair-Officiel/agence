@@ -95,4 +95,41 @@ describe("HomeFeaturedCaseStudy", () => {
     expect(text).not.toMatch(/\d+\s?%/)
     expect(text).not.toMatch(/témoignage/i)
   })
+
+  // --- Chemins assets (WebP)
+
+  it("all imageSrc paths point to .webp files", () => {
+    for (const study of caseStudies) {
+      expect(study.imageSrc).toMatch(/\.webp$/)
+    }
+  })
+
+  it("all overlayImageSrc paths point to .webp files when present", () => {
+    for (const study of caseStudies) {
+      if (!study.overlayImageSrc) continue
+      expect(study.overlayImageSrc).toMatch(/\.webp$/)
+    }
+  })
+
+  it("no imageSrc or overlayImageSrc references a removed .png path", () => {
+    for (const study of caseStudies) {
+      expect(study.imageSrc).not.toMatch(/\.png$/)
+      if (study.overlayImageSrc) {
+        expect(study.overlayImageSrc).not.toMatch(/\.png$/)
+      }
+    }
+  })
+
+  // --- Priorité réseau : toutes les images utilisent loading=lazy
+  // Le preload est géré par HomeFeaturedCaseStudy via new Image() pour
+  // éviter tout conflit fetchpriority avec les ressources critiques en HTML SSR.
+
+  it("all images in the carousel use loading=lazy", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    const imgs = wrapper.findAll("img")
+    for (const img of imgs) {
+      expect(img.attributes("loading")).toBe("lazy")
+      expect(img.attributes("fetchpriority")).toBeUndefined()
+    }
+  })
 })

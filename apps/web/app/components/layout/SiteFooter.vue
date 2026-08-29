@@ -27,7 +27,7 @@ const currentYear = new Date().getFullYear()
               decoding="async"
             >
           </NuxtLink>
-          <p class="site-footer__tagline">Sites Applications Image Visibilité</p>
+          <p class="site-footer__tagline">Sites - Applications - Image - Visibilité</p>
           <p class="site-footer__description">
             Nous concevons des solutions digitales cohérentes pour aider
             les entreprises à être visibles, crédibles et efficaces en ligne.
@@ -178,7 +178,7 @@ const currentYear = new Date().getFullYear()
   margin-bottom: var(--space-4);
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-mono);
-  font-size: 0.625rem;
+  font-size: 1rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1;

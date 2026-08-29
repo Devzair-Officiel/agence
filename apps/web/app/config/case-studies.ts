@@ -14,7 +14,7 @@
  * cible existe réellement et que le client a autorisé le lien.
  *
  * Pour ajouter un projet :
- *   1. déposer l'image principale dans `public/portfolio/{id}.png` ;
+ *   1. déposer l'image principale dans `public/portfolio/{id}.webp` ;
  *   2. renseigner un `imageAlt` descriptif (lu par les lecteurs d'écran,
  *      pas décoratif — l'image porte du contenu) ;
  *   3. `category`, `description`, `longDescription`, `tags` doivent rester
@@ -61,10 +61,10 @@ export const caseStudies: readonly CaseStudy[] = [
       "Nidemiel réunit une sélection resserrée de miels rares autour d'une exigence : rendre la provenance, la récolte et la fiche sensorielle de chaque pot lisibles en quelques secondes. Nous avons conçu une boutique sobre où le produit reste au centre, avec un tunnel d'achat direct et une base éditoriale prête à accueillir de nouvelles récoltes.",
     tags: ["E-commerce", "UX/UI", "Éditorial produit"],
     href: "https://nidemiel.com",
-    imageSrc: "/portfolio/nidemiel.png",
+    imageSrc: "/portfolio/nidemiel.webp",
     imageAlt:
       "Aperçu du site Nidemiel : maquettes desktop et mobile de la boutique en ligne de miels artisanaux",
-    overlayImageSrc: "/portfolio/nidemiel-honey-jar.png",
+    overlayImageSrc: "/portfolio/nidemiel-honey-jar.webp",
   },
   {
     id: "kitchen-meat",
@@ -76,10 +76,10 @@ export const caseStudies: readonly CaseStudy[] = [
       "Kitchen Meat est un projet dédié à l'univers de la grillade. Nous avons conçu une vitrine immersive mettant en avant les spécialités, l'identité du restaurant et une expérience claire pour découvrir la carte et réserver. La hiérarchie de contenu et l'ambiance chaleureuse guident le visiteur vers la table.",
     tags: ["Site vitrine", "Identité visuelle", "UI/UX", "Réservation"],
     href: "https://kitchen-meat.fr",
-    imageSrc: "/portfolio/kitchen-meat.png",
+    imageSrc: "/portfolio/kitchen-meat.webp",
     imageAlt:
       "Aperçu du site Kitchen Meat : maquette de la vitrine du restaurant de grillades lyonnais",
-    overlayImageSrc: "/portfolio/kitchen-meat-plate.png",
+    overlayImageSrc: "/portfolio/kitchen-meat-plate.webp",
   },
   {
     id: "e-shop-admin",
@@ -90,10 +90,10 @@ export const caseStudies: readonly CaseStudy[] = [
     longDescription:
       "E-Shop Admin est une interface d'administration pensée pour les e-commerçants qui veulent centraliser commandes, catalogue, clients et expéditions dans un même tableau de bord. Nous avons dessiné les écrans clés — vue synthétique des ventes, suivi des statuts de commande, gestion produit, top ventes — pour rendre le pilotage lisible d'un coup d'œil, en desktop comme en mobile.",
     tags: ["SaaS", "UI/UX", "Dashboard", "E-commerce"],
-    imageSrc: "/portfolio/saas-ecommerce.png",
+    imageSrc: "/portfolio/saas-ecommerce.webp",
     imageAlt:
       "Aperçu de l'interface E-Shop Admin : tableau de bord SaaS d'administration e-commerce avec ventes, statuts de commande et top produits",
-    overlayImageSrc: "/portfolio/saas-ecommerce-phone.png",
+    overlayImageSrc: "/portfolio/saas-ecommerce-phone.webp",
   },
   {
     id: "mizan",
@@ -105,10 +105,10 @@ export const caseStudies: readonly CaseStudy[] = [
       "Mizan est une solution SaaS pensée pour les commerçants et e-commerçants qui veulent piloter stock, commandes, clients, messages et calcul de zakat depuis une même application mobile-first. Nous avons dessiné l'interface autour d'un tableau de bord clair, d'un suivi des ventes hebdomadaires et d'une gestion des commandes prête à l'usage terrain — le tout dans un vocabulaire visuel sobre, aligné avec l'identité Mizan.",
     tags: ["SaaS", "Mobile-first", "UI/UX", "Dashboard"],
     href: "https://mizan-commerce.com",
-    imageSrc: "/portfolio/mizan.png",
+    imageSrc: "/portfolio/mizan.webp",
     imageAlt:
       "Aperçu du projet Mizan : maquette de l'application SaaS de gestion de commerce, vue laptop et mobile avec tableau de bord, stock et commandes",
-    overlayImageSrc: "/portfolio/mizan-phone.png",
+    overlayImageSrc: "/portfolio/mizan-phone.webp",
   },
   {
     id: "haramain-prestige",
@@ -119,10 +119,10 @@ export const caseStudies: readonly CaseStudy[] = [
     longDescription:
       "Haramain Prestige est une conciergerie qui propose des hôtels soigneusement sélectionnés à tarifs négociés, associés à un accompagnement local et personnalisé, pour vivre le séjour à Makkah et Madinah en toute sérénité. Nous avons dessiné la vitrine pour rendre lisibles les piliers du service — sélection des hôtels, tarifs négociés, accompagnement sur place — et fluidifier la prise de contact des pèlerins et voyageurs.",
     tags: ["Site vitrine", "UI/UX", "Conciergerie", "Réservation"],
-    imageSrc: "/portfolio/haramain-prestige.png",
+    imageSrc: "/portfolio/haramain-prestige.webp",
     imageAlt:
       "Aperçu du site Haramain Prestige : maquette tablette de la conciergerie de séjour à Makkah et Madinah, avec calendrier de réservation en avant-plan",
-    overlayImageSrc: "/portfolio/haramain-prestige-calendar.png",
+    overlayImageSrc: "/portfolio/haramain-prestige-calendar.webp",
   },
   {
     id: "al-mumayiz",
@@ -134,9 +134,9 @@ export const caseStudies: readonly CaseStudy[] = [
       "Al Mumayiz est un site vitrine pensé pour les professionnels — revendeurs, distributeurs et boutiques spécialisées. Nous avons conçu une présentation claire qui met en avant le savoir-faire de l'atelier, la constance des produits et la relation directe avec les artisans, afin de simplifier la prise de contact pour un public métier.",
     tags: ["Site vitrine", "B2B", "UX/UI"],
     href: "https://al-mumayiz.com",
-    imageSrc: "/portfolio/al-mumayiz.png",
+    imageSrc: "/portfolio/al-mumayiz.webp",
     imageAlt:
       "Aperçu du site Al Mumayiz : maquette du site vitrine dédié aux professionnels des chachias",
-    overlayImageSrc: "/portfolio/al-mumayiz-chechia.png",
+    overlayImageSrc: "/portfolio/al-mumayiz-chechia.webp",
   },
 ]

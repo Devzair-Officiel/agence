@@ -12,14 +12,20 @@ import type { CaseStudy } from "~/config/case-studies"
  *     la carte, débordant sur le bord droit pour créer un vrai plan avant.
  *     L'overlay est rendu `alt=""` + `aria-hidden` — purement visuel.
  *
- * Mise en scène du pot :
- *   1. Reveal composé — au premier passage dans le viewport, la carte
- *      révèle le pot qui « arrive » depuis le coin bas-droit avec un
- *      léger arc + fade. Un seul déclenchement, puis l'observer se
- *      déconnecte pour ne pas rejouer et rester silencieux au scroll.
- *   2. Flottement ambiant — une fois posé, le pot oscille très
- *      légèrement (translateY + micro-rotation) via une animation CSS
- *      infinie. Pas de tracking pointer, pas de JS pendant le mouvement.
+ * Mise en scène :
+ *   1. Reveal — au premier passage dans le viewport (threshold 0.1),
+ *      l'overlay « arrive » depuis le coin bas-droit avec un léger arc
+ *      + fade en ~500 ms. Un seul déclenchement, puis l'observer se
+ *      déconnecte. L'observer de reveal est indépendant du preload réseau
+ *      géré par HomeFeaturedCaseStudy.
+ *   2. Pose finale — une fois révélé, l'overlay reste immobile.
+ *      Micro-interaction au hover desktop : léger décalage + micro-rotation.
+ *
+ * Priorité réseau :
+ *   Toutes les images utilisent `loading="lazy"`. Le preload anticipé est
+ *   géré par HomeFeaturedCaseStudy via new Image() (observer section +
+ *   watch current), évitant ainsi tout conflit fetchpriority avec les
+ *   ressources critiques (polices, CSS) dans le HTML SSR.
  *
  * Reflet interactif :
  *   - le gradient radial du `.case-card__glare` est positionné via
@@ -28,12 +34,11 @@ import type { CaseStudy } from "~/config/case-studies"
  *   - le cadre lui-même reste immobile — seul le reflet réagit.
  *
  * Accessibilité :
- *   - `prefers-reduced-motion: reduce` coupe reveal + flottement + tilt.
- *     Le pot reste visible dans son état final, sans mouvement.
- *   - `@media (scripting: none)` : si JS est indisponible, le pot est
+ *   - `prefers-reduced-motion: reduce` coupe reveal + micro-hover.
+ *     L'overlay reste visible dans son état final, sans mouvement.
+ *   - `@media (scripting: none)` : si JS est indisponible, l'overlay est
  *     visible directement (fallback SSR-safe, l'observer ne tourne pas).
- *   - `@media (hover: none)` : pas de tilt sur touch, mais l'ambiant
- *     continue (non interactif, discret).
+ *   - `@media (hover: none)` : pas de reflet sur touch.
  */
 
 const props = defineProps<{
@@ -74,14 +79,17 @@ onMounted(() => {
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-  // Reduced-motion ou pas d'observer disponible → pot immédiatement visible
-  // dans son état final, on saute complètement la révélation animée.
+  // Reduced-motion ou pas d'observer disponible → overlay immédiatement
+  // visible dans son état final, on saute complètement la révélation animée.
   if (reduced || typeof IntersectionObserver === "undefined") {
     revealed.value = true
     return
   }
   if (!root.value) return
 
+  // Observer de reveal uniquement — indépendant du preload réseau.
+  // threshold 0.1 : le reveal démarre dès que 10 % de la carte est visible,
+  // soit légèrement plus tôt qu'à 0.25 pour une apparition moins tardive.
   observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -93,7 +101,7 @@ onMounted(() => {
         }
       }
     },
-    { threshold: 0.25 },
+    { threshold: 0.1 },
   )
   observer.observe(root.value)
 })
@@ -126,9 +134,8 @@ onBeforeUnmount(() => {
       </div>
 
       <!--
-        Wrapper span pour la révélation, img à l'intérieur pour le
-        flottement. Les deux animations vivent sur des éléments
-        distincts → aucun conflit de `transform`.
+        Wrapper span pour la révélation, img à l'intérieur pour la pose.
+        Les deux éléments distincts évitent tout conflit de `transform`.
       -->
       <span
         v-if="props.study.overlayImageSrc"
@@ -266,23 +273,23 @@ onBeforeUnmount(() => {
 }
 
 /*
- * Overlay pot de miel — wrapper span.
+ * Overlay — wrapper span.
  *
- * Positionnement, reveal et empilement Z-index vivent ici. Le wrapper
- * ne porte AUCUN filter ni animation infinie : ces deux propriétés
- * (drop-shadow + oscillation) descendent sur l'img à l'intérieur pour
- * éviter de reformater l'ombre à chaque frame et pour empêcher un
- * conflit `transform` entre reveal (wrapper) et flottement (img).
- *
- * Reveal composé :
+ * Reveal composé (durée locale --case-card-reveal-duration, ~500 ms) :
  *   - état par défaut → opacity 0, translation depuis le bas-droit +
  *     léger arc (rotate 6deg) ;
  *   - passage dans le viewport → classe `.case-card--revealed` posée
- *     par l'IntersectionObserver → retour à opacity 1, transform none.
- *   - transition longue (`--duration-signature`, 900ms) pour un effet
- *     éditorial, unique.
+ *     par l'IntersectionObserver (threshold 0.1) → retour à opacity 1,
+ *     transform none.
+ *   - durée locale au composant pour ne pas modifier --duration-signature
+ *     utilisé ailleurs dans le design system.
+ *
+ * Une fois posé, l'overlay reste immobile — l'animation infinie de
+ * flottement a été supprimée. Micro-interaction hover sur `.case-card__overlay-img`.
  */
 .case-card__overlay {
+  --case-card-reveal-duration: 500ms;
+
   position: absolute;
   bottom: -10%;
   right: -30%;
@@ -294,8 +301,8 @@ onBeforeUnmount(() => {
   transform: translate(40px, 30px) rotate(6deg);
   transform-origin: 20% 20%;
   transition:
-    opacity var(--duration-signature) var(--ease-out),
-    transform var(--duration-signature) var(--ease-out);
+    opacity var(--case-card-reveal-duration) var(--ease-out),
+    transform var(--case-card-reveal-duration) var(--ease-out);
 }
 
 .case-card--revealed .case-card__overlay {
@@ -304,13 +311,15 @@ onBeforeUnmount(() => {
 }
 
 /*
- * Image pot — flottement ambiant.
+ * Image overlay — pose finale.
  *
- * Micro-oscillation infinie sur `transform` (compositor-only, 60 fps).
- * `alternate` évite la coupure sèche du cycle. Amplitude volontairement
- * discrète : le pot respire, il ne danse pas.
- * `will-change: transform` pré-alloue une couche compositor pour éviter
- * les repaints de l'ombre à chaque cycle.
+ * L'animation infinie `case-card-float` est supprimée.
+ * `will-change: transform` retiré — l'overlay est statique une fois révélé,
+ * aucune promotion de couche GPU n'est justifiée.
+ *
+ * Micro-interaction hover desktop (`:hover` sur la carte parente) :
+ * très léger décalage et micro-rotation pour un retour visuel subtil
+ * au survol, sans mouvement permanent.
  */
 .case-card__overlay-img {
   display: block;
@@ -318,25 +327,12 @@ onBeforeUnmount(() => {
   height: auto;
   filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.35));
   transform-origin: 55% 30%;
-  /*
-   * Flottement ambiant discret : présent mais pas envahissant.
-   *   - amplitude : ~10px vertical + 2° de balancement + micro-drift
-   *     horizontal, pour un mouvement organique mais posé ;
-   *   - cadence : 4.5s ease-in-out infinite alternate → cycle complet
-   *     9s, respiration lente.
-   * Compositor-only, `will-change: transform` pré-alloue une couche
-   * GPU pour éviter que l'ombre re-rendue à chaque frame ne coûte cher.
-   */
-  animation: case-card-float 4.5s ease-in-out infinite alternate;
-  will-change: transform;
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
-@keyframes case-card-float {
-  from {
-    transform: translate3d(0, 0, 0) rotate(-0.5deg);
-  }
-  to {
-    transform: translate3d(-2px, -10px, 0) rotate(1.5deg);
+@media (hover: hover) {
+  .case-card:hover .case-card__overlay-img {
+    transform: translate3d(-2px, -4px, 0) rotate(0.4deg);
   }
 }
 
@@ -360,8 +356,7 @@ onBeforeUnmount(() => {
 
 /*
  * Touch (hover: none) : pas d'événement hover fiable, on masque le
- * reflet. Le flottement ambiant du pot est conservé — mouvement passif,
- * non interactif, qui donne vie à la composition sans exiger d'action.
+ * reflet. Pas de micro-interaction hover sur l'overlay non plus.
  */
 @media (hover: none) {
   .case-card__glare {
@@ -371,7 +366,7 @@ onBeforeUnmount(() => {
 
 /*
  * Reduced-motion + scripting désactivé : le reflet et l'apparition
- * animée sont neutralisés, le pot est visible dans son état final.
+ * animée sont neutralisés, l'overlay est visible dans son état final.
  * Fallback SSR-safe : `scripting: none` couvre le cas où
  * l'IntersectionObserver ne tournerait jamais.
  */
@@ -385,8 +380,8 @@ onBeforeUnmount(() => {
     transition: none;
   }
   .case-card__overlay-img {
-    animation: none;
     transform: none;
+    transition: none;
   }
 }
 </style>

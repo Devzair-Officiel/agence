@@ -102,12 +102,12 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       section.getByRole('heading', { level: 3, name: 'Nidemiel' }),
     ).toBeVisible()
     // Visuel principal du projet, alt descriptif (non décoratif).
-    const projectImage = section.locator('img[src="/portfolio/nidemiel.png"]')
+    const projectImage = section.locator('img[src="/portfolio/nidemiel.webp"]')
     await expect(projectImage).toHaveCount(1)
     await expect(projectImage).toHaveAttribute('alt', /Nidemiel/)
     // Overlay pot de miel : purement décoratif, aria-hidden + alt vide.
     const overlay = section.locator(
-      'img[src="/portfolio/nidemiel-honey-jar.png"]',
+      'img[src="/portfolio/nidemiel-honey-jar.webp"]',
     )
     await expect(overlay).toHaveCount(1)
     await expect(overlay).toHaveAttribute('alt', '')
@@ -231,7 +231,7 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
       'Des solutions concrètes, pas seulement de belles interfaces.',
     )
     expect(html).toContain('Nidemiel')
-    expect(html).toContain('/portfolio/nidemiel.png')
+    expect(html).toContain('/portfolio/nidemiel.webp')
     // Method — 6 labels.
     for (const label of [
       'Découverte',

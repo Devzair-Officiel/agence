@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue"
+import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 import HomeCaseCard from "~/components/home/HomeCaseCard.vue"
@@ -27,15 +27,47 @@ import { caseStudies } from "~/config/case-studies"
  *     que le focus atterrisse hors du viewport lors d'une tabulation ;
  *   - les boutons prev / next sont désactivés en début / fin (pas de wrap).
  *
+ * Stratégie de preload (deux responsabilités distinctes) :
+ *   A — observer d'anticipation de la section (rootMargin: "800px 0px") :
+ *       déclenche le téléchargement des assets du premier slide avant même
+ *       que la section entre dans le viewport ; ne touche pas au reveal.
+ *   B — watch sur `current` : précharge discrètement les assets du slide
+ *       suivant dès que la slide courante change.
+ *   Un Set<string> évite les requêtes dupliquées entre les deux mécanismes.
+ *
  * L'ancre `id="realisations"` reste la cible du CTA hero et du lien de
  * navigation « Réalisations ».
  */
 
+const section = ref<HTMLElement | null>(null)
 const track = ref<HTMLElement | null>(null)
 const current = ref(0)
 const total = caseStudies.length
 
-let observer: IntersectionObserver | null = null
+let slideObserver: IntersectionObserver | null = null
+let sectionObserver: IntersectionObserver | null = null
+
+// URLs déjà demandées — évite les requêtes dupliquées inter-observers.
+const preloaded = new Set<string>()
+
+/**
+ * Précharge discrètement une ou deux URLs d'image via new Image().
+ * fetchPriority "low" pour ne pas concurrencer les ressources critiques.
+ */
+function preloadStudy(index: number) {
+  if (typeof window === "undefined") return
+  const study = caseStudies[index]
+  if (!study) return
+
+  for (const url of [study.imageSrc, study.overlayImageSrc]) {
+    if (!url || preloaded.has(url)) continue
+    preloaded.add(url)
+    const img = new window.Image()
+    img.decoding = "async"
+    img.fetchPriority = "low"
+    img.src = url
+  }
+}
 
 function goTo(index: number) {
   const el = track.value
@@ -55,13 +87,34 @@ function next() {
 }
 
 onMounted(() => {
-  const el = track.value
-  if (!el || typeof IntersectionObserver === "undefined") return
+  if (typeof window === "undefined" || typeof IntersectionObserver === "undefined") return
 
-  // Un IntersectionObserver par slide met à jour l'index courant sans
-  // scroll listener bruyant : le navigateur nous prévient dès qu'une
-  // slide atteint > 50 % de visibilité dans la piste horizontale.
-  observer = new IntersectionObserver(
+  // Observer A — anticipation de section.
+  // Démarre le téléchargement du premier slide ~800px avant l'entrée dans
+  // le viewport. Ne déclenche qu'une seule fois puis se déconnecte.
+  const sec = section.value
+  if (sec) {
+    sectionObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            preloadStudy(0)
+            sectionObserver?.disconnect()
+            sectionObserver = null
+            break
+          }
+        }
+      },
+      { rootMargin: "800px 0px", threshold: 0 },
+    )
+    sectionObserver.observe(sec)
+  }
+
+  // Observer B — tracking de la slide courante (> 50 % visible dans la piste).
+  const el = track.value
+  if (!el) return
+
+  slideObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
@@ -75,19 +128,27 @@ onMounted(() => {
     { root: el, threshold: [0.5, 0.75, 1] },
   )
   for (const child of Array.from(el.children)) {
-    observer.observe(child)
+    slideObserver.observe(child)
   }
 })
 
+// Précharge la slide suivante dès que `current` change.
+watch(current, (idx) => {
+  preloadStudy(idx + 1)
+})
+
 onBeforeUnmount(() => {
-  observer?.disconnect()
-  observer = null
+  slideObserver?.disconnect()
+  slideObserver = null
+  sectionObserver?.disconnect()
+  sectionObserver = null
 })
 </script>
 
 <template>
   <section
     id="realisations"
+    ref="section"
     class="home-case"
     aria-labelledby="home-case-title"
   >
