@@ -310,6 +310,7 @@ final class SymfonyContactMessageSenderTest extends TestCase
     public function testSendConvertsTransportExceptionToDomainException(): void
     {
         $transportError = new class ('SMTP timeout') extends \RuntimeException implements TransportExceptionInterface {
+            public function __construct(string $message) { parent::__construct($message); }
             public function getDebug(): string { return ''; }
             public function appendDebug(string $debug): void {}
         };
