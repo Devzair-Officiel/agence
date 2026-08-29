@@ -141,17 +141,55 @@ const onToggleMenu = () => {
 }
 
 .site-header__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-family-body);
   font-weight: var(--font-weight-body-strong);
   font-size: 0.9375rem;
   color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
   transition: color var(--duration-fast) var(--ease-out);
-  padding-block: var(--space-2);
 }
 
-.site-header__link:hover,
-.site-header__link.router-link-active {
+.site-header__link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  opacity: 0;
+  scale: 0.82;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    scale var(--duration-base) var(--ease-out);
+}
+
+.site-header__link:hover {
   color: var(--text-primary);
+}
+
+.site-header__link:hover::before {
+  opacity: 1;
+  scale: 1;
+}
+
+.site-header__link.router-link-active {
+  color: var(--text-accent);
+}
+
+.site-header__link.router-link-active::before {
+  opacity: 1;
+  scale: 1;
+  background-color: color-mix(in srgb, var(--action-primary) 11%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__link,
+  .site-header__link::before {
+    transition: none;
+  }
 }
 
 .site-header__menu-button {
@@ -177,6 +215,28 @@ const onToggleMenu = () => {
   height: 2px;
   background-color: currentColor;
   border-radius: 2px;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+.site-header__menu-button[aria-expanded="true"] .site-header__menu-icon span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.site-header__menu-button[aria-expanded="true"] .site-header__menu-icon span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0.2);
+}
+
+.site-header__menu-button[aria-expanded="true"] .site-header__menu-icon span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__menu-icon span {
+    transition: none;
+  }
 }
 
 @media (min-width: 1024px) {

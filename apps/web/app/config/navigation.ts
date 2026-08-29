@@ -39,10 +39,10 @@ export interface NavigationGroup {
 }
 
 export const primaryNavigation: readonly NavigationItem[] = [
+  { label: "Accueil", to: "/", isRoute: true },
   { label: "Expertises", to: "/expertises", isRoute: true },
   { label: "Agence", to: "/agence", isRoute: true },
   { label: "Ressources", to: "/ressources", isRoute: true },
-  { label: "Réalisations", to: "/#realisations", isRoute: true },
 ]
 
 // Depuis le split du formulaire vers `/contact` (page dédiée), le CTA

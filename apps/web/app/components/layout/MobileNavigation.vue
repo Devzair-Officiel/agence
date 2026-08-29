@@ -209,14 +209,33 @@ watch(isOpen, async (opened) => {
   font-weight: var(--font-weight-heading-medium);
   font-size: 1.375rem;
   letter-spacing: -0.02em;
-  color: var(--text-inverse);
+  color: var(--text-inverse-muted);
   min-height: var(--touch-target-min);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.mobile-navigation__link:hover {
+  color: var(--text-inverse);
+}
+
+.mobile-navigation__link.router-link-active {
+  color: var(--color-devzair-blue);
 }
 
 .mobile-navigation__arrow {
   font-family: var(--font-family-mono);
   font-size: 0.9375rem;
   color: var(--color-devzair-blue);
+  opacity: 0.45;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+.mobile-navigation__link:hover .mobile-navigation__arrow,
+.mobile-navigation__link.router-link-active .mobile-navigation__arrow {
+  transform: translateX(8px);
+  opacity: 1;
 }
 
 .mobile-navigation__cta {
@@ -227,14 +246,39 @@ watch(isOpen, async (opened) => {
 .mobile-nav-enter-active,
 .mobile-nav-leave-active {
   transition:
-    opacity var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
 }
 
 .mobile-nav-enter-from,
 .mobile-nav-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-12px);
+}
+
+.mobile-nav-enter-active .mobile-navigation__item {
+  animation: mobileItemIn var(--duration-slow) var(--ease-out) both;
+}
+
+.mobile-nav-enter-active .mobile-navigation__item:nth-child(1) { animation-delay: 80ms; }
+.mobile-nav-enter-active .mobile-navigation__item:nth-child(2) { animation-delay: 130ms; }
+.mobile-nav-enter-active .mobile-navigation__item:nth-child(3) { animation-delay: 180ms; }
+.mobile-nav-enter-active .mobile-navigation__item:nth-child(4) { animation-delay: 230ms; }
+.mobile-nav-enter-active .mobile-navigation__item:nth-child(5) { animation-delay: 280ms; }
+
+.mobile-nav-enter-active .mobile-navigation__cta {
+  animation: mobileItemIn var(--duration-slow) var(--ease-out) 320ms both;
+}
+
+@keyframes mobileItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -246,6 +290,16 @@ watch(isOpen, async (opened) => {
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-enter-active,
   .mobile-nav-leave-active {
+    transition: none;
+  }
+
+  .mobile-nav-enter-active .mobile-navigation__item,
+  .mobile-nav-enter-active .mobile-navigation__cta {
+    animation: none;
+  }
+
+  .mobile-navigation__link,
+  .mobile-navigation__arrow {
     transition: none;
   }
 }
