@@ -84,6 +84,125 @@ test.describe.serial('Admin — édition éditoriale (Phase 8C3)', () => {
     expect(blocking, 'Axe serious/critical violations on /admin/articles').toEqual([])
   })
 
+  test('liste articles R8 — colonne ID, en-têtes triables, actions inline', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r8-list-${Date.now()}`
+    const title = `E2E R8 liste — ${slug}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, title)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles`)
+
+    // Colonne ID présente (code tronqué avec title = UUID complet).
+    const idCell = page.locator('code.admin-article-id').first()
+    await expect(idCell).toBeVisible()
+    const titleAttr = await idCell.getAttribute('title')
+    expect(titleAttr).toMatch(/^[0-9a-f-]{36}$/)
+
+    // En-têtes triables portent aria-sort.
+    await expect(page.locator('th[aria-sort]').first()).toBeVisible()
+    // Modifié : tri par défaut → descending.
+    const thModifie = page.locator('th.admin-th-sort', { hasText: 'Modifié' })
+    await expect(thModifie).toHaveAttribute('aria-sort', 'descending')
+
+    // Actions inline : pas de bouton ⋯, Éditer et Archiver visibles directement.
+    await expect(page.locator('.admin-row-actions').first()).toBeVisible()
+    await expect(page.locator('details.admin-actions-details')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Archiver' }).first()).toBeVisible()
+
+    // Axe WCAG 2.2 AA — 0 violation serious/critical.
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    )
+    if (blocking.length > 0) {
+      console.log(blocking.map((v) => `- [${v.impact}] ${v.id}: ${v.help}`).join('\n'))
+    }
+    expect(blocking, 'Axe serious/critical violations sur /admin/articles (R8)').toEqual([])
+  })
+
+  test('liste articles R8 — tri par colonne change aria-sort et query string', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r8-sort-${Date.now()}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, `E2E R8 sort ${slug}`)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles`)
+
+    // Cliquer sur l'en-tête Article → tri par title asc.
+    await page.locator('th.admin-th-sort', { hasText: 'Article' }).getByRole('link').click()
+    await page.waitForURL(/sort=title/)
+
+    const url = new URL(page.url())
+    expect(url.searchParams.get('sort')).toBe('title')
+    expect(url.searchParams.get('direction')).toBe('asc')
+
+    // aria-sort mis à jour.
+    await expect(
+      page.locator('th.admin-th-sort', { hasText: 'Article' }),
+    ).toHaveAttribute('aria-sort', 'ascending')
+
+    // Cliquer à nouveau → flip vers desc.
+    await page.locator('th.admin-th-sort', { hasText: 'Article' }).getByRole('link').click()
+    await page.waitForURL(/direction=desc/)
+    await expect(
+      page.locator('th.admin-th-sort', { hasText: 'Article' }),
+    ).toHaveAttribute('aria-sort', 'descending')
+  })
+
+  test('liste articles R8 — 390 px : pas de débordement, actions inline visibles', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r8-mobile-${Date.now()}`
+    const title = `E2E R8 mobile — ${slug}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, title)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles`)
+
+    await expect(page.locator('p.admin-article-title', { hasText: title })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Archiver' }).first()).toBeVisible()
+
+    const scrollWidth = await page.evaluate(() => document.body.scrollWidth)
+    expect(scrollWidth, 'Pas de débordement horizontal à 390 px').toBeLessThanOrEqual(390)
+
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    )
+    if (blocking.length > 0) {
+      console.log(blocking.map((v) => `- [${v.impact}] ${v.id}: ${v.help}`).join('\n'))
+    }
+    expect(blocking, 'Axe serious/critical violations sur /admin/articles (390px R8)').toEqual([])
+  })
+
+  test('liste articles R8 — 1820 px : tableau large visible sans overflow', async ({ page }) => {
+    const slug = `${SLUG_PREFIX}r8-wide-${Date.now()}`
+    const title = `E2E R8 wide — ${slug}`
+
+    await login(page)
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles/new`)
+    await fillDraftForm(page, slug, title)
+    await page.getByRole('button', { name: 'Créer le brouillon' }).click()
+    await page.waitForURL(/\/admin\/articles\/[0-9a-f-]{36}\/edit$/)
+
+    await page.setViewportSize({ width: 1820, height: 900 })
+    await page.goto(`${ADMIN_BASE_URL}/admin/articles`)
+
+    await expect(page.locator('table.admin-table')).toBeVisible()
+    const scrollWidth = await page.evaluate(() => document.body.scrollWidth)
+    expect(scrollWidth, 'Pas de débordement horizontal à 1820 px').toBeLessThanOrEqual(1820)
+  })
+
   test('liste articles — 390 px responsive (correctif R3 mobile)', async ({ page }) => {
     // Crée un article pour que la liste ne soit pas vide.
     const slug = `${SLUG_PREFIX}mobile-r3-${Date.now()}`

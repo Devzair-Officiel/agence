@@ -132,7 +132,7 @@
 
         {# Zone de travail principale #}
         <main class="admin-workspace" id="admin-main" tabindex="-1">
-            <div class="admin-workspace__inner">
+            <div class="admin-workspace__inner {% block workspace_inner_modifier %}{% endblock %}">{# trim #}
 
                 {% for level, messages in app.flashes(['success', 'info', 'error']) %}
                     {% for message in messages %}

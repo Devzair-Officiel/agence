@@ -19,7 +19,7 @@ final class ListAdminArticlesHandler
 
     public function __invoke(ListAdminArticles $query): AdminArticleListPage
     {
-        $items = $this->repository->paginate($query->page, $query->perPage, $query->statusFilter);
+        $items = $this->repository->paginate($query->page, $query->perPage, $query->statusFilter, $query->sortField, $query->sortAscending);
         $total = $this->repository->count($query->statusFilter);
 
         return new AdminArticleListPage(

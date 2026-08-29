@@ -9,6 +9,7 @@ use App\Editorial\Domain\ArticleStatus;
 /**
  * Requête paginée pour l'écran de liste admin. `page` et `perPage` bornés
  * en amont par le contrôleur (page ≥ 1 clampée, perPage = 20 fixe en 8C3).
+ * `sortField` et `sortAscending` sont validés par whitelist dans le contrôleur.
  */
 final class ListAdminArticles
 {
@@ -20,6 +21,8 @@ final class ListAdminArticles
         public readonly int $page,
         public readonly int $perPage,
         public readonly ?ArticleStatus $statusFilter,
+        public readonly ArticleSortField $sortField = ArticleSortField::UpdatedAt,
+        public readonly bool $sortAscending = false,
     ) {
     }
 }

@@ -90,6 +90,110 @@ final class AdminArticleListControllerTest extends WebTestCase
         self::assertGreaterThan(0, $crawler->filterXPath('//ul[contains(@class, "pagination-links")]//a')->count());
     }
 
+    public function testIdColumnPresentInTable(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(1);
+
+        $crawler = $this->client->request('GET', '/admin/articles');
+
+        self::assertResponseIsSuccessful();
+        self::assertGreaterThan(
+            0,
+            $crawler->filterXPath('//tbody//code[contains(@class,"admin-article-id")]')->count(),
+        );
+    }
+
+    /**
+     * @dataProvider validSortProvider
+     */
+    public function testValidSortParamReturns200(string $sort, string $direction): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(2);
+
+        $this->client->request('GET', \sprintf('/admin/articles?sort=%s&direction=%s', $sort, $direction));
+
+        self::assertResponseIsSuccessful();
+    }
+
+    /**
+     * @return iterable<array{string, string}>
+     */
+    public static function validSortProvider(): iterable
+    {
+        yield 'id asc'         => ['id',         'asc'];
+        yield 'id desc'        => ['id',         'desc'];
+        yield 'title asc'      => ['title',      'asc'];
+        yield 'title desc'     => ['title',      'desc'];
+        yield 'status asc'     => ['status',     'asc'];
+        yield 'status desc'    => ['status',     'desc'];
+        yield 'updated_at asc' => ['updated_at', 'asc'];
+        yield 'updated_at desc'=> ['updated_at', 'desc'];
+    }
+
+    public function testInvalidSortFallsBackToDefault(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(2);
+
+        $crawler = $this->client->request('GET', '/admin/articles?sort=INVALID&direction=INVALID');
+
+        self::assertResponseIsSuccessful();
+        // La colonne Modifié doit porter aria-sort (tri par défaut).
+        self::assertGreaterThan(
+            0,
+            $crawler->filterXPath('//th[@aria-sort and contains(.,"Modifié")]')->count(),
+        );
+    }
+
+    public function testSortWithStatusFilter(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(3);
+
+        $this->client->request('GET', '/admin/articles?status=draft&sort=title&direction=asc');
+
+        self::assertResponseIsSuccessful();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('admin-th-sort', $body);
+    }
+
+    public function testSortPreservedInPaginationLinks(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(22);
+
+        $crawler = $this->client->request('GET', '/admin/articles?sort=title&direction=asc');
+
+        self::assertResponseIsSuccessful();
+        $paginationLinks = $crawler->filterXPath('//ul[contains(@class,"pagination-links")]//a');
+        self::assertGreaterThan(0, $paginationLinks->count());
+        $href = (string) $paginationLinks->first()->attr('href');
+        self::assertStringContainsString('sort=title', $href);
+        self::assertStringContainsString('direction=asc', $href);
+    }
+
+    public function testAriaCurrentSortColumnOnDefault(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $this->seedArticles(1);
+
+        $crawler = $this->client->request('GET', '/admin/articles');
+
+        self::assertResponseIsSuccessful();
+        // Par défaut : tri updated_at desc → aria-sort="descending" sur Modifié.
+        self::assertGreaterThan(
+            0,
+            $crawler->filterXPath('//th[@aria-sort="descending" and contains(.,"Modifié")]')->count(),
+        );
+        // Les autres colonnes triables ont aria-sort="none".
+        self::assertGreaterThan(
+            0,
+            $crawler->filterXPath('//th[@aria-sort="none" and contains(.,"Article")]')->count(),
+        );
+    }
+
     private function seedArticles(int $count): void
     {
         $repo = self::getContainer()->get(ArticleRepositoryInterface::class);

@@ -8,6 +8,7 @@ use App\Editorial\Application\Media\MediaAssetReaderInterface;
 use App\Editorial\Application\Query\AdminArticleEditView;
 use App\Editorial\Application\Query\AdminArticleListItem;
 use App\Editorial\Application\Query\AdminArticleReadRepositoryInterface;
+use App\Editorial\Application\Query\ArticleSortField;
 use App\Editorial\Domain\Article;
 use App\Editorial\Domain\ArticleStatus;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,15 +36,25 @@ final class DoctrineAdminArticleReadRepository implements AdminArticleReadReposi
     ) {
     }
 
-    public function paginate(int $page, int $perPage, ?ArticleStatus $statusFilter): array
-    {
+    public function paginate(
+        int $page,
+        int $perPage,
+        ?ArticleStatus $statusFilter,
+        ArticleSortField $sortField = ArticleSortField::UpdatedAt,
+        bool $sortAscending = false,
+    ): array {
+        $direction = $sortAscending ? 'ASC' : 'DESC';
+
         $qb = $this->entityManager->createQueryBuilder()
             ->select('a')
             ->from(Article::class, 'a')
-            ->orderBy('a.updatedAt', 'DESC')
-            ->addOrderBy('a.id', 'DESC')
+            ->orderBy($sortField->toDoctrineAlias(), $direction)
             ->setFirstResult(($page - 1) * $perPage)
             ->setMaxResults($perPage);
+
+        if ($sortField !== ArticleSortField::Id) {
+            $qb->addOrderBy($sortField->secondaryAlias(), $direction);
+        }
 
         if ($statusFilter !== null) {
             $qb->andWhere('a.status = :status')->setParameter('status', $statusFilter);

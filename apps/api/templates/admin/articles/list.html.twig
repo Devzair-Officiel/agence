@@ -2,7 +2,34 @@
 
 {% block title %}Articles — Administration Devzair{% endblock %}
 
+{% block workspace_inner_modifier %}admin-workspace__inner--wide{% endblock %}
+
+{#
+    Rendu d'un en-tête de colonne triable.
+    Paramètres :
+      - sort_key        : valeur du param `sort` pour cette colonne ;
+      - current_sort    : tri actuel ;
+      - current_direction : direction actuelle (asc|desc) ;
+      - default_dir     : direction par défaut si la colonne n'est pas active ;
+      - current_status  : filtre statut ou null.
+#}
+{% macro th_sort(label, sort_key, current_sort, current_direction, default_dir, current_status) %}
+    {%- set _is_active = (current_sort == sort_key) -%}
+    {%- set _next_dir  = _is_active ? (current_direction == 'asc' ? 'desc' : 'asc') : default_dir -%}
+    {%- set _aria_sort = _is_active ? (current_direction == 'asc' ? 'ascending' : 'descending') : 'none' -%}
+    <th scope="col"
+        class="admin-th-sort"
+        aria-sort="{{ _aria_sort }}">
+        <a href="{{ path('admin_articles_list', {
+            sort:      sort_key,
+            direction: _next_dir,
+            status:    current_status ? current_status.value : null,
+        }) }}">{{ label }}</a>
+    </th>
+{% endmacro %}
+
 {% block body %}
+{% import _self as list_macros %}
 <div class="admin-articles-page">
 
     {# ── En-tête ─────────────────────────────────────────────────────────── #}
@@ -23,28 +50,28 @@
     <nav class="admin-article-filters" aria-label="Filtrer les articles par statut">
         <ul role="list">
             <li>
-                <a href="{{ path('admin_articles_list') }}"
+                <a href="{{ path('admin_articles_list', { sort: current_sort, direction: current_direction }) }}"
                    class="admin-article-filter{% if current_status is null %} admin-article-filter--active{% endif %}"
                    {% if current_status is null %}aria-current="page"{% endif %}>
                     Tous
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_articles_list', {status: 'published'}) }}"
+                <a href="{{ path('admin_articles_list', { status: 'published', sort: current_sort, direction: current_direction }) }}"
                    class="admin-article-filter{% if current_status is not null and current_status.value == 'published' %} admin-article-filter--active{% endif %}"
                    {% if current_status is not null and current_status.value == 'published' %}aria-current="page"{% endif %}>
                     Publiés
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_articles_list', {status: 'draft'}) }}"
+                <a href="{{ path('admin_articles_list', { status: 'draft', sort: current_sort, direction: current_direction }) }}"
                    class="admin-article-filter{% if current_status is not null and current_status.value == 'draft' %} admin-article-filter--active{% endif %}"
                    {% if current_status is not null and current_status.value == 'draft' %}aria-current="page"{% endif %}>
                     Brouillons
                 </a>
             </li>
             <li>
-                <a href="{{ path('admin_articles_list', {status: 'archived'}) }}"
+                <a href="{{ path('admin_articles_list', { status: 'archived', sort: current_sort, direction: current_direction }) }}"
                    class="admin-article-filter{% if current_status is not null and current_status.value == 'archived' %} admin-article-filter--active{% endif %}"
                    {% if current_status is not null and current_status.value == 'archived' %}aria-current="page"{% endif %}>
                     Archivés
@@ -79,15 +106,20 @@
                 </caption>
                 <thead>
                     <tr>
-                        <th scope="col">Article</th>
-                        <th scope="col">Statut</th>
-                        <th scope="col">Modifié</th>
+                        {{ list_macros.th_sort('ID',      'id',         current_sort, current_direction, 'asc',  current_status) }}
+                        {{ list_macros.th_sort('Article', 'title',      current_sort, current_direction, 'asc',  current_status) }}
+                        {{ list_macros.th_sort('Statut',  'status',     current_sort, current_direction, 'asc',  current_status) }}
+                        {{ list_macros.th_sort('Modifié', 'updated_at', current_sort, current_direction, 'desc', current_status) }}
                         <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in result.items %}
                         <tr>
+                            <td data-label="ID">
+                                <code class="admin-article-id"
+                                      title="{{ item.id }}">{{ item.id|slice(0, 8) }}…</code>
+                            </td>
                             <td class="admin-article-cell" data-label="Article">
                                 <p class="admin-article-title">{{ item.title }}</p>
                                 <code class="admin-article-slug">{{ item.slug }}</code>
@@ -121,16 +153,22 @@
             <ul class="pagination-links">
                 {% if result.hasPrevious() %}
                     <li>
-                        <a href="{{ path('admin_articles_list', { page: result.page - 1, status: current_status ? current_status.value : null }) }}">
-                            ← Précédent
-                        </a>
+                        <a href="{{ path('admin_articles_list', {
+                            page:      result.page - 1,
+                            status:    current_status ? current_status.value : null,
+                            sort:      current_sort,
+                            direction: current_direction,
+                        }) }}">← Précédent</a>
                     </li>
                 {% endif %}
                 {% if result.hasNext() %}
                     <li>
-                        <a href="{{ path('admin_articles_list', { page: result.page + 1, status: current_status ? current_status.value : null }) }}">
-                            Suivant →
-                        </a>
+                        <a href="{{ path('admin_articles_list', {
+                            page:      result.page + 1,
+                            status:    current_status ? current_status.value : null,
+                            sort:      current_sort,
+                            direction: current_direction,
+                        }) }}">Suivant →</a>
                     </li>
                 {% endif %}
             </ul>

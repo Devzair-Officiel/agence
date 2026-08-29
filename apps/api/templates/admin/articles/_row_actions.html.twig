@@ -1,54 +1,43 @@
 {#
-    Attend `item` (`AdminArticleListItem`).
+    Actions inline par ligne — attend `item` (`AdminArticleListItem`).
 
     Chaque action destructrice a son propre formulaire POST + jeton CSRF
     dédié à l'UUID — un jeton exfiltré ne suffit qu'à agir sur l'article
-    associé, pas sur l'ensemble du catalogue. Aucun JavaScript.
-
-    Structure :
-    - action primaire : lien Éditer / Voir (selon statut) ;
-    - actions secondaires : widget <details>/<summary> natif, sans ARIA menu,
-      sans JS — accessible au clavier (Espace / Entrée sur le résumé).
+    associé. Pas de <details>, pas de JavaScript.
 #}
 <div class="admin-row-actions">
+
     <a href="{{ path('admin_article_edit', { id: item.id }) }}"
-       class="button-link button-small admin-row-primary-action">
+       class="button-link button-small">
         {% if item.status.value == 'archived' %}Voir{% else %}Éditer{% endif %}
     </a>
 
-    <details class="admin-actions-details">
-        <summary class="admin-actions-summary">
-            <span aria-hidden="true">⋯</span>
-            <span class="visually-hidden">Actions pour « {{ item.title }} »</span>
-        </summary>
-        <div class="admin-actions-panel">
-            {% if item.status.value == 'draft' %}
-                <form method="post"
-                      action="{{ path('admin_article_publish', { id: item.id }) }}"
-                      class="inline-form">
-                    <input type="hidden" name="_csrf_token"
-                           value="{{ csrf_token('article_publish_' ~ item.id) }}">
-                    <button type="submit" class="button-small button-primary">Publier</button>
-                </form>
-            {% endif %}
+    {% if item.status.value == 'draft' %}
+        <form method="post"
+              action="{{ path('admin_article_publish', { id: item.id }) }}"
+              class="inline-form">
+            <input type="hidden" name="_csrf_token"
+                   value="{{ csrf_token('article_publish_' ~ item.id) }}">
+            <button type="submit" class="button-small button-primary">Publier</button>
+        </form>
+    {% endif %}
 
-            {% if item.status.value != 'archived' %}
-                <form method="post"
-                      action="{{ path('admin_article_archive', { id: item.id }) }}"
-                      class="inline-form">
-                    <input type="hidden" name="_csrf_token"
-                           value="{{ csrf_token('article_archive_' ~ item.id) }}">
-                    <button type="submit" class="button-small button-danger-subtle">Archiver</button>
-                </form>
-            {% else %}
-                <form method="post"
-                      action="{{ path('admin_article_restore', { id: item.id }) }}"
-                      class="inline-form">
-                    <input type="hidden" name="_csrf_token"
-                           value="{{ csrf_token('article_restore_' ~ item.id) }}">
-                    <button type="submit" class="button-small">Restaurer</button>
-                </form>
-            {% endif %}
-        </div>
-    </details>
+    {% if item.status.value != 'archived' %}
+        <form method="post"
+              action="{{ path('admin_article_archive', { id: item.id }) }}"
+              class="inline-form">
+            <input type="hidden" name="_csrf_token"
+                   value="{{ csrf_token('article_archive_' ~ item.id) }}">
+            <button type="submit" class="button-small button-danger-subtle">Archiver</button>
+        </form>
+    {% else %}
+        <form method="post"
+              action="{{ path('admin_article_restore', { id: item.id }) }}"
+              class="inline-form">
+            <input type="hidden" name="_csrf_token"
+                   value="{{ csrf_token('article_restore_' ~ item.id) }}">
+            <button type="submit" class="button-small">Restaurer</button>
+        </form>
+    {% endif %}
+
 </div>

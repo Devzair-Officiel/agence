@@ -7,6 +7,7 @@ namespace App\Tests\Editorial\Support;
 use App\Editorial\Application\Query\AdminArticleEditView;
 use App\Editorial\Application\Query\AdminArticleListItem;
 use App\Editorial\Application\Query\AdminArticleReadRepositoryInterface;
+use App\Editorial\Application\Query\ArticleSortField;
 use App\Editorial\Domain\Article;
 use App\Editorial\Domain\ArticleStatus;
 use Symfony\Component\Uid\Uuid;
@@ -27,16 +28,26 @@ final class InMemoryAdminArticleReadRepository implements AdminArticleReadReposi
         $this->articles[$article->id()->toRfc4122()] = $article;
     }
 
-    public function paginate(int $page, int $perPage, ?ArticleStatus $statusFilter): array
-    {
+    public function paginate(
+        int $page,
+        int $perPage,
+        ?ArticleStatus $statusFilter,
+        ArticleSortField $sortField = ArticleSortField::UpdatedAt,
+        bool $sortAscending = false,
+    ): array {
         $filtered = $this->filtered($statusFilter);
-        usort($filtered, static function (Article $a, Article $b): int {
-            $cmp = $b->updatedAt() <=> $a->updatedAt();
-            if ($cmp !== 0) {
-                return $cmp;
+        usort($filtered, static function (Article $a, Article $b) use ($sortField, $sortAscending): int {
+            $cmp = match ($sortField) {
+                ArticleSortField::Id        => strcmp($a->id()->toRfc4122(), $b->id()->toRfc4122()),
+                ArticleSortField::Title     => strcmp($a->title(), $b->title()),
+                ArticleSortField::Status    => $a->status()->value <=> $b->status()->value,
+                ArticleSortField::UpdatedAt => $a->updatedAt() <=> $b->updatedAt(),
+            };
+            if ($cmp === 0 && $sortField !== ArticleSortField::Id) {
+                $cmp = strcmp($a->id()->toRfc4122(), $b->id()->toRfc4122());
             }
 
-            return strcmp($b->id()->toRfc4122(), $a->id()->toRfc4122());
+            return $sortAscending ? $cmp : -$cmp;
         });
 
         $slice = array_values(\array_slice($filtered, ($page - 1) * $perPage, $perPage));
