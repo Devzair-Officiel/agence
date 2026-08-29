@@ -2,7 +2,8 @@
 
 > Source de vérité fonctionnelle du sous-projet « Estimer votre projet ».
 > EST-0 — Cadrage et documentation : **TERMINÉ** (2026-08-29).
-> Prochaine phase : **EST-1 — Domaine + moteur d'estimation**.
+> EST-1A — Contrat métier : **TERMINÉ** (2026-08-29).
+> Prochaine phase : **EST-1B — Calibration + moteur** (bloqué par Q-01 — grille tarifaire Devzair).
 
 ---
 
@@ -1167,12 +1168,6 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 |---|---|---|---|
 | Q-01 | Grille tarifaire réelle (montants MIN / MAX par type et option) | Devzair | Bloque la calibration du moteur. EST-1A démarre sans Q-01. |
 
-### BLOQUANT EST-2 — Architecture UX
-
-| # | Question | Responsable | Note |
-|---|---|---|---|
-| Q-13 | La page `/estimer-mon-projet` est-elle pré-rendue ou SSR dynamique ? | Devzair (SEO / performance) | Décision d'architecture nécessaire avant la fin de EST-2. |
-
 ### BLOQUANT EST-5 — Modalités de paiement
 
 | # | Question | Responsable | Note |
@@ -1202,6 +1197,7 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 | Q-05 | Texte juridique de non-engagement (avertissement résultat) | Devzair + conseil juridique | Placeholder autorisé pendant le développement — obligatoire avant mise en production. |
 | Q-07 | Conditions CGV / CGU liées à l'estimation | Devzair | À VALIDER avant lancement public. |
 | Q-08 | La page `/estimer-mon-projet` est-elle indexable ou noindex ? | Devzair (SEO) | Décision SEO à prendre avant EST-9. |
+| Q-13 | La page `/estimer-mon-projet` est-elle pré-rendue ou SSR dynamique ? | Devzair (SEO / performance) | Le shell UX peut être développé sans cette décision. À trancher avant EST-9 / mise en production. |
 | Q-14 | Faut-il un flux RSS ou sitemap spécifique à l'estimateur ? | Devzair | À VALIDER lors de la recette EST-9. |
 
 ### NON BLOQUANT À CE STADE

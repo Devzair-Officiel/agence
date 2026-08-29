@@ -1490,13 +1490,13 @@ Il n'interfère pas avec les phases 1–13 et ne les renumérote pas.
 
 EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite aucune grille tarifaire réelle.
 
-#### EST-1A — Contrat métier
+#### EST-1A — Contrat métier — **TERMINÉE** (2026-08-29)
 
-- [ ] DTO `ProjectEstimateInput` (types, enums `ProjectType`, value objects, validation métier).
-- [ ] DTO `EstimateResult` (fourchette, lignes détaillées, `pricingVersion`, hypothèses).
-- [ ] Invariants métier (cohérence input/output, règles de composition sans montant).
-- [ ] Fixtures tarifaires explicitement marquées **TEST** — aucune valeur Devzair réelle.
-- [ ] PHPUnit domaine.
+- [x] DTO `ProjectEstimateInput` (types, enums `ProjectType`, value objects, validation métier).
+- [x] DTO `EstimateResult` (fourchette, lignes détaillées, `pricingVersion`, hypothèses).
+- [x] Invariants métier (cohérence input/output, règles de composition sans montant).
+- [x] Fixtures tarifaires explicitement marquées **TEST** — aucune valeur Devzair réelle.
+- [x] PHPUnit domaine (93 tests, 137 assertions — suite complète 706/706).
 
 **Dépendances :** EST-0 terminé.
 **Critère de sortie :** Le contrat métier est défini, typé, testé avec fixtures TEST. Aucune grille Devzair réelle. EST-1A peut démarrer sans Q-01.
