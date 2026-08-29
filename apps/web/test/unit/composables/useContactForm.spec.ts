@@ -254,6 +254,54 @@ describe("useContactForm.submit", () => {
     if (result.status === "error") expect(result.code).toBe("payload_too_large")
   })
 
+  it("maps HTTP 500 → temporary_error (never validation_failed)", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      makeFetchResponse(500, { status: "error", request_id: "req-500" }),
+    )
+    const form = useContactForm({ endpoint: "/api/contact", fetcher })
+    Object.assign(form.values, validValues())
+    const result = await form.submit()
+
+    expect(result.status).toBe("error")
+    if (result.status === "error") {
+      expect(result.code).toBe("temporary_error")
+      expect(result.code).not.toBe("validation_failed")
+    }
+    expect(form.globalError.value?.code).toBe("temporary_error")
+  })
+
+  it("maps unknown 4xx without recognized code → temporary_error (not validation_failed)", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      makeFetchResponse(418, { status: "error", code: "i_am_a_teapot", request_id: "req-418" }),
+    )
+    const form = useContactForm({ endpoint: "/api/contact", fetcher })
+    Object.assign(form.values, validValues())
+    const result = await form.submit()
+
+    if (result.status === "error") {
+      expect(result.code).not.toBe("validation_failed")
+      expect(result.code).toBe("temporary_error")
+    }
+  })
+
+  it("maps HTTP 400 validation_failed → field errors without setting globalError", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      makeFetchResponse(400, {
+        status: "error",
+        code: "validation_failed",
+        request_id: "req-val",
+        errors: { name: ["Le nom est requis."] },
+      }),
+    )
+    const form = useContactForm({ endpoint: "/api/contact", fetcher })
+    Object.assign(form.values, validValues())
+    await form.submit()
+
+    expect(form.fieldErrors.value.name).toBeTruthy()
+    // Pas de bandeau global : les erreurs sont inline sous les champs.
+    expect(form.globalError.value).toBeNull()
+  })
+
   it("maps HTTP 503 temporary_error → dedicated code and preserves user values", async () => {
     const fetcher = vi.fn().mockResolvedValue(
       makeFetchResponse(503, {

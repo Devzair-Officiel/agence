@@ -164,12 +164,14 @@ function mapErrorCode(httpStatus: number, code: string | undefined): ContactErro
   if (typeof code === "string" && (knownCodes as readonly string[]).includes(code)) {
     return code as ContactErrorCode
   }
-  // Fallback contrat par statut HTTP.
+  // Fallback par statut HTTP — un 5xx n'est JAMAIS une erreur de saisie.
   if (httpStatus === 413) return "payload_too_large"
   if (httpStatus === 429) return "rate_limited"
   if (httpStatus === 403) return "origin_not_allowed"
-  if (httpStatus === 503) return "temporary_error"
-  return "validation_failed"
+  if (httpStatus >= 500) return "temporary_error"
+  // Défaut sûr : temporary_error, pas validation_failed — un statut inconnu
+  // ne doit jamais faire croire à l'utilisateur que ses champs sont invalides.
+  return "temporary_error"
 }
 
 function normaliseErrors(
@@ -312,10 +314,14 @@ export function useContactForm(options: UseContactFormOptions): ContactFormApi {
       fieldErrors.value = mapped
     }
     if (normalised.status === "error") {
-      globalError.value = {
-        code: normalised.code,
-        requestId: normalised.requestId,
-        retryAfter: normalised.retryAfter,
+      // Pour validation_failed, les erreurs inline sous les champs suffisent.
+      // Pas de bandeau global qui ferait croire à une panne serveur.
+      if (normalised.code !== "validation_failed") {
+        globalError.value = {
+          code: normalised.code,
+          requestId: normalised.requestId,
+          retryAfter: normalised.retryAfter,
+        }
       }
     }
     return normalised

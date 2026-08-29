@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useId } from "vue"
+import { computed, nextTick, onMounted, ref, useTemplateRef, useId } from "vue"
 
 import BaseButton from "~/components/base/BaseButton.vue"
 import ContactFormField from "~/components/contact/ContactFormField.vue"
@@ -63,10 +63,7 @@ onMounted(() => {
 })
 
 const statusRef = ref<InstanceType<typeof ContactFormStatus> | null>(null)
-const nameFieldRef = ref<InstanceType<typeof ContactFormField> | null>(null)
-const emailFieldRef = ref<InstanceType<typeof ContactFormField> | null>(null)
-const messageFieldRef = ref<InstanceType<typeof ContactFormField> | null>(null)
-const consentInputRef = ref<HTMLInputElement | null>(null)
+const formEl = useTemplateRef<HTMLFormElement>("formEl")
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 
 const projectOptions: readonly {
@@ -109,7 +106,7 @@ const globalErrorTitle = computed(() => {
     case "network_error":
       return "Connexion impossible"
     case "temporary_error":
-      return "Service momentanément indisponible"
+      return "Votre message n'a pas pu être envoyé"
     default:
       return "Envoi impossible"
   }
@@ -131,10 +128,8 @@ const globalErrorMessage = computed(() => {
       return "Votre navigateur n'a pas été reconnu comme un visiteur légitime. Merci de recharger la page."
     case "network_error":
       return "Aucune réponse du serveur. Vérifiez votre connexion et réessayez."
-    case "validation_failed":
-      return "Certaines informations sont incorrectes ou manquantes. Corrigez les champs signalés ci-dessous."
     case "temporary_error":
-      return "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard."
+      return "Un problème technique a empêché l'envoi. Vos informations sont conservées. Merci de réessayer dans quelques instants."
     default:
       return "Une erreur inattendue est survenue. Merci de réessayer dans un instant."
   }
@@ -150,22 +145,12 @@ function onTurnstileFailure(): void {
 
 async function focusFirstInvalidField(): Promise<void> {
   await nextTick()
-  const errors = form.fieldErrors.value
-  if (errors.name && nameFieldRef.value?.$el instanceof HTMLElement) {
-    nameFieldRef.value.$el.querySelector<HTMLInputElement>("input, textarea")?.focus()
-    return
-  }
-  if (errors.email && emailFieldRef.value?.$el instanceof HTMLElement) {
-    emailFieldRef.value.$el.querySelector<HTMLInputElement>("input, textarea")?.focus()
-    return
-  }
-  if (errors.message && messageFieldRef.value?.$el instanceof HTMLElement) {
-    messageFieldRef.value.$el.querySelector<HTMLTextAreaElement>("textarea")?.focus()
-    return
-  }
-  if (errors.consent && consentInputRef.value) {
-    consentInputRef.value.focus()
-  }
+  // Approche générique : premier contrôle portant aria-invalid dans l'ordre DOM.
+  // Couvre name, email, company, telephone, projectType (radio), message, consent
+  // sans liste codée en dur — chaque ContactFormField pose déjà aria-invalid sur
+  // son <input>/<textarea>, les radios et la checkbox le font également.
+  const firstInvalid = formEl.value?.querySelector<HTMLElement>("[aria-invalid='true']")
+  firstInvalid?.focus()
 }
 
 async function focusStatusBanner(): Promise<void> {
@@ -197,6 +182,7 @@ async function onSubmit(): Promise<void> {
 
 <template>
   <form
+    ref="formEl"
     class="contact-form"
     novalidate
     :aria-labelledby="titleId"
@@ -251,7 +237,6 @@ async function onSubmit(): Promise<void> {
         </p>
         <div class="contact-form__grid">
           <ContactFormField
-            ref="nameFieldRef"
             v-model="form.values.name"
             class="contact-form__field contact-form__field--name"
             label="Votre nom"
@@ -266,7 +251,6 @@ async function onSubmit(): Promise<void> {
           />
 
           <ContactFormField
-            ref="emailFieldRef"
             v-model="form.values.email"
             class="contact-form__field contact-form__field--email"
             label="Votre adresse email"
@@ -334,6 +318,7 @@ async function onSubmit(): Promise<void> {
                 name="projectType"
                 class="contact-form__project-input"
                 :value="option.value"
+                :aria-invalid="Boolean(form.fieldErrors.value.projectType) || undefined"
               >
               <span class="contact-form__project-dot" aria-hidden="true" />
               <span class="contact-form__project-label">{{ option.label }}</span>
@@ -355,7 +340,6 @@ async function onSubmit(): Promise<void> {
           <span>Votre message</span>
         </p>
         <ContactFormField
-          ref="messageFieldRef"
           v-model="form.values.message"
           class="contact-form__field contact-form__field--message"
           label="Votre message"
@@ -381,7 +365,6 @@ async function onSubmit(): Promise<void> {
         <div class="contact-form__consent" :data-invalid="Boolean(form.fieldErrors.value.consent) || undefined">
           <label class="contact-form__consent-label">
             <input
-              ref="consentInputRef"
               v-model="form.values.consent"
               type="checkbox"
               name="consent"

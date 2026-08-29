@@ -141,6 +141,94 @@ describe("ContactForm", () => {
     expect(privacyNode.text()).toContain("RGPD")
   })
 
+  describe("HTTP 500 — temporary_error, pas validation_failed", () => {
+    let originalFetch: typeof globalThis.fetch | undefined
+
+    beforeEach(() => {
+      originalFetch = globalThis.fetch
+    })
+
+    afterEach(() => {
+      if (originalFetch) globalThis.fetch = originalFetch
+    })
+
+    it("affiche le bandeau technique, pas un message d'erreur de saisie", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ status: "error", request_id: "aabbccdd-0000-0000-0000-000000000000" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        ),
+      ) as unknown as typeof globalThis.fetch
+
+      const wrapper = mountForm()
+      await wrapper.get('input[name="name"]').setValue("Alice Dupont")
+      await wrapper.get('input[name="email"]').setValue("alice@example.com")
+      await wrapper.get('textarea[name="message"]').setValue(
+        "Nous souhaitons refondre notre site vitrine pour clarifier notre offre.",
+      )
+      await wrapper.get('input[name="consent"]').setValue(true)
+      wrapper.findComponent({ name: "TurnstileWidget" }).vm.$emit("success", "cf-token-xyz")
+      await flushPromises()
+
+      await wrapper.get("form").trigger("submit")
+      await flushPromises()
+
+      const banner = wrapper.find(".contact-form__status")
+      expect(banner.exists()).toBe(true)
+      expect(banner.text()).toContain("Votre message n'a pas pu être envoyé")
+      expect(banner.text()).not.toContain("incorrectes ou manquantes")
+      // La référence courte est affichée, l'UUID brut non.
+      expect(banner.text()).toContain("#AABBCCDD")
+      expect(banner.text()).not.toContain("aabbccdd-0000-0000-0000-000000000000")
+    })
+  })
+
+  describe("validation_failed serveur — erreurs inline, pas de bandeau global", () => {
+    let originalFetch: typeof globalThis.fetch | undefined
+
+    beforeEach(() => {
+      originalFetch = globalThis.fetch
+    })
+
+    afterEach(() => {
+      if (originalFetch) globalThis.fetch = originalFetch
+    })
+
+    it("affiche les erreurs sous les champs sans gros bandeau rouge", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            status: "error",
+            code: "validation_failed",
+            request_id: "req-val-server",
+            errors: { email: ["L'adresse email est invalide."] },
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        ),
+      ) as unknown as typeof globalThis.fetch
+
+      const wrapper = mountForm()
+      await wrapper.get('input[name="name"]').setValue("Alice Dupont")
+      await wrapper.get('input[name="email"]').setValue("alice@example.com")
+      await wrapper.get('textarea[name="message"]').setValue(
+        "Message suffisamment long pour passer la validation client.",
+      )
+      await wrapper.get('input[name="consent"]').setValue(true)
+      wrapper.findComponent({ name: "TurnstileWidget" }).vm.$emit("success", "cf-token-xyz")
+      await flushPromises()
+
+      await wrapper.get("form").trigger("submit")
+      await flushPromises()
+
+      // Pas de bandeau d'erreur global.
+      expect(wrapper.find(".contact-form__status").exists()).toBe(false)
+      // L'erreur inline est présente (aria-invalid + message sous le champ).
+      const emailInput = wrapper.get('input[name="email"]').element as HTMLInputElement
+      expect(emailInput.getAttribute("aria-invalid")).toBe("true")
+      expect(wrapper.text()).toContain("invalide")
+    })
+  })
+
   describe("global error banner on HTTP 503", () => {
     let originalFetch: typeof globalThis.fetch | undefined
 
@@ -189,11 +277,13 @@ describe("ContactForm", () => {
 
       const banner = wrapper.find(".contact-form__status")
       expect(banner.exists()).toBe(true)
-      expect(banner.text()).toContain("Service momentanément indisponible")
+      expect(banner.text()).toContain("Votre message n'a pas pu être envoyé")
       expect(banner.text()).toContain(
-        "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard.",
+        "Un problème technique a empêché l'envoi. Vos informations sont conservées.",
       )
-      expect(banner.text()).toContain("req-503-verbatim")
+      // L'UUID complet n'est jamais affiché — seule la référence courte (#XXXXXXXX).
+      expect(banner.text()).not.toContain("req-503-verbatim")
+      expect(banner.text()).toContain("#REQ-503-")
 
       // Contrat ADR-008 §7 : les valeurs ne doivent pas être effacées.
       expect(

@@ -8,7 +8,6 @@ use App\Contact\Dto\ContactRequest;
 use App\Contact\Service\SymfonyContactMessageSender;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\Mailer\MailerInterface;
 
 /**
  * Test d'intégration — rendu Twig réel via le pipeline Symfony Mailer.
@@ -26,16 +25,16 @@ use Symfony\Component\Mailer\MailerInterface;
 #[CoversClass(SymfonyContactMessageSender::class)]
 final class ContactEmailRenderingTest extends KernelTestCase
 {
-    public function testSendRendersTemplatesWithoutThrowingReservedVariableException(): void
+    private function sender(): SymfonyContactMessageSender
     {
         self::bootKernel();
+        /** @var SymfonyContactMessageSender */
+        return self::getContainer()->get(SymfonyContactMessageSender::class);
+    }
 
-        $sender = new SymfonyContactMessageSender(
-            self::getContainer()->get(MailerInterface::class),
-            fromEmail: 'no-reply@devzair.test',
-            fromName: 'Devzair — Site',
-            recipient: 'contact@devzair.test',
-        );
+    public function testSendRendersTemplatesWithoutThrowingReservedVariableException(): void
+    {
+        $sender = $this->sender();
 
         // Doit ne lever aucune exception — notamment pas :
         // Symfony\Component\Mime\Exception\InvalidArgumentException:
@@ -49,14 +48,7 @@ final class ContactEmailRenderingTest extends KernelTestCase
 
     public function testSendWithXssInMessageDoesNotThrow(): void
     {
-        self::bootKernel();
-
-        $sender = new SymfonyContactMessageSender(
-            self::getContainer()->get(MailerInterface::class),
-            fromEmail: 'no-reply@devzair.test',
-            fromName: 'Devzair — Site',
-            recipient: 'contact@devzair.test',
-        );
+        $sender = $this->sender();
 
         $xssRequest = new ContactRequest(
             name: '<script>alert("xss")</script>',
@@ -76,14 +68,7 @@ final class ContactEmailRenderingTest extends KernelTestCase
 
     public function testSendWithOptionalFieldsNullDoesNotThrow(): void
     {
-        self::bootKernel();
-
-        $sender = new SymfonyContactMessageSender(
-            self::getContainer()->get(MailerInterface::class),
-            fromEmail: 'no-reply@devzair.test',
-            fromName: 'Devzair — Site',
-            recipient: 'contact@devzair.test',
-        );
+        $sender = $this->sender();
 
         $minimalRequest = new ContactRequest(
             name: 'Bob Martin',

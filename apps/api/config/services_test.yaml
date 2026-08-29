@@ -18,7 +18,18 @@ services:
 
     App\Contact\Service\ContactMessageSenderInterface:
         alias: App\Contact\Service\InMemoryContactMessageSender
+
+    # Publié pour les tests d'intégration du rendu email (ContactEmailRenderingTest).
+    # Le sender réel envoie via `null://null` en test, ce qui déclenche le
+    # BodyRenderer Twig sans jamais contacter un serveur SMTP.
+    # Les arguments scalaires doivent être répétés ici : re-déclarer un service
+    # dans un second fichier efface les arguments explicites du premier fichier.
+    App\Contact\Service\SymfonyContactMessageSender:
         public: true
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName: '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
 
     # Force le rate limiter à utiliser un cache en mémoire, isolé par kernel :
     # chaque `createClient()` reboot le kernel, chaque test repart d'un bucket

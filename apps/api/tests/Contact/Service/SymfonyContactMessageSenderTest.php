@@ -153,19 +153,12 @@ final class SymfonyContactMessageSenderTest extends TestCase
 
     /**
      * Régression : "email" est une clé réservée de TemplatedEmail.
-     * Si quelqu'un remet `'email' => ...` dans le contexte, Symfony lève
-     * une `InvalidArgumentException` immédiatement dans `->context()`.
-     * Ce test unitaire prouve que le mécanisme existe et que notre code ne
-     * l'enfreint pas (le test suivant).
+     * La vérification est effectuée par `BodyRenderer` au moment du rendu
+     * (pas dans `->context()` qui se contente de stocker). Ce test unitaire
+     * prouve que notre sender utilise "visitorEmail" et n'expose pas "email"
+     * dans le contexte — ce qui évite l'exception au rendu.
+     * Le test d'intégration `ContactEmailRenderingTest` valide le rendu réel.
      */
-    public function testTemplatedEmailThrowsImmediatelyForReservedEmailKey(): void
-    {
-        $this->expectException(\Symfony\Component\Mime\Exception\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/reserved/i');
-
-        (new TemplatedEmail())->context(['email' => 'will-throw@example.com']);
-    }
-
     public function testContextDoesNotUseReservedEmailKeyButVisitorEmail(): void
     {
         $captured = null;
@@ -260,7 +253,7 @@ final class SymfonyContactMessageSenderTest extends TestCase
         self::assertInstanceOf(TemplatedEmail::class, $captured);
         $ctx = $captured->getContext();
 
-        foreach (['name', 'email', 'company', 'telephone', 'projectType', 'message',
+        foreach (['name', 'visitorEmail', 'company', 'telephone', 'projectType', 'message',
                   'consent', 'requestId', 'shortId', 'receivedAtFormatted'] as $key) {
             self::assertArrayHasKey($key, $ctx, "La clé « $key » est absente du contexte Twig.");
         }

@@ -4,6 +4,11 @@ import { computed } from "vue"
 /**
  * Bandeau d'état — succès ou erreur globale du formulaire.
  *
+ * Le `requestId` complet est conservé pour la corrélation côté logs/API,
+ * mais seule la référence courte (#XXXXXXXX, 8 premiers caractères en
+ * majuscules) est affichée à l'utilisateur — l'UUID brut est technique
+ * et n'apporte rien de lisible au prospect.
+ *
  * Deux régions ARIA distinctes :
  *   - succès : `role="status" aria-live="polite"` (annonce non-intrusive) ;
  *   - erreur : `role="alert" aria-live="assertive"` (interrompt le lecteur).
@@ -29,6 +34,10 @@ const props = withDefaults(defineProps<Props>(), {
 const role = computed(() => (props.variant === "success" ? "status" : "alert"))
 const ariaLive = computed(() =>
   props.variant === "success" ? "polite" : "assertive",
+)
+
+const shortId = computed(() =>
+  props.requestId ? `#${props.requestId.substring(0, 8).toUpperCase()}` : null,
 )
 </script>
 
@@ -75,9 +84,9 @@ const ariaLive = computed(() =>
       En général, nous répondons sous 24 à 48h ouvrées.
     </p>
 
-    <div v-if="requestId" class="contact-status__ref">
+    <div v-if="shortId" class="contact-status__ref">
       <span class="contact-status__ref-label">Réf. support</span>
-      <code class="contact-status__ref-code">{{ requestId }}</code>
+      <code class="contact-status__ref-code">{{ shortId }}</code>
     </div>
   </div>
 </template>
