@@ -149,6 +149,36 @@ final class SymfonyContactMessageSenderTest extends TestCase
         self::assertSame('contact/notification.txt.twig', $captured->getTextTemplate());
     }
 
+    // ── Variable réservée "email" ──────────────────────────────────────────
+
+    /**
+     * Régression : "email" est une clé réservée de TemplatedEmail.
+     * Si quelqu'un remet `'email' => ...` dans le contexte, Symfony lève
+     * une `InvalidArgumentException` immédiatement dans `->context()`.
+     * Ce test unitaire prouve que le mécanisme existe et que notre code ne
+     * l'enfreint pas (le test suivant).
+     */
+    public function testTemplatedEmailThrowsImmediatelyForReservedEmailKey(): void
+    {
+        $this->expectException(\Symfony\Component\Mime\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/reserved/i');
+
+        (new TemplatedEmail())->context(['email' => 'will-throw@example.com']);
+    }
+
+    public function testContextDoesNotUseReservedEmailKeyButVisitorEmail(): void
+    {
+        $captured = null;
+        $this->sender($captured)->send($this->request(), 'req-1');
+
+        self::assertInstanceOf(TemplatedEmail::class, $captured);
+        $ctx = $captured->getContext();
+
+        self::assertArrayNotHasKey('email', $ctx, '"email" est réservé par TemplatedEmail — ne jamais l\'utiliser comme clé de contexte.');
+        self::assertArrayHasKey('visitorEmail', $ctx);
+        self::assertSame('alice@example.com', $ctx['visitorEmail']);
+    }
+
     // ── Contexte Twig ─────────────────────────────────────────────────────
 
     public function testContextContainsProjectTypeEnum(): void

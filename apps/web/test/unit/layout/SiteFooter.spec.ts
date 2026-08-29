@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { mount } from "@vue/test-utils"
 import SiteFooter from "~/components/layout/SiteFooter.vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
-import { footerNavigation, legalNavigation } from "~/config/navigation"
+import { footerNavigation, legalNavigation, primaryCta } from "~/config/navigation"
 import { expertisePages } from "~/config/expertise-pages"
 
 describe("SiteFooter", () => {
@@ -35,21 +35,24 @@ describe("SiteFooter", () => {
 
   // ── Colonne Marque ─────────────────────────────────────────────────
 
-  it("renders the logo link to / with aria-label", () => {
+  it("renders logo and brand name on the same link", () => {
     const wrapper = mountFooter()
-    const link = wrapper.find('a.site-footer__logo-link[href="/"]')
-    expect(link.exists()).toBe(true)
-    expect(link.attributes("aria-label")).toBeTruthy()
+    const brandLink = wrapper.find("a.site-footer__brand-link")
+    expect(brandLink.exists()).toBe(true)
+    expect(brandLink.attributes("aria-label")).toBeTruthy()
+    // Logo et nom sont enfants du même lien
+    expect(brandLink.find("img.site-footer__logo").exists()).toBe(true)
+    expect(brandLink.find(".site-footer__brand-name").exists()).toBe(true)
   })
 
-  it("renders the eyebrow containing 'Agence digitale'", () => {
+  it("renders the eyebrow containing 'agence digitale'", () => {
     const wrapper = mountFooter()
     const eyebrow = wrapper.find(".site-footer__eyebrow")
     expect(eyebrow.exists()).toBe(true)
     expect(eyebrow.text().toLowerCase()).toContain("agence digitale")
   })
 
-  it("renders the tagline with brand positioning text", () => {
+  it("renders the tagline", () => {
     const wrapper = mountFooter()
     const tagline = wrapper.find(".site-footer__tagline")
     expect(tagline.exists()).toBe(true)
@@ -57,18 +60,13 @@ describe("SiteFooter", () => {
     expect(tagline.text()).toContain("Visibilité")
   })
 
-  // ── Expertises ─────────────────────────────────────────────────────
-
-  it("renders all navigation links declared in footerNavigation", () => {
-    const wrapper = mountFooter()
-    for (const group of footerNavigation) {
-      for (const item of group.items) {
-        const link = wrapper.find(`a[href="${item.to}"]`)
-        expect(link.exists(), `link to ${item.to} should exist`).toBe(true)
-        expect(link.text()).toContain(item.label)
-      }
-    }
+  it("renders the positioning description", () => {
+    expect(mountFooter().find(".site-footer__description").text()).toContain(
+      "solutions digitales cohérentes",
+    )
   })
+
+  // ── Expertises ─────────────────────────────────────────────────────
 
   it("renders exactly 5 expertise links pointing to /expertises/* routes", () => {
     const wrapper = mountFooter()
@@ -81,29 +79,55 @@ describe("SiteFooter", () => {
     }
   })
 
-  // ── Découvrir (y compris Ressources) ───────────────────────────────
+  // ── Découvrir ──────────────────────────────────────────────────────
 
-  it("renders /ressources inside the Découvrir group (not a separate group)", () => {
+  it("renders all nav items declared in footerNavigation groups", () => {
     const wrapper = mountFooter()
+    for (const group of footerNavigation) {
+      for (const item of group.items) {
+        const link = wrapper.find(`a[href="${item.to}"]`)
+        expect(link.exists(), `link to ${item.to} should exist`).toBe(true)
+        expect(link.text()).toContain(item.label)
+      }
+    }
+  })
 
-    // Le lien /ressources est bien présent
-    const link = wrapper.find('a[href="/ressources"]')
-    expect(link.exists()).toBe(true)
-
-    // Il n'existe pas de groupe "Ressources" séparé
+  it("renders /ressources as a plain link inside Découvrir items", () => {
+    const wrapper = mountFooter()
     const discoverGroup = footerNavigation.find((g) => g.title === "Découvrir")
     expect(discoverGroup).toBeDefined()
-    const resourcesItem = discoverGroup!.items.find((i) => i.to === "/ressources")
-    expect(resourcesItem).toBeDefined()
-
-    const resourcesGroup = footerNavigation.find((g) => g.title === "Ressources")
-    expect(resourcesGroup).toBeUndefined()
+    const hasRessources = discoverGroup!.items.some((i) => i.to === "/ressources")
+    expect(hasRessources).toBe(true)
+    expect(wrapper.find('a[href="/ressources"]').exists()).toBe(true)
   })
 
   it("has exactly 2 nav groups (Expertises + Découvrir)", () => {
     expect(footerNavigation).toHaveLength(2)
     expect(footerNavigation[0].title).toBe("Expertises")
     expect(footerNavigation[1].title).toBe("Découvrir")
+  })
+
+  it("has no separate Ressources group", () => {
+    const resourcesGroup = footerNavigation.find((g) => g.title === "Ressources")
+    expect(resourcesGroup).toBeUndefined()
+  })
+
+  // ── CTA "Parler de votre projet" ───────────────────────────────────
+
+  it("renders the CTA button for primaryCta in the Découvrir column", () => {
+    const wrapper = mountFooter()
+    const cta = wrapper.find(`a.site-footer__cta[href="${primaryCta.to}"]`)
+    expect(cta.exists()).toBe(true)
+    expect(cta.text()).toContain(primaryCta.label)
+    expect(cta.find(".site-footer__cta-icon").text()).toBe("→")
+  })
+
+  it("does NOT include the CTA label in the regular items list", () => {
+    const discoverGroup = footerNavigation.find((g) => g.title === "Découvrir")
+    const ctaInItems = discoverGroup?.items.some(
+      (i) => i.label === primaryCta.label,
+    )
+    expect(ctaInItems).toBe(false)
   })
 
   // ── Éléments supprimés ─────────────────────────────────────────────
@@ -126,12 +150,11 @@ describe("SiteFooter", () => {
   })
 
   it("renders the back-to-top link with href #top", () => {
-    const wrapper = mountFooter()
-    const link = wrapper.find('a[href="#top"].site-footer__back-to-top')
+    const link = mountFooter().find('a[href="#top"].site-footer__back-to-top')
     expect(link.exists()).toBe(true)
   })
 
-  it("does not render legal links when legalNavigation is empty", () => {
+  it("does not render legal list when legalNavigation is empty", () => {
     const wrapper = mountFooter()
     if (legalNavigation.length === 0) {
       expect(wrapper.find(".site-footer__legal-list").exists()).toBe(false)
@@ -152,5 +175,15 @@ describe("SiteFooter", () => {
 
   it("has no bare href=\"#\" dead anchors", () => {
     expect(mountFooter().findAll('a[href="#"]')).toHaveLength(0)
+  })
+
+  it("has no empty href", () => {
+    const hrefs = mountFooter()
+      .findAll("a")
+      .map((link) => link.attributes("href"))
+
+    expect(hrefs.every((href) => typeof href === "string" && href.length > 0)).toBe(
+      true,
+    )
   })
 })

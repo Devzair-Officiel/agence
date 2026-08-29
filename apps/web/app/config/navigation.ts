@@ -31,6 +31,11 @@ export interface NavigationItem {
 export interface NavigationGroup {
   readonly title: string
   readonly items: readonly NavigationItem[]
+  /**
+   * Lien optionnel rendu comme bouton/CTA sous la liste du groupe.
+   * Il reste dans la configuration afin de ne pas dupliquer son URL dans la vue.
+   */
+  readonly cta?: NavigationItem
 }
 
 export const primaryNavigation: readonly NavigationItem[] = [
@@ -61,15 +66,15 @@ export const footerNavigation: readonly NavigationGroup[] = [
     items: expertisesFooterItems,
   },
   {
-    // "Découvrir" regroupe les destinations générales du site.
-    // `/ressources` est ici — pas de groupe séparé (cf. brief Phase 7A correction).
+    // "Découvrir" regroupe les destinations générales.
+    // `cta` est rendu séparément comme bouton bordé sous la liste.
     title: "Découvrir",
     items: [
       { label: "L'agence", to: "/agence", isRoute: true },
       { label: "Réalisations", to: "/#realisations", isRoute: false },
       { label: "Ressources", to: "/ressources", isRoute: true },
-      { label: "Parler de votre projet", to: "/contact", isRoute: true },
     ],
+    cta: primaryCta,
   },
 ]
 

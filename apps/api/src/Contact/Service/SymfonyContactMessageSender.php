@@ -65,7 +65,7 @@ final class SymfonyContactMessageSender implements ContactMessageSenderInterface
             ->textTemplate('contact/notification.txt.twig')
             ->context([
                 'name'               => $request->name,
-                'email'              => $request->email,
+                'visitorEmail'       => $request->email,
                 'company'            => $request->company,
                 'telephone'          => $request->telephone,
                 'projectType'        => $projectType,

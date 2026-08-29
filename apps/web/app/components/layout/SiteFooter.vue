@@ -10,23 +10,26 @@ const currentYear = new Date().getFullYear()
     <BaseContainer as="div" width="wide" class="site-footer__body">
       <div class="site-footer__grid">
 
-        <!-- Zone 1 : Marque / Positionnement -->
+        <!-- Zone 1 : Marque -->
         <div class="site-footer__brand">
+          <!-- Logo + nom sur la même ligne -->
           <NuxtLink
             to="/"
-            class="site-footer__logo-link"
-            aria-label="Devzair — accueil"
+            class="site-footer__brand-link"
+            :aria-label="`${site.name} — Accueil`"
           >
             <img
               class="site-footer__logo"
               alt=""
               src="/brand/logo_devzaire_agency.png"
-              width="64"
-              height="64"
+              width="40"
+              height="40"
               loading="lazy"
               decoding="async"
             >
+            <span class="site-footer__brand-name" aria-hidden="true">{{ site.name }}</span>
           </NuxtLink>
+
           <p class="site-footer__eyebrow">Agence digitale</p>
           <p class="site-footer__tagline">
             Sites. Applications.<br>Image. Visibilité.
@@ -37,7 +40,7 @@ const currentYear = new Date().getFullYear()
           </p>
         </div>
 
-        <!-- Zones 2 + 3 : Navigation (landmark unique) -->
+        <!-- Zones 2 + 3 : Expertises et Découvrir -->
         <nav
           class="site-footer__nav"
           aria-label="Navigation du pied de page"
@@ -57,6 +60,16 @@ const currentYear = new Date().getFullYear()
                 >{{ item.label }}</NuxtLink>
               </li>
             </ul>
+            <!-- CTA bordé sous la liste (colonne Découvrir uniquement) -->
+            <NuxtLink
+              v-if="group.cta"
+              :to="group.cta.to"
+              :external="group.cta.isRoute ? undefined : true"
+              class="site-footer__cta"
+            >
+              {{ group.cta.label }}
+              <span class="site-footer__cta-icon" aria-hidden="true">→</span>
+            </NuxtLink>
           </div>
         </nav>
 
@@ -64,7 +77,7 @@ const currentYear = new Date().getFullYear()
     </BaseContainer>
 
     <!-- Barre légale -->
-    <BaseContainer as="div" class="site-footer__legal">
+    <BaseContainer as="div" width="wide" class="site-footer__legal">
       <span class="site-footer__copyright">© {{ currentYear }} {{ site.name }}</span>
       <ul
         v-if="legalNavigation.length > 0"
@@ -89,7 +102,7 @@ const currentYear = new Date().getFullYear()
 
 <style scoped>
 /* ------------------------------------------------------------------ *
- * Fond et rythme vertical
+ * Base
  * ------------------------------------------------------------------ */
 
 .site-footer {
@@ -100,7 +113,7 @@ const currentYear = new Date().getFullYear()
 }
 
 /* ------------------------------------------------------------------ *
- * Grille principale — mobile first : colonne unique
+ * Grille principale — mobile first
  * ------------------------------------------------------------------ */
 
 .site-footer__body {
@@ -113,33 +126,6 @@ const currentYear = new Date().getFullYear()
   gap: var(--space-10);
 }
 
-/* Tablette : marque pleine largeur, nav 2 colonnes côte à côte */
-@media (min-width: 768px) {
-  .site-footer__nav {
-    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
-  }
-}
-
-/* Desktop : marque (40 %) + nav (60 %) en ligne */
-@media (min-width: 1024px) {
-  .site-footer__grid {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: var(--space-16);
-  }
-
-  .site-footer__brand {
-    flex: 0 0 40%;
-    max-width: 40%;
-  }
-
-  .site-footer__nav {
-    flex: 1;
-    /* Expertises ~ 56 % / Découvrir ~ 44 % de la zone nav */
-    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
-  }
-}
-
 /* ------------------------------------------------------------------ *
  * Zone 1 — Marque
  * ------------------------------------------------------------------ */
@@ -150,22 +136,34 @@ const currentYear = new Date().getFullYear()
   gap: var(--space-3);
 }
 
-.site-footer__logo-link {
+/* Logo + nom sur la même ligne */
+.site-footer__brand-link {
   display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   width: fit-content;
   border-radius: var(--radius-md);
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
 }
 
 .site-footer__logo {
   display: block;
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+.site-footer__brand-name {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading-medium);
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  color: var(--text-inverse);
 }
 
 .site-footer__eyebrow {
-  /* Space Mono, tout en capitales — AA sur navy-deep : cream-subtle ≈ 5.2:1 */
+  /* Space Mono tout en capitales — AA sur navy-deep : cream-subtle ≈ 5.2:1 */
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-mono);
   font-size: 0.625rem;
@@ -176,7 +174,6 @@ const currentYear = new Date().getFullYear()
 }
 
 .site-footer__tagline {
-  /* Typographie d'accroche — hiérarchie forte, sobre */
   font-family: var(--font-family-heading);
   font-weight: var(--font-weight-heading-medium);
   font-size: clamp(1.5rem, 2.5vw, 2rem);
@@ -203,7 +200,7 @@ const currentYear = new Date().getFullYear()
   gap: var(--space-8);
 }
 
-/* Titre de colonne — override styles globaux h3 */
+/* Titre de colonne — override des styles globaux h3 */
 .site-footer__column-title {
   margin-bottom: var(--space-4);
   font-family: var(--font-family-mono);
@@ -212,7 +209,7 @@ const currentYear = new Date().getFullYear()
   letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1;
-  /* AA sur navy-deep — cream-subtle ≈ 5.2:1 */
+  /* AA sur navy-deep : cream-subtle ≈ 5.2:1 */
   color: var(--color-cream-subtle);
 }
 
@@ -224,45 +221,68 @@ const currentYear = new Date().getFullYear()
   list-style: none;
 }
 
-/* Expertises en grille 2 colonnes uniquement sur grand écran
-   Ordre colonne : Concevoir → Construire → Valoriser / Visibilité → Faire évoluer */
-@media (min-width: 1024px) {
-  .site-footer__nav > .site-footer__column:first-child .site-footer__list {
-    display: grid;
-    grid-template-rows: repeat(3, auto);
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
-    column-gap: var(--space-6);
-  }
-}
-
 /* ------------------------------------------------------------------ *
- * Liens — micro-interaction : underline pétrole au survol
+ * Liens de navigation — underline pétrole au survol
  * ------------------------------------------------------------------ */
 
 .site-footer__link {
   display: block;
   padding-block: var(--space-2);
-  /* WCAG 2.2 SC 2.5.8 : cible ≥ 24 px. On vise 40 px pour le confort clavier. */
+  /* WCAG 2.2 SC 2.5.8 : cible ≥ 24 px. */
   min-height: 2.5rem;
   font-family: var(--font-family-body);
   font-size: 0.875rem;
   line-height: 1.4;
   color: var(--color-cream-muted);
-  /* Underline initialement transparent — s'anime au hover vers pétrole */
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
   text-decoration-color: transparent;
   transition:
-    color 150ms var(--ease-out),
-    text-decoration-color 150ms var(--ease-out);
+    color var(--duration-fast) var(--ease-out),
+    text-decoration-color var(--duration-fast) var(--ease-out);
 }
 
 .site-footer__link:hover,
 .site-footer__link:focus-visible {
   color: var(--text-inverse);
   text-decoration-color: var(--color-petrol);
+}
+
+/* ------------------------------------------------------------------ *
+ * CTA bordé — "Parler de votre projet"
+ * ------------------------------------------------------------------ */
+
+.site-footer__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid color-mix(
+    in srgb,
+    var(--color-cream-muted) 30%,
+    transparent
+  );
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-body);
+  font-size: 0.8125rem;
+  color: var(--color-cream-muted);
+  /* min-height cible WCAG 2.2 SC 2.5.8 */
+  min-height: 2.5rem;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.site-footer__cta:hover,
+.site-footer__cta:focus-visible {
+  color: var(--text-inverse);
+  border-color: var(--color-cream-muted);
+}
+
+.site-footer__cta-icon {
+  flex-shrink: 0;
 }
 
 /* ------------------------------------------------------------------ *
@@ -298,7 +318,7 @@ const currentYear = new Date().getFullYear()
   font-family: var(--font-family-body);
   font-size: 0.75rem;
   color: var(--color-cream-subtle);
-  transition: color 150ms var(--ease-out);
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 .site-footer__legal-link:hover {
@@ -313,7 +333,7 @@ const currentYear = new Date().getFullYear()
   font-size: 0.75rem;
   color: var(--color-cream-subtle);
   min-height: 2rem;
-  transition: color 150ms var(--ease-out);
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 .site-footer__back-to-top:hover,
@@ -323,7 +343,7 @@ const currentYear = new Date().getFullYear()
 
 .site-footer__back-to-top-icon {
   display: inline-block;
-  transition: transform 150ms var(--ease-out);
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .site-footer__back-to-top:hover .site-footer__back-to-top-icon,
@@ -332,11 +352,42 @@ const currentYear = new Date().getFullYear()
 }
 
 /* ------------------------------------------------------------------ *
+ * Responsive — placé après les règles de base pour préserver la cascade
+ * ------------------------------------------------------------------ */
+
+/* Tablette : marque pleine largeur, navigation en deux colonnes. */
+@media (min-width: 768px) {
+  .site-footer__nav {
+    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
+  }
+}
+
+/* Desktop : une masse marque large, puis deux colonnes de navigation. */
+@media (min-width: 1024px) {
+  .site-footer__grid {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-16);
+  }
+
+  .site-footer__brand {
+    flex: 0 0 40%;
+    max-width: 40%;
+  }
+
+  .site-footer__nav {
+    flex: 1;
+    grid-template-columns: minmax(0, 9fr) minmax(0, 7fr);
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * prefers-reduced-motion — défense en profondeur
  * ------------------------------------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
   .site-footer__link,
+  .site-footer__cta,
   .site-footer__legal-link,
   .site-footer__back-to-top,
   .site-footer__back-to-top-icon {
