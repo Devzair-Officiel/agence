@@ -1623,12 +1623,20 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-4 — Calcul + écran résultat
 
-**État actuel : À FAIRE**
+**État actuel : Implémentation technique terminée — validation visuelle requise (2026-08-30)**
 
-- [ ] Connexion questionnaire → API Symfony.
-- [ ] Composant `EstimateResult.vue`.
-- [ ] Affichage fourchette MIN / MAX, résumé, investissement initial / récurrent.
-- [ ] Vitest et Playwright.
+- [x] Connexion questionnaire → API Symfony (`useEstimatorApi`, `POST /api/estimate`).
+- [x] Composant `EstimatorResult.vue` — branches `estimated` et `human_scoping_required`.
+- [x] Fourchette MIN / MAX, investissement initial (one_off_items), accompagnement récurrent (recurring_items + period).
+- [x] Assumptions éditoriales, besoin complémentaire non chiffré.
+- [x] `estimate-labels.ts` : mapping complet V1 (line items, récurrents, assumptions, types de projet).
+- [x] `format-money.ts` : `formatMoneyMinor` + `formatMoneyRangeMinor` (Intl.NumberFormat fr-FR, centimes→€).
+- [x] Loading state, double-submit protégé, erreurs 400/403/413/429/500/réseau.
+- [x] Invalidation résultat sur "Modifier mes réponses".
+- [x] `additionalFeatureNote` jamais dans le payload POST.
+- [x] Fourchette fallback `human_scoping_required` jamais affichée.
+- [x] 929 tests verts. Lint, typecheck, build OK.
+- [ ] Validation visuelle humaine de l'écran résultat (requise avant EST-5).
 
 **Critère de sortie :** Un parcours complet aboutit à un résultat affiché, cohérent, accessible et non contractuel.
 

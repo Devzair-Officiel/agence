@@ -8,7 +8,8 @@
 > EST-2 — Shell UX du configurateur : **Implémentation technique livrée — validation visuelle requise** (2026-08-30).
 > EST-3 — Questionnaires conditionnels : **TERMINÉ** (2026-08-30).
 > EST-3.1 — Récapitulatif dynamique + Besoin complémentaire : **TERMINÉ** (2026-08-30).
-> Prochaine phase : **EST-4 — Calcul + écran résultat**.
+> EST-4 — Calcul + écran résultat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
+> Prochaine phase : **EST-5 — Modalités de paiement / récurrent**.
 
 ---
 
@@ -1040,27 +1041,63 @@ EST-1 est décomposé en trois sous-jalons. Tous terminés.
 
 ### EST-4 — Calcul + écran résultat
 
+**État : Implémentation technique terminée — validation visuelle requise (2026-08-30).**
+
 **Objectif :** Connecter le questionnaire au moteur Symfony et afficher l'écran résultat.
 
-**Périmètre :**
-- Composable `useEstimator` : appel `POST /api/estimate`, gestion des états (chargement, erreur, succès).
-- Composant `EstimateResult.vue`.
-- Affichage fourchette MIN / MAX.
-- Résumé du projet.
-- Séparation investissement initial / récurrent.
-- Vitest et Playwright.
+**Livré :**
+
+- `useEstimatorApi` composable : `POST /api/estimate` impératif, états idle/loading/success/error,
+  double-submit protégé, `clearResult()`.
+- Types `types/estimator-api.ts` : `EstimateLineItemResponse` (minimum/maximum/currency),
+  `RecurringEstimateLineItemResponse` (+ period), `EstimateApiResponse` complet.
+- `config/estimate-labels.ts` : mapping complet V1 de tous les codes one-off / récurrents /
+  assumptions / types de projet. Fallbacks génériques pour codes futurs. `getPeriodLabel()`.
+- `utils/format-money.ts` : `formatMoneyMinor()` + `formatMoneyRangeMinor()` via
+  `Intl.NumberFormat("fr-FR")`. Division centimes→€ exclusivement pour affichage.
+- `EstimatorResult.vue` refactorisé : deux branches selon `outcome` —
+  - `estimated` : fourchette, investissement initial (one_off_items), accompagnement récurrent
+    (recurring_items + period), assumptions éditoriales, note complémentaire non chiffrée,
+    bouton "Modifier mes réponses".
+  - `human_scoping_required` : message cadrage, PAS de fourchette fallback technique,
+    assumptions, note sans montant.
+- `EstimatorNavigation.vue` : bouton "Voir mon estimation" sur la dernière étape, `isSubmitting`
+  pour désactiver pendant le loading.
+- `EstimatorShell.vue` : intégration `useEstimatorApi`, loading state, erreurs 400/403/413/429/500/réseau,
+  invalidation (clearResult sur modify-answers), progressbar masquée sur l'écran résultat.
+- 108 fichiers de test, 929 assertions — tous verts.
+
+**Garanties architecturales :**
+- Aucun prix côté frontend : Nuxt reçoit et affiche, Symfony calcule.
+- `additionalFeatureNote` jamais dans le payload `POST /api/estimate`.
+- Fourchette fallback `human_scoping_required` jamais rendue à l'utilisateur.
+- Aucun paiement échelonné, aucun lead, aucune PII.
+- Aucun `v-html` sur les données utilisateur.
 
 **Hors périmètre :** Modalités de paiement (EST-5), collecte de PII (EST-6).
 
-**Fichiers/domaines probables :** `apps/web/app/components/estimator/EstimateResult.vue`, `apps/web/app/composables/useEstimator.ts`.
+**Fichiers créés :**
+- `apps/web/app/composables/useEstimatorApi.ts`
+- `apps/web/app/types/estimator-api.ts`
+- `apps/web/app/config/estimate-labels.ts`
+- `apps/web/app/utils/format-money.ts`
+- `apps/web/app/components/estimator/EstimatorResult.vue`
+- `apps/web/test/unit/utils/format-money.spec.ts`
+- `apps/web/test/unit/config/estimate-labels.spec.ts`
+- `apps/web/test/unit/composables/useEstimatorApi.spec.ts`
+- `apps/web/test/unit/estimator/EstimatorResult.spec.ts`
+- `apps/web/test/e2e/estimator-result.spec.ts`
 
-**Tests attendus :** Vitest (états, mapping API). Playwright (affichage résultat, séparation initial/récurrent, responsive, Axe).
+**Fichiers modifiés :**
+- `apps/web/app/components/estimator/EstimatorShell.vue`
+- `apps/web/app/components/estimator/EstimatorNavigation.vue`
+- `apps/web/test/e2e/estimator-questionnaire.spec.ts` (Terminer → Voir mon estimation)
 
 **Critères de sortie :** Un parcours complet aboutit à un résultat affiché, cohérent, accessible et non contractuel.
 
 **Dépendances :** EST-3, EST-1.
 
-**Risques :** Incohérence entre les hypothèses affichées et le résultat.
+**Risques :** Validation visuelle humaine requise avant EST-5.
 
 ---
 

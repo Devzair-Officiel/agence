@@ -71,10 +71,10 @@ test.describe("Parcours standard — 7 étapes", () => {
       ).toBeEnabled()
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
-    // étape 7 : bouton Terminer
+    // étape 7 : bouton Voir mon estimation
     const bar = page.getByRole("progressbar")
     await expect(bar).toHaveAttribute("aria-valuenow", "7")
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("ecommerce : parcours complet jusqu'à l'étape 7", async ({ page }) => {
@@ -82,7 +82,7 @@ test.describe("Parcours standard — 7 étapes", () => {
     for (let step = 4; step <= 6; step++) {
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("businessapp : parcours complet jusqu'à l'étape 7", async ({ page }) => {
@@ -90,7 +90,7 @@ test.describe("Parcours standard — 7 étapes", () => {
     for (let step = 4; step <= 6; step++) {
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("refonte : parcours complet jusqu'à l'étape 7", async ({ page }) => {
@@ -98,7 +98,7 @@ test.describe("Parcours standard — 7 étapes", () => {
     for (let step = 4; step <= 6; step++) {
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("other : parcours complet jusqu'à l'étape 7 avec labels cohérents", async ({
@@ -123,7 +123,7 @@ test.describe("Parcours standard — 7 étapes", () => {
     for (let i = 0; i < 3; i++) {
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("étape 2 (standard) : champ situation requis, Continuer bloqué", async ({
@@ -156,20 +156,20 @@ test.describe("Parcours standard — 7 étapes", () => {
 
   test("isComplete = false avant l'étape 7 (standard)", async ({ page }) => {
     await completeRequiredStepsStandard(page, "vitrinesite")
-    // sur l'étape 4 : Terminer pas encore affiché
+    // sur l'étape 4 : Voir mon estimation pas encore affiché
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).not.toBeVisible()
-    // avancer jusqu'à étape 6 : Terminer toujours absent
+    // avancer jusqu'à étape 6 : Voir mon estimation toujours absent
     await page.getByRole("button", { name: /Continuer/i }).click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).not.toBeVisible()
-    // étape 7 : Terminer présent
+    // étape 7 : Voir mon estimation présent
     await page.getByRole("button", { name: /Continuer/i }).click()
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).toBeVisible()
   })
 })
@@ -217,7 +217,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
     ).toBeEnabled()
   })
 
-  test("parcours unknown complet : étape 6 affiche Terminer", async ({
+  test("parcours unknown complet : étape 6 affiche Voir mon estimation", async ({
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
@@ -235,7 +235,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
       "aria-valuenow",
       "6",
     )
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("isComplete = false avant l'étape 6 (unknown)", async ({ page }) => {
@@ -245,23 +245,23 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
     await page.locator("label:has(input[name='objectives'])").first().click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await page.locator("label:has(input[value='none'])").click()
-    // étape 3 : Continuer présent, Terminer absent
+    // étape 3 : Continuer présent, Voir mon estimation absent
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).not.toBeVisible()
     await page.getByRole("button", { name: /Continuer/i }).click()
-    // étape 4 : Terminer absent
+    // étape 4 : Voir mon estimation absent
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).not.toBeVisible()
     await page.getByRole("button", { name: /Continuer/i }).click()
-    // étape 5 : Terminer absent
+    // étape 5 : Voir mon estimation absent
     await expect(
-      page.getByRole("button", { name: /Terminer/i }),
+      page.getByRole("button", { name: /Voir mon estimation/i }),
     ).not.toBeVisible()
     await page.getByRole("button", { name: /Continuer/i }).click()
-    // étape 6 : Terminer présent
-    await expect(page.getByRole("button", { name: /Terminer/i })).toBeVisible()
+    // étape 6 : Voir mon estimation présent
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
   })
 
   test("unknown : aucune conversion d'objectifs en ProjectType côté frontend", async ({
@@ -405,7 +405,7 @@ test.describe("Garanties d'isolation (pas d'API, pas de prix)", () => {
 
     await completeRequiredStepsStandard(page, "vitrinesite")
     for (let i = 0; i < 4; i++) {
-      await page.getByRole("button", { name: /(Continuer|Terminer)/i }).click()
+      await page.getByRole("button", { name: /(Continuer|Voir mon estimation)/i }).click()
     }
 
     expect(apiCalls).toHaveLength(0)
@@ -421,7 +421,7 @@ test.describe("Garanties d'isolation (pas d'API, pas de prix)", () => {
       expect(bodyText).not.toMatch(/\d[\d\s]*\s*€/)
       expect(bodyText).not.toMatch(/MIN\s*\/\s*MAX|budget estimé/i)
       await page
-        .getByRole("button", { name: /(Continuer|Terminer)/i })
+        .getByRole("button", { name: /(Continuer|Voir mon estimation)/i })
         .click()
         .catch(() => {})
     }

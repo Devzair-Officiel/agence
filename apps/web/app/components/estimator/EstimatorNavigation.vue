@@ -3,6 +3,7 @@ defineProps<{
   currentStep: number
   canGoNext: boolean
   isLastStep?: boolean
+  isSubmitting?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -18,6 +19,7 @@ const emit = defineEmits<{
       variant="secondary"
       type="button"
       class="estimator-nav__back"
+      :disabled="isSubmitting"
       @click="emit('prev')"
     >
       ← Retour
@@ -27,10 +29,11 @@ const emit = defineEmits<{
       variant="primary"
       type="button"
       class="estimator-nav__next"
-      :disabled="!canGoNext"
+      :disabled="!canGoNext || isSubmitting"
+      :loading="isSubmitting"
       @click="emit('next')"
     >
-      {{ isLastStep ? 'Terminer →' : 'Continuer →' }}
+      {{ isLastStep ? 'Voir mon estimation' : 'Continuer →' }}
     </BaseButton>
   </div>
 </template>
