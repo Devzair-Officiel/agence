@@ -7,6 +7,7 @@
 import { config } from "@vue/test-utils"
 import { defineComponent, h } from "vue"
 import { vi } from "vitest"
+import EstimatorCheckboxCard from "~/components/estimator/EstimatorCheckboxCard.vue"
 
 const NuxtLinkStub = defineComponent({
   name: "NuxtLink",
@@ -46,6 +47,10 @@ config.global.stubs = {
   NuxtLink: NuxtLinkStub,
   Teleport: TeleportStub,
   Transition: TransitionStub,
+}
+
+config.global.components = {
+  EstimatorCheckboxCard,
 }
 
 // Stubs Nuxt : composables auto-importés non résolus par Vitest.
