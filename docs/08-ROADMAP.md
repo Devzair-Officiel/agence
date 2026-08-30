@@ -1665,13 +1665,22 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-6 — Lead qualifié + persistence / API
 
-**État actuel : À FAIRE**
+**État actuel : Implémentation technique terminée (2026-08-30)**
 
-- [ ] Formulaire de contact final (email, nom, brief).
-- [ ] Endpoint Symfony de réception du lead.
-- [ ] Persistence PostgreSQL.
-- [ ] Notification email à Devzair.
-- [ ] Mise à jour `docs/05-SECURITY-PRIVACY.md`.
+- [x] CTA "Parler de mon projet" après résultat — jamais bloquant.
+- [x] Formulaire lead : nom, email, téléphone (opt.), société (opt.), honeypot.
+- [x] Endpoint `POST /api/estimate/lead` (Symfony, Caddy strippe `/api`).
+- [x] Recalcul Symfony de l'estimation — prix clients jamais lus.
+- [x] Persistence PostgreSQL (`estimator_lead`, snapshots JSONB).
+- [x] Notification email Devzair (best-effort, échec = warning).
+- [x] Rate limit dédié `estimate_lead_ip` (10/min, bucket distinct).
+- [x] Honeypot + Origin allowlist + CSRF stateless.
+- [x] Logs zéro PII.
+- [x] `human_scoping_required` → `estimate_minimum_minor = NULL`.
+- [x] Vie privée inline (pas de politique de confidentialité nécessaire).
+- [x] Tests PHPUnit (controller + entity) + tests unitaires frontend.
+- [x] Tests E2E Playwright.
+- [x] Mise à jour docs (05, 06, 12, 08, 10).
 
 **Critère de sortie :** Un lead est transmis, reçu, persisté, sans PII dans les logs.
 

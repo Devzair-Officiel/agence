@@ -81,6 +81,13 @@ framework:
             limit: '%app.estimate.rate_limit%'
             rate: { interval: '%app.estimate.rate_interval%', amount: '%app.estimate.rate_limit%' }
 
+        # Lead estimateur (EST-6). Bucket plus strict (10/min) : chaque lead
+        # déclenche une persistance DB et un envoi e-mail.
+        estimate_lead_ip:
+            policy: 'token_bucket'
+            limit: '%app.estimate_lead.rate_limit%'
+            rate: { interval: '%app.estimate_lead.rate_interval%', amount: '%app.estimate_lead.rate_limit%' }
+
     serializer:
         enabled: true
 

@@ -246,3 +246,42 @@ services:
         arguments:
             $limiterFactory: '@limiter.estimate_ip'
         public: true
+
+    # ------------------------------------------------------------------
+    # Lead estimateur (EST-6)
+    # ------------------------------------------------------------------
+    limiter.storage.estimate_lead_ip:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.estimate_lead_ip:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'estimate_lead_ip'
+              limit: '%app.estimate_lead.rate_limit%'
+              rate: { interval: '%app.estimate_lead.rate_interval%', amount: '%app.estimate_lead.rate_limit%' }
+            - '@limiter.storage.estimate_lead_ip'
+        public: true
+
+    App\Estimator\Infrastructure\Security\EstimateLeadRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.estimate_lead_ip'
+        public: true
+
+    App\Estimator\Domain\Lead\EstimatorLeadRepositoryInterface:
+        alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorLeadRepository
+        public: true
+
+    App\Estimator\Infrastructure\Persistence\DoctrineEstimatorLeadRepository:
+        public: true
+
+    App\Estimator\Application\Lead\SubmitEstimatorLead:
+        public: true
+
+    App\Estimator\Application\Lead\EstimatorLeadNotifier:
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName: '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
+        public: true

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue"
 import type { EstimateApiResponse } from "~/types/estimator-api"
+import type { EstimatePayload } from "~/types/estimator"
 import { formatMoneyRangeMinor } from "~/utils/format-money"
 import {
   getLineItemLabel,
@@ -10,12 +11,14 @@ import {
   getPeriodLabel,
 } from "~/config/estimate-labels"
 import EstimatorPaymentTerms from "~/components/estimator/EstimatorPaymentTerms.vue"
+import EstimatorLeadForm from "~/components/estimator/EstimatorLeadForm.vue"
 
 const props = defineProps<{
   result: EstimateApiResponse
   additionalFeatureNote: string
   careAnswered: boolean
   careNeeds: string[]
+  questionnairePayload: EstimatePayload
 }>()
 
 const emit = defineEmits<{
@@ -23,6 +26,8 @@ const emit = defineEmits<{
 }>()
 
 const heading = ref<HTMLHeadingElement | null>(null)
+const leadFormOpen = ref(false)
+const ctaRef = ref<HTMLButtonElement | null>(null)
 
 onMounted(() => {
   heading.value?.focus()
@@ -43,6 +48,10 @@ const showEmptyRecurringNote = computed(() =>
   props.careAnswered &&
   props.careNeeds.length === 0,
 )
+
+function openLeadForm(): void {
+  leadFormOpen.value = true
+}
 </script>
 
 <template>
@@ -98,6 +107,25 @@ const showEmptyRecurringNote = computed(() =>
         Nous le préciserons avec vous lors du cadrage.
       </p>
     </div>
+
+    <!-- CTA lead + formulaire (human scoping) -->
+    <div v-if="!leadFormOpen" class="result__cta-block">
+      <button
+        ref="ctaRef"
+        type="button"
+        class="result__cta"
+        @click="openLeadForm"
+      >
+        Parler de mon projet →
+      </button>
+    </div>
+
+    <EstimatorLeadForm
+      v-if="leadFormOpen"
+      :questionnaire-payload="questionnairePayload"
+      :additional-feature-note="additionalFeatureNote"
+      @submitted="leadFormOpen = false"
+    />
 
     <div class="result__actions">
       <button
@@ -223,6 +251,24 @@ const showEmptyRecurringNote = computed(() =>
         Nous le préciserons avec vous lors du cadrage.
       </p>
     </div>
+
+    <!-- CTA lead + formulaire (estimated) -->
+    <div v-if="!leadFormOpen" class="result__cta-block">
+      <button
+        type="button"
+        class="result__cta"
+        @click="openLeadForm"
+      >
+        Parler de mon projet →
+      </button>
+    </div>
+
+    <EstimatorLeadForm
+      v-if="leadFormOpen"
+      :questionnaire-payload="questionnairePayload"
+      :additional-feature-note="additionalFeatureNote"
+      @submitted="leadFormOpen = false"
+    />
 
     <div class="result__actions">
       <button
@@ -437,6 +483,34 @@ const showEmptyRecurringNote = computed(() =>
   font-style: italic;
   margin: 0;
   line-height: 1.5;
+}
+
+/* CTA lead */
+.result__cta-block {
+  padding-top: var(--space-2);
+  border-top: 1px solid color-mix(in srgb, var(--color-petrol) 20%, transparent);
+}
+
+.result__cta {
+  background: var(--color-petrol);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-family-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out);
+}
+
+.result__cta:hover {
+  background: color-mix(in srgb, var(--color-petrol) 85%, #000);
+}
+
+.result__cta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* Actions */

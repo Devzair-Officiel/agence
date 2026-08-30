@@ -53,3 +53,10 @@ estimate_submission:
     path: /estimate
     controller: App\Estimator\Presentation\Http\EstimateController::__invoke
     methods: [POST]
+
+# Lead estimateur (EST-6). Caddy strippe /api → Symfony reçoit /estimate/lead.
+# Route publique vue par le navigateur : POST /api/estimate/lead.
+estimate_lead_submission:
+    path: /estimate/lead
+    controller: App\Estimator\Presentation\Http\Lead\EstimateLeadController::__invoke
+    methods: [POST]

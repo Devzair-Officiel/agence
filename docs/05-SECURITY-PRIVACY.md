@@ -546,6 +546,28 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 - opt-in séparé, facultatif et non précoché pour la prospection ;
 - mécanisme de traitement des demandes d’accès, rectification, opposition et suppression.
 
+### Lead estimateur (EST-6)
+
+**Données collectées :** nom, email, téléphone (opt.), société (opt.), questionnaire (codes snake_case, sans PII), snapshot estimatif (montants en centimes).
+
+**Données NON collectées :** message libre, newsletter, partenariat.
+
+**Stockage :** Table `estimator_lead` (PostgreSQL). Colonnes `questionnaire_snapshot` et `estimate_snapshot` en JSONB. Colonnes `email`, `name`, `phone`, `company` en clair — à chiffrer au repos si la durée de conservation est longue (Q-02 à valider).
+
+**Base légale :** Intérêt légitime (art. 6-1-f RGPD) — rappel inline dans le formulaire.
+
+**Logs :** zéro PII — ni name, ni email, ni phone, ni company, ni `additionalFeatureNote` dans les logs Monolog.
+
+**Rate limiting :** bucket `estimate_lead_ip` dédié (10/min), indépendant du bucket estimateur (30/min) et contact.
+
+**Durée de conservation :** À valider par l’équipe Devzair (Q-02 — bloquant avant mise en production).
+
+**Notifications email :** Symfony Mailer → template Twig ; `Reply-To` = email prospect ; `From` = adresse Devzair. Échec SMTP = warning log, lead toujours persisté.
+
+**Honeypot :** champ `website` (aria-hidden, tabindex=-1) — silence 202 si rempli.
+
+**Droits :** accès, rectification, suppression sur demande écrite. Mécanisme manuel (outil CLI ou requête SQL directe) — interface d’administration à prévoir en EST-8+.
+
 ---
 
 ---

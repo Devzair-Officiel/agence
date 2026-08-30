@@ -142,6 +142,7 @@ const canRetry = computed(
               :additional-feature-note="additionalFeatureNote"
               :care-answered="careAnswered"
               :care-needs="careNeeds"
+              :questionnaire-payload="toEstimatePayload()"
               @modify-answers="handleModifyAnswers"
             />
 

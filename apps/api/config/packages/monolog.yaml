@@ -4,6 +4,7 @@ monolog:
         - editorial
         - admin
         - estimator
+        - estimator_lead
 
 when@dev:
     monolog:

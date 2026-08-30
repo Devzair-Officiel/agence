@@ -11,6 +11,8 @@ parameters:
     app.contact.rate_interval: '%env(CONTACT_RATE_INTERVAL)%'
     app.estimate.rate_limit: '%env(int:ESTIMATE_RATE_LIMIT)%'
     app.estimate.rate_interval: '%env(ESTIMATE_RATE_INTERVAL)%'
+    app.estimate_lead.rate_limit: '%env(int:ESTIMATE_LEAD_RATE_LIMIT)%'
+    app.estimate_lead.rate_interval: '%env(ESTIMATE_LEAD_RATE_INTERVAL)%'
     app.contact.from_email: '%env(CONTACT_FROM_EMAIL)%'
     app.contact.from_name: '%env(CONTACT_FROM_NAME)%'
     app.contact.recipient: '%env(default::CONTACT_RECIPIENT)%'
@@ -37,6 +39,8 @@ services:
             Psr\Log\LoggerInterface $adminLogger: '@monolog.logger.admin'
             # Canal dédié à l'endpoint POST /api/estimate (EST-1C).
             Psr\Log\LoggerInterface $estimatorLogger: '@monolog.logger.estimator'
+            # Canal dédié à l'endpoint POST /api/estimate/lead (EST-6).
+            Psr\Log\LoggerInterface $estimatorLeadLogger: '@monolog.logger.estimator_lead'
 
     App\:
         resource: '../src/'
@@ -89,6 +93,19 @@ services:
     App\Estimator\Infrastructure\Security\EstimateRateLimiter:
         arguments:
             $limiterFactory: '@limiter.estimate_ip'
+
+    App\Estimator\Infrastructure\Security\EstimateLeadRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.estimate_lead_ip'
+
+    App\Estimator\Domain\Lead\EstimatorLeadRepositoryInterface:
+        alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorLeadRepository
+
+    App\Estimator\Application\Lead\EstimatorLeadNotifier:
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName: '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
 
     App\EventListener\ApiExceptionListener:
         arguments:

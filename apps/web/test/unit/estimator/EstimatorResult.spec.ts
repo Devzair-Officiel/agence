@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest"
 import { mount } from "@vue/test-utils"
 import EstimatorResult from "~/components/estimator/EstimatorResult.vue"
 import type { EstimateApiResponse } from "~/types/estimator-api"
+import type { EstimatePayload } from "~/types/estimator"
+
+const BASE_QUESTIONNAIRE: EstimatePayload = {
+  project_type: "vitrinesite",
+  objectives: [],
+  current_situation: "none",
+  scale: "small",
+  features: [],
+  content_needs: [],
+  visibility_needs: [],
+  care_needs: [],
+}
 
 const ESTIMATED_RESULT: EstimateApiResponse = {
   status: "ok",
@@ -47,7 +59,13 @@ function mountResult(
   careNeeds: string[] = [],
 ) {
   return mount(EstimatorResult, {
-    props: { result, additionalFeatureNote, careAnswered, careNeeds },
+    props: {
+      result,
+      additionalFeatureNote,
+      careAnswered,
+      careNeeds,
+      questionnairePayload: BASE_QUESTIONNAIRE,
+    },
   })
 }
 
@@ -153,7 +171,8 @@ describe("EstimatorResult — outcome estimated", () => {
 
   it("émet modify-answers sur clic du bouton", async () => {
     const wrapper = mountResult(ESTIMATED_RESULT)
-    await wrapper.find("button").trigger("click")
+    const modifyBtn = wrapper.findAll("button").find(b => b.text().includes("Modifier") || b.text().includes("Revoir"))
+    await modifyBtn!.trigger("click")
     expect(wrapper.emitted("modify-answers")).toBeTruthy()
   })
 
@@ -213,7 +232,8 @@ describe("EstimatorResult — outcome human_scoping_required", () => {
 
   it("émet modify-answers sur clic du bouton", async () => {
     const wrapper = mountResult(HUMAN_SCOPING_RESULT)
-    await wrapper.find("button").trigger("click")
+    const modifyBtn = wrapper.findAll("button").find(b => b.text().includes("Modifier") || b.text().includes("Revoir"))
+    await modifyBtn!.trigger("click")
     expect(wrapper.emitted("modify-answers")).toBeTruthy()
   })
 

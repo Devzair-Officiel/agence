@@ -10,7 +10,8 @@
 > EST-3.1 — Récapitulatif dynamique + Besoin complémentaire : **TERMINÉ** (2026-08-30).
 > EST-4 — Calcul + écran résultat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
 > EST-5 — Modalités de paiement : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
-> Prochaine phase : **EST-6 — Lead qualifié + persistence / API**.
+> EST-6 — Lead qualifié + persistence / API : **Implémentation technique terminée** (2026-08-30).
+> Prochaine phase : **EST-7 — Parcours partenariat** (après validation visuelle EST-6 et EST-2/4/5).
 
 ---
 
@@ -1130,27 +1131,59 @@ EST-1 est décomposé en trois sous-jalons. Tous terminés.
 
 ### EST-6 — Lead qualifié + persistence / API
 
-**Objectif :** Permettre au prospect de transmettre son estimation (email + brief structuré) et implémenter la persistence de la demande.
+**État : Implémentation technique terminée (2026-08-30)**
 
-**Périmètre :**
-- Formulaire de contact final (email, nom, message optionnel) accessible après l'écran résultat.
-- Endpoint Symfony de réception du lead (POST /api/estimate/submit ou similaire).
-- Persistence PostgreSQL (table `project_estimate_lead` ou similaire).
-- Notification email à Devzair.
-- Honeypot, rate limiting, Turnstile optionnel.
-- Mise à jour de `docs/05-SECURITY-PRIVACY.md`.
+**Objectif :** Permettre au prospect de transmettre ses coordonnées après l'estimation, sans bloquer l'accès au résultat.
 
-**Hors périmètre :** Parcours partenariat (EST-7).
+**Principes clés :**
+- CTA "Parler de mon projet" affiché APRÈS le résultat — jamais devant.
+- Le résultat reste visible même si le formulaire est ouvert.
+- Symfony recalcule l'estimation à partir du questionnaire — les prix du client ne sont jamais lus.
+- `human_scoping_required` → `estimate_minimum_minor = NULL`, `estimate_maximum_minor = NULL`.
+- Logs : zéro PII (ni name, email, phone, company, additionalFeatureNote).
+- `additionalFeatureNote` stockée en DB mais jamais transmise au moteur de prix.
 
-**Fichiers/domaines probables :** `apps/api/src/Estimator/`, table en PostgreSQL, `apps/web/app/components/estimator/LeadForm.vue`.
+**Périmètre livré :**
+- Formulaire lead : nom (req.), email (req.), téléphone (opt.), société (opt.), honeypot `website`.
+- Route `POST /api/estimate/lead` (Caddy strippe `/api`).
+- Entité `EstimatorLead` (UUID v7, Doctrine ORM).
+- JSONB : `questionnaire_snapshot` (sans PII), `estimate_snapshot` (résultat recalculé).
+- Rate limiter `estimate_lead_ip` (10/min, bucket distinct de `estimate_ip`).
+- Notification email Devzair (best-effort — échec = warning, toujours 201).
+- Vie privée inline (pas de politique de confidentialité nécessaire).
+- Aucune Turnstile V1 (documenté comme option).
+- WCAG 2.2 AA : `aria-required`, `aria-invalid`, `aria-describedby`, gestion du focus.
 
-**Tests attendus :** PHPUnit (endpoint, validation, email, PII logs). Vitest (formulaire, états). Playwright (soumission, confirmation, erreurs).
+**Fichiers créés / modifiés :**
+- `apps/api/migrations/Version20260830120000.php`
+- `apps/api/src/Estimator/Domain/Lead/EstimatorLead.php`
+- `apps/api/src/Estimator/Domain/Lead/EstimatorLeadRepositoryInterface.php`
+- `apps/api/src/Estimator/Infrastructure/Persistence/DoctrineEstimatorLeadRepository.php`
+- `apps/api/src/Estimator/Infrastructure/Security/EstimateLeadRateLimiter.php`
+- `apps/api/src/Estimator/Presentation/Http/Lead/EstimateLeadRequest.php`
+- `apps/api/src/Estimator/Presentation/Http/Lead/EstimateLeadRequestMapper.php`
+- `apps/api/src/Estimator/Application/Lead/SubmitEstimatorLead.php`
+- `apps/api/src/Estimator/Application/Lead/EstimatorLeadNotifier.php`
+- `apps/api/src/Estimator/Presentation/Http/Lead/EstimateLeadController.php`
+- `apps/api/templates/estimator/lead_notification.html.twig`
+- `apps/api/templates/estimator/lead_notification.txt.twig`
+- `apps/web/app/types/estimator-lead.ts`
+- `apps/web/app/utils/estimator-lead-payload.ts`
+- `apps/web/app/composables/useEstimatorLeadApi.ts`
+- `apps/web/app/components/estimator/EstimatorLeadForm.vue`
+- `apps/web/app/components/estimator/EstimatorResult.vue` (CTA + form intégré)
+- `apps/web/app/components/estimator/EstimatorShell.vue` (passage prop `questionnairePayload`)
 
-**Critères de sortie :** Un lead est transmis, reçu par email, persisté, et aucun PII ne fuite dans les logs.
+**Tests :**
+- PHPUnit : `EstimateLeadControllerTest` (13 cas) + `EstimatorLeadTest` (4 cas).
+- Vitest : `useEstimatorLeadApi.spec.ts`, `estimator-lead-payload.spec.ts`, `EstimatorLeadForm.spec.ts`.
+- Playwright : `estimator-lead.spec.ts` (8 scénarios).
 
-**Dépendances :** EST-5. Validation juridique des durées de conservation (À VALIDER).
+**Hors périmètre :** Parcours partenariat (EST-7), Turnstile V1 (option documentée).
 
-**Risques :** Non-conformité RGPD si la durée de conservation n'est pas validée.
+**Dépendances :** EST-5. Durée de conservation à valider juridiquement (Q-02).
+
+**Risques :** Non-conformité RGPD si la durée de conservation n'est pas validée avant mise en production.
 
 ---
 
