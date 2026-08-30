@@ -5,6 +5,7 @@ monolog:
         - admin
         - estimator
         - estimator_lead
+        - estimator_partnership
 
 when@dev:
     monolog:

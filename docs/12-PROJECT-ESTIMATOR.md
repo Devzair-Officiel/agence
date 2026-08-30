@@ -11,7 +11,8 @@
 > EST-4 — Calcul + écran résultat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
 > EST-5 — Modalités de paiement : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
 > EST-6 — Lead qualifié + persistence / API : **Implémentation technique terminée** (2026-08-30).
-> Prochaine phase : **EST-7 — Parcours partenariat** (après validation visuelle EST-6 et EST-2/4/5).
+> EST-7 — Parcours partenariat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
+> Prochaine phase : **EST-8 — Administration tarifaire** (après validation visuelle EST-5/6/7).
 
 ---
 
@@ -1189,26 +1190,39 @@ EST-1 est décomposé en trois sous-jalons. Tous terminés.
 
 ### EST-7 — Parcours partenariat
 
-**Objectif :** Implémenter le parcours de candidature partenariat (formulaire dédié, transmission, accusé de réception).
+**État : IMPLÉMENTATION TECHNIQUE TERMINÉE (2026-08-30) — validation visuelle requise**
 
-**Périmètre :**
-- Formulaire partenariat (9 sections, voir §13).
-- Endpoint Symfony de réception.
-- Notification email à Devzair.
-- Pas de réponse automatique favorable.
-- Critères d'éligibilité À VALIDER avant l'ouverture de cette phase.
+**Objectif :** CTA secondaire discret sur l'écran résultat, formulaire dédié de proposition de partenariat, persistence backend, aucun calcul automatique de conditions.
 
-**Hors périmètre :** Traitement automatique, calcul de conditions, intégration CRM.
+**Décisions prises :**
+- Partenariat = jamais une alternative de paiement automatique. `status` toujours `pending_review` à la création.
+- Backend recalcule l'estimation — prix client jamais lus.
+- Aucun champ `percentage`, `equity`, `commissionRate`, `revenueShareRate`, `valuation` dans l'entité ni la réponse.
+- `human_scoping_required` → `estimateMinimum = null`, `estimateMaximum = null`.
+- Notification email V1 différée — persistence suffisante, dette documentée.
+- `lead_request_id` : colonne nullable VARCHAR(36) sans FK Doctrine (V1, évite les cascades).
+- `activeForm: 'none' | 'lead' | 'partnership'` dans `EstimatorResult` — exclusivité mutuelle des formulaires.
+- Pré-remplissage contact via prop `PartnershipInitialContact` — contact capturé depuis lead soumis dans la même session.
 
-**Fichiers/domaines probables :** Extension du domaine `Estimator`, `apps/web/app/components/estimator/PartnershipForm.vue`.
+**Périmètre livré :**
+- Types TS : `PartnershipTypeCode`, `ProjectStageCode`, `GeneratesRevenueCode`, `EstimatePartnershipPayload`, `PartnershipInitialContact`.
+- `toPartnershipPayload()` — aucun champ prix, trim contact.
+- `useEstimatorPartnershipApi` — double-submit guard, mapping HTTP → `EstimatePartnershipErrorKind`.
+- `EstimatorPartnershipForm.vue` — WCAG 2.2 AA, fieldsets/legends, radios ×5/×5/×3, textareas + compteurs 500 c, honeypot, mention RGPD inline.
+- `EstimatorResult.vue` mis à jour — `activeForm` union, `.result__cta-secondary` discret, pré-remplissage.
+- `EstimatorLeadForm.vue` mis à jour — emit `submitted` avec données contact.
+- Migration `Version20260830130000` — table `estimator_partnership_proposal`.
+- Entité `EstimatorPartnershipProposal` — UUID v7, snapshots JSONB, `status = pending_review`.
+- `DoctrineEstimatorPartnershipRepository`, `EstimatePartnershipRateLimiter`.
+- `EstimatorPartnershipController` — endpoint `POST /estimate/partnership`, réponse `{ status: "submitted", proposal_id, request_id }`.
 
-**Tests attendus :** PHPUnit, Vitest, Playwright.
+**Hors périmètre livré :** Traitement automatique de conditions, calcul de parts, intégration CRM, notification email V1.
 
-**Critères de sortie :** Le parcours partenariat est distinct, accessible, et aucune condition n'est calculée automatiquement.
+**Tests :** PHPUnit (26 cas), Vitest (48+ cas), Playwright (19 scénarios `estimator-partnership.spec.ts`).
 
-**Dépendances :** EST-6. Critères d'éligibilité validés par l'équipe Devzair.
+**Critères de sortie :** Parcours distinct, accessible, aucune condition calculée automatiquement. ✓
 
-**Risques :** Confusion entre partenariat et paiement. Attentes mal calibrées.
+**Risques couverts :** Confusion partenariat/paiement (texte éditorial explicite, aucun champ de calcul). Attentes mal calibrées (texte "ne constitue pas une alternative automatiquement disponible").
 
 ---
 

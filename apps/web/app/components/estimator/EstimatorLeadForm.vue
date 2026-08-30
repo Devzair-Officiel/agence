@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submitted: []
+  submitted: [contact: { name: string; email: string; phone?: string; company?: string }]
 }>()
 
 const { leadStatus, leadError, submitLead } = useEstimatorLeadApi()
@@ -72,7 +72,12 @@ async function handleSubmit(): Promise<void> {
   if (leadStatus.value === "success") {
     await nextTick()
     successRef.value?.focus()
-    emit("submitted")
+    emit("submitted", {
+      name:    fields.name.trim(),
+      email:   fields.email.trim(),
+      phone:   fields.phone.trim() || undefined,
+      company: fields.company.trim() || undefined,
+    })
   }
 }
 

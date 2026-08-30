@@ -88,6 +88,14 @@ framework:
             limit: '%app.estimate_lead.rate_limit%'
             rate: { interval: '%app.estimate_lead.rate_interval%', amount: '%app.estimate_lead.rate_limit%' }
 
+        # Partenariat estimateur (EST-7). Bucket dédié (5/min) : chaque proposition
+        # déclenche une persistance DB. Séparé de estimate_lead_ip pour ne pas
+        # impacter le flux de lead classique.
+        estimate_partnership_ip:
+            policy: 'token_bucket'
+            limit: '%app.estimate_partnership.rate_limit%'
+            rate: { interval: '%app.estimate_partnership.rate_interval%', amount: '%app.estimate_partnership.rate_limit%' }
+
     serializer:
         enabled: true
 

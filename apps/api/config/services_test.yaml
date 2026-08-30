@@ -285,3 +285,35 @@ services:
             $fromName: '%app.contact.from_name%'
             $recipient: '%app.contact.recipient%'
         public: true
+
+    # ------------------------------------------------------------------
+    # Partenariat estimateur (EST-7)
+    # ------------------------------------------------------------------
+    limiter.storage.estimate_partnership_ip:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.estimate_partnership_ip:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'estimate_partnership_ip'
+              limit: '%app.estimate_partnership.rate_limit%'
+              rate: { interval: '%app.estimate_partnership.rate_interval%', amount: '%app.estimate_partnership.rate_limit%' }
+            - '@limiter.storage.estimate_partnership_ip'
+        public: true
+
+    App\Estimator\Infrastructure\Security\EstimatePartnershipRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.estimate_partnership_ip'
+        public: true
+
+    App\Estimator\Domain\Partnership\EstimatorPartnershipRepositoryInterface:
+        alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPartnershipRepository
+        public: true
+
+    App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPartnershipRepository:
+        public: true
+
+    App\Estimator\Application\Partnership\SubmitEstimatorPartnership:
+        public: true

@@ -550,7 +550,7 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 
 **Données collectées :** nom, email, téléphone (opt.), société (opt.), questionnaire (codes snake_case, sans PII), snapshot estimatif (montants en centimes).
 
-**Données NON collectées :** message libre, newsletter, partenariat.
+**Données NON collectées :** message libre, newsletter. Partenariat : formulaire séparé (EST-7).
 
 **Stockage :** Table `estimator_lead` (PostgreSQL). Colonnes `questionnaire_snapshot` et `estimate_snapshot` en JSONB. Colonnes `email`, `name`, `phone`, `company` en clair — à chiffrer au repos si la durée de conservation est longue (Q-02 à valider).
 
@@ -567,6 +567,30 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 **Honeypot :** champ `website` (aria-hidden, tabindex=-1) — silence 202 si rempli.
 
 **Droits :** accès, rectification, suppression sur demande écrite. Mécanisme manuel (outil CLI ou requête SQL directe) — interface d’administration à prévoir en EST-8+.
+
+### Proposition de partenariat (EST-7)
+
+**Données collectées :** nom, email, téléphone (opt.), société (opt.), type de partenariat (enum), stade du projet (enum), génère des revenus (enum opt.), texte de proposition (max 500 c), texte de pertinence (max 500 c opt.), questionnaire (codes snake_case), snapshot estimatif (montants en centimes).
+
+**Données NON collectées :** pourcentage, part d'equity, taux de commission, valorisation — aucun champ de calcul automatique de conditions.
+
+**Stockage :** Table `estimator_partnership_proposal` (PostgreSQL). `questionnaire_snapshot` et `estimate_snapshot` en JSONB. Colonnes contact en clair — sensibilité commerciale élevée (proposition de partenariat).
+
+**Base légale :** Intérêt légitime (art. 6-1-f RGPD) — rappel inline dans le formulaire.
+
+**Statut :** toujours `pending_review` à la création. Seule une action humaine peut modifier le statut.
+
+**Logs :** zéro PII — ni contact, ni `proposal_text` dans les logs Monolog.
+
+**Rate limiting :** bucket `estimate_partnership_ip` dédié, indépendant de `estimate_lead_ip` et `estimate_ip`.
+
+**Durée de conservation :** À valider par l'équipe Devzair (même règle que Q-02).
+
+**Notifications email :** V1 — différé (dette documentée). La persistence en base est suffisante pour V1. À implémenter avant mise en production publique.
+
+**Honeypot :** champ `website` (aria-hidden, tabindex=-1) — silence 202 si rempli.
+
+**Droits :** accès, rectification, suppression sur demande écrite. Mécanisme manuel — interface d'administration à prévoir en EST-8+.
 
 ---
 

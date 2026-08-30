@@ -1690,15 +1690,37 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-7 — Parcours partenariat
 
-**État actuel : À FAIRE**
+**État actuel : IMPLÉMENTATION TECHNIQUE TERMINÉE (2026-08-30) — validation visuelle requise**
 
-- [ ] Formulaire partenariat (9 sections du §13 de la source de vérité).
-- [ ] Transmission à l'équipe Devzair.
-- [ ] Accusé de réception (sans réponse favorable automatique).
+- [x] Type `EstimatePartnershipPayload` + `PartnershipInitialContact` + codes union TypeScript.
+- [x] `toPartnershipPayload()` — fonction pure, aucun champ de prix frontend.
+- [x] `useEstimatorPartnershipApi` — double-submit guard, mapping erreurs HTTP, `resetPartnership`.
+- [x] `EstimatorPartnershipForm.vue` — 2 fieldsets, radios type/stade/revenu, textareas + compteurs, honeypot, WCAG 2.2 AA.
+- [x] `EstimatorResult.vue` — `activeForm: 'none' | 'lead' | 'partnership'`, CTA secondaire discret, pré-remplissage contact.
+- [x] `EstimatorLeadForm.vue` — emit `submitted` enrichi avec données contact.
+- [x] Migration `Version20260830130000` — table `estimator_partnership_proposal`.
+- [x] Entité `EstimatorPartnershipProposal` — `status` toujours `pending_review`, aucun champ de calcul.
+- [x] `DoctrineEstimatorPartnershipRepository`.
+- [x] `EstimatePartnershipRateLimiter` (bucket `estimate_partnership_ip`, séparé du lead).
+- [x] DTO `EstimatorPartnershipRequest` + `EstimatorPartnershipRequestMapper`.
+- [x] `SubmitEstimatorPartnership` — recalcul autoritaire backend, `human_scoping` → montants null.
+- [x] `EstimatorPartnershipController` — pipeline 8 étapes, réponse `{ status: "submitted", proposal_id, request_id }`.
+- [x] Config : routes, services, framework, doctrine, monolog, services_test, .env.
+- [x] PHPUnit : `EstimatorPartnershipProposalTest` (9 cas) + `EstimatorPartnershipControllerTest` (17 cas).
+- [x] Vitest : `estimator-partnership-payload.spec.ts` + `useEstimatorPartnershipApi.spec.ts` + `EstimatorPartnershipForm.spec.ts` + `EstimatorResult.spec.ts` mis à jour.
+- [x] Playwright : `estimator-partnership.spec.ts` (19 scénarios).
+- [ ] Validation visuelle humaine.
+- [ ] Notification email Devzair (V1 : dette documentée — persistence suffisante).
+
+**Garanties implémentées :**
+- Jamais une alternative de paiement automatique — `status` = `pending_review` uniquement.
+- Backend recalcule l'estimation — prix client jamais lus.
+- Aucun champ `percentage`, `equity`, `commissionRate`, `revenueShareRate`, `valuation` dans l'entité ni la réponse.
+- `human_scoping_required` → `estimateMinimum = null`, `estimateMaximum = null`.
 
 **Critère de sortie :** Parcours distinct, accessible, sans calcul automatique de conditions.
 
-**Dépendances :** EST-6. Critères d'éligibilité validés (Q-04).
+**Dépendances :** EST-6.
 
 ---
 

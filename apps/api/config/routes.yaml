@@ -60,3 +60,11 @@ estimate_lead_submission:
     path: /estimate/lead
     controller: App\Estimator\Presentation\Http\Lead\EstimateLeadController::__invoke
     methods: [POST]
+
+# Partenariat estimateur (EST-7). Caddy strippe /api → Symfony reçoit /estimate/partnership.
+# Route publique vue par le navigateur : POST /api/estimate/partnership.
+# status = pending_review — aucune acceptation automatique.
+estimate_partnership_submission:
+    path: /estimate/partnership
+    controller: App\Estimator\Presentation\Http\Partnership\EstimatorPartnershipController::__invoke
+    methods: [POST]

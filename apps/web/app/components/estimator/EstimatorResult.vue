@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted, computed, nextTick } from "vue"
 import type { EstimateApiResponse } from "~/types/estimator-api"
 import type { EstimatePayload } from "~/types/estimator"
+import type { PartnershipInitialContact } from "~/types/estimator-partnership"
 import { formatMoneyRangeMinor } from "~/utils/format-money"
 import {
   getLineItemLabel,
@@ -12,6 +13,7 @@ import {
 } from "~/config/estimate-labels"
 import EstimatorPaymentTerms from "~/components/estimator/EstimatorPaymentTerms.vue"
 import EstimatorLeadForm from "~/components/estimator/EstimatorLeadForm.vue"
+import EstimatorPartnershipForm from "~/components/estimator/EstimatorPartnershipForm.vue"
 
 const props = defineProps<{
   result: EstimateApiResponse
@@ -25,9 +27,14 @@ const emit = defineEmits<{
   "modify-answers": []
 }>()
 
+type ActiveForm = "none" | "lead" | "partnership"
+
 const heading = ref<HTMLHeadingElement | null>(null)
-const leadFormOpen = ref(false)
-const ctaRef = ref<HTMLButtonElement | null>(null)
+const activeForm = ref<ActiveForm>("none")
+const partnershipCta = ref<HTMLButtonElement | null>(null)
+
+// Contact capturé lors d'un lead EST-6 soumis dans la même session.
+const submittedLeadContact = ref<PartnershipInitialContact | null>(null)
 
 onMounted(() => {
   heading.value?.focus()
@@ -50,7 +57,27 @@ const showEmptyRecurringNote = computed(() =>
 )
 
 function openLeadForm(): void {
-  leadFormOpen.value = true
+  activeForm.value = "lead"
+}
+
+async function openPartnershipForm(): Promise<void> {
+  activeForm.value = "partnership"
+}
+
+function onLeadSubmitted(contact: { name: string; email: string; phone?: string; company?: string }): void {
+  submittedLeadContact.value = {
+    name:    contact.name,
+    email:   contact.email,
+    phone:   contact.phone,
+    company: contact.company,
+  }
+  activeForm.value = "none"
+}
+
+async function onPartnershipClosed(): Promise<void> {
+  activeForm.value = "none"
+  await nextTick()
+  partnershipCta.value?.focus()
 }
 </script>
 
@@ -109,22 +136,37 @@ function openLeadForm(): void {
     </div>
 
     <!-- CTA lead + formulaire (human scoping) -->
-    <div v-if="!leadFormOpen" class="result__cta-block">
+    <div v-if="activeForm === 'none'" class="result__cta-block">
       <button
-        ref="ctaRef"
         type="button"
         class="result__cta"
         @click="openLeadForm"
       >
         Parler de mon projet →
       </button>
+      <button
+        ref="partnershipCta"
+        type="button"
+        class="result__cta-secondary"
+        @click="openPartnershipForm"
+      >
+        Vous souhaitez nous proposer un partenariat ?
+      </button>
     </div>
 
     <EstimatorLeadForm
-      v-if="leadFormOpen"
+      v-if="activeForm === 'lead'"
       :questionnaire-payload="questionnairePayload"
       :additional-feature-note="additionalFeatureNote"
-      @submitted="leadFormOpen = false"
+      @submitted="onLeadSubmitted"
+    />
+
+    <EstimatorPartnershipForm
+      v-if="activeForm === 'partnership'"
+      :questionnaire-payload="questionnairePayload"
+      :initial-contact="submittedLeadContact ?? undefined"
+      @submitted="activeForm = 'none'"
+      @close="onPartnershipClosed"
     />
 
     <div class="result__actions">
@@ -253,7 +295,7 @@ function openLeadForm(): void {
     </div>
 
     <!-- CTA lead + formulaire (estimated) -->
-    <div v-if="!leadFormOpen" class="result__cta-block">
+    <div v-if="activeForm === 'none'" class="result__cta-block">
       <button
         type="button"
         class="result__cta"
@@ -261,13 +303,29 @@ function openLeadForm(): void {
       >
         Parler de mon projet →
       </button>
+      <button
+        ref="partnershipCta"
+        type="button"
+        class="result__cta-secondary"
+        @click="openPartnershipForm"
+      >
+        Vous souhaitez nous proposer un partenariat ?
+      </button>
     </div>
 
     <EstimatorLeadForm
-      v-if="leadFormOpen"
+      v-if="activeForm === 'lead'"
       :questionnaire-payload="questionnairePayload"
       :additional-feature-note="additionalFeatureNote"
-      @submitted="leadFormOpen = false"
+      @submitted="onLeadSubmitted"
+    />
+
+    <EstimatorPartnershipForm
+      v-if="activeForm === 'partnership'"
+      :questionnaire-payload="questionnairePayload"
+      :initial-contact="submittedLeadContact ?? undefined"
+      @submitted="activeForm = 'none'"
+      @close="onPartnershipClosed"
     />
 
     <div class="result__actions">
@@ -485,13 +543,17 @@ function openLeadForm(): void {
   line-height: 1.5;
 }
 
-/* CTA lead */
+/* CTA lead + partenariat */
 .result__cta-block {
   padding-top: var(--space-2);
   border-top: 1px solid color-mix(in srgb, var(--color-petrol) 20%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .result__cta {
+  align-self: flex-start;
   background: var(--color-petrol);
   color: #fff;
   border: none;
@@ -511,6 +573,31 @@ function openLeadForm(): void {
 .result__cta:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Action secondaire partenariat — visuellement discrète vs CTA principal */
+.result__cta-secondary {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--color-petrol) 80%, var(--color-ink));
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+}
+
+.result__cta-secondary:hover {
+  color: var(--color-petrol);
+}
+
+.result__cta-secondary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Actions */

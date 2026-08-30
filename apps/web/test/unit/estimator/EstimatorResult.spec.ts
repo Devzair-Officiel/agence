@@ -313,3 +313,126 @@ describe("EstimatorResult — codes inconnus", () => {
     expect(wrapper.text()).not.toContain("FUTURE_UNKNOWN_FEATURE")
   })
 })
+
+// ─── EST-7 : CTA partenariat (outcome estimated) ──────────────────────────────
+
+describe("EstimatorResult — partnership CTA (estimated)", () => {
+  it("affiche le CTA principal 'Parler de mon projet'", () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    const buttons = wrapper.findAll("button")
+    const primaryCta = buttons.find((b) => b.text().includes("Parler de mon projet"))
+    expect(primaryCta).toBeDefined()
+  })
+
+  it("affiche le CTA secondaire partenariat", () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    const buttons = wrapper.findAll("button")
+    const secondaryCta = buttons.find((b) => b.text().includes("partenariat"))
+    expect(secondaryCta).toBeDefined()
+  })
+
+  it("le CTA secondaire a la classe result__cta-secondary", () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    expect(wrapper.find(".result__cta-secondary").exists()).toBe(true)
+  })
+
+  it("le CTA primaire a la classe result__cta", () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    expect(wrapper.find(".result__cta").exists()).toBe(true)
+  })
+
+  it("cliquer sur le CTA secondaire affiche EstimatorPartnershipForm", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    const secondaryCta = wrapper.find(".result__cta-secondary")
+    await secondaryCta.trigger("click")
+    expect(wrapper.find(".partnership-form").exists()).toBe(true)
+  })
+
+  it("cliquer sur le CTA secondaire masque les deux CTAs", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    await wrapper.find(".result__cta-secondary").trigger("click")
+    expect(wrapper.find(".result__cta").exists()).toBe(false)
+    expect(wrapper.find(".result__cta-secondary").exists()).toBe(false)
+  })
+
+  it("cliquer sur le CTA principal affiche EstimatorLeadForm", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    await wrapper.find(".result__cta").trigger("click")
+    expect(wrapper.find(".lead-form").exists()).toBe(true)
+  })
+
+  it("une seule forme active à la fois — lead masque partnership", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    await wrapper.find(".result__cta").trigger("click")
+    expect(wrapper.find(".lead-form").exists()).toBe(true)
+    expect(wrapper.find(".partnership-form").exists()).toBe(false)
+  })
+
+  it("n'affiche jamais 'Payez avec votre projet' ni 'Revenue share'", () => {
+    const text = mountResult(ESTIMATED_RESULT).text()
+    expect(text).not.toContain("Payez avec")
+    expect(text).not.toContain("Revenue share disponible")
+    expect(text).not.toContain("0 €")
+  })
+})
+
+// ─── EST-7 : CTA partenariat (outcome human_scoping) ─────────────────────────
+
+describe("EstimatorResult — partnership CTA (human_scoping)", () => {
+  it("affiche également le CTA partenariat sur human_scoping", () => {
+    const wrapper = mountResult(HUMAN_SCOPING_RESULT)
+    expect(wrapper.find(".result__cta-secondary").exists()).toBe(true)
+  })
+
+  it("cliquer sur le CTA secondaire affiche EstimatorPartnershipForm", async () => {
+    const wrapper = mountResult(HUMAN_SCOPING_RESULT)
+    await wrapper.find(".result__cta-secondary").trigger("click")
+    expect(wrapper.find(".partnership-form").exists()).toBe(true)
+  })
+})
+
+// ─── EST-7 : pré-remplissage contact après lead soumis ───────────────────────
+
+describe("EstimatorResult — contact pre-fill après lead soumis", () => {
+  it("après @submitted du LeadForm, le PartnershipForm reçoit initialContact", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    // Ouvrir le formulaire lead
+    await wrapper.find(".result__cta").trigger("click")
+    const leadForm = wrapper.findComponent({ name: "EstimatorLeadForm" })
+    // Émettre submitted avec données de contact
+    await leadForm.vm.$emit("submitted", {
+      name: "Marie Dupont",
+      email: "marie@test.com",
+      phone: "+33 6 00 00 00 00",
+      company: "ACME",
+    })
+    await wrapper.vm.$nextTick()
+    // Ouvrir ensuite le formulaire partenariat
+    await wrapper.find(".result__cta-secondary").trigger("click")
+    const partnershipForm = wrapper.findComponent({ name: "EstimatorPartnershipForm" })
+    expect(partnershipForm.props("initialContact")).toMatchObject({
+      name: "Marie Dupont",
+      email: "marie@test.com",
+    })
+  })
+
+  it("après @submitted du LeadForm, activeForm revient à none", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    await wrapper.find(".result__cta").trigger("click")
+    const leadForm = wrapper.findComponent({ name: "EstimatorLeadForm" })
+    await leadForm.vm.$emit("submitted", { name: "Jean", email: "jean@test.com" })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find(".lead-form").exists()).toBe(false)
+    expect(wrapper.find(".result__cta").exists()).toBe(true)
+  })
+
+  it("@close du PartnershipForm revient à l'état none", async () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    await wrapper.find(".result__cta-secondary").trigger("click")
+    const partnershipForm = wrapper.findComponent({ name: "EstimatorPartnershipForm" })
+    await partnershipForm.vm.$emit("close")
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find(".partnership-form").exists()).toBe(false)
+    expect(wrapper.find(".result__cta-secondary").exists()).toBe(true)
+  })
+})

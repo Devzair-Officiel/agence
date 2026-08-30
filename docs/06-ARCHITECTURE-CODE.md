@@ -118,9 +118,10 @@ devzair/
 │       │   │   ├── Application/
 │       │   │   │   └── Pricing/      # EST-1B — PricingCatalogInterface, DevzairPricingCatalogV1 (grille `2026-v1`), ProjectEstimationEngine (déterministe), RoundingPolicy
 │       │   │   ├── Infrastructure/
-│       │   │   │   └── Security/     # EST-1C — EstimateRateLimiter (bucket `estimate_ip`, indépendant de `contact_ip`)
+│       │   │   │   ├── Persistence/  # EST-6 — DoctrineEstimatorLeadRepository ; EST-7 — DoctrineEstimatorPartnershipRepository
+│       │   │   │   └── Security/     # EST-1C — EstimateRateLimiter ; EST-6 — EstimateLeadRateLimiter ; EST-7 — EstimatePartnershipRateLimiter
 │       │   │   └── Presentation/
-│       │   │       └── Http/         # EST-1C — EstimateController (POST /estimate, pipeline 9 étapes), EstimateRequest (DTO sans PII), EstimateRequestMapper, EstimateResponseFactory
+│       │   │       └── Http/         # EST-1C — EstimateController ; EST-6 — EstimatorLeadController ; EST-7 — EstimatorPartnershipController (POST /estimate/partnership, pipeline 8 étapes, réponse { status: "submitted", proposal_id, request_id })
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
