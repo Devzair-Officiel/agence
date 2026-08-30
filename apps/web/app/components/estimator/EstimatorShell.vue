@@ -1,10 +1,42 @@
 <script setup lang="ts">
+import { nextTick, ref, watch } from "vue"
 import { useEstimator } from "~/composables/useEstimator"
 
-const TOTAL_STEPS = 7
+const {
+  currentStep,
+  projectType,
+  objectives,
+  currentSituation,
+  scale,
+  features,
+  contentNeeds,
+  visibilityNeeds,
+  careNeeds,
+  path,
+  totalSteps,
+  canGoNext,
+  isComplete,
+  goNext,
+  goPrev,
+  setProjectType,
+  setCurrentSituation,
+  setScale,
+  setFeatures,
+  setObjectives,
+  setContentNeeds,
+  setVisibilityNeeds,
+  setCareNeeds,
+} = useEstimator()
 
-const { currentStep, projectType, canGoNext, goNext, goPrev, setProjectType } =
-  useEstimator({ maxStep: 1 })
+const stepRef = ref<HTMLElement | null>(null)
+
+watch(currentStep, async () => {
+  await nextTick()
+  const target = stepRef.value?.querySelector<HTMLElement>(
+    "legend[tabindex='-1'], h2[tabindex='-1']",
+  )
+  target?.focus()
+})
 </script>
 
 <template>
@@ -13,20 +45,87 @@ const { currentStep, projectType, canGoNext, goNext, goPrev, setProjectType } =
       <div class="estimator-shell__card">
         <EstimatorProgress
           :current-step="currentStep"
-          :total-steps="TOTAL_STEPS"
+          :total-steps="totalSteps"
         />
 
-        <div class="estimator-shell__step">
+        <div ref="stepRef" class="estimator-shell__step">
+          <!-- Étape 1 — Type de projet (commun aux deux chemins) -->
           <EstimatorProjectTypeStep
             v-if="currentStep === 1"
             :model-value="projectType"
             @update:model-value="setProjectType"
           />
+
+          <!-- Chemin standard (vitrinesite, ecommerce, businessapp, refonte, other) -->
+          <template v-else-if="path === 'standard'">
+            <EstimatorSituationStep
+              v-if="currentStep === 2"
+              :model-value="currentSituation"
+              @update:model-value="setCurrentSituation"
+            />
+            <EstimatorScopeStep
+              v-else-if="currentStep === 3"
+              :model-value="scale"
+              :project-type="projectType!"
+              @update:model-value="setScale"
+            />
+            <EstimatorFeaturesStep
+              v-else-if="currentStep === 4"
+              :model-value="features"
+              :project-type="projectType!"
+              @update:model-value="setFeatures"
+            />
+            <EstimatorContentStep
+              v-else-if="currentStep === 5"
+              :model-value="contentNeeds"
+              @update:model-value="setContentNeeds"
+            />
+            <EstimatorVisibilityStep
+              v-else-if="currentStep === 6"
+              :model-value="visibilityNeeds"
+              @update:model-value="setVisibilityNeeds"
+            />
+            <EstimatorCareStep
+              v-else-if="currentStep === 7"
+              :model-value="careNeeds"
+              @update:model-value="setCareNeeds"
+            />
+          </template>
+
+          <!-- Chemin unknown (objectif-first, 6 étapes) -->
+          <template v-else>
+            <EstimatorObjectivesStep
+              v-if="currentStep === 2"
+              :model-value="objectives"
+              @update:model-value="setObjectives"
+            />
+            <EstimatorSituationStep
+              v-else-if="currentStep === 3"
+              :model-value="currentSituation"
+              @update:model-value="setCurrentSituation"
+            />
+            <EstimatorContentStep
+              v-else-if="currentStep === 4"
+              :model-value="contentNeeds"
+              @update:model-value="setContentNeeds"
+            />
+            <EstimatorVisibilityStep
+              v-else-if="currentStep === 5"
+              :model-value="visibilityNeeds"
+              @update:model-value="setVisibilityNeeds"
+            />
+            <EstimatorCareStep
+              v-else-if="currentStep === 6"
+              :model-value="careNeeds"
+              @update:model-value="setCareNeeds"
+            />
+          </template>
         </div>
 
         <EstimatorNavigation
           :current-step="currentStep"
           :can-go-next="canGoNext"
+          :is-last-step="isComplete"
           @prev="goPrev"
           @next="goNext"
         />

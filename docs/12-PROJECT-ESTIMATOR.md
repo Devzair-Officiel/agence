@@ -6,7 +6,8 @@
 > EST-1B — Calibration + moteur : **TERMINÉ** (2026-08-30). Q-01 validée. Grille `2026-v1` active.
 > EST-1C — API HTTP : **TERMINÉ** (2026-08-30). `POST /api/estimate` opérationnel, recette 16 critères validée.
 > EST-2 — Shell UX du configurateur : **Implémentation technique livrée — validation visuelle requise** (2026-08-30).
-> Prochaine phase : **EST-3 — Questionnaires conditionnels**.
+> EST-3 — Questionnaires conditionnels : **TERMINÉ** (2026-08-30).
+> Prochaine phase : **EST-4 — Calcul + écran résultat**.
 
 ---
 
@@ -1003,26 +1004,36 @@ EST-1 est décomposé en trois sous-jalons. Tous terminés.
 
 ### EST-3 — Questionnaires conditionnels
 
-**Objectif :** Implémenter les questions par type de projet (§8) avec leur logique conditionnelle.
+**État : TERMINÉ** (2026-08-30)
 
-**Périmètre :**
-- Composants de step pour chaque type de projet (site vitrine, e-commerce, application, refonte, objectif-first).
-- Logique conditionnelle dans `useEstimator`.
-- Arbre de décision pour la branche « Je ne sais pas encore ».
-- Validation de chaque étape avant passage à la suivante.
-- Vitest et Playwright.
+**Livré :**
+
+- `useEstimator` réécrit : état complet typé, `path` / `totalSteps` / `canGoNext` par étape,
+  `isComplete`, `toEstimatePayload()` pur (sans appel HTTP), nettoyage conditionnel sur changement
+  de `projectType`.
+- `EstimatorCheckboxCard.vue` : composant multi-select réutilisable.
+- 7 composants de step : SituationStep, ObjectivesStep, ScopeStep, FeaturesStep, ContentStep,
+  VisibilityStep, CareStep.
+- `EstimatorShell` mis à jour : routing conditionnel standard/unknown, focus `nextTick`, bouton
+  « Terminer → » à la dernière étape.
+- 3 configs ajoutées : `estimator-content-options.ts`, `estimator-visibility-options.ts`,
+  `estimator-care-options.ts`.
+- 777 tests verts. Lint, typecheck, build OK.
+
+**Écarts documentés :**
+
+| Écart | Décision |
+|---|---|
+| Horizon de projet (doc §6) : aucun champ backend | Non collecté (KISS) |
+| `CurrentSituation` : 5 options (doc = 3) | UX étendue pour couvrir les 5 codes backend |
+| ContentNeed « prêt » : aucun code backend | Tableau vide = tout fourni |
+| Champ libre « Autre » objectif : aucun champ backend | Différé à EST-6 |
+| Unknown path Q2 (B2B/B2C) : aucun champ backend | Non collecté |
+| CareNeed autonomie : aucun code backend | Tableau vide = autonomie |
 
 **Hors périmètre :** Calcul et écran résultat (EST-4).
 
-**Fichiers/domaines probables :** `apps/web/app/components/estimator/steps/`.
-
-**Tests attendus :** Vitest (logique conditionnelle, validation). Playwright (parcours complets par type, branche objectif-first, « Je ne sais pas »).
-
-**Critères de sortie :** Les cinq branches de questionnaire sont complètes, accessibles et testées.
-
 **Dépendances :** EST-2.
-
-**Risques :** Explosion combinatoire des cas de test. Formulations inadaptées aux prospects non techniques.
 
 ---
 

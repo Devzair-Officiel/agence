@@ -2,6 +2,7 @@
 defineProps<{
   currentStep: number
   canGoNext: boolean
+  isLastStep?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -29,7 +30,7 @@ const emit = defineEmits<{
       :disabled="!canGoNext"
       @click="emit('next')"
     >
-      Continuer →
+      {{ isLastStep ? 'Terminer →' : 'Continuer →' }}
     </BaseButton>
   </div>
 </template>

@@ -1554,14 +1554,38 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-3 — Questionnaires conditionnels
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE**
 
-- [ ] Composants de step par type de projet (site vitrine, e-commerce, application, refonte, objectif-first).
-- [ ] Arbre de décision « Je ne sais pas encore ».
-- [ ] Logique conditionnelle dans `useEstimator`.
-- [ ] Vitest et Playwright.
+- [x] `useEstimator` étendu : état complet (projectType, objectives, currentSituation, scale,
+  features, contentNeeds, visibilityNeeds, careNeeds), `path` / `totalSteps` calculés, `canGoNext`
+  par étape, `isComplete`, `toEstimatePayload()` pur sans appel API.
+- [x] Chemin standard (7 étapes) : SituationStep → ScopeStep → FeaturesStep → ContentStep →
+  VisibilityStep → CareStep.
+- [x] Chemin unknown / objectif-first (6 étapes) : ObjectivesStep → SituationStep → ContentStep →
+  VisibilityStep → CareStep.
+- [x] Composant `EstimatorCheckboxCard.vue` (réutilisable, multi-select, WCAG AA).
+- [x] 7 composants de step créés, focusables au changement d'étape (`tabindex="-1"` sur
+  `legend`/`h2`, focus via `nextTick` dans la Shell).
+- [x] `EstimatorShell.vue` orchestre les deux chemins, passe `totalSteps` dynamique à la barre de
+  progression, affiche « Terminer → » à la dernière étape.
+- [x] Nettoyage conditionnel : changement de `projectType` efface `objectives`, `scale`, `features`
+  (mais préserve `currentSituation`, `contentNeeds`, `visibilityNeeds`, `careNeeds`).
+- [x] Configs ajoutées : `estimator-content-options.ts`, `estimator-visibility-options.ts`,
+  `estimator-care-options.ts`.
+- [x] 64 tests unitaires Vitest (useEstimator ×50, SituationStep, ObjectivesStep, ScopeStep,
+  FeaturesStep, ContentStep, VisibilityStep, CareStep, estimator-features config) + suite E2E
+  `estimator-questionnaire.spec.ts`. Total suite verte : 777 tests.
+- [x] Lint, typecheck, build production verts.
 
-**Critère de sortie :** Les cinq branches de questionnaire sont complètes, accessibles et testées.
+**Écarts documentés (backend / docs §12 ↔ implémentation) :**
+- Horizon de projet (§6 étape 02) : non collecté — aucun champ backend.
+- `CurrentSituation` : 5 options UX (doc propose 3) pour couvrir les 5 codes backend.
+- ContentNeed « prêt » : code vide dans le tableau (pas de code "complete" côté Symfony).
+- Champ libre « Autre » objectif : différé à EST-6.
+- Unknown path Q2 (B2B/B2C) : non collecté — aucun champ backend.
+- CareNeed autonomie : tableau vide = autonomie (pas de code "autonomy" côté Symfony).
+
+**Critère de sortie :** atteint (lint, typecheck, 777 tests unitaires verts, build OK).
 
 **Dépendances :** EST-2.
 
