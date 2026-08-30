@@ -1533,13 +1533,18 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-2 — Shell UX du configurateur (Nuxt)
 
-**État actuel : À FAIRE**
+**État actuel : Implémentation technique livrée — validation visuelle requise** (2026-08-30)
 
-- [ ] Page `/estimer-mon-projet`.
-- [ ] Orchestrateur `ProjectEstimator.vue`.
-- [ ] Navigation entre étapes, indicateur de progression, gestion du focus.
-- [ ] Accessibilité WCAG 2.2 AA de base.
-- [ ] Vitest et Playwright.
+- [x] Page `/estimer-mon-projet` (`usePageSeo`, SSR, `data-hydrated`).
+- [x] Composable `useEstimator` (état in-memory, `maxStep`, `canGoNext`, `goNext`/`goPrev`, `setProjectType`).
+- [x] Config `estimator-project-types.ts` (6 codes alignés sur l'enum Symfony `ProjectType`).
+- [x] `EstimatorHero.vue` — intro compacte visible en viewport sans scroll.
+- [x] `EstimatorShell.vue` — orchestrateur avec `maxStep=1` (EST-2).
+- [x] `EstimatorProgress.vue` — `role=progressbar`, `aria-valuenow/min/max`.
+- [x] `EstimatorProjectTypeStep.vue` — `<fieldset>/<legend>`, 6 radios natifs, cartes accessibles WCAG 2.2.
+- [x] `EstimatorNavigation.vue` — Retour / Continuer, Continuer désactivé sans sélection.
+- [x] Vitest : 5 fichiers spec (config, composable, Progress, ProjectTypeStep, Navigation).
+- [x] Playwright + Axe : `estimator-shell.spec.ts` (10 scénarios WCAG 2.2 AA).
 
 **Critère de sortie :** Shell navigable, accessible, responsive. Aucun questionnaire ni calcul fonctionnel requis.
 

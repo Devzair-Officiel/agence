@@ -4,7 +4,9 @@
 > EST-0 — Cadrage et documentation : **TERMINÉ** (2026-08-29).
 > EST-1A — Contrat métier : **TERMINÉ** (2026-08-29).
 > EST-1B — Calibration + moteur : **TERMINÉ** (2026-08-30). Q-01 validée. Grille `2026-v1` active.
-> Prochaine phase : **EST-1C — API HTTP** (`POST /api/estimate`, sécurité, rate limiting).
+> EST-1C — API HTTP : **TERMINÉ** (2026-08-30). `POST /api/estimate` opérationnel, recette 16 critères validée.
+> EST-2 — Shell UX du configurateur : **Implémentation technique livrée — validation visuelle requise** (2026-08-30).
+> Prochaine phase : **EST-3 — Questionnaires conditionnels**.
 
 ---
 
