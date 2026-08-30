@@ -469,4 +469,177 @@ describe("useEstimator", () => {
       expect(features.value).toEqual(["contact_form"])
     })
   })
+
+  describe("additionalFeatureNote", () => {
+    it("initialises to empty string", () => {
+      const { additionalFeatureNote } = useEstimator()
+      expect(additionalFeatureNote.value).toBe("")
+    })
+
+    it("setAdditionalFeatureNote updates the value", () => {
+      const { additionalFeatureNote, setAdditionalFeatureNote } = useEstimator()
+      setAdditionalFeatureNote("Système de chat en temps réel")
+      expect(additionalFeatureNote.value).toBe("Système de chat en temps réel")
+    })
+
+    it("is not included in toEstimatePayload", () => {
+      const { setProjectType, setAdditionalFeatureNote, toEstimatePayload } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      setAdditionalFeatureNote("Besoin secret")
+      const payload = toEstimatePayload()
+      expect(Object.keys(payload)).not.toContain("additional_feature_note")
+      expect(Object.keys(payload)).not.toContain("additionalFeatureNote")
+    })
+
+    it("is cleared when switching to unknown path", () => {
+      const { additionalFeatureNote, setProjectType, setAdditionalFeatureNote } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      setAdditionalFeatureNote("Une idée")
+      setProjectType("unknown")
+      expect(additionalFeatureNote.value).toBe("")
+    })
+
+    it("is preserved when switching between standard types", () => {
+      const { additionalFeatureNote, setProjectType, setAdditionalFeatureNote } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      setAdditionalFeatureNote("Une idée")
+      setProjectType("ecommerce")
+      expect(additionalFeatureNote.value).toBe("Une idée")
+    })
+
+    it("is preserved when same type is re-selected", () => {
+      const { additionalFeatureNote, setProjectType, setAdditionalFeatureNote } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      setAdditionalFeatureNote("Une idée")
+      setProjectType("vitrinesite")
+      expect(additionalFeatureNote.value).toBe("Une idée")
+    })
+  })
+
+  describe("careAnswered", () => {
+    it("initialises to false", () => {
+      const { careAnswered } = useEstimator()
+      expect(careAnswered.value).toBe(false)
+    })
+
+    it("becomes true after setCareNeeds is called", () => {
+      const { careAnswered, setCareNeeds } = useEstimator()
+      setCareNeeds(["maintenance"])
+      expect(careAnswered.value).toBe(true)
+    })
+
+    it("is true even when setCareNeeds called with empty array", () => {
+      const { careAnswered, setCareNeeds } = useEstimator()
+      setCareNeeds([])
+      expect(careAnswered.value).toBe(true)
+    })
+
+    it("resets to false when project type changes", () => {
+      const { careAnswered, setCareNeeds, setProjectType } = useEstimator()
+      setProjectType("vitrinesite")
+      setCareNeeds(["support"])
+      setProjectType("ecommerce")
+      expect(careAnswered.value).toBe(false)
+    })
+
+    it("is NOT reset when same type is re-selected", () => {
+      const { careAnswered, setCareNeeds, setProjectType } = useEstimator()
+      setProjectType("vitrinesite")
+      setCareNeeds(["support"])
+      setProjectType("vitrinesite")
+      expect(careAnswered.value).toBe(true)
+    })
+  })
+
+  describe("maxVisitedStep", () => {
+    it("initialises to 1", () => {
+      const { maxVisitedStep } = useEstimator()
+      expect(maxVisitedStep.value).toBe(1)
+    })
+
+    it("is updated by goNext", () => {
+      const { maxVisitedStep, setProjectType, goNext } = useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      expect(maxVisitedStep.value).toBe(2)
+    })
+
+    it("never goes below a previously reached step on goPrev", () => {
+      const { maxVisitedStep, setProjectType, setCurrentSituation, goNext, goPrev } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      setCurrentSituation("none")
+      goNext()
+      expect(maxVisitedStep.value).toBe(3)
+      goPrev()
+      expect(maxVisitedStep.value).toBe(3)
+    })
+
+    it("resets to 1 when project type changes", () => {
+      const { maxVisitedStep, setProjectType, setCurrentSituation, goNext } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      setCurrentSituation("none")
+      goNext()
+      expect(maxVisitedStep.value).toBe(3)
+      setProjectType("ecommerce")
+      expect(maxVisitedStep.value).toBe(1)
+    })
+
+    it("is NOT reset when same type is re-selected", () => {
+      const { maxVisitedStep, setProjectType, setCurrentSituation, goNext } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      setCurrentSituation("none")
+      goNext()
+      setProjectType("vitrinesite")
+      expect(maxVisitedStep.value).toBe(3)
+    })
+  })
+
+  describe("goToStep", () => {
+    it("navigates to a previously visited step", () => {
+      const { currentStep, maxVisitedStep, setProjectType, setCurrentSituation, goNext, goToStep } =
+        useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      setCurrentSituation("none")
+      goNext()
+      expect(maxVisitedStep.value).toBe(3)
+      goToStep(1)
+      expect(currentStep.value).toBe(1)
+    })
+
+    it("does nothing when step > maxVisitedStep", () => {
+      const { currentStep, setProjectType, goToStep } = useEstimator()
+      setProjectType("vitrinesite")
+      expect(currentStep.value).toBe(1)
+      goToStep(3)
+      expect(currentStep.value).toBe(1)
+    })
+
+    it("does nothing when step < 1", () => {
+      const { currentStep, goToStep } = useEstimator()
+      goToStep(0)
+      expect(currentStep.value).toBe(1)
+    })
+
+    it("can navigate to maxVisitedStep itself", () => {
+      const { currentStep, setProjectType, goNext, goToStep } = useEstimator()
+      setProjectType("vitrinesite")
+      goNext()
+      expect(currentStep.value).toBe(2)
+      goToStep(1)
+      expect(currentStep.value).toBe(1)
+      goToStep(2)
+      expect(currentStep.value).toBe(2)
+    })
+  })
 })

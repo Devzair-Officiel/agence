@@ -21,19 +21,24 @@ export interface EstimatorApi {
   currentSituation: Ref<CurrentSituationCode | null>
   scale: Ref<ProjectScaleCode | null>
   features: Ref<ProjectFeatureCode[]>
+  additionalFeatureNote: Ref<string>
   contentNeeds: Ref<ContentNeedCode[]>
   visibilityNeeds: Ref<VisibilityNeedCode[]>
   careNeeds: Ref<CareNeedCode[]>
+  careAnswered: Ref<boolean>
+  maxVisitedStep: Ref<number>
   path: ComputedRef<EstimatorPath>
   totalSteps: ComputedRef<number>
   canGoNext: ComputedRef<boolean>
   isComplete: ComputedRef<boolean>
   goNext: () => void
   goPrev: () => void
+  goToStep: (step: number) => void
   setProjectType: (value: ProjectTypeCode) => void
   setCurrentSituation: (value: CurrentSituationCode) => void
   setScale: (value: ProjectScaleCode) => void
   setFeatures: (codes: ProjectFeatureCode[]) => void
+  setAdditionalFeatureNote: (value: string) => void
   setObjectives: (codes: ProjectObjectiveCode[]) => void
   setContentNeeds: (codes: ContentNeedCode[]) => void
   setVisibilityNeeds: (codes: VisibilityNeedCode[]) => void
@@ -48,9 +53,12 @@ export function useEstimator(): EstimatorApi {
   const currentSituation = ref<CurrentSituationCode | null>(null)
   const scale = ref<ProjectScaleCode | null>(null)
   const features = ref<ProjectFeatureCode[]>([])
+  const additionalFeatureNote = ref<string>("")
   const contentNeeds = ref<ContentNeedCode[]>([])
   const visibilityNeeds = ref<VisibilityNeedCode[]>([])
   const careNeeds = ref<CareNeedCode[]>([])
+  const careAnswered = ref<boolean>(false)
+  const maxVisitedStep = ref<number>(1)
 
   const path = computed<EstimatorPath>(() =>
     projectType.value === "unknown" ? "unknown" : "standard",
@@ -80,6 +88,7 @@ export function useEstimator(): EstimatorApi {
     if (!canGoNext.value) return
     if (currentStep.value >= totalSteps.value) return
     currentStep.value++
+    maxVisitedStep.value = Math.max(maxVisitedStep.value, currentStep.value)
   }
 
   function goPrev(): void {
@@ -87,11 +96,22 @@ export function useEstimator(): EstimatorApi {
     currentStep.value--
   }
 
+  function goToStep(step: number): void {
+    if (step >= 1 && step <= maxVisitedStep.value) {
+      currentStep.value = step
+    }
+  }
+
   function setProjectType(value: ProjectTypeCode): void {
     if (projectType.value !== value) {
       objectives.value = []
       scale.value = null
       features.value = []
+      careAnswered.value = false
+      maxVisitedStep.value = 1
+      if (value === "unknown") {
+        additionalFeatureNote.value = ""
+      }
     }
     projectType.value = value
   }
@@ -108,6 +128,10 @@ export function useEstimator(): EstimatorApi {
     features.value = codes
   }
 
+  function setAdditionalFeatureNote(value: string): void {
+    additionalFeatureNote.value = value
+  }
+
   function setObjectives(codes: ProjectObjectiveCode[]): void {
     objectives.value = codes
   }
@@ -122,10 +146,12 @@ export function useEstimator(): EstimatorApi {
 
   function setCareNeeds(codes: CareNeedCode[]): void {
     careNeeds.value = codes
+    careAnswered.value = true
   }
 
   function toEstimatePayload(): EstimatePayload {
     const isUnknown = path.value === "unknown"
+    // additionalFeatureNote is intentionally excluded — never sent to /api/estimate
     return {
       project_type: projectType.value ?? "unknown",
       objectives: [...objectives.value],
@@ -145,19 +171,24 @@ export function useEstimator(): EstimatorApi {
     currentSituation,
     scale,
     features,
+    additionalFeatureNote,
     contentNeeds,
     visibilityNeeds,
     careNeeds,
+    careAnswered,
+    maxVisitedStep,
     path,
     totalSteps,
     canGoNext,
     isComplete,
     goNext,
     goPrev,
+    goToStep,
     setProjectType,
     setCurrentSituation,
     setScale,
     setFeatures,
+    setAdditionalFeatureNote,
     setObjectives,
     setContentNeeds,
     setVisibilityNeeds,

@@ -7,6 +7,7 @@
 > EST-1C — API HTTP : **TERMINÉ** (2026-08-30). `POST /api/estimate` opérationnel, recette 16 critères validée.
 > EST-2 — Shell UX du configurateur : **Implémentation technique livrée — validation visuelle requise** (2026-08-30).
 > EST-3 — Questionnaires conditionnels : **TERMINÉ** (2026-08-30).
+> EST-3.1 — Récapitulatif dynamique + Besoin complémentaire : **TERMINÉ** (2026-08-30).
 > Prochaine phase : **EST-4 — Calcul + écran résultat**.
 
 ---

@@ -1591,6 +1591,36 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ---
 
+### EST-3.1 — Récapitulatif dynamique + Besoin complémentaire
+
+**État actuel : TERMINÉE** (2026-08-30)
+
+- [x] `useEstimator` étendu : `additionalFeatureNote` (string, `""`), `careAnswered` (bool), `maxVisitedStep` (int),
+  `goToStep(n)`, `setAdditionalFeatureNote()`. Nettoyage conditionnel : `additionalFeatureNote` effacé si bascule
+  vers chemin unknown ; `careAnswered` et `maxVisitedStep` réinitialisés si `projectType` change.
+- [x] `EstimatorFeaturesStep.vue` étendu : textarea « Une autre fonctionnalité à prévoir ? »,
+  counter X / 400 (`aria-live="polite"`), disclaimer non contractuel, prop `additionalFeatureNote`
+  + émission `update:additionalFeatureNote`. La note n'est pas transmise à `toEstimatePayload()`.
+- [x] `EstimatorProjectSummary.vue` créé : récapitulatif des réponses par section, contrôle
+  « Modifier » (émet `go-to-step`), mobile accordion CSS (`summary__body--expanded`), desktop
+  sticky colonne gauche 300 px (≥ 1024 px). Autonomie distinguée via `careAnswered`. Labels
+  humains pour content needs via table interne. Note complémentaire tronquée à 72 chars.
+  Contraste WCAG AA : `color-mix(in srgb, var(--color-ink) 68%, var(--color-cream-elevated))`.
+- [x] `EstimatorShell.vue` restructuré : grille 2 colonnes (≥ 1024 px), summary sticky gauche,
+  step + navigation droite. Props `additionalFeatureNote` / `careAnswered` / `maxVisitedStep` /
+  `goToStep` passés aux composants.
+- [x] 51 tests unitaires ajoutés (useEstimator ×40, FeaturesStep ×6, ProjectSummary ×35).
+  Total suite : **828 tests verts**.
+- [x] 5 tests E2E `estimator-summary.spec.ts` : scénario A enrichissement, B Modifier, C payload
+  isolation, D textarea/counter, E note dans récapitulatif. **55 tests E2E verts**.
+- [x] Lint, typecheck, build production verts.
+
+**Critère de sortie :** atteint.
+
+**Dépendances :** EST-3.
+
+---
+
 ### EST-4 — Calcul + écran résultat
 
 **État actuel : À FAIRE**
