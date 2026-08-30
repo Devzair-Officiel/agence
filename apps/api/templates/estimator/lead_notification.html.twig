@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouveau lead estimateur — Devzair</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #222; background: #f5f5f5; margin: 0; padding: 0; }
+    .wrapper { max-width: 600px; margin: 24px auto; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .header { background: #1a1a2e; color: #fff; padding: 24px 32px; }
+    .header h1 { margin: 0; font-size: 18px; }
+    .section { padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .section h2 { font-size: 13px; text-transform: uppercase; color: #888; letter-spacing: 1px; margin: 0 0 12px; }
+    .row { display: flex; margin-bottom: 6px; }
+    .label { width: 130px; flex-shrink: 0; color: #555; font-weight: bold; }
+    .value { color: #222; }
+    .note-box { background: #f8f8f8; border-left: 3px solid #ddd; padding: 10px 14px; margin-top: 8px; white-space: pre-line; }
+    .footer { padding: 16px 32px; font-size: 12px; color: #aaa; text-align: center; }
+    .range { font-weight: bold; color: #1a1a2e; font-size: 16px; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>Nouveau lead estimateur</h1>
+    <p style="margin:6px 0 0;font-size:13px;opacity:.8;">Devzair · Réf. #{{ shortId }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Contact</h2>
+    <div class="row"><span class="label">Nom</span><span class="value">{{ name }}</span></div>
+    <div class="row"><span class="label">Email</span><span class="value"><a href="mailto:{{ visitorEmail }}">{{ visitorEmail }}</a></span></div>
+    <div class="row"><span class="label">Téléphone</span><span class="value">{{ phone ?? 'Non renseigné' }}</span></div>
+    <div class="row"><span class="label">Société</span><span class="value">{{ company ?? 'Non renseigné' }}</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Projet estimé</h2>
+    <div class="row"><span class="label">Type</span><span class="value">{{ projectType }}</span></div>
+    <div class="row"><span class="label">Résultat</span><span class="value">{{ outcome }}</span></div>
+    {% if minorMin is not null and minorMax is not null %}
+    <div class="row">
+      <span class="label">Fourchette</span>
+      <span class="value range">{{ (minorMin / 100)|number_format(0, ',', ' ') }} € – {{ (minorMax / 100)|number_format(0, ',', ' ') }} €</span>
+    </div>
+    {% else %}
+    <div class="row"><span class="label">Fourchette</span><span class="value">Cadrage humain requis</span></div>
+    {% endif %}
+
+    {% if note %}
+    <div style="margin-top:14px;">
+      <div class="label" style="margin-bottom:6px;">Besoin complémentaire</div>
+      <div class="note-box">{{ note }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="section">
+    <h2>Référence</h2>
+    <div class="row"><span class="label">ID technique</span><span class="value" style="font-size:11px;color:#888;">{{ requestId }}</span></div>
+  </div>
+
+  <div class="footer">Devzair · devzair.fr</div>
+</div>
+</body>
+</html>
