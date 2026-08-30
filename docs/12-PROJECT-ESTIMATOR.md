@@ -3,7 +3,8 @@
 > Source de vérité fonctionnelle du sous-projet « Estimer votre projet ».
 > EST-0 — Cadrage et documentation : **TERMINÉ** (2026-08-29).
 > EST-1A — Contrat métier : **TERMINÉ** (2026-08-29).
-> Prochaine phase : **EST-1B — Calibration + moteur** (bloqué par Q-01 — grille tarifaire Devzair).
+> EST-1B — Calibration + moteur : **TERMINÉ** (2026-08-30). Q-01 validée. Grille `2026-v1` active.
+> Prochaine phase : **EST-1C — API HTTP** (`POST /api/estimate`, sécurité, rate limiting).
 
 ---
 
@@ -489,6 +490,37 @@ EstimateResult {
 **Aucun tarif réel n'est défini dans ce document.**  
 La calibration des montants MIN / MAX est réalisée lors de **EST-1** par l'équipe Devzair.  
 Tous les montants sont marqués **À VALIDER** jusqu'à cette étape.
+
+### 10.4 Contrat sémantique Unknown / Other — signal EST-4
+
+Lorsque le moteur ne peut pas inférer un type de projet fiable (`ProjectType::Unknown` ou `ProjectType::Other` sans objectifs déterminants, ou avec objectifs conflictuels), il retourne obligatoirement l'assumption :
+
+```
+unknown_project_requires_human_scoping
+```
+
+**Fourchette fallback (valeur technique) :**
+
+La fourchette retournée dans ce cas — correspondant à l'étendue complète des types connus [900 € — 4 000 €] — est une **valeur technique** permettant de satisfaire le contrat `EstimateResult`, qui exige un `EstimateRange` non nul. Elle ne constitue **pas** une estimation commerciale fiable et ne doit jamais être présentée comme telle.
+
+**Inférence déterministe et conflits :**
+
+Le moteur utilise deux niveaux de signal pour tenter l'inférence :
+
+- **Fort** : `SellOnline` → Ecommerce · `DigitalizeProcess` → BusinessApp
+- **Faible** : `PresentBusiness | GenerateLeads | ImproveVisibility` → VitrineSite (cède aux signaux forts)
+
+Si plusieurs familles fortes distinctes sont présentes (ex. `SellOnline + DigitalizeProcess`), le moteur détecte un conflit et retourne `unknown_project_requires_human_scoping` sans inférer de type.
+
+**Contrat pour EST-4 (affichage résultat) :**
+
+Lorsque l'assumption `unknown_project_requires_human_scoping` est présente dans l'`EstimateResult`, l'écran de résultat **ne doit pas** afficher la fourchette comme une estimation normale. Il doit afficher à la place un message du type :
+
+> Votre projet nécessite un premier cadrage.
+
+La fourchette fallback peut rester dans le JSON de réponse pour la cohérence du contrat, mais ne doit pas être rendue telle quelle à l'utilisateur final.
+
+**Ce comportement d'affichage ne doit pas être implémenté avant EST-4.**
 
 ---
 
@@ -1162,11 +1194,11 @@ Le MVP de l'estimateur est considéré fonctionnel lorsque :
 
 Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (terminée) ni EST-1A.
 
-### BLOQUANT EST-1B — Calibration commerciale
+### ~~BLOQUANT EST-1B~~ — Calibration commerciale — **RÉSOLUE**
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
-| Q-01 | Grille tarifaire réelle (montants MIN / MAX par type et option) | Devzair | Bloque la calibration du moteur. EST-1A démarre sans Q-01. |
+| Q-01 | Grille tarifaire réelle (montants MIN / MAX par type et option) | Devzair | **VALIDÉE (2026-08-30)** — Grille `2026-v1` implémentée dans `DevzairPricingCatalogV1`. |
 
 ### BLOQUANT EST-5 — Modalités de paiement
 
@@ -1225,3 +1257,8 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 | 2026-08-29 | DEST-011 | Le développement du sous-projet peut être conduit en parallèle des phases globales restantes | Le sous-projet est indépendant et n'interfère pas avec les phases 1–13 ; bloquer sur Phase 12 retarderait inutilement EST-1A et EST-2 | La mise en production reste soumise aux gates habituelles (sécurité, privacy, QA, recette, GO explicite) coordonnée lors de EST-9 |
 | 2026-08-29 | DEST-012 | EST-1 est découpé en trois sous-jalons EST-1A / EST-1B / EST-1C | EST-1A (contrat métier) ne nécessite aucun tarif réel, ce qui évite de bloquer le développement en attente de Q-01 | EST-1A peut démarrer immédiatement après EST-0 ; EST-1B est conditionné à Q-01 ; EST-1C suit EST-1B |
 | 2026-08-29 | DEST-013 | EST-0 est terminé dès que les questions ouvertes sont identifiées et classées, sans exiger leur résolution | La résolution des questions commerciales (Q-01, Q-03, Q-04…) appartient à Devzair et n'est pas un prérequis pour clôturer le cadrage documentaire | Q-01 reste obligatoire avant EST-1B ; Q-02 avant EST-6 ; Q-04 avant EST-7 |
+| 2026-08-30 | DEST-014 | Q-01 validée — grille tarifaire `2026-v1` retenue comme première politique commerciale Devzair | Stratégie : prix d'entrée accessibles, pas de positionnement low-cost, valeur du travail préservée, orientation forte vers le récurrent | Implémentée dans `DevzairPricingCatalogV1` ; séparation investissement initial / récurrent strictement respectée ; le moteur est pur (sans I/O, déterministe, versionné) |
+| 2026-08-30 | DEST-015 | Le scale n'affecte que le socle, pas les features/contenus/visibilité | Éviter une dérive multiplicative globale qui rend les fourchettes incompréhensibles | Les features, contenus et visibilité sont des suppléments fixes, indépendants de la taille déclarée |
+| 2026-08-30 | DEST-016 | Arrondi conservateur à 50 € — MIN vers le bas, MAX vers le haut | Éviter les montants artificiellement précis (1 437,50 €) qui suggèrent une fausse exactitude | Les line items conservent leurs valeurs exactes ; l'arrondi s'applique uniquement à `estimateRange` (somme agrégée) |
+| 2026-08-30 | DEST-017 | Anti-doublon récurrent : un seul tier de maintenance (le plus haut applicable), ContinuousSeo orthogonal | Éviter de facturer ESSENTIAL_MAINTENANCE + MAINTENANCE_FOLLOWUP quand le second couvre déjà le premier | Logique de tier : FunctionalEvolution > ContentUpdates > Support > Maintenance ; SEO continu ajouté séparément |
+| 2026-08-30 | DEST-018 | For Unknown/Other sans inférence : fourchette large [vitrine_min, businessapp_max] + assumption humaine | Ne pas inventer une estimation 0 € ni ignorer le besoin ; être honnête sur l'incertitude | `unknown_project_requires_human_scoping` ajouté ; la fourchette est réelle et annotée, non commerciale |

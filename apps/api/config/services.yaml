@@ -109,6 +109,12 @@ services:
     App\Editorial\Domain\Clock\ClockInterface:
         alias: App\Editorial\Domain\Clock\SystemClock
 
+    # Moteur tarifaire Estimateur (EST-1B). La politique commerciale V1 est
+    # l'implémentation par défaut. EST-8 créera l'administration permettant
+    # de créer et activer de nouvelles versions tarifaires.
+    App\Estimator\Application\Pricing\PricingCatalogInterface:
+        alias: App\Estimator\Application\Pricing\DevzairPricingCatalogV1
+
     # Domaine Admin (Phase 8C1). Le port est branché sur l'adaptateur Doctrine ;
     # une variante en mémoire pour les tests unitaires est déclarée dans
     # services_test.yaml. L'horloge PSR-20 est fournie par le composant Symfony

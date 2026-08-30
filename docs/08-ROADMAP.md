@@ -1486,7 +1486,7 @@ Il n'interfère pas avec les phases 1–13 et ne les renumérote pas.
 
 ### EST-1 — Domaine + moteur d'estimation (Symfony)
 
-**État actuel : À FAIRE**
+**État actuel : EN COURS** (EST-1A et EST-1B terminées — EST-1C à faire)
 
 EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite aucune grille tarifaire réelle.
 
@@ -1501,15 +1501,16 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 **Dépendances :** EST-0 terminé.
 **Critère de sortie :** Le contrat métier est défini, typé, testé avec fixtures TEST. Aucune grille Devzair réelle. EST-1A peut démarrer sans Q-01.
 
-#### EST-1B — Calibration + moteur
+#### EST-1B — Calibration + moteur — **TERMINÉE** (2026-08-30)
 
-- [ ] Service `ProjectEstimationEngine` (calcul autoritaire).
-- [ ] Interface `PricingRepositoryInterface` + implémentation statique versionnée.
-- [ ] Première grille Devzair réelle (Q-01 — **BLOQUANT**).
-- [ ] Règles MIN/MAX par type de projet et option.
-- [ ] PHPUnit moteur.
+- [x] `ProjectEstimationEngine` (pur, déterministe, sans I/O).
+- [x] `PricingCatalogInterface` + `DevzairPricingCatalogV1` (grille réelle `2026-v1`).
+- [x] Grille Devzair V1 (Q-01 validée) — socles, scale, features, contenus, visibilité, récurrent.
+- [x] Politique d'arrondi conservateur (50 €) — MIN vers le bas, MAX vers le haut.
+- [x] Anti-doublon récurrent (un seul tier de maintenance, SEO continu orthogonal).
+- [x] PHPUnit moteur : 208 tests, 376 assertions. Suite globale 821/821.
 
-**Dépendances :** EST-1A, Q-01 validé par l'équipe Devzair.
+**Dépendances :** EST-1A, Q-01 validée par l'équipe Devzair.
 **Critère de sortie :** Le moteur calcule des fourchettes MIN/MAX réelles pour chaque type de projet.
 
 #### EST-1C — API HTTP
