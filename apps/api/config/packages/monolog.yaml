@@ -3,6 +3,7 @@ monolog:
         - contact
         - editorial
         - admin
+        - estimator
 
 when@dev:
     monolog:

@@ -46,3 +46,10 @@ editorial_automated_draft_create:
     path: /internal/editorial/articles/drafts
     controller: App\Editorial\Presentation\Http\Api\CreateAutomatedDraftArticleController::__invoke
     methods: [POST]
+
+# Estimateur (EST-1C). Caddy strippe /api → Symfony reçoit /estimate.
+# Route publique vue par le navigateur : POST /api/estimate.
+estimate_submission:
+    path: /estimate
+    controller: App\Estimator\Presentation\Http\EstimateController::__invoke
+    methods: [POST]

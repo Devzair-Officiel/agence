@@ -221,3 +221,28 @@ services:
     # ce service (via `getContainer()->set(...)`).
     Symfony\Component\Clock\NativeClock:
         public: true
+
+    # ------------------------------------------------------------------
+    # Estimateur (EST-1C)
+    # ------------------------------------------------------------------
+    # Storage en mémoire : chaque boot de kernel (createClient()) repart d'un
+    # bucket neuf. Sans cette override, le cache filesystem persiste entre runs
+    # et fait échouer les tests suivants dès que la limite est atteinte.
+    limiter.storage.estimate_ip:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+        public: true
+
+    limiter.estimate_ip:
+        class: Symfony\Component\RateLimiter\RateLimiterFactory
+        arguments:
+            - policy: 'token_bucket'
+              id: 'estimate_ip'
+              limit: '%app.estimate.rate_limit%'
+              rate: { interval: '%app.estimate.rate_interval%', amount: '%app.estimate.rate_limit%' }
+            - '@limiter.storage.estimate_ip'
+        public: true
+
+    App\Estimator\Infrastructure\Security\EstimateRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.estimate_ip'
+        public: true

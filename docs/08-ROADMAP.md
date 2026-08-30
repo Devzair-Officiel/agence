@@ -1486,7 +1486,7 @@ Il n'interfère pas avec les phases 1–13 et ne les renumérote pas.
 
 ### EST-1 — Domaine + moteur d'estimation (Symfony)
 
-**État actuel : EN COURS** (EST-1A et EST-1B terminées — EST-1C à faire)
+**État actuel : TERMINÉE** (EST-1A, EST-1B et EST-1C terminées)
 
 EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite aucune grille tarifaire réelle.
 
@@ -1513,14 +1513,18 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 **Dépendances :** EST-1A, Q-01 validée par l'équipe Devzair.
 **Critère de sortie :** Le moteur calcule des fourchettes MIN/MAX réelles pour chaque type de projet.
 
-#### EST-1C — API HTTP
+#### EST-1C — API HTTP — **TERMINÉE** (2026-08-30)
 
-- [ ] Contrôleur `POST /api/estimate`.
-- [ ] Validation HTTP de l'input (payload invalide → 400).
-- [ ] Origin allowlist stricte.
-- [ ] Rate limiting (token bucket par IP).
-- [ ] Mapping d'erreurs (400, 429, 413), `X-Request-Id` UUID v7.
-- [ ] PHPUnit fonctionnels (happy path, validation, rate limit, payload trop grand).
+- [x] Contrôleur `POST /api/estimate` (`EstimateController`, pipeline 9 étapes).
+- [x] DTO `EstimateRequest` + `EstimateRequestMapper` (sans PII, validation Symfony Validator).
+- [x] `EstimateResponseFactory` (`outcome`, amounts en minor units int, `period: month`, codes snake_case).
+- [x] Validation HTTP de l'input (payload invalide → 400 `validation_error`).
+- [x] Origin allowlist stricte (réutilisation `OriginAllowlist`, même env `CONTACT_ORIGIN_ALLOWLIST`).
+- [x] Rate limiting (token bucket `estimate_ip` dédié — 30/min par défaut, `InMemoryStorage` en test).
+- [x] Mapping d'erreurs (400, 413, 429 + `Retry-After`), `X-Request-Id` UUID v7, `Cache-Control: no-store`.
+- [x] Canal Monolog `estimator` dédié — aucun PII ni payload loggués.
+- [x] PHPUnit : `EstimateRequestMapperTest` (11 cas), `EstimateResponseFactoryTest` (9 cas), `EstimateControllerTest` (21 cas WebTestCase).
+- [x] `ESTIMATE_RATE_LIMIT` / `ESTIMATE_RATE_INTERVAL` dans `.env.example` et `.env.test`.
 
 **Dépendances :** EST-1B.
 **Critère de sortie :** `POST /api/estimate` retourne un `EstimateResult` valide et versionné pour chaque type de projet, avec les garanties de sécurité HTTP.

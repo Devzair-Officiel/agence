@@ -905,11 +905,13 @@ L'interface d'administration (EST-8) est une phase distincte et non bloquante po
 
 ---
 
-### EST-1 — Domaine + moteur d'estimation (Symfony)
+### EST-1 — Domaine + moteur d'estimation (Symfony) — **TERMINÉE** (2026-08-30)
 
 **Objectif :** Implémenter le domaine Estimator côté Symfony, le moteur de calcul autoritaire et l'endpoint HTTP sécurisé.
 
-EST-1 est décomposé en trois sous-jalons. **EST-1A peut démarrer sans grille tarifaire réelle.**
+EST-1 est décomposé en trois sous-jalons. Tous terminés.
+
+**Résultat :** 254 tests Estimator, 495 assertions. Suite complète 867/867.
 
 **Hors périmètre (global EST-1) :** Interface Nuxt, persistence PostgreSQL, administration.
 
@@ -947,15 +949,18 @@ EST-1 est décomposé en trois sous-jalons. **EST-1A peut démarrer sans grille 
 
 ---
 
-#### EST-1C — API HTTP
+#### EST-1C — API HTTP — **TERMINÉE** (2026-08-30)
 
-**Périmètre :**
-- Contrôleur `POST /api/estimate`.
-- Validation HTTP de l'input (payload invalide → 400).
-- Origin allowlist stricte.
-- Rate limiting (token bucket par IP — conditions À VALIDER).
-- Mapping d'erreurs (400, 429, 413). `X-Request-Id` UUID v7.
-- PHPUnit fonctionnels (happy path, validation, rate limit, payload trop grand).
+**Périmètre livré :**
+- `EstimateController` (`POST /estimate` — Caddy strips `/api` prefix) avec pipeline en 9 étapes : requestId UUID v7, Origin allowlist, taille payload (10 KB), rate limit, désérialisation JSON, validation Symfony Validator, mapping Presentation→Domaine, moteur, réponse.
+- `EstimateRequest` DTO : champs `project_type`, `current_situation`, `scale` (requis, `Choice`), tableaux optionnels `objectives`, `features`, `content_needs`, `visibility_needs`, `care_needs` (valeurs validées, sans PII).
+- `EstimateRequestMapper` : conversion DTO → `ProjectEstimateInput` via `fromString()` des enums.
+- `EstimateResponseFactory` : champ `outcome` (`estimated` / `human_scoping_required`), montants en minor units entiers (jamais float), `recurring_items` avec `period: "month"`, `assumptions` en codes snake_case, `pricing_version: "2026-v1"`.
+- `EstimateRateLimiter` (bucket `estimate_ip` dédié, indépendant de `contact_ip`) : 30 req/min/IP par défaut (`ESTIMATE_RATE_LIMIT` / `ESTIMATE_RATE_INTERVAL`). `InMemoryStorage` en test (reset à chaque kernel boot).
+- Canal Monolog `estimator` dédié. Aucun PII ni payload loggué. Événements : `origin_rejected`, `payload_too_large`, `rate_limited`, `invalid_json`, `validation_failed`, `estimate_generated`.
+- `Cache-Control: no-store` sur toutes les réponses.
+- `ESTIMATE_RATE_LIMIT=30` / `ESTIMATE_RATE_INTERVAL="1 minute"` dans `.env.example`. `ESTIMATE_RATE_LIMIT=5` dans `.env.test`.
+- 254 tests Estimator (unitaires + WebTestCase), 495 assertions. Suite complète 867/867.
 
 **Dépendances :** EST-1B.
 
@@ -1262,3 +1267,6 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 | 2026-08-30 | DEST-016 | Arrondi conservateur à 50 € — MIN vers le bas, MAX vers le haut | Éviter les montants artificiellement précis (1 437,50 €) qui suggèrent une fausse exactitude | Les line items conservent leurs valeurs exactes ; l'arrondi s'applique uniquement à `estimateRange` (somme agrégée) |
 | 2026-08-30 | DEST-017 | Anti-doublon récurrent : un seul tier de maintenance (le plus haut applicable), ContinuousSeo orthogonal | Éviter de facturer ESSENTIAL_MAINTENANCE + MAINTENANCE_FOLLOWUP quand le second couvre déjà le premier | Logique de tier : FunctionalEvolution > ContentUpdates > Support > Maintenance ; SEO continu ajouté séparément |
 | 2026-08-30 | DEST-018 | For Unknown/Other sans inférence : fourchette large [vitrine_min, businessapp_max] + assumption humaine | Ne pas inventer une estimation 0 € ni ignorer le besoin ; être honnête sur l'incertitude | `unknown_project_requires_human_scoping` ajouté ; la fourchette est réelle et annotée, non commerciale |
+| 2026-08-30 | DEST-019 | Inférence déterministe : deux familles fortes (SellOnline + DigitalizeProcess) → conflit → human scoping | Éviter qu'un ordre aléatoire de sélection des objectifs produise des résultats différents pour le même ensemble | Classification en deux niveaux : objectifs forts (Ecommerce / BusinessApp) et faibles (VitrineSite) ; 2+ forts distincts → null → fallback |
+| 2026-08-30 | DEST-020 | L'endpoint `POST /api/estimate` réutilise `OriginAllowlist` du module Contact (même env `CONTACT_ORIGIN_ALLOWLIST`) | Un seul point de configuration pour la whitelist d'origines autorisées ; cohérence des règles CSRF stateless | `EstimateRateLimiter` utilise un bucket `estimate_ip` dédié pour éviter toute interférence avec le budget de tokens Contact |
+| 2026-08-30 | DEST-021 | Tous les montants de la réponse HTTP sont des entiers en unités mineures (centimes EUR) | Éliminer tout risque d'imprécision flottante dans la sérialisation JSON | `amountMinor: int` est l'unité de transport ; le frontend convertit (÷ 100) pour l'affichage |

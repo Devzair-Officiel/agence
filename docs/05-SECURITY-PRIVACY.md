@@ -426,6 +426,22 @@ Politique consignée dans `docs/adr/ADR-010-pipeline-markdown-editorial-cache-ht
   n'a pas été auditée dans son intégralité. Chaque item pointe vers un
   test automatique ou une commande shell reproductible.
 
+### Endpoint `POST /api/estimate` (EST-1C)
+
+Trois filtres indépendants — aucune session, aucun cookie, aucun CSRF token :
+
+1. **CSRF stateless** : même `OriginAllowlist` que `/api/contact` (`CONTACT_ORIGIN_ALLOWLIST`). Origin absent ou non-listé → 403 `origin_not_allowed`. Aucune session Symfony impliquée.
+2. **Rate limit** : bucket `estimate_ip` **dédié** (indépendant de `contact_ip`). Politique par défaut : 30 requêtes / minute / IP réelle. Variable : `ESTIMATE_RATE_LIMIT` / `ESTIMATE_RATE_INTERVAL`. Dépassement → 429 `rate_limited` avec `Retry-After`.
+3. **Payload** : limite stricte 10 000 octets avant désérialisation. Dépassement → 413 `payload_too_large`.
+
+**Aucune PII collectée :** le DTO `EstimateRequest` n'accepte aucun champ email, nom, téléphone ni message libre. Aucune persistence, aucune table, aucune migration. Le moteur est pur (sans I/O, déterministe).
+
+**Canal Monolog `estimator`** : six événements loggués (`origin_rejected`, `payload_too_large`, `rate_limited`, `invalid_json`, `validation_failed`, `estimate_generated`). Seuls `request_id`, `pricing_version` et `outcome` sont enregistrés — jamais le payload, jamais l'IP, jamais les champs fonctionnels.
+
+**Catalogue non exposé** : aucune route publique ne retourne les grilles tarifaires (`/api/pricing`, `/api/estimate/config`, etc. → 404). Seul le résultat calculé est transmis au navigateur.
+
+**Cache-Control: no-store** posé sur toutes les réponses (succès et erreurs).
+
 ## 14.10 Transport, hébergement et réseau
 
 - HTTPS obligatoire ;

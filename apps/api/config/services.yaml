@@ -9,6 +9,8 @@ parameters:
     app.editorial_media.storage_dir: '%env(default::EDITORIAL_MEDIA_STORAGE_DIR)%'
     app.contact.rate_limit: '%env(int:CONTACT_RATE_LIMIT)%'
     app.contact.rate_interval: '%env(CONTACT_RATE_INTERVAL)%'
+    app.estimate.rate_limit: '%env(int:ESTIMATE_RATE_LIMIT)%'
+    app.estimate.rate_interval: '%env(ESTIMATE_RATE_INTERVAL)%'
     app.contact.from_email: '%env(CONTACT_FROM_EMAIL)%'
     app.contact.from_name: '%env(CONTACT_FROM_NAME)%'
     app.contact.recipient: '%env(default::CONTACT_RECIPIENT)%'
@@ -33,6 +35,8 @@ services:
             # Canal dédié aux événements admin (login success/failure, logout,
             # opérations CLI de gestion de comptes). Voir ADR-012.
             Psr\Log\LoggerInterface $adminLogger: '@monolog.logger.admin'
+            # Canal dédié à l'endpoint POST /api/estimate (EST-1C).
+            Psr\Log\LoggerInterface $estimatorLogger: '@monolog.logger.estimator'
 
     App\:
         resource: '../src/'
@@ -81,6 +85,10 @@ services:
     App\Contact\Security\ContactRateLimiter:
         arguments:
             $limiterFactory: '@limiter.contact_ip'
+
+    App\Estimator\Infrastructure\Security\EstimateRateLimiter:
+        arguments:
+            $limiterFactory: '@limiter.estimate_ip'
 
     App\EventListener\ApiExceptionListener:
         arguments:

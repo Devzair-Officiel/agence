@@ -113,6 +113,14 @@ devzair/
 │       │   │       ├── Console/      # Phase 8C1 — app:admin:create-user / reset-password / disable
 │       │   │       ├── EventSubscriber/  # Phase 8C1 — AdminSecurityHeadersSubscriber (CSP durcie + X-Robots noindex + Cache-Control private no-store étendu 8C3)
 │       │   │       └── Http/         # Phase 8C1 — AdminLoginController, AdminDashboardController ; Phase 8C3 — AdminArticleList/Create/Edit/Publish/Archive/Restore + Form/{ArticleCreateData,ArticleEditData,FormErrorBag,ArticleFormPayload} ; Phase 8C4 — AdminArticlePreviewController (GET-only, /admin/articles/{id}/preview, `#[IsGranted('ROLE_ADMIN')]`, aucune mutation)
+│       │   ├── Estimator/              # EST-1 : moteur d'estimation (pur, sans I/O, sans DB)
+│       │   │   ├── Domain/           # EST-1A — 9 enums (ProjectType, ProjectScale, CareNeed, ContentNeed, VisibilityNeed, ProjectFeature, ProjectObjective, CurrentSituation, EstimateAssumption), 5 VOs, ProjectEstimateInput, EstimateResult, EstimatorInvariantViolation
+│       │   │   ├── Application/
+│       │   │   │   └── Pricing/      # EST-1B — PricingCatalogInterface, DevzairPricingCatalogV1 (grille `2026-v1`), ProjectEstimationEngine (déterministe), RoundingPolicy
+│       │   │   ├── Infrastructure/
+│       │   │   │   └── Security/     # EST-1C — EstimateRateLimiter (bucket `estimate_ip`, indépendant de `contact_ip`)
+│       │   │   └── Presentation/
+│       │   │       └── Http/         # EST-1C — EstimateController (POST /estimate, pipeline 9 étapes), EstimateRequest (DTO sans PII), EstimateRequestMapper, EstimateResponseFactory
 │       │   ├── EventListener/
 │       │   └── Kernel.php
 │       ├── tests/
