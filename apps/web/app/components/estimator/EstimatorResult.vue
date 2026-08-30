@@ -9,6 +9,7 @@ import {
   getRecommendedProjectTypeLabel,
   getPeriodLabel,
 } from "~/config/estimate-labels"
+import EstimatorPaymentTerms from "~/components/estimator/EstimatorPaymentTerms.vue"
 
 const props = defineProps<{
   result: EstimateApiResponse
@@ -139,8 +140,9 @@ const showEmptyRecurringNote = computed(() =>
         }}
       </p>
       <p class="result__range-disclaimer">
-        Estimation indicative, non contractuelle. Elle sera confirmée et ajustée
-        après échange et cadrage avec notre équipe.
+        Cette estimation est indicative et ne constitue pas un devis.
+        Le budget définitif dépendra du périmètre confirmé et des éventuels besoins
+        précisés lors du cadrage du projet.
       </p>
     </div>
 
@@ -164,6 +166,9 @@ const showEmptyRecurringNote = computed(() =>
         </li>
       </ul>
     </section>
+
+    <!-- Modalités de paiement -->
+    <EstimatorPaymentTerms :estimate-maximum-minor="result.estimate.maximum" />
 
     <!-- Accompagnement récurrent -->
     <section

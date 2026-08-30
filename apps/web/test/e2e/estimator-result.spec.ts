@@ -402,6 +402,96 @@ test.describe("Invalidation du résultat", () => {
   })
 })
 
+// ─── Modalités de paiement (EST-5) ───────────────────────────────────────────
+
+test.describe("Modalités de paiement — estimated", () => {
+  // Cas A : max 90 000 centimes (900 €) → 2 échéances
+  test("cas A — max 900 € → 2 échéances", async ({ page }) => {
+    const mock = {
+      ...MOCK_ESTIMATED,
+      estimate: { minimum: 70_000, maximum: 90_000, currency: "EUR" },
+    }
+    await mockEstimateResponse(page, mock)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    const text = await page.locator("body").textContent()
+    expect(text).toContain("2 échéances")
+    expect(text).not.toContain("3 échéances")
+    expect(text).not.toContain("4 échéances")
+  })
+
+  // Cas B : max 130 000 centimes (1 300 €) → 3 échéances
+  test("cas B — max 1 300 € → 3 échéances", async ({ page }) => {
+    await mockEstimateResponse(page, MOCK_ESTIMATED) // max = 130 000
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    const text = await page.locator("body").textContent()
+    expect(text).toContain("3 échéances")
+    expect(text).not.toContain("2 échéances")
+    expect(text).not.toContain("4 échéances")
+  })
+
+  // Cas C : max 400 000 centimes (4 000 €) → 4 échéances
+  test("cas C — max 4 000 € → 4 échéances", async ({ page }) => {
+    const mock = {
+      ...MOCK_ESTIMATED,
+      estimate: { minimum: 200_000, maximum: 400_000, currency: "EUR" },
+    }
+    await mockEstimateResponse(page, mock)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    const text = await page.locator("body").textContent()
+    expect(text).toContain("4 échéances")
+    expect(text).not.toContain("2 échéances")
+    expect(text).not.toContain("3 échéances")
+  })
+
+  // Cas D : estimated + récurrents — deux sections distinctes (paiement vs récurrent)
+  test("cas D — bloc paiement et récurrent distincts, pas de mélange '/ mois'", async ({
+    page,
+  }) => {
+    await mockEstimateResponse(page, MOCK_ESTIMATED)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    // Les récurrents affichent bien '/ mois'
+    const text = await page.locator("body").textContent()
+    expect(text).toContain("/ mois")
+    // Et le bloc paiement affiche 'échéances' sans '/mois' propre
+    expect(text).toContain("échéances")
+    // Ne jamais diviser : 130 000 / 3 ≈ 433 — jamais affiché
+    expect(text).not.toContain("433")
+    // Pas de terminologie bancaire
+    expect(text?.toLowerCase()).not.toContain("crédit")
+    expect(text?.toLowerCase()).not.toContain("financement")
+  })
+
+  // Cas E : human_scoping → aucune section "échéance"
+  test("cas E — human_scoping_required : aucune mention d'échéance", async ({ page }) => {
+    await mockEstimateResponse(page, MOCK_HUMAN_SCOPING)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    const text = await page.locator("body").textContent()
+    expect(text).not.toContain("échéance")
+    expect(text).not.toContain("Modalités de règlement")
+  })
+
+  // Anti-confusion : pas de montant par échéance affiché
+  test("n'affiche jamais un montant calculé par échéance", async ({ page }) => {
+    // max 130 000 centimes / 3 ≈ 433 €
+    await mockEstimateResponse(page, MOCK_ESTIMATED)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    const text = await page.locator("body").textContent()
+    expect(text).not.toContain("433")
+  })
+})
+
 // ─── Erreurs API ──────────────────────────────────────────────────────────────
 
 test.describe("Erreurs API — UX", () => {

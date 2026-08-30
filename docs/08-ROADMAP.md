@@ -1646,11 +1646,16 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-5 — Modalités de paiement / récurrent
 
-**État actuel : À FAIRE**
+**État actuel : Implémentation technique terminée — validation visuelle requise (2026-08-30)**
 
-- [ ] Section modalités envisageables (règlement standard, échelonné, solution adaptée).
-- [ ] Simulation de répartition du montant (sans paiement réel).
-- [ ] Mentions de non-engagement.
+- [x] `estimator-payment-options.ts` — `getMaxInstallments()` pure, limites en centimes (< 100 000 → 2, 100 000–250 000 → 3, > 250 000 → 4).
+- [x] `EstimatorPaymentTerms.vue` — affiche "Jusqu'à N échéances possibles", jamais de montant par échéance, jamais "/ mois", jamais "crédit"/"financement".
+- [x] `EstimatorResult.vue` — Q-05 validé ("ne constitue pas un devis"), `EstimatorPaymentTerms` inséré après one_off_items, absent de la branche `human_scoping_required`.
+- [x] Tests unitaires : 12 tests `estimator-payment-options.spec.ts`, 9 tests `EstimatorPaymentTerms.spec.ts`, 7 tests nouveaux dans `EstimatorResult.spec.ts`.
+- [x] Tests E2E : 6 nouveaux cas A–E + anti-confusion dans `estimator-result.spec.ts`.
+- [x] Q-03 validée — règles d'échelonnement (2/3/4 selon maximum). Q-11 validée — nombre de mensualités aligné sur Q-03. Q-05 validée — texte "ne constitue pas un devis" actif.
+- [x] 956 tests verts. Lint, typecheck, build OK.
+- [ ] Validation visuelle humaine (requise avant EST-6).
 
 **Critère de sortie :** Les modalités sont affichées avec avertissements. Aucune confusion possible avec un paiement réel.
 

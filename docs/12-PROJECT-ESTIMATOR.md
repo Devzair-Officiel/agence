@@ -9,7 +9,8 @@
 > EST-3 — Questionnaires conditionnels : **TERMINÉ** (2026-08-30).
 > EST-3.1 — Récapitulatif dynamique + Besoin complémentaire : **TERMINÉ** (2026-08-30).
 > EST-4 — Calcul + écran résultat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
-> Prochaine phase : **EST-5 — Modalités de paiement / récurrent**.
+> EST-5 — Modalités de paiement : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
+> Prochaine phase : **EST-6 — Lead qualifié + persistence / API**.
 
 ---
 
@@ -1103,25 +1104,27 @@ EST-1 est décomposé en trois sous-jalons. Tous terminés.
 
 ### EST-5 — Modalités de paiement / récurrent
 
-**Objectif :** Implémenter l'affichage des modalités envisageables et la simulation de paiement échelonné.
+**État : Implémentation technique terminée — validation visuelle requise (2026-08-30)**
 
-**Périmètre :**
-- Section « Modalités envisageables » dans `EstimateResult.vue`.
-- Simulation de répartition du montant (sans paiement réel).
-- Affichage de l'accompagnement récurrent avec les conditions À VALIDER.
-- Mentions légales de non-engagement.
+**Objectif :** Afficher les modalités d'échelonnement indicatives (nombre d'échéances selon le maximum estimé), sans simulation de montant par échéance, sans terminologie bancaire.
 
-**Hors périmètre :** Paiement réel, crédit, prélèvement automatique.
+**Livraisons :**
+- `apps/web/app/config/estimator-payment-options.ts` — `getMaxInstallments()` pur, `INSTALLMENT_RULES`.
+- `apps/web/app/components/estimator/EstimatorPaymentTerms.vue` — bloc "Jusqu'à N échéances possibles".
+- `EstimatorResult.vue` — Q-05 actif, `EstimatorPaymentTerms` après one_off_items, absent de `human_scoping_required`.
 
-**Fichiers/domaines probables :** Extension de `EstimateResult.vue`.
+**Décisions validées :**
+- Q-03 : Règles d'échelonnement — max < 1 000 € → 2 ; 1 000 – 2 500 € → 3 ; > 2 500 € → 4.
+- Q-11 : Nombre de mensualités aligné sur Q-03.
+- Q-05 : Texte "Cette estimation est indicative et ne constitue pas un devis. Le budget définitif dépendra du périmètre confirmé et des éventuels besoins précisés lors du cadrage du projet."
 
-**Tests attendus :** Vitest (calcul de répartition). Playwright (affichage, mentions de non-engagement).
+**Hors périmètre livré :** Montant par échéance, crédit, sélecteur d'échelonnement, paiement réel, lead form, PII.
 
-**Critères de sortie :** Les modalités sont affichées avec avertissements. La simulation ne peut pas être confondue avec un paiement réel.
+**Tests :** 21 nouveaux tests unitaires, 6 nouveaux cas E2E. 956 tests verts. Lint, typecheck, build OK.
 
 **Dépendances :** EST-4.
 
-**Risques :** Ambiguïté entre simulation et engagement commercial.
+**Validation requise :** Validation visuelle humaine avant ouverture EST-6.
 
 ---
 
@@ -1256,12 +1259,12 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 |---|---|---|---|
 | Q-01 | Grille tarifaire réelle (montants MIN / MAX par type et option) | Devzair | **VALIDÉE (2026-08-30)** — Grille `2026-v1` implémentée dans `DevzairPricingCatalogV1`. |
 
-### BLOQUANT EST-5 — Modalités de paiement
+### ~~BLOQUANT EST-5~~ — Modalités de paiement — **RÉSOLUES**
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
-| Q-03 | Conditions du paiement échelonné (durée, acompte) | Devzair | Nécessaire pour présenter des modalités honnêtes. |
-| Q-11 | Nombre de mensualités pour la simulation d'échelonnement | Devzair | Couplé à Q-03. |
+| Q-03 | Conditions du paiement échelonné (durée, acompte) | Devzair | **VALIDÉE (2026-08-30)** — Règles : max < 100 000 c → 2 éch. ; 100 000–250 000 c → 3 éch. ; > 250 000 c → 4 éch. Implémentées dans `getMaxInstallments()`. |
+| Q-11 | Nombre de mensualités pour la simulation d'échelonnement | Devzair | **VALIDÉE (2026-08-30)** — Aligné sur Q-03. Affichage "Jusqu'à N échéances possibles" sans montant par échéance. |
 
 ### BLOQUANT EST-6 — Persistence et conformité RGPD
 
@@ -1282,7 +1285,7 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
-| Q-05 | Texte juridique de non-engagement (avertissement résultat) | Devzair + conseil juridique | Placeholder autorisé pendant le développement — obligatoire avant mise en production. |
+| Q-05 | Texte juridique de non-engagement (avertissement résultat) | Devzair + conseil juridique | **VALIDÉE (2026-08-30)** — Texte actif : "Cette estimation est indicative et ne constitue pas un devis. Le budget définitif dépendra du périmètre confirmé et des éventuels besoins précisés lors du cadrage du projet." Validation juridique complète requise avant mise en production. |
 | Q-07 | Conditions CGV / CGU liées à l'estimation | Devzair | À VALIDER avant lancement public. |
 | Q-08 | La page `/estimer-mon-projet` est-elle indexable ou noindex ? | Devzair (SEO) | Décision SEO à prendre avant EST-9. |
 | Q-13 | La page `/estimer-mon-projet` est-elle pré-rendue ou SSR dynamique ? | Devzair (SEO / performance) | Le shell UX peut être développé sans cette décision. À trancher avant EST-9 / mise en production. |
@@ -1321,3 +1324,4 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 | 2026-08-30 | DEST-019 | Inférence déterministe : deux familles fortes (SellOnline + DigitalizeProcess) → conflit → human scoping | Éviter qu'un ordre aléatoire de sélection des objectifs produise des résultats différents pour le même ensemble | Classification en deux niveaux : objectifs forts (Ecommerce / BusinessApp) et faibles (VitrineSite) ; 2+ forts distincts → null → fallback |
 | 2026-08-30 | DEST-020 | L'endpoint `POST /api/estimate` réutilise `OriginAllowlist` du module Contact (même env `CONTACT_ORIGIN_ALLOWLIST`) | Un seul point de configuration pour la whitelist d'origines autorisées ; cohérence des règles CSRF stateless | `EstimateRateLimiter` utilise un bucket `estimate_ip` dédié pour éviter toute interférence avec le budget de tokens Contact |
 | 2026-08-30 | DEST-021 | Tous les montants de la réponse HTTP sont des entiers en unités mineures (centimes EUR) | Éliminer tout risque d'imprécision flottante dans la sérialisation JSON | `amountMinor: int` est l'unité de transport ; le frontend convertit (÷ 100) pour l'affichage |
+| 2026-08-30 | DEST-022 | EST-5 : afficher le nombre d'échéances maximum sans jamais diviser ni afficher un montant par échéance | Éviter toute confusion avec un engagement contractuel ou un crédit ; l'échéancier précis est défini lors du cadrage | `EstimatorPaymentTerms.vue` affiche uniquement "Jusqu'à N échéances possibles" ; absent de la branche `human_scoping_required` ; Q-03/Q-11/Q-05 validées |

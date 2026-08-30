@@ -139,9 +139,10 @@ describe("EstimatorResult — outcome estimated", () => {
     expect(html).toContain("&lt;img")
   })
 
-  it("affiche la mention 'non contractuelle'", () => {
+  it("affiche la mention indicative (non contractuelle — Q-05)", () => {
     const wrapper = mountResult(ESTIMATED_RESULT)
-    expect(wrapper.text().toLowerCase()).toContain("non contractuelle")
+    // Q-05 validé : "ne constitue pas un devis" remplace "non contractuelle"
+    expect(wrapper.text().toLowerCase()).toContain("ne constitue pas un devis")
   })
 
   it("n'affiche PAS la fourchette dans le titre ou les meta", () => {
@@ -228,6 +229,53 @@ describe("EstimatorResult — outcome human_scoping_required", () => {
   it("N'affiche pas unknown_project_requires_human_scoping comme texte brut", () => {
     const wrapper = mountResult(HUMAN_SCOPING_RESULT)
     expect(wrapper.text()).not.toContain("unknown_project_requires_human_scoping")
+  })
+})
+
+// ─── Modalités de paiement (EST-5) ───────────────────────────────────────────
+
+describe("EstimatorResult — payment terms (outcome estimated)", () => {
+  it("affiche la section modalités de paiement pour outcome estimated", () => {
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    expect(wrapper.text()).toContain("échéances")
+  })
+
+  it("n'affiche jamais un montant par échéance", () => {
+    // estimate.maximum = 130 000 centimes = 1 300 €, 3 échéances → 433 € — jamais affiché
+    const wrapper = mountResult(ESTIMATED_RESULT)
+    expect(wrapper.text()).not.toContain("433")
+  })
+
+  it("n'affiche pas '/ mois' dans le bloc paiement", () => {
+    // Les récurrents affichent '/ mois', mais le bloc paiement ne doit pas en avoir
+    // On vérifie que le texte des termes de paiement ne contient pas '/ mois'
+    const noRecurring = { ...ESTIMATED_RESULT, recurringItems: [] }
+    const wrapper = mountResult(noRecurring)
+    // Avec recurringItems vide et careAnswered=false, aucun '/ mois' ne doit apparaître
+    expect(wrapper.text()).not.toContain("/ mois")
+  })
+
+  it("n'utilise pas 'crédit' ni 'financement'", () => {
+    const text = mountResult(ESTIMATED_RESULT).text().toLowerCase()
+    expect(text).not.toContain("crédit")
+    expect(text).not.toContain("financement")
+  })
+
+  it("affiche le bon nombre d'échéances selon estimate.maximum", () => {
+    const result4 = {
+      ...ESTIMATED_RESULT,
+      estimate: { minimum: 200_000, maximum: 400_000, currency: "EUR" },
+    }
+    const wrapper = mountResult(result4)
+    expect(wrapper.text()).toContain("4 échéances")
+  })
+})
+
+describe("EstimatorResult — payment terms absent pour human_scoping", () => {
+  it("n'affiche PAS la section modalités de paiement pour human_scoping_required", () => {
+    const wrapper = mountResult(HUMAN_SCOPING_RESULT)
+    expect(wrapper.text()).not.toContain("échéances")
+    expect(wrapper.text()).not.toContain("Modalités de règlement")
   })
 })
 
