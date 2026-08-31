@@ -317,3 +317,25 @@ services:
 
     App\Estimator\Application\Partnership\SubmitEstimatorPartnership:
         public: true
+
+    # ------------------------------------------------------------------
+    # Pricing estimateur (EST-8)
+    # ------------------------------------------------------------------
+    App\Estimator\Domain\Pricing\PricingConfigurationRepositoryInterface:
+        alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPricingRepository
+        public: true
+
+    App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPricingRepository:
+        public: true
+
+    App\Estimator\Application\Pricing\CreatePricingDraft:
+        public: true
+
+    App\Estimator\Application\Pricing\UpdatePricingDraft:
+        public: true
+
+    App\Estimator\Application\Pricing\PublishPricingConfiguration:
+        public: true
+
+    App\Admin\Infrastructure\Logging\PricingAdminAuditLogger:
+        public: true

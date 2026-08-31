@@ -17,6 +17,7 @@
     {% set _nav_dashboard = _route == 'admin_dashboard' %}
     {% set _nav_articles  = 'admin_article' in _route %}
     {% set _nav_media     = 'admin_media'   in _route %}
+    {% set _nav_pricing   = 'admin_pricing' in _route %}
 
     {# ── Lien d'évitement (visible au focus clavier) ──────────────────────── #}
     <a class="admin-skip-link" href="#admin-main">Aller au contenu principal</a>
@@ -52,6 +53,13 @@
                            class="admin-mobile-menu__link{% if _nav_media %} admin-mobile-menu__link--active{% endif %}"
                            {% if _nav_media %}aria-current="page"{% endif %}>
                             Médias
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_pricing_list') }}"
+                           class="admin-mobile-menu__link{% if _nav_pricing %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_pricing %}aria-current="page"{% endif %}>
+                            Tarification
                         </a>
                     </li>
                 </ul>
@@ -106,6 +114,13 @@
                            class="admin-sidebar__link{% if _nav_media %} admin-sidebar__link--active{% endif %}"
                            {% if _nav_media %}aria-current="page"{% endif %}>
                             Médias
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_pricing_list') }}"
+                           class="admin-sidebar__link{% if _nav_pricing %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_pricing %}aria-current="page"{% endif %}>
+                            Tarification
                         </a>
                     </li>
                 </ul>

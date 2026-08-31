@@ -145,11 +145,22 @@ services:
     App\Editorial\Domain\Clock\ClockInterface:
         alias: App\Editorial\Domain\Clock\SystemClock
 
-    # Moteur tarifaire Estimateur (EST-1B). La politique commerciale V1 est
-    # l'implémentation par défaut. EST-8 créera l'administration permettant
-    # de créer et activer de nouvelles versions tarifaires.
+    # Moteur tarifaire Estimateur (EST-8). La grille active est chargée depuis
+    # la base de données (version publiée). ActivePricingCatalog est lazy et
+    # fail-closed : lève NoPricingConfigurationAvailableException si aucune
+    # version publiée n'existe. DevzairPricingCatalogV1 reste utilisé comme
+    # référence et fixture de parité dans les tests.
     App\Estimator\Application\Pricing\PricingCatalogInterface:
-        alias: App\Estimator\Application\Pricing\DevzairPricingCatalogV1
+        alias: App\Estimator\Application\Pricing\ActivePricingCatalog
+
+    App\Estimator\Domain\Pricing\PricingConfigurationRepositoryInterface:
+        alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPricingRepository
+
+    # Binding du logger admin (canal `admin`) pour PricingAdminAuditLogger.
+    # EditorialAdminAuditLogger utilise déjà ce même binding via autowire.
+    App\Admin\Infrastructure\Logging\PricingAdminAuditLogger:
+        arguments:
+            $adminLogger: '@monolog.logger.admin'
 
     # Domaine Admin (Phase 8C1). Le port est branché sur l'adaptateur Doctrine ;
     # une variante en mémoire pour les tests unitaires est déclarée dans

@@ -1,0 +1,81 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Grilles tarifaires — Administration Devzair{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Grilles tarifaires estimateur</h1>
+    <a href="{{ path('admin_pricing_new') }}" class="btn btn-primary">
+        + Nouveau brouillon
+    </a>
+</div>
+
+{% if configurations is empty %}
+    <p class="admin-empty-state">Aucune configuration tarifaire. Créez un brouillon pour commencer.</p>
+{% else %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Version</th>
+                <th>Statut</th>
+                <th>Devise</th>
+                <th>Créé le</th>
+                <th>Publié le</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for config in configurations %}
+            <tr class="admin-table__row{% if config.status.value == 'published' %} admin-table__row--highlighted{% endif %}">
+                <td>
+                    <a href="{{ path('admin_pricing_show', {id: config.id.toRfc4122}) }}">
+                        {{ config.version }}
+                    </a>
+                </td>
+                <td>
+                    <span class="badge badge--{{ config.status.value }}">
+                        {{ config.status.value }}
+                    </span>
+                </td>
+                <td>{{ config.currency }}</td>
+                <td>{{ config.createdAt|date('d/m/Y H:i') }}</td>
+                <td>{{ config.publishedAt ? config.publishedAt|date('d/m/Y H:i') : '—' }}</td>
+                <td class="admin-table__actions">
+                    {% if config.status.value == 'draft' %}
+                        <a href="{{ path('admin_pricing_edit', {id: config.id.toRfc4122}) }}"
+                           class="btn btn-sm btn-secondary">
+                            Éditer
+                        </a>
+                        <form method="post"
+                              action="{{ path('admin_pricing_publish', {id: config.id.toRfc4122}) }}"
+                              class="admin-inline-form"
+                              onsubmit="return confirm('Publier cette grille tarifaire ? L\'ancienne version sera archivée.')">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('pricing_publish_' ~ config.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                Publier
+                            </button>
+                        </form>
+                        <form method="post"
+                              action="{{ path('admin_pricing_delete', {id: config.id.toRfc4122}) }}"
+                              class="admin-inline-form"
+                              onsubmit="return confirm('Supprimer ce brouillon ?')">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('pricing_delete_' ~ config.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                Supprimer
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{{ path('admin_pricing_show', {id: config.id.toRfc4122}) }}"
+                           class="btn btn-sm btn-secondary">
+                            Voir
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% endblock %}

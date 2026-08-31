@@ -1,0 +1,49 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Nouveau brouillon tarifaire — Administration Devzair{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Nouveau brouillon tarifaire</h1>
+    <a href="{{ path('admin_pricing_list') }}" class="btn btn-secondary">
+        ← Retour à la liste
+    </a>
+</div>
+
+<div class="admin-card">
+    <p class="admin-card__intro">
+        Un brouillon sera créé en clonant la grille publiée <strong>{{ published_version }}</strong>.
+        Vous pourrez ensuite modifier tous les montants avant publication.
+    </p>
+
+    <form method="post" action="{{ path('admin_pricing_new') }}" class="admin-form" novalidate>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('pricing_new') }}">
+
+        <div class="admin-form__field">
+            <label for="version" class="admin-form__label">
+                Label de version <span aria-hidden="true">*</span>
+            </label>
+            <input type="text"
+                   id="version"
+                   name="version"
+                   class="admin-form__input"
+                   placeholder="ex : 2027-v1"
+                   maxlength="80"
+                   required
+                   autofocus>
+            <p class="admin-form__hint">
+                Identifiant lisible par les humains (max. 80 caractères). Doit être unique.
+            </p>
+        </div>
+
+        <div class="admin-form__actions">
+            <button type="submit" class="btn btn-primary">
+                Créer le brouillon
+            </button>
+            <a href="{{ path('admin_pricing_list') }}" class="btn btn-secondary">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Grille {{ config.version }} — Administration Devzair{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">
+        Grille tarifaire : {{ config.version }}
+        <span class="badge badge--{{ config.status.value }}">{{ config.status.value }}</span>
+    </h1>
+    <a href="{{ path('admin_pricing_list') }}" class="btn btn-secondary">
+        ← Retour à la liste
+    </a>
+</div>
+
+<div class="admin-card">
+    <dl class="admin-dl">
+        <dt>Devise</dt><dd>{{ config.currency }}</dd>
+        <dt>Créé le</dt><dd>{{ config.createdAt|date('d/m/Y H:i') }}</dd>
+        <dt>Mis à jour le</dt><dd>{{ config.updatedAt|date('d/m/Y H:i') }}</dd>
+        {% if config.publishedAt %}
+        <dt>Publié le</dt><dd>{{ config.publishedAt|date('d/m/Y H:i') }}</dd>
+        {% endif %}
+    </dl>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Montants de base (€)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Type de projet</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+        {% for key, range in data.baseAmounts %}
+            <tr><td>{{ key }}</td><td>{{ range.min }} €</td><td>{{ range.max }} €</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Multiplicateurs de taille (%)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Taille</th><th>Min %</th><th>Max %</th></tr></thead>
+        <tbody>
+        {% for key, range in data.scalePercents %}
+            <tr><td>{{ key }}</td><td>{{ range.min }}</td><td>{{ range.max }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Complexité des fonctionnalités</h2>
+    <table class="admin-table">
+        <thead><tr><th>Fonctionnalité</th><th>Complexité</th></tr></thead>
+        <tbody>
+        {% for key, complexity in data.featureComplexity %}
+            <tr><td>{{ key }}</td><td><span class="badge badge--{{ complexity }}">{{ complexity }}</span></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Montants par complexité (€)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Niveau</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+        {% for key, range in data.complexityAmounts %}
+            <tr><td>{{ key }}</td><td>{{ range.min }} €</td><td>{{ range.max }} €</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Contenu (€)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Besoin</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+        {% for key, range in data.contentAmounts %}
+            <tr><td>{{ key }}</td><td>{{ range.min }} €</td><td>{{ range.max }} €</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Visibilité (€)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Besoin</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+        {% for key, range in data.visibilityAmounts %}
+            <tr>
+                <td>{{ key }}</td>
+                <td>{{ range is null ? '(inclus)' : range.min ~ ' €' }}</td>
+                <td>{{ range is null ? '' : range.max ~ ' €' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h2 class="admin-section-title">Abonnements récurrents (€/mois)</h2>
+    <table class="admin-table">
+        <thead><tr><th>Tier</th><th>Min</th><th>Max</th></tr></thead>
+        <tbody>
+        {% for key, range in data.recurringAmounts %}
+            <tr><td>{{ key }}</td><td>{{ range.min }} €</td><td>{{ range.max }} €</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if config.status.value == 'draft' %}
+<div class="admin-card admin-card--actions">
+    <a href="{{ path('admin_pricing_edit', {id: config.id.toRfc4122}) }}" class="btn btn-primary">
+        Éditer ce brouillon
+    </a>
+</div>
+{% endif %}
+{% endblock %}

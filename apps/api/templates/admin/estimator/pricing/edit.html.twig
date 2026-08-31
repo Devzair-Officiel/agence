@@ -1,0 +1,284 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Édition grille {{ config.version }} — Administration Devzair{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">
+        Brouillon : {{ config.version }}
+    </h1>
+    <div class="admin-page-header__actions">
+        <a href="{{ path('admin_pricing_list') }}" class="btn btn-secondary">
+            ← Retour
+        </a>
+    </div>
+</div>
+
+{% if errors.hasErrors %}
+    {% for message in errors.global %}
+        <div class="alert alert-error" role="alert">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+{% if warnings is not empty %}
+    <div class="alert alert-info" role="status">
+        <strong>Avertissements de validation (non bloquants) :</strong>
+        <ul>
+        {% for warning in warnings %}
+            <li>{{ warning }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<form method="post"
+      action="{{ path('admin_pricing_edit', {id: config.id.toRfc4122}) }}"
+      class="admin-form"
+      novalidate>
+    <input type="hidden" name="_csrf_token"
+           value="{{ csrf_token('pricing_edit_' ~ config.id.toRfc4122) }}">
+
+    {# ── Section : Montants de base ──────────────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Montants de base (€)</h2>
+        <p class="admin-section-hint">Socle de facturation pour chaque type de projet. Valeurs en euros entiers.</p>
+        <table class="admin-table">
+            <thead><tr><th>Type de projet</th><th>Min (€)</th><th>Max (€)</th></tr></thead>
+            <tbody>
+            {% set base_keys = ['vitrinesite', 'ecommerce', 'businessapp', 'refonte'] %}
+            {% for key in base_keys %}
+                {% set range = data.baseAmounts[key] ?? {min: 0, max: 0} %}
+                <tr>
+                    <td><label for="ba_{{ key }}_min">{{ key }}</label></td>
+                    <td>
+                        <input type="number" id="ba_{{ key }}_min"
+                               name="base_amounts[{{ key }}][min]"
+                               value="{{ range.min }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                    <td>
+                        <input type="number" id="ba_{{ key }}_max"
+                               name="base_amounts[{{ key }}][max]"
+                               value="{{ range.max }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Multiplicateurs de taille ─────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Multiplicateurs de taille (%)</h2>
+        <p class="admin-section-hint">100 = neutre. Appliqué au socle uniquement.</p>
+        <table class="admin-table">
+            <thead><tr><th>Taille</th><th>Min %</th><th>Max %</th></tr></thead>
+            <tbody>
+            {% set scale_keys = ['small', 'medium', 'large', 'unknown'] %}
+            {% for key in scale_keys %}
+                {% set range = data.scalePercents[key] ?? {min: 100, max: 100} %}
+                <tr>
+                    <td><label for="sp_{{ key }}_min">{{ key }}</label></td>
+                    <td>
+                        <input type="number" id="sp_{{ key }}_min"
+                               name="scale_percents[{{ key }}][min]"
+                               value="{{ range.min }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                    <td>
+                        <input type="number" id="sp_{{ key }}_max"
+                               name="scale_percents[{{ key }}][max]"
+                               value="{{ range.max }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Complexité des fonctionnalités ─────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Complexité des fonctionnalités</h2>
+        <table class="admin-table">
+            <thead><tr><th>Fonctionnalité</th><th>Complexité</th></tr></thead>
+            <tbody>
+            {% set feature_keys = [
+                'contact_form', 'multilingual', 'content_management',
+                'booking_form', 'payment', 'shipping', 'customer_accounts',
+                'notifications', 'import_export', 'stock_management', 'promotions',
+                'authentication', 'roles_and_permissions', 'document_generation', 'api_integration'
+            ] %}
+            {% for key in feature_keys %}
+                {% set current = data.featureComplexity[key] ?? 'medium' %}
+                <tr>
+                    <td><label for="fc_{{ key }}">{{ key }}</label></td>
+                    <td>
+                        <select id="fc_{{ key }}"
+                                name="feature_complexity[{{ key }}]"
+                                class="admin-form__select">
+                            <option value="light"    {% if current == 'light'    %}selected{% endif %}>Légère</option>
+                            <option value="medium"   {% if current == 'medium'   %}selected{% endif %}>Moyenne</option>
+                            <option value="advanced" {% if current == 'advanced' %}selected{% endif %}>Avancée</option>
+                        </select>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Montants par complexité ───────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Montants par complexité (€)</h2>
+        <table class="admin-table">
+            <thead><tr><th>Niveau</th><th>Min (€)</th><th>Max (€)</th></tr></thead>
+            <tbody>
+            {% for key in ['light', 'medium', 'advanced'] %}
+                {% set range = data.complexityAmounts[key] ?? {min: 0, max: 0} %}
+                <tr>
+                    <td><label for="ca_{{ key }}_min">{{ key }}</label></td>
+                    <td>
+                        <input type="number" id="ca_{{ key }}_min"
+                               name="complexity_amounts[{{ key }}][min]"
+                               value="{{ range.min }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                    <td>
+                        <input type="number" id="ca_{{ key }}_max"
+                               name="complexity_amounts[{{ key }}][max]"
+                               value="{{ range.max }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Besoins contenu ───────────────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Besoins contenu (€)</h2>
+        <table class="admin-table">
+            <thead><tr><th>Besoin</th><th>Min (€)</th><th>Max (€)</th></tr></thead>
+            <tbody>
+            {% set content_keys = [
+                'visual_identity_needed', 'visual_identity_partial',
+                'content_to_write', 'content_with_help', 'photography_needed'
+            ] %}
+            {% for key in content_keys %}
+                {% set range = data.contentAmounts[key] ?? {min: 0, max: 0} %}
+                <tr>
+                    <td><label for="cna_{{ key }}_min">{{ key }}</label></td>
+                    <td>
+                        <input type="number" id="cna_{{ key }}_min"
+                               name="content_amounts[{{ key }}][min]"
+                               value="{{ range.min }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                    <td>
+                        <input type="number" id="cna_{{ key }}_max"
+                               name="content_amounts[{{ key }}][max]"
+                               value="{{ range.max }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Visibilité ─────────────────────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Visibilité (€)</h2>
+        <p class="admin-section-hint">
+            <code>seo_basic</code> est toujours inclus dans le socle — non modifiable.
+        </p>
+        <table class="admin-table">
+            <thead><tr><th>Besoin</th><th>Min (€)</th><th>Max (€)</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>seo_basic</td>
+                    <td colspan="2"><em>(inclus dans tous les socles)</em></td>
+                </tr>
+                {% set vis_keys = ['seo_advanced', 'local_visibility', 'editorial_strategy'] %}
+                {% for key in vis_keys %}
+                    {% set range = data.visibilityAmounts[key] ?? {min: 0, max: 0} %}
+                    <tr>
+                        <td><label for="va_{{ key }}_min">{{ key }}</label></td>
+                        <td>
+                            <input type="number" id="va_{{ key }}_min"
+                                   name="visibility_amounts[{{ key }}][min]"
+                                   value="{{ range is null ? 0 : range.min }}" min="0" required
+                                   class="admin-form__input admin-form__input--narrow">
+                        </td>
+                        <td>
+                            <input type="number" id="va_{{ key }}_max"
+                                   name="visibility_amounts[{{ key }}][max]"
+                                   value="{{ range is null ? 0 : range.max }}" min="0" required
+                                   class="admin-form__input admin-form__input--narrow">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Section : Abonnements récurrents ────────────────────────────────── #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Abonnements récurrents (€/mois)</h2>
+        <table class="admin-table">
+            <thead><tr><th>Tier</th><th>Min (€)</th><th>Max (€)</th></tr></thead>
+            <tbody>
+            {% set recurring_keys = [
+                'ESSENTIAL_MAINTENANCE', 'MAINTENANCE_FOLLOWUP',
+                'ACCOMPANIMENT', 'REGULAR_EVOLUTION', 'CONTINUOUS_SEO'
+            ] %}
+            {% for key in recurring_keys %}
+                {% set range = data.recurringAmounts[key] ?? {min: 0, max: 0} %}
+                <tr>
+                    <td><label for="ra_{{ key }}_min">{{ key }}</label></td>
+                    <td>
+                        <input type="number" id="ra_{{ key }}_min"
+                               name="recurring_amounts[{{ key }}][min]"
+                               value="{{ range.min }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                    <td>
+                        <input type="number" id="ra_{{ key }}_max"
+                               name="recurring_amounts[{{ key }}][max]"
+                               value="{{ range.max }}" min="0" required
+                               class="admin-form__input admin-form__input--narrow">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Actions ─────────────────────────────────────────────────────────── #}
+    <div class="admin-card admin-card--actions">
+        <button type="submit" class="btn btn-primary">
+            Sauvegarder le brouillon
+        </button>
+        <a href="{{ path('admin_pricing_list') }}" class="btn btn-secondary">
+            Annuler
+        </a>
+    </div>
+</form>
+
+{# Formulaire de publication — HORS du formulaire d'édition (les <form> imbriqués sont invalides en HTML). #}
+<div class="admin-card admin-card--publish">
+    <form method="post"
+          action="{{ path('admin_pricing_publish', {id: config.id.toRfc4122}) }}"
+          class="admin-inline-form"
+          onsubmit="return confirm('Publier la grille « {{ config.version }} » ? L\'ancienne version active sera archivée. Cette action est irréversible.')">
+        <input type="hidden" name="_csrf_token"
+               value="{{ csrf_token('pricing_publish_' ~ config.id.toRfc4122) }}">
+        <button type="submit" class="btn btn-publish">
+            Publier cette grille
+        </button>
+    </form>
+</div>
+{% endblock %}

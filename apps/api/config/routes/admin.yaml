@@ -109,3 +109,43 @@ admin_media_preview:
     methods: [GET]
     requirements:
         id: '[0-9a-fA-F-]{36}'
+
+# Administration des grilles tarifaires estimateur (EST-8).
+# Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
+admin_pricing_list:
+    path: /admin/pricing
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingListController::__invoke
+    methods: [GET]
+
+admin_pricing_new:
+    path: /admin/pricing/new
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingNewController::__invoke
+    methods: [GET, POST]
+
+admin_pricing_show:
+    path: /admin/pricing/{id}
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingShowController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_pricing_edit:
+    path: /admin/pricing/{id}/edit
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingEditController::__invoke
+    methods: [GET, POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_pricing_publish:
+    path: /admin/pricing/{id}/publish
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingPublishController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_pricing_delete:
+    path: /admin/pricing/{id}/delete
+    controller: App\Admin\Presentation\Http\AdminEstimatorPricingDeleteController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
