@@ -1,0 +1,262 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}{{ lead.name|e }} — Lead estimateur — Administration Devzair{% endblock %}
+
+{% block body %}
+{# ── Mappings humains (source unique pour ce template) ──────────────────── #}
+{% set projectTypeLabels = {
+    'vitrinesite': 'Site vitrine',
+    'ecommerce':   'E-commerce',
+    'businessapp': 'Application métier',
+    'refonte':     'Refonte',
+    'other':       'Autre projet',
+    'unknown':     'Projet à cadrer'
+} %}
+
+{% set featureLabels = {
+    'contact_form':       'Formulaire de contact',
+    'content_management': 'Gestion de contenu',
+    'booking':            'Prise de rendez-vous',
+    'ecommerce':          'Boutique en ligne',
+    'user_auth':          'Espace membres',
+    'multilingual':       'Multilingue',
+    'blog':               'Blog / actualités',
+    'payment':            'Paiement en ligne',
+    'api_integration':    'Intégration API',
+    'custom_dashboard':   'Dashboard personnalisé'
+} %}
+
+{% set scaleLabels = {
+    'small':  'Petite (< 5 pages)',
+    'medium': 'Moyenne (5–20 pages)',
+    'large':  'Grande (20+ pages)',
+    'custom': 'Sur mesure'
+} %}
+
+{% set contentNeedLabels = {
+    'provided':     'Contenus fournis',
+    'assisted':     'Rédaction assistée',
+    'full_service': 'Rédaction complète',
+    'none':         'Pas de besoin contenu'
+} %}
+
+{% set visibilityNeedLabels = {
+    'seo_basic':    'SEO de base',
+    'seo_advanced': 'SEO avancé',
+    'paid_ads':     'Publicité payante',
+    'none':         'Pas de besoin visibilité'
+} %}
+
+{% set careLabels = {
+    'maintenance':     'Maintenance technique',
+    'seo_ongoing':     'SEO continu',
+    'content_updates': 'Mises à jour contenu',
+    'full_support':    'Support complet',
+    'autonomy':        'Géré en autonomie',
+    'none':            'Pas d\'accompagnement'
+} %}
+
+{# ── Snapshots raccourcis ──────────────────────────────────────────────── #}
+{% set snapshot = lead.questionnaireSnapshot %}
+{% set estimate = lead.estimateSnapshot %}
+
+{# ── Badge outcome ─────────────────────────────────────────────────────── #}
+{% if lead.outcome == 'estimated' %}
+    {% set outcomeBadgeClass = 'admin-badge admin-badge--positive' %}
+    {% set outcomeBadgeLabel = 'Estimation disponible' %}
+{% else %}
+    {% set outcomeBadgeClass = 'admin-badge admin-badge--neutral' %}
+    {% set outcomeBadgeLabel = 'Cadrage nécessaire' %}
+{% endif %}
+
+{# ── Hero / en-tête fiche ──────────────────────────────────────────────── #}
+<div class="admin-detail-hero">
+    <div class="admin-detail-hero__topbar">
+        <a href="{{ path('admin_leads_list') }}" class="admin-detail-hero__back">&larr; Retour aux leads</a>
+        <div class="admin-detail-hero__actions">
+            <a href="mailto:{{ lead.email|e }}" class="button-link button-small">
+                Envoyer un email &nearr;
+            </a>
+        </div>
+    </div>
+
+    <h1 class="admin-detail-hero__name">{{ lead.name|e }}</h1>
+    {% if lead.company %}
+        <p class="admin-detail-hero__company">{{ lead.company|e }}</p>
+    {% endif %}
+
+    <div class="admin-detail-hero__meta">
+        <span>{{ projectTypeLabels[lead.projectType] ?? lead.projectType|e }}</span>
+        <span aria-hidden="true">&middot;</span>
+        <span class="{{ outcomeBadgeClass }}">{{ outcomeBadgeLabel }}</span>
+    </div>
+
+    {% if lead.outcome == 'estimated' and lead.estimateMinimumMinor is not null %}
+        <p class="admin-detail-hero__range">
+            {{ (lead.estimateMinimumMinor / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+            &ndash;
+            {{ (lead.estimateMaximumMinor / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+        </p>
+    {% endif %}
+
+    <p class="admin-detail-hero__date">Reçu le {{ lead.createdAt|date('d/m/Y à H:i') }}</p>
+</div>
+
+{# ── Grille deux colonnes : Coordonnées | Projet ─────────────────────── #}
+<div class="admin-detail-grid">
+
+    {# Colonne gauche : Coordonnées #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Coordonnées</h2>
+        <dl class="admin-dl">
+            <dt>Nom</dt>
+            <dd>{{ lead.name|e }}</dd>
+
+            <dt>Email</dt>
+            <dd><a href="mailto:{{ lead.email|e }}">{{ lead.email|e }}</a></dd>
+
+            <dt>Téléphone</dt>
+            <dd>
+                {% if lead.phone %}
+                    <a href="tel:{{ lead.phone|e }}">{{ lead.phone|e }}</a>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </dd>
+
+            <dt>Entreprise</dt>
+            <dd>{{ lead.company ? lead.company|e : '—' }}</dd>
+        </dl>
+    </div>
+
+    {# Colonne droite : Projet (depuis questionnaireSnapshot) #}
+    <div class="admin-card">
+        <h2 class="admin-section-title">Projet</h2>
+
+        <dl class="admin-dl">
+            {# Type de projet #}
+            {% if snapshot.type is defined and snapshot.type is not empty %}
+                <dt>Type</dt>
+                <dd>{{ projectTypeLabels[snapshot.type] ?? snapshot.type|e }}</dd>
+            {% endif %}
+
+            {# Taille du projet #}
+            {% if snapshot.scale is defined and snapshot.scale is not empty %}
+                <dt>Taille</dt>
+                <dd>{{ scaleLabels[snapshot.scale] ?? snapshot.scale|e }}</dd>
+            {% endif %}
+
+            {# Besoin contenu #}
+            {% if snapshot.content_need is defined and snapshot.content_need is not empty %}
+                <dt>Contenu</dt>
+                <dd>{{ contentNeedLabels[snapshot.content_need] ?? snapshot.content_need|e }}</dd>
+            {% endif %}
+
+            {# Besoin visibilité #}
+            {% if snapshot.visibility_need is defined and snapshot.visibility_need is not empty %}
+                <dt>Visibilité</dt>
+                <dd>{{ visibilityNeedLabels[snapshot.visibility_need] ?? snapshot.visibility_need|e }}</dd>
+            {% endif %}
+
+            {# Suivi / care #}
+            {% if snapshot.care is defined and snapshot.care is not empty %}
+                <dt>Suivi</dt>
+                <dd>{{ careLabels[snapshot.care] ?? snapshot.care|e }}</dd>
+            {% endif %}
+        </dl>
+
+        {# Fonctionnalités : liste de chips #}
+        {% if snapshot.features is defined and snapshot.features is not empty %}
+            <p class="admin-section-title" style="margin-top:1rem;">Fonctionnalités</p>
+            <ul class="admin-feature-list" aria-label="Fonctionnalités demandées">
+                {% for feature in snapshot.features %}
+                    <li class="admin-feature-chip">
+                        {{ featureLabels[feature] ?? feature|e }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {# Objectifs (pour type unknown) #}
+        {% if snapshot.goals is defined and snapshot.goals is not empty %}
+            <dl class="admin-dl" style="margin-top:1rem;">
+                <dt>Objectifs</dt>
+                <dd>{{ snapshot.goals|e }}</dd>
+            </dl>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Estimation (pleine largeur) ──────────────────────────────────────── #}
+<div class="admin-card">
+    <h2 class="admin-section-title">Estimation</h2>
+    <dl class="admin-dl">
+        <dt>Fourchette</dt>
+        <dd>
+            {% if lead.outcome == 'estimated' and lead.estimateMinimumMinor is not null %}
+                <span class="admin-estimate-range">
+                    {{ (lead.estimateMinimumMinor / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+                    &ndash;
+                    {{ (lead.estimateMaximumMinor / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+                </span>
+            {% else %}
+                <span class="admin-badge admin-badge--neutral">Cadrage nécessaire</span>
+            {% endif %}
+        </dd>
+
+        <dt>Version tarifaire</dt>
+        <dd>{{ lead.pricingVersion|e }}</dd>
+
+        {% if estimate.recommended_project_type is defined and estimate.recommended_project_type is not empty %}
+            <dt>Type recommandé</dt>
+            <dd>{{ projectTypeLabels[estimate.recommended_project_type] ?? estimate.recommended_project_type|e }}</dd>
+        {% endif %}
+
+        <dt>Statut</dt>
+        <dd><span class="{{ outcomeBadgeClass }}">{{ outcomeBadgeLabel }}</span></dd>
+    </dl>
+
+    {# Ventilation (breakdown) #}
+    {% if estimate.breakdown is defined and estimate.breakdown is not empty %}
+        <div class="admin-estimate-breakdown">
+            <p class="admin-estimate-breakdown__title">Détail de l&rsquo;estimation</p>
+            <table class="admin-estimate-breakdown__table" aria-label="Détail de l'estimation">
+                <tbody>
+                {% for item in estimate.breakdown %}
+                    <tr>
+                        <td>{{ item.label is defined ? item.label|e : '—' }}</td>
+                        <td>
+                            {% if item.min is defined and item.max is defined %}
+                                {{ (item.min / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+                                &ndash;
+                                {{ (item.max / 100)|number_format(0, ',', ' ') }}&nbsp;&euro;
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+{# ── Besoin complémentaire ─────────────────────────────────────────────── #}
+{% if lead.additionalFeatureNote %}
+<div class="admin-card">
+    <h2 class="admin-section-title">Besoin complémentaire</h2>
+    <blockquote class="admin-note-box">{{ lead.additionalFeatureNote|e }}</blockquote>
+</div>
+{% endif %}
+
+{# ── Données techniques (accordéon) ──────────────────────────────────── #}
+<details class="admin-technical-details">
+    <summary class="admin-technical-summary">Données techniques</summary>
+    <div class="admin-technical-content">
+        <p><strong>Request ID</strong>&nbsp;: <code>{{ lead.requestId|e }}</code></p>
+        <h3>Questionnaire brut</h3>
+        <pre class="admin-json-preview">{{ lead.questionnaireSnapshot|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE'))|e }}</pre>
+        <h3>Estimation brute</h3>
+        <pre class="admin-json-preview">{{ lead.estimateSnapshot|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE'))|e }}</pre>
+    </div>
+</details>
+{% endblock %}

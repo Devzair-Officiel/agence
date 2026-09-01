@@ -1,0 +1,101 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Partenariats estimateur — Administration Devzair{% endblock %}
+
+{% block body %}
+{# ── Mappings humains (source unique pour ce template) ──────────────────── #}
+{% set projectTypeLabels = {
+    'vitrinesite': 'Site vitrine',
+    'ecommerce':   'E-commerce',
+    'businessapp': 'Application métier',
+    'refonte':     'Refonte',
+    'other':       'Autre projet',
+    'unknown':     'Projet à cadrer'
+} %}
+
+{% set partnershipTypeLabels = {
+    'revenue_share':  'Partage de revenus',
+    'collaboration':  'Collaboration',
+    'subcontracting': 'Sous-traitance',
+    'referral':       'Apport d\'affaires',
+    'other':          'Autre'
+} %}
+
+{% set partnershipStatusLabels = {
+    'pending_review': 'À étudier'
+} %}
+
+{# ── En-tête de page ────────────────────────────────────────────────────── #}
+<div class="admin-page-header">
+    <div class="admin-page-header__titles">
+        <h1 class="admin-page-header__title">Propositions de partenariat</h1>
+        <p class="admin-page-header__subtitle">Propositions reçues depuis l&rsquo;estimateur de projet.</p>
+        <p class="admin-page-count">{{ proposals|length }} proposition{{ proposals|length != 1 ? 's' }}</p>
+    </div>
+</div>
+
+{# ── Tableau ou état vide ─────────────────────────────────────────────── #}
+{% if proposals is empty %}
+    <p class="admin-empty-state">Aucune proposition de partenariat reçue pour le moment.</p>
+{% else %}
+<div class="admin-table-scroll">
+    <table class="admin-table" aria-label="Liste des propositions de partenariat">
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Entreprise</th>
+                <th scope="col">Projet</th>
+                <th scope="col">Partenariat</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for proposal in proposals %}
+            <tr>
+                {# Date #}
+                <td data-label="Date">{{ proposal.createdAt|date('d/m/Y à H:i') }}</td>
+
+                {# Contact : nom + email deux lignes #}
+                <td data-label="Contact">
+                    <div class="admin-table-contact">
+                        <span class="admin-table-contact__name">{{ proposal.name|e }}</span>
+                        <span class="admin-table-contact__email">{{ proposal.email|e }}</span>
+                    </div>
+                </td>
+
+                {# Entreprise #}
+                <td data-label="Entreprise">{{ proposal.company ? proposal.company|e : '—' }}</td>
+
+                {# Projet : label humain #}
+                <td data-label="Projet">
+                    {{ projectTypeLabels[proposal.projectType] ?? proposal.projectType|e }}
+                </td>
+
+                {# Type de partenariat : label humain #}
+                <td data-label="Partenariat">
+                    {{ partnershipTypeLabels[proposal.partnershipType] ?? proposal.partnershipType|e }}
+                </td>
+
+                {# Statut : badge #}
+                <td data-label="Statut">
+                    <span class="admin-badge admin-badge--neutral">
+                        {{ partnershipStatusLabels[proposal.status] ?? proposal.status|e }}
+                    </span>
+                </td>
+
+                {# Action #}
+                <td data-label="Action">
+                    <a href="{{ path('admin_partnerships_show', {id: proposal.id.toRfc4122}) }}"
+                       class="admin-action-link">
+                        Voir la proposition
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

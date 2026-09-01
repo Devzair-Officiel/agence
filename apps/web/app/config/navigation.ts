@@ -54,6 +54,15 @@ export const primaryCta: NavigationItem = {
   isRoute: true,
 }
 
+// CTA secondaire vers l'estimateur de projet — affiché dans le header
+// (lien bordé, distinct du CTA primaire) et dans le groupe "Découvrir"
+// du footer. Route livrée → `isRoute: true`.
+export const estimatorCta: NavigationItem = {
+  label: "Estimer mon projet",
+  to: "/estimer-mon-projet",
+  isRoute: true,
+}
+
 // Les cinq pôles d'expertise publiés, dérivés de `expertise-pages.ts`
 // pour rester synchronisés automatiquement avec tout changement de statut.
 const expertisesFooterItems: readonly NavigationItem[] = expertisePages
@@ -73,6 +82,7 @@ export const footerNavigation: readonly NavigationGroup[] = [
       { label: "L'agence", to: "/agence", isRoute: true },
       { label: "Réalisations", to: "/#realisations", isRoute: false },
       { label: "Ressources", to: "/ressources", isRoute: true },
+      { label: "Estimer mon projet", to: "/estimer-mon-projet", isRoute: true },
     ],
     cta: primaryCta,
   },

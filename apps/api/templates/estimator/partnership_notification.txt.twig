@@ -1,0 +1,40 @@
+DEVZAIR — Nouvelle proposition de partenariat
+=============================================
+
+Un partenaire potentiel a soumis une proposition depuis l'estimateur.
+
+
+── CONTACT ──────────────────────────────────────────
+
+Nom     : {{ name|e }}
+Société : {{ company ? company|e : 'Non renseigné' }}
+
+
+── PARTENARIAT ──────────────────────────────────────
+
+Type de projet      : {{ projectTypeLabel|e }}
+Type de partenariat : {{ partnershipTypeLabel|e }}
+Stade du projet     : {{ projectStageLabel|e }}
+Résultat            : {{ outcomeLabel|e }}
+Statut              : À étudier
+
+{% if minorMin is not null and minorMax is not null %}
+Fourchette          : {{ (minorMin / 100)|number_format(0, ',', ' ') }} € – {{ (minorMax / 100)|number_format(0, ',', ' ') }} €
+{% else %}
+Fourchette          : Cadrage humain requis
+{% endif %}
+
+
+── RÉFÉRENCE ────────────────────────────────────────
+
+Référence : #{{ shortId|e }}
+
+
+── INFORMATIONS TECHNIQUES ──────────────────────────
+
+ID technique : {{ requestId|e }}
+
+Voir dans l'admin : {{ adminLink|e }}
+
+─────────────────────────────────────────────────────
+Devzair · devzair.fr

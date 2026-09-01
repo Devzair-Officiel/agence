@@ -2161,3 +2161,396 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     flex-direction: column;
     gap: 1.5rem;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Estimateur — leads & partenariats (Phase R8)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Compteur de page ────────────────────────────────────────────────────── */
+.admin-page-count {
+    font-size: 0.875rem;
+    color: var(--color-ink-subtle);
+    font-weight: 500;
+    margin: 0.5rem 0 0;
+}
+
+/* ── Empty state estimateur ──────────────────────────────────────────────── */
+.admin-empty-state {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--color-ink-muted);
+    font-size: 0.9375rem;
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+}
+
+/* ── Admin card générique ────────────────────────────────────────────────── */
+.admin-card {
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1rem;
+}
+
+.admin-card__title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-muted);
+    margin: 0 0 1rem;
+}
+
+/* ── Section title dans une card ────────────────────────────────────────── */
+.admin-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-muted);
+    margin: 0 0 0.875rem;
+}
+
+/* ── Description list admin ──────────────────────────────────────────────── */
+.admin-dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0;
+}
+
+.admin-dl dt {
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+    padding: 0.125rem 0;
+    font-weight: 500;
+    margin-top: 0;
+}
+
+.admin-dl dd {
+    margin: 0;
+    font-size: 0.875rem;
+    padding: 0.125rem 0;
+    font-weight: 500;
+    color: var(--color-ink);
+}
+
+.admin-dl a {
+    color: var(--color-devzair-blue);
+    text-decoration: none;
+}
+
+.admin-dl a:hover,
+.admin-dl a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── Badges estimateur (outcome / status) ────────────────────────────────── */
+.admin-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+/* Positif : estimation disponible */
+.admin-badge--positive {
+    background: #e9f5f4;
+    color: var(--color-petrol);
+    border-color: rgba(12, 91, 87, 0.22);
+}
+
+/* Neutre/ambre : cadrage nécessaire, à étudier */
+.admin-badge--neutral {
+    background: #fef8ec;
+    color: #7a4810;
+    border-color: rgba(120, 72, 16, 0.22);
+}
+
+/* Secondaire : statut discret */
+.admin-badge--secondary {
+    background: var(--color-cream);
+    color: var(--color-ink-muted);
+    border-color: var(--border-default);
+}
+
+/* ── Contact deux lignes dans table ──────────────────────────────────────── */
+.admin-table-contact { line-height: 1.35; }
+
+.admin-table-contact__name { font-weight: 600; color: var(--color-ink); }
+
+.admin-table-contact__email {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--color-ink-muted);
+    margin-top: 0.125rem;
+}
+
+/* ── Montant estimé dans table ───────────────────────────────────────────── */
+.admin-estimate-range {
+    font-weight: 700;
+    color: var(--color-petrol);
+    white-space: nowrap;
+}
+
+/* ── Lien action dans table ──────────────────────────────────────────────── */
+.admin-action-link {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.admin-action-link:hover,
+.admin-action-link:focus-visible {
+    background: var(--color-sand);
+    color: var(--color-ink);
+}
+
+/* ── Hero détail (fiche projet ou partenariat) ───────────────────────────── */
+.admin-detail-hero {
+    background: var(--color-cream-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.admin-detail-hero__topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.admin-detail-hero__back {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.admin-detail-hero__back:hover,
+.admin-detail-hero__back:focus-visible {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.admin-detail-hero__name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0 0 0.125rem;
+    line-height: 1.2;
+}
+
+.admin-detail-hero__company {
+    font-size: 0.9375rem;
+    color: var(--color-ink-muted);
+    margin: 0 0 0.5rem;
+}
+
+.admin-detail-hero__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink-muted);
+    margin-bottom: 0.25rem;
+}
+
+.admin-detail-hero__range {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-petrol);
+    margin: 0.25rem 0;
+}
+
+.admin-detail-hero__date {
+    font-size: 0.875rem;
+    color: var(--color-ink-subtle);
+    margin: 0.25rem 0 0;
+}
+
+.admin-detail-hero__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ── Grid deux colonnes desktop ──────────────────────────────────────────── */
+.admin-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 48em) {
+    .admin-detail-grid {
+        grid-template-columns: 1fr 2fr;
+        align-items: start;
+    }
+}
+
+/* ── Aperçu JSON dans accordéon ──────────────────────────────────────────── */
+.admin-json-preview {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    background: var(--color-cream);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--color-ink);
+    line-height: 1.5;
+    margin: 0.5rem 0 0;
+}
+
+/* ── Accordéon données techniques ───────────────────────────────────────── */
+.admin-technical-details { margin-top: 1.25rem; }
+
+.admin-technical-summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.75rem 1rem;
+    background: var(--color-cream);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-technical-summary::-webkit-details-marker { display: none; }
+
+.admin-technical-summary::before {
+    content: '▶';
+    font-size: 0.625rem;
+    transition: transform 0.15s ease;
+}
+
+details[open] .admin-technical-summary::before {
+    transform: rotate(90deg);
+}
+
+.admin-technical-content {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-default);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+.admin-technical-content h3 {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+    margin: 1rem 0 0.25rem;
+}
+
+.admin-technical-content h3:first-child { margin-top: 0.5rem; }
+
+/* ── Liste de fonctionnalités (chips) ───────────────────────────────────── */
+.admin-feature-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.admin-feature-chip {
+    display: inline-block;
+    padding: 0.2rem 0.625rem;
+    background: var(--color-cream);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    color: var(--color-ink);
+}
+
+/* ── Note / blockquote complémentaire ───────────────────────────────────── */
+.admin-note-box {
+    background: var(--color-cream);
+    border-left: 3px solid var(--border-strong);
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    white-space: pre-line;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--color-ink);
+    line-height: 1.55;
+    margin: 0;
+}
+
+/* ── Sous-section détail estimation ─────────────────────────────────────── */
+.admin-estimate-breakdown {
+    margin-top: 1rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--border-default);
+}
+
+.admin-estimate-breakdown__title {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+    margin: 0 0 0.5rem;
+}
+
+.admin-estimate-breakdown__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.admin-estimate-breakdown__table td {
+    padding: 0.25rem 0.5rem 0.25rem 0;
+    vertical-align: top;
+    border: none;
+}
+
+.admin-estimate-breakdown__table td:last-child {
+    text-align: right;
+    font-weight: 600;
+    color: var(--color-petrol);
+    white-space: nowrap;
+    padding-right: 0;
+}
+
+/* ── Séparateur de titre hero ────────────────────────────────────────────── */
+.admin-detail-hero__separator {
+    width: 100%;
+    height: 1px;
+    background: var(--border-default);
+    margin: 0.375rem 0;
+}

@@ -21,15 +21,16 @@ use Symfony\Component\Uid\Uuid;
  * - statut initial = pending_review (aucune acceptation automatique) ;
  * - aucun champ `percentage`, `equity`, `commission` n'est calculé ;
  * - pour outcome = human_scoping_required, les montants en DB sont NULL ;
- * - aucune notification email en V1 (dette opérationnelle documentée).
+ * - notification email best-effort via EstimatorPartnershipNotifier.
  */
 final class SubmitEstimatorPartnership
 {
     public function __construct(
-        private readonly EstimatorPartnershipRequestMapper   $mapper,
-        private readonly ProjectEstimationEngine             $engine,
-        private readonly EstimateResponseFactory             $responseFactory,
+        private readonly EstimatorPartnershipRequestMapper       $mapper,
+        private readonly ProjectEstimationEngine                 $engine,
+        private readonly EstimateResponseFactory                 $responseFactory,
         private readonly EstimatorPartnershipRepositoryInterface $repository,
+        private readonly EstimatorPartnershipNotifier            $notifier,
     ) {}
 
     public function submit(
@@ -84,9 +85,8 @@ final class SubmitEstimatorPartnership
         // 5. Persistance
         $this->repository->save($proposal);
 
-        // NOTE: Pas de notification email en V1. Dette opérationnelle :
-        // ajouter un EstimatorPartnershipNotifier (pattern EST-6) quand
-        // une surveillance admin régulière sera formalisée.
+        // 6. Notification email best-effort (échec SMTP silencieux, lead déjà persisté)
+        $this->notifier->notify($proposal);
 
         return $proposal;
     }

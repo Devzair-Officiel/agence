@@ -153,9 +153,12 @@ export default defineNuxtConfig({
     // énumère explicitement pour préserver leur présence dans le sitemap.
     // Filtré aux pages `published` — une page `planned` ne doit pas y
     // apparaître (règle 11 : pas de placeholder indexable).
-    urls: expertisePages
-      .filter((page) => page.status === 'published')
-      .map((page) => ({ loc: page.route })),
+    urls: [
+      ...expertisePages
+        .filter((page) => page.status === 'published')
+        .map((page) => ({ loc: page.route })),
+      { loc: '/estimer-mon-projet' },
+    ],
   },
 
   // DEV-048 — désactivation de `payloadExtraction`.

@@ -108,8 +108,16 @@ services:
     App\Estimator\Application\Lead\EstimatorLeadNotifier:
         arguments:
             $fromEmail: '%app.contact.from_email%'
-            $fromName: '%app.contact.from_name%'
+            $fromName:  '%app.contact.from_name%'
             $recipient: '%app.contact.recipient%'
+            $adminBaseUrl: '%env(default::APP_ADMIN_BASE_URL)%'
+
+    App\Estimator\Application\Partnership\EstimatorPartnershipNotifier:
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName:  '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
+            $adminBaseUrl: '%env(default::APP_ADMIN_BASE_URL)%'
 
     App\Estimator\Infrastructure\Security\EstimatePartnershipRateLimiter:
         arguments:

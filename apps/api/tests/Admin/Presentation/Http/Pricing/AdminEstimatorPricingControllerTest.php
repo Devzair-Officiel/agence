@@ -42,6 +42,23 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
         $this->purgePricingTable();
     }
 
+    protected function tearDown(): void
+    {
+        // Restore a clean published config so estimator HTTP tests are not
+        // affected by setUp()'s purgePricingTable() when test order is random.
+        // Purge first to avoid unique-version or unique-published conflicts.
+        $this->purgePricingTable();
+        $config = PricingConfiguration::create(
+            id:            Uuid::v7(),
+            version:       '2026-v1',
+            currency:      'EUR',
+            configuration: $this->v1Config(),
+        );
+        $config->publish();
+        $this->pricingRepo->save($config);
+        parent::tearDown();
+    }
+
     // ─── Contrôle d'accès ────────────────────────────────────────────────
 
     public function testListRedirectsUnauthenticatedToLogin(): void

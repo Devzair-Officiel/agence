@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useMobileNavigation } from "~/composables/useMobileNavigation"
-import { primaryCta, primaryNavigation } from "~/config/navigation"
+import { estimatorCta, primaryCta, primaryNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
 
 const { isOpen, close } = useMobileNavigation()
@@ -123,6 +123,17 @@ watch(isOpen, async (opened) => {
             </ul>
           </nav>
 
+          <div class="mobile-navigation__estimator">
+            <NuxtLink
+              :to="estimatorCta.to"
+              class="mobile-navigation__estimator-link"
+              @click="onNavigate"
+            >
+              {{ estimatorCta.label }}
+              <span class="mobile-navigation__arrow" aria-hidden="true">→</span>
+            </NuxtLink>
+          </div>
+
           <BaseButton
             :to="primaryCta.to"
             :external="primaryCta.isRoute ? undefined : true"
@@ -241,6 +252,33 @@ watch(isOpen, async (opened) => {
 .mobile-navigation__cta {
   margin-top: var(--space-6);
   width: 100%;
+}
+
+.mobile-navigation__estimator {
+  border-top: 1px solid var(--border-inverse);
+  padding-top: var(--space-2);
+}
+
+.mobile-navigation__estimator-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-5);
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading-medium);
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--color-devzair-blue);
+  min-height: var(--touch-target-min);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.mobile-navigation__estimator-link:hover {
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-navigation__estimator-link { transition: none; }
 }
 
 .mobile-nav-enter-active,

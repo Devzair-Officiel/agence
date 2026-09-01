@@ -149,3 +149,29 @@ admin_pricing_delete:
     methods: [POST]
     requirements:
         id: '[0-9a-fA-F-]{36}'
+
+# Administration des leads estimateur (EST-9).
+admin_leads_list:
+    path: /admin/estimator/leads
+    controller: App\Admin\Presentation\Http\AdminEstimatorLeadListController::__invoke
+    methods: [GET]
+
+admin_leads_show:
+    path: /admin/estimator/leads/{id}
+    controller: App\Admin\Presentation\Http\AdminEstimatorLeadShowController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+# Administration des propositions de partenariat estimateur (EST-9).
+admin_partnerships_list:
+    path: /admin/estimator/partnerships
+    controller: App\Admin\Presentation\Http\AdminEstimatorPartnershipListController::__invoke
+    methods: [GET]
+
+admin_partnerships_show:
+    path: /admin/estimator/partnerships/{id}
+    controller: App\Admin\Presentation\Http\AdminEstimatorPartnershipShowController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'

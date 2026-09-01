@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Nouveau lead — {{ projectTypeLabel|e }} — Devzair</title>
+  <title>Nouvelle proposition de partenariat — {{ projectTypeLabel|e }} — Devzair</title>
   <style>
     body { font-family: Arial, sans-serif; font-size: 14px; color: #222; background: #f5f5f5; margin: 0; padding: 0; }
     .wrapper { max-width: 600px; margin: 24px auto; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
@@ -11,8 +11,9 @@
     .section { padding: 20px 32px; border-bottom: 1px solid #eee; }
     .section h2 { font-size: 13px; text-transform: uppercase; color: #888; letter-spacing: 1px; margin: 0 0 12px; }
     .row { display: flex; margin-bottom: 6px; }
-    .label { width: 130px; flex-shrink: 0; color: #555; font-weight: bold; }
+    .label { width: 160px; flex-shrink: 0; color: #555; font-weight: bold; }
     .value { color: #222; }
+    .badge { display: inline-block; padding: 2px 8px; background: #eef0ff; color: #1a1a2e; border-radius: 3px; font-size: 12px; font-weight: bold; }
     .footer { padding: 16px 32px; font-size: 12px; color: #aaa; text-align: center; }
     .range { font-weight: bold; color: #1a1a2e; font-size: 16px; }
     .admin-link { display: inline-block; margin-top: 12px; padding: 8px 16px; background: #1a1a2e; color: #fff; text-decoration: none; border-radius: 4px; font-size: 13px; }
@@ -21,21 +22,23 @@
 <body>
 <div class="wrapper">
   <div class="header">
-    <h1>Nouveau lead estimateur</h1>
+    <h1>Nouvelle proposition de partenariat</h1>
     <p style="margin:6px 0 0;font-size:13px;opacity:.8;">Devzair · Réf. #{{ shortId|e }}</p>
   </div>
 
   <div class="section">
     <h2>Contact</h2>
     <div class="row"><span class="label">Nom</span><span class="value">{{ name|e }}</span></div>
-    <div class="row"><span class="label">Email</span><span class="value"><a href="mailto:{{ visitorEmail|e }}">{{ visitorEmail|e }}</a></span></div>
     <div class="row"><span class="label">Société</span><span class="value">{{ company ? company|e : 'Non renseigné' }}</span></div>
   </div>
 
   <div class="section">
-    <h2>Projet estimé</h2>
-    <div class="row"><span class="label">Type</span><span class="value">{{ projectTypeLabel|e }}</span></div>
+    <h2>Partenariat</h2>
+    <div class="row"><span class="label">Type de projet</span><span class="value">{{ projectTypeLabel|e }}</span></div>
+    <div class="row"><span class="label">Type de partenariat</span><span class="value">{{ partnershipTypeLabel|e }}</span></div>
+    <div class="row"><span class="label">Stade du projet</span><span class="value">{{ projectStageLabel|e }}</span></div>
     <div class="row"><span class="label">Résultat</span><span class="value">{{ outcomeLabel|e }}</span></div>
+    <div class="row"><span class="label">Statut</span><span class="value"><span class="badge">À étudier</span></span></div>
     {% if minorMin is not null and minorMax is not null %}
     <div class="row">
       <span class="label">Fourchette</span>

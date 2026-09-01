@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 import { useMobileNavigation } from "~/composables/useMobileNavigation"
-import { primaryCta, primaryNavigation } from "~/config/navigation"
+import { estimatorCta, primaryCta, primaryNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
 
 const { toggle, isOpen } = useMobileNavigation()
@@ -51,6 +51,12 @@ const onToggleMenu = () => {
             </NuxtLink>
           </li>
         </ul>
+        <NuxtLink
+          :to="estimatorCta.to"
+          class="site-header__estimator-link"
+        >
+          {{ estimatorCta.label }}
+        </NuxtLink>
         <BaseButton
           :to="primaryCta.to"
           :external="primaryCta.isRoute ? undefined : true"
@@ -190,6 +196,34 @@ const onToggleMenu = () => {
   .site-header__link::before {
     transition: none;
   }
+}
+
+.site-header__estimator-link {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+
+.site-header__estimator-link:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.site-header__estimator-link.router-link-active {
+  color: var(--text-accent);
+  border-color: var(--text-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__estimator-link { transition: none; }
 }
 
 .site-header__menu-button {

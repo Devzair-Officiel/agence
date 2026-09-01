@@ -6,16 +6,15 @@ Un prospect a demandé à être contacté depuis l'estimateur en ligne.
 
 ── CONTACT ──────────────────────────────────────────
 
-Nom        : {{ name }}
-Email      : {{ visitorEmail }}
-Téléphone  : {{ phone ?? 'Non renseigné' }}
-Société    : {{ company ?? 'Non renseigné' }}
+Nom        : {{ name|e }}
+Email      : {{ visitorEmail|e }}
+Société    : {{ company ? company|e : 'Non renseigné' }}
 
 
 ── PROJET ───────────────────────────────────────────
 
-Type de projet : {{ projectType }}
-Résultat       : {{ outcome }}
+Type de projet : {{ projectTypeLabel|e }}
+Résultat       : {{ outcomeLabel|e }}
 
 {% if minorMin is not null and minorMax is not null %}
 Fourchette     : {{ (minorMin / 100)|number_format(0, ',', ' ') }} € – {{ (minorMax / 100)|number_format(0, ',', ' ') }} €
@@ -23,22 +22,17 @@ Fourchette     : {{ (minorMin / 100)|number_format(0, ',', ' ') }} € – {{ (m
 Fourchette     : Cadrage humain requis
 {% endif %}
 
-{% if note %}
-Besoin complémentaire :
-──────────
-{{ note }}
-──────────
-{% endif %}
-
 
 ── RÉFÉRENCE ────────────────────────────────────────
 
-Référence : #{{ shortId }}
+Référence : #{{ shortId|e }}
 
 
 ── INFORMATIONS TECHNIQUES ──────────────────────────
 
-ID technique : {{ requestId }}
+ID technique : {{ requestId|e }}
+
+Voir dans l'admin : {{ adminLink|e }}
 
 ─────────────────────────────────────────────────────
 Devzair · devzair.fr

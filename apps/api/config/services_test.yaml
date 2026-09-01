@@ -282,8 +282,9 @@ services:
     App\Estimator\Application\Lead\EstimatorLeadNotifier:
         arguments:
             $fromEmail: '%app.contact.from_email%'
-            $fromName: '%app.contact.from_name%'
+            $fromName:  '%app.contact.from_name%'
             $recipient: '%app.contact.recipient%'
+            $adminBaseUrl: 'http://localhost:8000'
         public: true
 
     # ------------------------------------------------------------------
@@ -316,6 +317,14 @@ services:
         public: true
 
     App\Estimator\Application\Partnership\SubmitEstimatorPartnership:
+        public: true
+
+    App\Estimator\Application\Partnership\EstimatorPartnershipNotifier:
+        arguments:
+            $fromEmail: '%app.contact.from_email%'
+            $fromName:  '%app.contact.from_name%'
+            $recipient: '%app.contact.recipient%'
+            $adminBaseUrl: 'http://localhost:8000'
         public: true
 
     # ------------------------------------------------------------------

@@ -18,6 +18,8 @@
     {% set _nav_articles  = 'admin_article' in _route %}
     {% set _nav_media     = 'admin_media'   in _route %}
     {% set _nav_pricing   = 'admin_pricing' in _route %}
+    {% set _nav_leads    = 'admin_leads' in _route %}
+    {% set _nav_partners = 'admin_partnerships' in _route %}
 
     {# ── Lien d'évitement (visible au focus clavier) ──────────────────────── #}
     <a class="admin-skip-link" href="#admin-main">Aller au contenu principal</a>
@@ -60,6 +62,21 @@
                            class="admin-mobile-menu__link{% if _nav_pricing %} admin-mobile-menu__link--active{% endif %}"
                            {% if _nav_pricing %}aria-current="page"{% endif %}>
                             Tarification
+                        </a>
+                    </li>
+                    {# Estimateur — leads et partenariats (EST-9) #}
+                    <li>
+                        <a href="{{ path('admin_leads_list') }}"
+                           class="admin-mobile-menu__link{% if _nav_leads %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_leads %}aria-current="page"{% endif %}>
+                            Leads
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_partnerships_list') }}"
+                           class="admin-mobile-menu__link{% if _nav_partners %} admin-mobile-menu__link--active{% endif %}"
+                           {% if _nav_partners %}aria-current="page"{% endif %}>
+                            Partenariats
                         </a>
                     </li>
                 </ul>
@@ -121,6 +138,21 @@
                            class="admin-sidebar__link{% if _nav_pricing %} admin-sidebar__link--active{% endif %}"
                            {% if _nav_pricing %}aria-current="page"{% endif %}>
                             Tarification
+                        </a>
+                    </li>
+                    {# Estimateur — leads et partenariats (EST-9) #}
+                    <li>
+                        <a href="{{ path('admin_leads_list') }}"
+                           class="admin-sidebar__link{% if _nav_leads %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_leads %}aria-current="page"{% endif %}>
+                            Leads
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ path('admin_partnerships_list') }}"
+                           class="admin-sidebar__link{% if _nav_partners %} admin-sidebar__link--active{% endif %}"
+                           {% if _nav_partners %}aria-current="page"{% endif %}>
+                            Partenariats
                         </a>
                     </li>
                 </ul>
