@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { waitForEstimatorHydrated } from "./helpers/estimator-hydration"
 
 // E2E — Récapitulatif dynamique + Besoin complémentaire /estimer-mon-projet
 //
@@ -14,6 +15,7 @@ const ESTIMATOR_PATH = "/estimer-mon-projet"
 test.describe("EstimatorSummary E2E", () => {
   test("A — le récapitulatif s'enrichit étape par étape", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
 
     // Étape 1 : choisir un type de projet
     await page.locator("label:has(input[value='vitrinesite'])").click()
@@ -43,6 +45,7 @@ test.describe("EstimatorSummary E2E", () => {
 
   test("B — Modifier ramène à l'étape ciblée", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
 
     // Remplir étape 1
     await page.locator("label:has(input[value='ecommerce'])").click()
@@ -74,6 +77,7 @@ test.describe("EstimatorSummary E2E", () => {
     })
 
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
 
     // Remplir jusqu'à l'étape fonctionnalités (étape 4, chemin standard)
     await page.locator("label:has(input[value='vitrinesite'])").click()
@@ -104,6 +108,7 @@ test.describe("EstimatorSummary E2E", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
 
     // Naviguer jusqu'à l'étape 4
     await page.locator("label:has(input[value='vitrinesite'])").click()
@@ -131,6 +136,7 @@ test.describe("EstimatorSummary E2E", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
 
     // Naviguer jusqu'à l'étape 4
     await page.locator("label:has(input[value='vitrinesite'])").click()

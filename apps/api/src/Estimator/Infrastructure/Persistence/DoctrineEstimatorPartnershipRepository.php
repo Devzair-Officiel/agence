@@ -6,6 +6,7 @@ namespace App\Estimator\Infrastructure\Persistence;
 
 use App\Estimator\Domain\Partnership\EstimatorPartnershipProposal;
 use App\Estimator\Domain\Partnership\EstimatorPartnershipRepositoryInterface;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -33,5 +34,25 @@ final class DoctrineEstimatorPartnershipRepository implements EstimatorPartnersh
     public function findById(Uuid $id): ?EstimatorPartnershipProposal
     {
         return $this->em->find(EstimatorPartnershipProposal::class, $id);
+    }
+
+    public function countExpiredBefore(\DateTimeImmutable $cutoff): int
+    {
+        return (int) $this->em
+            ->createQuery(
+                'SELECT COUNT(p.id) FROM App\Estimator\Domain\Partnership\EstimatorPartnershipProposal p WHERE p.createdAt < :cutoff'
+            )
+            ->setParameter('cutoff', $cutoff, Types::DATETIMETZ_IMMUTABLE)
+            ->getSingleScalarResult();
+    }
+
+    public function deleteExpiredBefore(\DateTimeImmutable $cutoff): int
+    {
+        return (int) $this->em
+            ->createQuery(
+                'DELETE FROM App\Estimator\Domain\Partnership\EstimatorPartnershipProposal p WHERE p.createdAt < :cutoff'
+            )
+            ->setParameter('cutoff', $cutoff, Types::DATETIMETZ_IMMUTABLE)
+            ->execute();
     }
 }

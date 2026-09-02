@@ -346,5 +346,17 @@ services:
     App\Estimator\Application\Pricing\PublishPricingConfiguration:
         public: true
 
+    App\Estimator\Presentation\Console\PurgeExpiredEstimatorDataCommand:
+        public: true
+
+    App\Estimator\Presentation\Console\EstimatorPreflightCommand:
+        arguments:
+            $appEnv:           'test'
+            $adminBaseUrl:     'http://localhost:8000'
+            $contactRecipient: 'contact@devzair.test'
+            $mailerDsn:        'null://null'
+            $originAllowlist:  ['http://localhost:3001']
+        public: true
+
     App\Admin\Infrastructure\Logging\PricingAdminAuditLogger:
         public: true

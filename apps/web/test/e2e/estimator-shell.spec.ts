@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
+import { waitForEstimatorHydrated } from "./helpers/estimator-hydration"
 
 // E2E — Configurateur de projet /estimer-mon-projet
 //
@@ -58,6 +59,7 @@ test.describe("EstimatorShell E2E", () => {
 
   test("Continuer est activé après sélection d'un type", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='vitrinesite'])").click()
     const continuer = page.getByRole("button", { name: /Continuer/i })
     await expect(continuer).toBeEnabled()
@@ -65,6 +67,7 @@ test.describe("EstimatorShell E2E", () => {
 
   test("EST-3 : Continuer avance réellement à l'étape 2", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='ecommerce'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     const bar = page.getByRole("progressbar")
@@ -73,6 +76,7 @@ test.describe("EstimatorShell E2E", () => {
 
   test("unknown : totalSteps bascule à 6 après sélection", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     const continuer = page.getByRole("button", { name: /Continuer/i })
     await expect(continuer).toBeEnabled()
@@ -91,6 +95,7 @@ test.describe("EstimatorShell E2E", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     const radios = page.locator('input[type="radio"]')
     await radios.first().focus()
     await page.keyboard.press("Space")

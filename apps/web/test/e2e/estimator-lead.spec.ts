@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { waitForEstimatorHydrated } from "./helpers/estimator-hydration"
 
 // E2E — Lead estimateur (EST-6)
 //
@@ -19,6 +20,7 @@ const ESTIMATOR_PATH = "/estimer-mon-projet"
 
 async function completeVitrineToLastStep(page: import("@playwright/test").Page) {
   await page.goto(ESTIMATOR_PATH)
+  await waitForEstimatorHydrated(page)
   await page.locator("label:has(input[value='vitrinesite'])").click()
   await page.getByRole("button", { name: /Continuer/i }).click()
   await page.locator("label:has(input[value='none'])").click()

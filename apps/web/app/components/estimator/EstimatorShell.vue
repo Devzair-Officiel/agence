@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch, computed } from "vue"
+import { nextTick, onMounted, ref, watch, computed } from "vue"
 import { useEstimator } from "~/composables/useEstimator"
 import { useEstimatorApi } from "~/composables/useEstimatorApi"
 
@@ -93,10 +93,19 @@ const canRetry = computed(
     estimateError.value === "network_error" ||
     estimateError.value === "unknown_error",
 )
+
+const hydrated = ref(false)
+onMounted(() => {
+  hydrated.value = true
+})
 </script>
 
 <template>
-  <section class="estimator-shell" aria-label="Configurateur de projet">
+  <section
+    class="estimator-shell"
+    aria-label="Configurateur de projet"
+    :data-estimator-hydrated="hydrated ? 'true' : 'false'"
+  >
     <BaseContainer width="wide">
       <div class="estimator-shell__card">
         <!-- Progression : masquée pendant le résultat -->

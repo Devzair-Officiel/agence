@@ -1740,11 +1740,20 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ### EST-9 — Intégration site + QA + lancement
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉ (2026-09-02) — GO-LIVE READY (hardening pass)**
 
-- [ ] Intégration dans la navigation principale.
-- [ ] Sitemap, SEO, pré-rendu ou SSR (selon Q-08 et Q-13).
-- [ ] Recette QA complète (fonctionnelle, accessibilité, sécurité, RGPD).
+- [x] Intégration dans la navigation principale (desktop + mobile).
+- [x] SSR standard confirmé (Q-13 VALIDÉE). Pas de pré-rendu.
+- [x] Indexabilité en production contrôlée par `siteIndexable` global (Q-08 VALIDÉE).
+- [x] Rétention RGPD 24 mois validée (Q-02 résolue). `EstimatorRetentionPolicy::MONTHS = 24`.
+- [x] Commande `app:estimator:purge-expired` (dry-run + purge réelle, zéro PII en sortie). Fréquence recommandée : **quotidienne** (heures creuses).
+- [x] Commande `app:estimator:preflight` (vérifications pré-déploiement). Gates prod durcies : `null://` MAILER_DSN → FAIL, `APP_ADMIN_BASE_URL` vide/localhost/HTTP → FAIL.
+- [x] Tests PHPUnit retention policy + purge command (intégration KernelTestCase).
+- [x] Tests PHPUnit preflight command (12 cas unitaires — MAILER_DSN, APP_ADMIN_BASE_URL, IPv6 loopback).
+- [x] Notification email partenariat opérationnelle (`EstimatorPartnershipNotifier`).
+- [x] Hydratation E2E déterministe : marqueur `data-estimator-hydrated` sur `EstimatorShell.vue`, helper `waitForEstimatorHydrated()`, tous les specs estimateur mis à jour. `estimator-shell.spec.ts` : 11/11 ×2.
+- [x] PHPUnit global : 1 035/1 035 ×2 (2026-09-02).
+- [x] Frontend : lint clean, typecheck clean, Vitest 1 046/1 046 (2026-09-02).
 
 **Critère de sortie :** L'outil est publié, indexable si décidé, accessible, sécurisé, conforme RGPD, lié depuis la navigation.
 

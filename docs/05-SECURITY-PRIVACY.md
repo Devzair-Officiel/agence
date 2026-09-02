@@ -552,7 +552,7 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 
 **Données NON collectées :** message libre, newsletter. Partenariat : formulaire séparé (EST-7).
 
-**Stockage :** Table `estimator_lead` (PostgreSQL). Colonnes `questionnaire_snapshot` et `estimate_snapshot` en JSONB. Colonnes `email`, `name`, `phone`, `company` en clair — à chiffrer au repos si la durée de conservation est longue (Q-02 à valider).
+**Stockage :** Table `estimator_lead` (PostgreSQL). Colonnes `questionnaire_snapshot` et `estimate_snapshot` en JSONB. Colonnes `email`, `name`, `phone`, `company` en clair.
 
 **Base légale :** Intérêt légitime (art. 6-1-f RGPD) — rappel inline dans le formulaire.
 
@@ -560,13 +560,13 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 
 **Rate limiting :** bucket `estimate_lead_ip` dédié (10/min), indépendant du bucket estimateur (30/min) et contact.
 
-**Durée de conservation :** À valider par l’équipe Devzair (Q-02 — bloquant avant mise en production).
+**Durée de conservation :** **24 mois** à compter de `createdAt` (Q-02 validée — 2026-09-01). Source de vérité : `EstimatorRetentionPolicy::MONTHS = 24`. Purge automatique via `app:estimator:purge-expired` (option `--dry-run`). Fréquence recommandée : **quotidienne** (une fois par jour en heures creuses). Aucun PII dans la sortie de la commande de purge.
 
 **Notifications email :** Symfony Mailer → template Twig ; `Reply-To` = email prospect ; `From` = adresse Devzair. Échec SMTP = warning log, lead toujours persisté.
 
 **Honeypot :** champ `website` (aria-hidden, tabindex=-1) — silence 202 si rempli.
 
-**Droits :** accès, rectification, suppression sur demande écrite. Mécanisme manuel (outil CLI ou requête SQL directe) — interface d’administration à prévoir en EST-8+.
+**Droits :** accès, rectification, suppression sur demande écrite. Purge automatique après 24 mois. Effacement anticipé sur demande : procédure manuelle (à définir par Devzair) — interface d’administration à prévoir en EST-8+.
 
 ### Proposition de partenariat (EST-7)
 
@@ -584,13 +584,13 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 
 **Rate limiting :** bucket `estimate_partnership_ip` dédié, indépendant de `estimate_lead_ip` et `estimate_ip`.
 
-**Durée de conservation :** À valider par l'équipe Devzair (même règle que Q-02).
+**Durée de conservation :** **24 mois** à compter de `createdAt` (Q-02 validée — 2026-09-01, même politique que le lead). Purge via `app:estimator:purge-expired` — les propositions sont purgées avant les leads. `lead_request_id` est un VARCHAR sans FK : la purge d'un lead n'invalide pas une proposition active. **Fréquence recommandée : quotidienne** (une fois par jour en heures creuses).
 
-**Notifications email :** V1 — différé (dette documentée). La persistence en base est suffisante pour V1. À implémenter avant mise en production publique.
+**Notifications email :** `EstimatorPartnershipNotifier` opérationnel depuis EST-9 (2026-09-01). Template Twig html+txt, `Reply-To` = email partenaire, `From` = adresse Devzair. Échec SMTP = warning log, proposition toujours persistée.
 
 **Honeypot :** champ `website` (aria-hidden, tabindex=-1) — silence 202 si rempli.
 
-**Droits :** accès, rectification, suppression sur demande écrite. Mécanisme manuel — interface d'administration à prévoir en EST-8+.
+**Droits :** accès, rectification, suppression sur demande écrite. Purge automatique après 24 mois. Effacement anticipé sur demande : procédure manuelle à définir par Devzair.
 
 ---
 

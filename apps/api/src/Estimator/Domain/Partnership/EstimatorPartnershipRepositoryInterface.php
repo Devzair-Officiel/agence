@@ -17,4 +17,13 @@ interface EstimatorPartnershipRepositoryInterface
     public function listAll(): array;
 
     public function findById(Uuid $id): ?EstimatorPartnershipProposal;
+
+    /** Returns the number of proposals with createdAt strictly before $cutoff (dry-run support). */
+    public function countExpiredBefore(\DateTimeImmutable $cutoff): int;
+
+    /**
+     * Bulk-deletes proposals with createdAt strictly before $cutoff.
+     * Returns the number of rows deleted.
+     */
+    public function deleteExpiredBefore(\DateTimeImmutable $cutoff): int;
 }

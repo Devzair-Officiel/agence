@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
+import { waitForEstimatorHydrated } from "./helpers/estimator-hydration"
 
 // E2E — Navigation complète du questionnaire estimateur (EST-3)
 //
@@ -26,6 +27,7 @@ async function goToStep2Standard(
   type: string,
 ) {
   await page.goto(ESTIMATOR_PATH)
+  await waitForEstimatorHydrated(page)
   await page.locator(`label:has(input[value='${type}'])`).click()
   await page.getByRole("button", { name: /Continuer/i }).click()
 }
@@ -105,6 +107,7 @@ test.describe("Parcours standard — 7 étapes", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='other'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     // étape 2 : situation
@@ -179,6 +182,7 @@ test.describe("Parcours standard — 7 étapes", () => {
 test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
   test("totalSteps = 6 dès l'étape 2", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await expect(page.getByRole("progressbar")).toHaveAttribute(
@@ -189,6 +193,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
 
   test("étape 2 : objectifs requis avant Continuer", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await expect(
@@ -204,6 +209,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await page.locator("label:has(input[name='objectives'])").first().click()
@@ -221,6 +227,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await page.locator("label:has(input[name='objectives'])").first().click()
@@ -240,6 +247,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
 
   test("isComplete = false avant l'étape 6 (unknown)", async ({ page }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     await page.locator("label:has(input[name='objectives'])").first().click()
@@ -268,6 +276,7 @@ test.describe("Parcours unknown — 6 étapes (objectif-first)", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     // Sélectionner "Vendre en ligne" qui pourrait naïvement être converti en ecommerce
@@ -481,6 +490,7 @@ test.describe("Navigation clavier", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator('input[type="radio"]').first().focus()
     await page.keyboard.press("Space")
     await expect(page.locator('input[type="radio"]').first()).toBeChecked()

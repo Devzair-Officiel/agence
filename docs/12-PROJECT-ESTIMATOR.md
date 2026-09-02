@@ -12,7 +12,8 @@
 > EST-5 — Modalités de paiement : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
 > EST-6 — Lead qualifié + persistence / API : **Implémentation technique terminée** (2026-08-30).
 > EST-7 — Parcours partenariat : **Implémentation technique terminée — validation visuelle requise** (2026-08-30).
-> Prochaine phase : **EST-8 — Administration tarifaire** (après validation visuelle EST-5/6/7).
+> EST-8 — Administration tarifaire : **TERMINÉ** (2026-09-01). Interface Twig CRUD, gestion des versions et activation tarifaire opérationnelles.
+> EST-9 — Intégration site + QA + lancement : **TERMINÉ** (2026-09-01). Navigation, SEO, rétention RGPD, purge, preflight — Release Candidate validée.
 
 ---
 
@@ -672,7 +673,7 @@ Navigateur (Vue / Nuxt)
 ### 14.3 Composants identifiés (noms indicatifs — à confirmer en EST-1 et EST-2)
 
 **Nuxt / Vue :**
-- Page `/estimer-mon-projet` (SSR, indexable selon décision À VALIDER)
+- Page `/estimer-mon-projet` (SSR standard, indexable en production lorsque `siteIndexable=true` — Q-08 VALIDÉE, Q-13 VALIDÉE)
 - Composant `ProjectEstimator` (orchestrateur du questionnaire)
 - Composants de step (un par étape, rendu conditionnel)
 - Composant `EstimateResult` (affichage du résultat)
@@ -756,12 +757,18 @@ L'utilisateur peut obtenir une estimation complète sans fournir son nom ni son 
 
 ### 16.5 Durée de conservation
 
-**À VALIDER** avant l'ouverture de EST-6.  
-Ne pas inventer de durée dans cette phase.
+**VALIDÉE (2026-09-01) — Q-02 résolue.**
+
+- `EstimatorLead` : **24 mois** à compter de `createdAt`. Source de vérité : `EstimatorRetentionPolicy::MONTHS = 24`.
+- `EstimatorPartnershipProposal` : **24 mois** à compter de `createdAt`. Même politique que le lead.
+- Règle d'expiration : `createdAt < cutoff` (strict). Un enregistrement créé exactement à la date limite n'est pas considéré expiré.
+- Commande de purge : `app:estimator:purge-expired` (option `--dry-run` disponible). Les propositions de partenariat sont purgées avant les leads. Aucun PII n'est produit dans la sortie.
+- Fréquence recommandée : **quotidienne** (une fois par jour en heures creuses — cron ou tâche planifiée en infrastructure).
+- `lead_request_id` dans `EstimatorPartnershipProposal` est un VARCHAR sans contrainte FK. La purge d'un lead n'invalide pas une proposition active référençant son `requestId`.
 
 ### 16.6 Suppression
 
-**À VALIDER** (procédure de suppression sur demande, droit à l'effacement RGPD).
+Droit à l'effacement RGPD : un prospect peut demander la suppression manuelle de ses données avant l'expiration de la fenêtre de rétention. La procédure est à définir par Devzair (email à l'équipe, interface admin dédiée ou commande CLI supervisée). L'implémentation technique est déléguée à une tâche hors périmètre EST-9.
 
 ### 16.7 Journalisation
 
@@ -1313,29 +1320,29 @@ Les questions sont classées par phase bloquante. Aucune ne bloque EST-0 (termin
 | Q-03 | Conditions du paiement échelonné (durée, acompte) | Devzair | **VALIDÉE (2026-08-30)** — Règles : max < 100 000 c → 2 éch. ; 100 000–250 000 c → 3 éch. ; > 250 000 c → 4 éch. Implémentées dans `getMaxInstallments()`. |
 | Q-11 | Nombre de mensualités pour la simulation d'échelonnement | Devzair | **VALIDÉE (2026-08-30)** — Aligné sur Q-03. Affichage "Jusqu'à N échéances possibles" sans montant par échéance. |
 
-### BLOQUANT EST-6 — Persistence et conformité RGPD
+### ~~BLOQUANT EST-6~~ — Persistence et conformité RGPD — **RÉSOLUES**
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
-| Q-02 | Durée de conservation des leads (RGPD) | Devzair + conseil juridique | Collecte de PII impossible sans durée validée. **Critique RGPD.** |
-| Q-06 | Politique de suppression des données (droit à l'effacement) | Devzair | Droit à l'effacement RGPD — À VALIDER avant ouverture EST-6. |
-| Q-10 | Le téléphone est-il collecté dans le formulaire final ? | Devzair | Impacte le design et les mentions du formulaire de lead. |
-| Q-12 | Modalité de réception interne du lead (email seul, CRM, autre) | Devzair | Impacte l'architecture Symfony de réception et de persistence. |
+| Q-02 | Durée de conservation des leads (RGPD) | Devzair + conseil juridique | **VALIDÉE (2026-09-01)** — 24 mois depuis `createdAt` pour `EstimatorLead` et `EstimatorPartnershipProposal`. Source de vérité : `EstimatorRetentionPolicy::MONTHS = 24`. |
+| Q-06 | Politique de suppression des données (droit à l'effacement) | Devzair | **VALIDÉE (partiellement, 2026-09-01)** — Purge automatique via `app:estimator:purge-expired`. Droit d'effacement manuel : procédure opérationnelle à définir par Devzair (hors périmètre EST-9). |
+| Q-10 | Le téléphone est-il collecté dans le formulaire final ? | Devzair | **VALIDÉE (2026-08-30)** — Téléphone collecté en champ optionnel dans `EstimatorLead` et `EstimatorPartnershipProposal`. |
+| Q-12 | Modalité de réception interne du lead (email seul, CRM, autre) | Devzair | **VALIDÉE (2026-08-30)** — Email de notification via `EstimatorLeadNotifier` et `EstimatorPartnershipNotifier` (best-effort, aucun CRM V1). |
 
-### BLOQUANT EST-7 — Partenariat
+### ~~BLOQUANT EST-7~~ — Partenariat — **RÉSOLUES**
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
-| Q-04 | Critères d'éligibilité au partenariat | Devzair | Ouvrir EST-7 sans critères crée des attentes non gérables. |
+| Q-04 | Critères d'éligibilité au partenariat | Devzair | **VALIDÉE (2026-08-30)** — Aucun critère automatique V1 : toute proposition est soumise à validation humaine après réception. |
 
-### BLOQUANT EST-9 / PRODUCTION
+### ~~BLOQUANT EST-9 / PRODUCTION~~ — **RÉSOLUES**
 
 | # | Question | Responsable | Note |
 |---|---|---|---|
 | Q-05 | Texte juridique de non-engagement (avertissement résultat) | Devzair + conseil juridique | **VALIDÉE (2026-08-30)** — Texte actif : "Cette estimation est indicative et ne constitue pas un devis. Le budget définitif dépendra du périmètre confirmé et des éventuels besoins précisés lors du cadrage du projet." Validation juridique complète requise avant mise en production. |
 | Q-07 | Conditions CGV / CGU liées à l'estimation | Devzair | À VALIDER avant lancement public. |
-| Q-08 | La page `/estimer-mon-projet` est-elle indexable ou noindex ? | Devzair (SEO) | Décision SEO à prendre avant EST-9. |
-| Q-13 | La page `/estimer-mon-projet` est-elle pré-rendue ou SSR dynamique ? | Devzair (SEO / performance) | Le shell UX peut être développé sans cette décision. À trancher avant EST-9 / mise en production. |
+| Q-08 | La page `/estimer-mon-projet` est-elle indexable ou noindex ? | Devzair (SEO) | **VALIDÉE (2026-09-01)** — Indexable en production lorsque `siteIndexable=true` (contrôle global `NUXT_PUBLIC_SITE_INDEXABLE`). Le contrôle global est autoritaire. |
+| Q-13 | La page `/estimer-mon-projet` est-elle pré-rendue ou SSR dynamique ? | Devzair (SEO / performance) | **VALIDÉE (2026-09-01)** — SSR standard Nuxt. Pas de pré-rendu (`prerender: false`). Décision coûts/bénéfices : le contenu est interactif, pas de gain SEO à pré-rendre. |
 | Q-14 | Faut-il un flux RSS ou sitemap spécifique à l'estimateur ? | Devzair | À VALIDER lors de la recette EST-9. |
 
 ### NON BLOQUANT À CE STADE

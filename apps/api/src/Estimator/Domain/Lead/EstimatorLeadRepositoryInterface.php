@@ -17,4 +17,13 @@ interface EstimatorLeadRepositoryInterface
     public function listAll(): array;
 
     public function findById(Uuid $id): ?EstimatorLead;
+
+    /** Returns the number of leads with createdAt strictly before $cutoff (dry-run support). */
+    public function countExpiredBefore(\DateTimeImmutable $cutoff): int;
+
+    /**
+     * Bulk-deletes leads with createdAt strictly before $cutoff.
+     * Returns the number of rows deleted.
+     */
+    public function deleteExpiredBefore(\DateTimeImmutable $cutoff): int;
 }

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
+import { waitForEstimatorHydrated } from "./helpers/estimator-hydration"
 
 // E2E — Écran de résultat de l'estimateur (EST-4)
 //
@@ -26,6 +27,7 @@ const ESTIMATOR_PATH = "/estimer-mon-projet"
 /** Complete le parcours vitrine jusqu'à la dernière étape (étape 7). */
 async function completeVitrineToLastStep(page: import("@playwright/test").Page) {
   await page.goto(ESTIMATOR_PATH)
+  await waitForEstimatorHydrated(page)
   await page.locator("label:has(input[value='vitrinesite'])").click()
   await page.getByRole("button", { name: /Continuer/i }).click()
   // étape 2 : situation

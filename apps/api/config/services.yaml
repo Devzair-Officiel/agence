@@ -24,6 +24,7 @@ parameters:
     app.site.indexable: '%env(bool:default::NUXT_PUBLIC_SITE_INDEXABLE)%'
     app.mailer.dsn: '%env(MAILER_DSN)%'
     app.trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
+    app.admin_base_url: '%env(default::APP_ADMIN_BASE_URL)%'
 
 services:
     _defaults:
@@ -110,14 +111,14 @@ services:
             $fromEmail: '%app.contact.from_email%'
             $fromName:  '%app.contact.from_name%'
             $recipient: '%app.contact.recipient%'
-            $adminBaseUrl: '%env(default::APP_ADMIN_BASE_URL)%'
+            $adminBaseUrl: '%app.admin_base_url%'
 
     App\Estimator\Application\Partnership\EstimatorPartnershipNotifier:
         arguments:
             $fromEmail: '%app.contact.from_email%'
             $fromName:  '%app.contact.from_name%'
             $recipient: '%app.contact.recipient%'
-            $adminBaseUrl: '%env(default::APP_ADMIN_BASE_URL)%'
+            $adminBaseUrl: '%app.admin_base_url%'
 
     App\Estimator\Infrastructure\Security\EstimatePartnershipRateLimiter:
         arguments:
@@ -163,6 +164,14 @@ services:
 
     App\Estimator\Domain\Pricing\PricingConfigurationRepositoryInterface:
         alias: App\Estimator\Infrastructure\Persistence\DoctrineEstimatorPricingRepository
+
+    App\Estimator\Presentation\Console\EstimatorPreflightCommand:
+        arguments:
+            $appEnv:            '%kernel.environment%'
+            $adminBaseUrl:      '%app.admin_base_url%'
+            $contactRecipient:  '%app.contact.recipient%'
+            $mailerDsn:         '%app.mailer.dsn%'
+            $originAllowlist:   '%app.contact.origin_allowlist%'
 
     # Binding du logger admin (canal `admin`) pour PricingAdminAuditLogger.
     # EditorialAdminAuditLogger utilise déjà ce même binding via autowire.
