@@ -1,5 +1,6 @@
 import { expertisePages } from "./app/config/expertise-pages"
 import { robotsGroups } from "./app/config/robots"
+import { servicePages } from "./app/config/service-pages"
 import { site } from "./app/config/site"
 
 // Configuration Nuxt du frontend Devzair.
@@ -157,6 +158,12 @@ export default defineNuxtConfig({
       ...expertisePages
         .filter((page) => page.status === 'published')
         .map((page) => ({ loc: page.route })),
+      // SEO-COM-1 : le hub /services est publié ; les huit pages filles restent
+      // `planned` et sont exclues par le filtre ci-dessous.
+      { loc: '/services' },
+      ...servicePages
+        .filter((page) => page.status === 'published')
+        .map((page) => ({ loc: page.route })),
       { loc: '/estimer-mon-projet' },
     ],
   },
@@ -216,5 +223,9 @@ export default defineNuxtConfig({
     '/expertises/**': {
       headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' },
     },
+    // SEO-COM-1 : hub services pré-rendu (contenu 100 % local, aucune donnée
+    // dynamique). Les pages filles `/services/**` restent en SSR à la volée
+    // jusqu'à leur publication effective (SEO-COM-2 et suivants).
+    '/services': { prerender: true },
   },
 })

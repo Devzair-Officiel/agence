@@ -92,10 +92,11 @@ describe("SiteFooter", () => {
     expect(mountFooter().find('a[href="/ressources"]').exists()).toBe(true)
   })
 
-  it("has exactly 2 nav groups (Expertises + Découvrir)", () => {
-    expect(footerNavigation).toHaveLength(2)
+  it("has exactly 3 nav groups (Expertises + Services + Découvrir)", () => {
+    expect(footerNavigation).toHaveLength(3)
     expect(footerNavigation[0].title).toBe("Expertises")
-    expect(footerNavigation[1].title).toBe("Découvrir")
+    expect(footerNavigation[1].title).toBe("Services")
+    expect(footerNavigation[2].title).toBe("Découvrir")
   })
 
   it("has no separate Ressources group", () => {

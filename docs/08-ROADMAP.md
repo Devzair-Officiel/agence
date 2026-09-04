@@ -1812,14 +1812,17 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-1 — Architecture services
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE (2026-09-04)**
 
-- [ ] Créer `app/config/service-pages.ts` (configuration typée des services).
-- [ ] Créer `app/pages/services/index.vue` (hub éditorial).
-- [ ] Créer la route dynamique `app/pages/services/[slug].vue` (placeholder avec `status` guard).
-- [ ] Intégrer `/services` dans la navigation principale.
-- [ ] Exclure du sitemap toute route `status !== "published"`.
-- [ ] Écrire tests config, SSR, title, H1, canonical, liens publiés uniquement, accessibilité.
+- [x] Créer `app/config/service-pages.ts` (8 services, tous `planned`, typés strictement).
+- [x] Créer `app/composables/useServiceSchema.ts` (générique, calqué sur `useExpertiseServiceSchema`).
+- [x] Créer `app/pages/services/index.vue` (hub éditorial : orientation, grille 8 services, CTA).
+- [x] Créer la route dynamique `app/pages/services/[slug].vue` (404 pour tout slug `planned` ou inconnu).
+- [x] Intégrer `/services` dans la navigation principale (header + footer).
+- [x] Ajouter `/services` au prerender et au sitemap ; exclure toute route `status: "planned"`.
+- [x] Écrire tests unitaires config (11 cas) et page (10 cas).
+- [x] Écrire tests E2E SSR, H1, SEO, no-dead-links, sitemap, 404-guard, responsive, Axe WCAG AA.
+- [x] Lint propre, typecheck OK, 1066 tests unitaires verts, build OK, HTML SSR inspecté.
 
 **Critère de sortie :** La page hub `/services` est publiée avec un contenu éditorial réel. Aucune page service détaillée liée tant que son `status` n'est pas `published`.
 
@@ -1833,7 +1836,7 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 - [ ] Publier `/services/creation-site-internet` avec la structure recommandée dans `docs/13-SEO-COMMERCIAL.md §4`.
 - [ ] Émettre `Service` + `BreadcrumbList` JSON-LD via composable `useServiceSchema`.
-- [ ] Créer `app/composables/useServiceSchema.ts` (générique pour toutes les pages `/services/**`).
+- [x] `app/composables/useServiceSchema.ts` livré dans SEO-COM-1 — prêt à l'emploi.
 - [ ] Vérifier HTML SSR : title, H1, description, canonical, JSON-LD.
 - [ ] Maillage entrant : lien depuis `/`, `/services`, `/expertises/construire`.
 - [ ] Maillage sortant : liens vers `/estimer-mon-projet`, `/contact`.
