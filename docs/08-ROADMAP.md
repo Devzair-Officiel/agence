@@ -1761,6 +1761,242 @@ EST-1 est décomposé en trois sous-jalons indépendants. EST-1A ne nécessite a
 
 ---
 
+---
+
+## Programme SEO-COM — SEO commercial et architecture sémantique
+
+Source de vérité fonctionnelle : `docs/13-SEO-COMMERCIAL.md`.
+
+Ce programme est un **chantier transversal** ouvert en septembre 2026. Il peut être conduit en parallèle des phases globales restantes (10A2, 11C, 12), sous réserve que les pages produites respectent les gates habituelles : SSR, accessibilité, sécurité, tests, critère de terminé.
+
+Il ne renumérote pas les phases 1–13 et n'interfère pas avec le programme Estimateur.
+
+### Règle d'exécution
+
+Ne jamais implémenter plusieurs phases SEO-COM importantes dans une seule intervention.
+
+Pour chaque phase :
+
+1. lire `docs/13-SEO-COMMERCIAL.md` ;
+2. lire uniquement les autres documents utiles ;
+3. inspecter les fichiers existants ;
+4. annoncer les fichiers visés ;
+5. identifier les risques SEO / accessibilité / régression ;
+6. implémenter uniquement la phase demandée ;
+7. écrire ou adapter les tests ;
+8. exécuter lint, typecheck, tests unitaires concernés, E2E concernés, build ;
+9. inspecter le HTML SSR des pages SEO touchées ;
+10. mettre à jour `08-ROADMAP.md` et `10-TRACKING.md` seulement si les critères sont réellement remplis ;
+11. fournir un rapport final précis.
+
+Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instruction.
+
+---
+
+### SEO-COM-0 — Cadrage et documentation
+
+**État actuel : TERMINÉE (2026-09-04)**
+
+- [x] Lire et analyser tous les documents projet pertinents.
+- [x] Inspecter l'implémentation existante (pages, configs, composables).
+- [x] Créer `docs/13-SEO-COMMERCIAL.md` (source de vérité du chantier).
+- [x] Ajouter le programme SEO-COM dans `docs/08-ROADMAP.md`.
+- [x] Ajouter les tâches correspondantes dans `docs/10-TRACKING.md`.
+- [x] Corriger les mentions obsolètes de « Phase 1 = phase actuelle » dans `AGENTS.md` et `docs/09-WORKFLOW.md`.
+
+**Critère de sortie :** Le chantier est documenté, borné et compatible avec l'architecture actuelle. Aucune page n'a été créée.
+
+**Statut : atteint.**
+
+---
+
+### SEO-COM-1 — Architecture services
+
+**État actuel : À FAIRE**
+
+- [ ] Créer `app/config/service-pages.ts` (configuration typée des services).
+- [ ] Créer `app/pages/services/index.vue` (hub éditorial).
+- [ ] Créer la route dynamique `app/pages/services/[slug].vue` (placeholder avec `status` guard).
+- [ ] Intégrer `/services` dans la navigation principale.
+- [ ] Exclure du sitemap toute route `status !== "published"`.
+- [ ] Écrire tests config, SSR, title, H1, canonical, liens publiés uniquement, accessibilité.
+
+**Critère de sortie :** La page hub `/services` est publiée avec un contenu éditorial réel. Aucune page service détaillée liée tant que son `status` n'est pas `published`.
+
+**Dépendances :** SEO-COM-0.
+
+---
+
+### SEO-COM-2 — Page prioritaire création de site internet
+
+**État actuel : À FAIRE**
+
+- [ ] Publier `/services/creation-site-internet` avec la structure recommandée dans `docs/13-SEO-COMMERCIAL.md §4`.
+- [ ] Émettre `Service` + `BreadcrumbList` JSON-LD via composable `useServiceSchema`.
+- [ ] Créer `app/composables/useServiceSchema.ts` (générique pour toutes les pages `/services/**`).
+- [ ] Vérifier HTML SSR : title, H1, description, canonical, JSON-LD.
+- [ ] Maillage entrant : lien depuis `/`, `/services`, `/expertises/construire`.
+- [ ] Maillage sortant : liens vers `/estimer-mon-projet`, `/contact`.
+- [ ] Écrire la suite de tests complète.
+
+**Critère de sortie :** La page est publiée, SSR complet, maillage cohérent, JSON-LD valide, tests verts.
+
+**Dépendances :** SEO-COM-1.
+
+---
+
+### SEO-COM-3 — Estimateur : prix et budget
+
+**État actuel : À FAIRE**
+
+- [ ] Ajouter une section éditoriale SSR à `/estimer-mon-projet` (avant ou après le configurateur).
+- [ ] Adapter le title SEO et le H1 pour couvrir l'intention prix.
+- [ ] Vérifier que le contenu éditorial est dans le HTML serveur (pas uniquement client-side).
+- [ ] Ajouter un lien contextuel depuis `/services/creation-site-internet` vers l'estimateur.
+- [ ] Écrire ou adapter les tests SEO et SSR concernés.
+
+**Critère de sortie :** L'estimateur répond également aux intentions liées au prix. Le configurateur reste l'élément central.
+
+**Dépendances :** SEO-COM-0, Programme Estimateur livré.
+
+---
+
+### SEO-COM-4 — Réalisations et études de cas
+
+**État actuel : À FAIRE**
+
+- [ ] Créer `app/pages/realisations/index.vue` (hub éditorial).
+- [ ] Créer `app/pages/realisations/[slug].vue` (page détail).
+- [ ] Implémenter les premières études de cas depuis `case-studies.ts` (Kitchen Meat, Nidemiel, Mizan en priorité).
+- [ ] Ne jamais inventer de résultat quantifié.
+- [ ] Câbler le maillage : depuis chaque réalisation vers les services mobilisés.
+- [ ] Mettre à jour la navigation principale.
+- [ ] Écrire les tests.
+
+**Critère de sortie :** Les réalisations sont publiées avec un contenu factuel, maillées vers les services réels.
+
+**Dépendances :** SEO-COM-1.
+
+---
+
+### SEO-COM-5A — Services construction
+
+**État actuel : À FAIRE**
+
+- [ ] Publier `/services/site-e-commerce`.
+- [ ] Publier `/services/application-web-metier`.
+- [ ] Écrire les tests pour chaque page.
+
+**Dépendances :** SEO-COM-1, SEO-COM-2.
+
+---
+
+### SEO-COM-5B — Design et contenus
+
+**État actuel : À FAIRE**
+
+- [ ] Publier `/services/design-ui-ux-identite-visuelle`.
+- [ ] Publier `/services/photographie-creation-contenu`.
+- [ ] Écrire les tests pour chaque page.
+
+**Dépendances :** SEO-COM-1.
+
+---
+
+### SEO-COM-5C — Visibilité et maintenance
+
+**État actuel : À FAIRE**
+
+- [ ] Publier `/services/seo-referencement-naturel`.
+- [ ] Publier `/services/visibilite-locale` (uniquement si données locales validées).
+- [ ] Publier `/services/maintenance-accompagnement`.
+- [ ] Écrire les tests pour chaque page.
+
+**Dépendances :** SEO-COM-1.
+
+---
+
+### SEO-COM-6 — Cluster « prix / site internet pas cher »
+
+**État actuel : À FAIRE**
+
+- [ ] Rédiger et publier via le pipeline éditorial Symfony (jamais hardcodé dans Nuxt) :
+  - `site-internet-pas-cher`
+  - `prix-site-internet`
+  - `prix-site-vitrine`
+  - `refaire-site-internet-budget`
+- [ ] Commencer par un seul article — mesurer avant de continuer.
+- [ ] CTA vers `/estimer-mon-projet` dans chaque article.
+
+**Dépendances :** SEO-COM-3, pipeline éditorial Phase 8B fonctionnel.
+
+---
+
+### SEO-COM-7 — Maillage et architecture SEO
+
+**État actuel : À FAIRE**
+
+- [ ] Ajouter des liens croisés depuis chaque page expertise vers ses services associés.
+- [ ] Réévaluer et mettre à jour la navigation principale.
+- [ ] Créer une vraie section services dans le footer.
+- [ ] Ajouter toutes les pages services publiées dans le sitemap.
+- [ ] Vérifier le fil d'Ariane sur toutes les pages profondes.
+
+**Dépendances :** SEO-COM-1 à 5.
+
+---
+
+### SEO-COM-8 — Optimisation accueil et page Agence
+
+**État actuel : À FAIRE**
+
+- [ ] Rendre la définition de Devzair très explicite dans le premier écran ou immédiatement après.
+- [ ] Ajouter des liens contextuels vers les pages services depuis l'accueil.
+- [ ] Enrichir `/agence` de réponses naturelles aux questions des prospects (sans institutionnel impersonnel).
+
+**Dépendances :** SEO-COM-1, pages services publiées.
+
+---
+
+### SEO-COM-9 — Identité, local et autorité
+
+**État actuel : EN ATTENTE DE VALIDATION MÉTIER**
+
+Aucune action possible tant que les informations suivantes n'ont pas été validées par l'humain :
+
+- [ ] Raison sociale / nom légal à publier.
+- [ ] E-mail professionnel.
+- [ ] Téléphone professionnel.
+- [ ] Ville et zone réellement desservie.
+- [ ] Profils sociaux officiels.
+- [ ] Logo et image Open Graph.
+- [ ] Éligibilité réelle au référencement local (Google Business Profile).
+
+Une fois validées : mettre à jour `site.ts` et les données structurées pertinentes. Ne créer `LocalBusiness` que si réellement justifié (DEC à ouvrir).
+
+**Dépendances :** Validation métier explicite (données locales). Voir DEC-097 et DEC-100.
+
+---
+
+### SEO-COM-10 — Recette production
+
+**État actuel : À FAIRE**
+
+- [ ] Vérifier domaine canonique, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_SITE_INDEXABLE=true`.
+- [ ] Vérifier `X-Robots-Tag`, `<meta robots>`, robots.txt, sitemap.xml, canonicals.
+- [ ] Contrôler HTML SSR pour chaque page stratégique (title, H1, contenu, JSON-LD).
+- [ ] Vérifier HTTP (200, 301, 404, absence de soft-404, liens cassés).
+- [ ] Valider Schema.org (Organization, WebSite, Service, BreadcrumbList, BlogPosting).
+- [ ] Contrôler LCP, CLS, INP, images, fonts, JavaScript.
+- [ ] Soumettre le sitemap dans Search Console.
+- [ ] Inspecter les pages principales et surveiller les impressions.
+
+**Critère de sortie :** Toutes les pages commerciales publiées sont indexables, sans erreur, avec Schema.org valide.
+
+**Dépendances :** SEO-COM-1 à 8, Phase 12 (production VPS).
+
+---
+
 ## Règle de maintenance
 
 Ce fichier doit être modifié uniquement lorsque les règles de son domaine évoluent.  

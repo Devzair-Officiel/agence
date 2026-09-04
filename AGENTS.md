@@ -48,6 +48,8 @@ Lis d’abord `docs/README.md`, puis uniquement les documents indiqués pour la 
 | Étape actuelle et ordre du projet | `docs/08-ROADMAP.md` |
 | Définition de terminé et méthode | `docs/09-WORKFLOW.md` |
 | Statuts et décisions | `docs/10-TRACKING.md` |
+| Pages `/services/**`, `/realisations/**`, ressources prix, SEO commercial | `docs/13-SEO-COMMERCIAL.md` |
+| Estimateur de projet (`/estimer-mon-projet`) | `docs/12-PROJECT-ESTIMATOR.md` |
 
 ## Méthode obligatoire
 
@@ -77,8 +79,6 @@ Avant de conclure :
 
 ## État actuel
 
-La phase active est **Phase 1 — Dépôt et Docker Nuxt**.
+Consulter `docs/08-ROADMAP.md` pour identifier la phase active avant chaque intervention. L’état actuel doit toujours être lu depuis ce fichier, qui est la seule source de vérité sur l’avancement du projet.
 
-Le projet Nuxt minimal existe déjà dans `apps/web`. npm a été choisi. Aucun dépôt Git imbriqué ni module Nuxt n’a été ajouté pendant le scaffolding.
-
-La prochaine tâche est de créer le socle Docker reproductible, vérifier le démarrage et le build, puis effectuer le premier commit racine.
+Le projet est en cours de développement actif. Plusieurs phases sont terminées (1 à 10B, 11A/B, 12 infrastructure Docker, programme Estimateur). Le chantier SEO-COM a été ouvert en septembre 2026 (voir `docs/13-SEO-COMMERCIAL.md` et la section SEO-COM dans `docs/08-ROADMAP.md`).

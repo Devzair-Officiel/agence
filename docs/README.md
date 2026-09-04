@@ -18,6 +18,8 @@ Cette documentation est volontairement modulaire. Un agent ne doit pas tout lire
 | `09-WORKFLOW.md` | Définition de terminé et méthode de travail | Revue et clôture de tâche |
 | `10-TRACKING.md` | Registre, décisions et changements | Avant et après une tâche |
 | `11-SOURCES.md` | Sources officielles | Vérification d’une règle externe |
+| `12-PROJECT-ESTIMATOR.md` | Estimateur de projet — source de vérité fonctionnelle (parcours, moteur, grille, EST-0 → EST-9) | Toute intervention sur `/estimer-mon-projet` |
+| `13-SEO-COMMERCIAL.md` | SEO commercial et architecture sémantique — source de vérité du chantier SEO-COM | Toute intervention sur `/services/**`, `/realisations/**`, ressources prix |
 | `adr/README.md` | Modèle des décisions d’architecture | Toute décision structurante |
 | `DEPLOIEMENT-PROD.md` | Runbook de déploiement VPS (build, recreate, migrations) | Mise en production |
 
