@@ -62,15 +62,25 @@ describe("/services page", () => {
     }
   })
 
-  it("renders zero NuxtLink elements for planned services", () => {
+  it("renders NuxtLink only for published services and not for planned ones", () => {
     const wrapper = mount(ServicesPage)
-    const nuxtLinks = wrapper.findAll("[data-nuxt-link]")
-    // Only hero CTAs (/estimer-mon-projet and /contact) + EditorialCallout primary/secondary.
-    // No service cards should produce NuxtLink when all are planned.
-    for (const link of nuxtLinks) {
-      const href = link.attributes("href") ?? ""
-      // None should point to a /services/{slug} route.
-      expect(href).not.toMatch(/^\/services\/[a-z]/)
+    const publishedServices = servicePages.filter((s) => s.status === "published")
+    const plannedServices = servicePages.filter((s) => s.status === "planned")
+
+    // Published service cards must have a link.
+    for (const service of publishedServices) {
+      expect(
+        wrapper.find(`a[href="${service.route}"]`).exists(),
+        `published card ${service.route} should be a link`,
+      ).toBe(true)
+    }
+
+    // Planned service cards must never be linked.
+    for (const service of plannedServices) {
+      expect(
+        wrapper.find(`a[href="${service.route}"]`).exists(),
+        `planned card ${service.route} must not be a link`,
+      ).toBe(false)
     }
   })
 

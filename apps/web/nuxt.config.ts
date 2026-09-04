@@ -227,5 +227,7 @@ export default defineNuxtConfig({
     // dynamique). Les pages filles `/services/**` restent en SSR à la volée
     // jusqu'à leur publication effective (SEO-COM-2 et suivants).
     '/services': { prerender: true },
+    // SEO-COM-2 : première page fille publiée — contenu 100 % local.
+    '/services/creation-site-internet': { prerender: true },
   },
 })

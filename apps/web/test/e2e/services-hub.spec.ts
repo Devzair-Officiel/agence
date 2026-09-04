@@ -101,6 +101,13 @@ test.describe("/services — SSR et contenu éditorial", () => {
     }
   })
 
+  test("la carte creation-site-internet est maintenant un lien cliquable", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/creation-site-internet"]')
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("Création de site internet")
+  })
+
   test("propose les CTA vers /estimer-mon-projet et /contact", async ({ page }) => {
     await page.goto("/services")
     await expect(page.locator('a[href="/estimer-mon-projet"]').first()).toBeVisible()

@@ -82,6 +82,15 @@ const titleId = computed(() => `construire-callout-title-${generatedId}`)
             un besoin cadré en une solution technique claire, fiable et
             évolutive.
           </p>
+          <p class="construire-callout__service-note">
+            Vous démarrez avec un besoin de site vitrine ?
+            <NuxtLink
+              to="/services/creation-site-internet"
+              class="construire-callout__service-link"
+            >
+              Voir notre service création de site
+            </NuxtLink>.
+          </p>
         </div>
 
         <div class="construire-callout__actions">
@@ -211,6 +220,26 @@ const titleId = computed(() => `construire-callout-title-${generatedId}`)
   color: var(--text-inverse-muted);
   margin: 0;
   max-width: 58ch;
+}
+
+.construire-callout__service-note {
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-inverse-muted);
+  margin: 0;
+  opacity: 0.8;
+}
+
+.construire-callout__service-link {
+  color: var(--color-cream);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.12s ease;
+}
+
+.construire-callout__service-link:hover {
+  opacity: 0.75;
 }
 
 .construire-callout__actions {

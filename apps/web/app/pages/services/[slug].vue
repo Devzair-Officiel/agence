@@ -1,27 +1,87 @@
 <script setup lang="ts">
+import { computed } from "vue"
+import CreationSiteInternetPage from "~/components/services/creation-site-internet/CreationSiteInternetPage.vue"
+import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { servicePages } from "~/config/service-pages"
 
 /**
- * Route garde pour `/services/{slug}`.
+ * Route dynamique `/services/{slug}` — pages détaillées des services commerciaux.
  *
- * Retourne un 404 explicite pour tout slug dont le service correspondant
- * est `planned` ou inconnu. Cette page n'a pas encore de contenu éditorial :
- * le contenu sera ajouté service par service à partir de SEO-COM-2.
+ * Choix architectural : route unique qui dispatche vers un composant par service
+ * publié, calqué sur `pages/expertises/[slug].vue`.
  *
- * Règle : une page `planned` ne doit jamais être accessible comme route
- * publique (AGENTS.md §11 + docs/13-SEO-COMMERCIAL.md §5).
+ * Guard 404 : tout slug non publié (planned ou inexistant) retourne un 404
+ * explicite via `createError({ fatal: true })` — aucune page placeholder
+ * ne peut fuiter (règle 11 du référentiel).
+ *
+ * SEO : `usePageSeo` pour title/description/canonical/OG, `useServiceSchema`
+ * pour le JSON-LD Service, `useBreadcrumb` pour le JSON-LD BreadcrumbList.
+ * Ces trois appels sont posés dans ce dispatcher — jamais dupliqués dans
+ * les composants fils.
  */
 
 const route = useRoute()
-const slug = route.params.slug as string
 
-const page = servicePages.find((p) => p.slug === slug)
+const slugParam = computed(() => {
+  const raw = route.params.slug
+  return Array.isArray(raw) ? raw[0] : raw
+})
 
-if (!page || page.status !== "published") {
-  throw createError({ statusCode: 404, fatal: true })
+const page = computed(() => {
+  const slug = slugParam.value
+  if (!slug || typeof slug !== "string") return undefined
+  return servicePages.find((p) => p.slug === slug && p.status === "published")
+})
+
+if (!page.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: "Service introuvable",
+    fatal: true,
+  })
 }
+
+const resolvedPage = computed(() => page.value!)
+
+const breadcrumbItems = computed(() => [
+  { label: "Accueil", to: "/" },
+  { label: "Services", to: "/services" },
+  { label: resolvedPage.value.shortTitle },
+])
+
+usePageSeo({
+  title: resolvedPage.value.seoTitle,
+  description: resolvedPage.value.seoDescription,
+  path: resolvedPage.value.route,
+  type: "website",
+})
+
+useServiceSchema({
+  title: resolvedPage.value.title,
+  description: resolvedPage.value.seoDescription,
+  path: resolvedPage.value.route,
+  serviceType: resolvedPage.value.shortTitle,
+})
+
+useBreadcrumb(breadcrumbItems.value)
+
+const isCreationSiteInternet = computed(() => resolvedPage.value.id === "creation-site-internet")
 </script>
 
 <template>
-  <div />
+  <div class="service-page">
+    <SiteBreadcrumb :items="breadcrumbItems" />
+
+    <CreationSiteInternetPage
+      v-if="isCreationSiteInternet"
+      :page="resolvedPage"
+    />
+  </div>
 </template>
+
+<style scoped>
+.service-page {
+  display: flex;
+  flex-direction: column;
+}
+</style>

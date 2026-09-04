@@ -1832,15 +1832,19 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-2 — Page prioritaire création de site internet
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE (2026-09-04)**
 
-- [ ] Publier `/services/creation-site-internet` avec la structure recommandée dans `docs/13-SEO-COMMERCIAL.md §4`.
-- [ ] Émettre `Service` + `BreadcrumbList` JSON-LD via composable `useServiceSchema`.
-- [x] `app/composables/useServiceSchema.ts` livré dans SEO-COM-1 — prêt à l'emploi.
-- [ ] Vérifier HTML SSR : title, H1, description, canonical, JSON-LD.
-- [ ] Maillage entrant : lien depuis `/`, `/services`, `/expertises/construire`.
-- [ ] Maillage sortant : liens vers `/estimer-mon-projet`, `/contact`.
-- [ ] Écrire la suite de tests complète.
+- [x] Publier `/services/creation-site-internet` (`status: "planned"` → `"published"`).
+- [x] Étendre `ServicePageDefinition` avec `seoTitle` et `seoDescription` ; ajouter les valeurs pour les 8 entrées.
+- [x] Créer `app/composables/useBreadcrumb.ts` (JSON-LD `BreadcrumbList`).
+- [x] Mettre à jour `app/pages/services/[slug].vue` : SEO, Service JSON-LD, BreadcrumbList, dispatch vers `CreationSiteInternetPage`.
+- [x] Créer `app/components/services/creation-site-internet/CreationSiteInternetPage.vue` (12 sections éditoriales : hero, situations, périmètre, design sur mesure, étapes projet, contenu, SEO base, déroulement, budget, réalisations vitrines, FAQ, CTA).
+- [x] Ajouter `/services/creation-site-internet` au prerender (`nuxt.config.ts`).
+- [x] Maillage entrant : lien depuis `/expertises/construire` (`ConstruireProjectCallout.vue`), carte hub `/services` maintenant cliquable.
+- [x] Maillage sortant : liens vers `/estimer-mon-projet`, `/contact`, `/services/design-ui-ux-identite-visuelle`, `/services/photographie-creation-contenu`, `/services/seo-referencement-naturel`.
+- [x] Tests unitaires mis à jour (14 cas — `seoTitle`/`seoDescription`, `creation-site-internet` publié, 7 autres planifiés, `resolveServiceRoute` retourne la route pour le publié). `services.spec.ts` mis à jour (lien hub conditionnel).
+- [x] Tests E2E créés : `test/e2e/service-creation-site-internet.spec.ts` (200, H1, SEO, fil d'Ariane HTML, JSON-LD Service + BreadcrumbList, sections éditoriales, CTA, sitemap, 404 guard, responsive, Axe WCAG 2.2 AA). `services-hub.spec.ts` étendu (carte `creation-site-internet` cliquable).
+- [x] Lint propre, typecheck OK, 1069 tests unitaires verts, build OK, HTML SSR inspecté (title, H1, canonical, JSON-LD, réalisations, FAQ).
 
 **Critère de sortie :** La page est publiée, SSR complet, maillage cohérent, JSON-LD valide, tests verts.
 

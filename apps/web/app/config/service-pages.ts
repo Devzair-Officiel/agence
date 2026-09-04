@@ -1,17 +1,13 @@
 /**
  * Définitions typées des huit pages de service commerciales.
  *
- * Source de vérité pour le statut de publication et les données de présentation
+ * Source de vérité pour le statut de publication et les données SEO/présentation
  * de chaque page fille `/services/{slug}`. Distincte de `expertise-pages.ts`,
  * qui porte les pôles d'expertise Devzair.
  *
  * Règle stricte : une page dont `status === "planned"` ne doit jamais
  * apparaître dans le sitemap, la navigation, les liens internes ni être
  * accessible comme route publique.
- *
- * Les champs déclarés ici sont ceux consommés par la phase actuelle (SEO-COM-1).
- * Les champs SEO détaillés (seoTitle, introduction, etc.) seront ajoutés lors
- * de l'implémentation de chaque page fille (SEO-COM-2 et suivants).
  */
 
 export type ServicePageStatus = "planned" | "published"
@@ -31,6 +27,10 @@ export interface ServicePageDefinition {
   readonly title: string
   /** Résumé d'une phrase, autonome — utilisé dans la carte du hub. */
   readonly summary: string
+  /** Titre de page SEO (balise <title>). */
+  readonly seoTitle: string
+  /** Meta description SEO (max 160 caractères). */
+  readonly seoDescription: string
 }
 
 export const servicePages: readonly ServicePageDefinition[] = [
@@ -38,11 +38,14 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "creation-site-internet",
     slug: "creation-site-internet",
     route: "/services/creation-site-internet",
-    status: "planned",
+    status: "published",
     shortTitle: "Site internet",
     title: "Création de site internet",
     summary:
       "Un site vitrine professionnel, pensé pour votre activité et facile à trouver en ligne.",
+    seoTitle: "Création de site internet professionnel — Sites vitrines",
+    seoDescription:
+      "Création de site internet vitrine ou institutionnel. Conception sur mesure, SEO de base intégré, contenu adapté à votre activité.",
   },
   {
     id: "site-e-commerce",
@@ -53,6 +56,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Site e-commerce",
     summary:
       "Une boutique en ligne fiable, avec catalogue, panier et gestion des commandes.",
+    seoTitle: "Création de site e-commerce — Boutique en ligne",
+    seoDescription:
+      "Création de boutique en ligne avec catalogue, panier et gestion des commandes. Solution e-commerce fiable et maintenable.",
   },
   {
     id: "application-web-metier",
@@ -63,6 +69,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Application web métier",
     summary:
       "Un outil sur mesure qui s'adapte à vos processus internes, pas l'inverse.",
+    seoTitle: "Application web métier sur mesure",
+    seoDescription:
+      "Développement d'application web sur mesure, adaptée à vos processus métier. Interface claire et code maintenable.",
   },
   {
     id: "design-ui-ux-identite-visuelle",
@@ -73,6 +82,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Design et identité visuelle",
     summary:
       "Une identité cohérente et une interface claire, conçues avant le développement.",
+    seoTitle: "Design UI/UX et identité visuelle",
+    seoDescription:
+      "Conception d'identité visuelle et d'interface web cohérente. Design UI/UX pensé avant le développement pour poser une base solide.",
   },
   {
     id: "photographie-creation-contenu",
@@ -83,6 +95,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Photographie et contenu web",
     summary:
       "Des photos professionnelles et des textes qui décrivent ce que vous faites réellement.",
+    seoTitle: "Photographie et création de contenu web",
+    seoDescription:
+      "Photographie professionnelle et rédaction de contenus web. Textes factuels et visuels adaptés à votre activité réelle.",
   },
   {
     id: "seo-referencement-naturel",
@@ -93,6 +108,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "SEO et référencement naturel",
     summary:
       "Un travail de fond sur la visibilité organique : technique, éditorial et local.",
+    seoTitle: "SEO et référencement naturel — Visibilité organique",
+    seoDescription:
+      "Référencement naturel : audit technique, optimisation éditoriale et structure de pages. Résultats sur plusieurs mois, sans promesses inventées.",
   },
   {
     id: "visibilite-locale",
@@ -103,6 +121,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Visibilité locale",
     summary:
       "Apparaître sur les recherches de proximité et tenir votre présence locale cohérente.",
+    seoTitle: "Référencement local et visibilité Google Maps",
+    seoDescription:
+      "Référencement local et gestion de présence Google : fiche d'établissement, cohérence des données et visibilité de proximité.",
   },
   {
     id: "maintenance-accompagnement",
@@ -113,6 +134,9 @@ export const servicePages: readonly ServicePageDefinition[] = [
     title: "Maintenance et accompagnement",
     summary:
       "Un suivi technique régulier, des mises à jour appliquées et des évolutions livrées au fil du besoin.",
+    seoTitle: "Maintenance site web et accompagnement",
+    seoDescription:
+      "Maintenance site web, mises à jour de sécurité et évolutions régulières. Suivi préventif plutôt qu'interventions en urgence.",
   },
 ]
 

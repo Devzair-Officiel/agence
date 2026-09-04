@@ -33,10 +33,12 @@ describe("servicePages", () => {
     }
   })
 
-  it("starts all definitions at `planned` status", () => {
-    for (const page of servicePages) {
-      expect(page.status).toBe("planned")
-    }
+  it("publishes exactly creation-site-internet; the 7 others remain planned", () => {
+    const published = servicePages.filter((p) => p.status === "published")
+    const planned = servicePages.filter((p) => p.status === "planned")
+    expect(published).toHaveLength(1)
+    expect(published[0].id).toBe("creation-site-internet")
+    expect(planned).toHaveLength(7)
   })
 
   it("never carries an empty title, shortTitle or summary", () => {
@@ -44,6 +46,13 @@ describe("servicePages", () => {
       expect(page.title.trim().length).toBeGreaterThan(0)
       expect(page.shortTitle.trim().length).toBeGreaterThan(0)
       expect(page.summary.trim().length).toBeGreaterThan(20)
+    }
+  })
+
+  it("never carries an empty seoTitle or seoDescription", () => {
+    for (const page of servicePages) {
+      expect(page.seoTitle.trim().length).toBeGreaterThan(0)
+      expect(page.seoDescription.trim().length).toBeGreaterThan(20)
     }
   })
 
@@ -64,13 +73,25 @@ describe("servicePages", () => {
       expect(page.summary.length).toBeLessThanOrEqual(160)
     }
   })
+
+  it("keeps seoDescriptions under 160 characters", () => {
+    for (const page of servicePages) {
+      expect(page.seoDescription.length).toBeLessThanOrEqual(160)
+    }
+  })
 })
 
 describe("resolveServiceRoute", () => {
   it("returns null for every planned service", () => {
-    for (const page of servicePages) {
+    for (const page of servicePages.filter((p) => p.status === "planned")) {
       expect(resolveServiceRoute(page.id)).toBeNull()
     }
+  })
+
+  it("returns the route for creation-site-internet (published)", () => {
+    expect(resolveServiceRoute("creation-site-internet")).toBe(
+      "/services/creation-site-internet",
+    )
   })
 
   it("returns null for unknown identifiers", () => {
