@@ -1854,17 +1854,30 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-3 — Estimateur : prix et budget
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE** (2026-09-04)
 
-- [ ] Ajouter une section éditoriale SSR à `/estimer-mon-projet` (avant ou après le configurateur).
-- [ ] Adapter le title SEO et le H1 pour couvrir l'intention prix.
-- [ ] Vérifier que le contenu éditorial est dans le HTML serveur (pas uniquement client-side).
-- [ ] Ajouter un lien contextuel depuis `/services/creation-site-internet` vers l'estimateur.
-- [ ] Écrire ou adapter les tests SEO et SSR concernés.
+- [x] Ajouter une section éditoriale SSR à `/estimer-mon-projet` (après le configurateur).
+- [x] Adapter le title SEO et le H1 pour couvrir l'intention prix.
+- [x] Vérifier que le contenu éditorial est dans le HTML serveur (pas uniquement client-side).
+- [x] Ajouter un lien contextuel vers `/services/creation-site-internet` depuis l'éditorial.
+- [x] Écrire ou adapter les tests SEO et SSR concernés.
 
 **Critère de sortie :** L'estimateur répond également aux intentions liées au prix. Le configurateur reste l'élément central.
 
 **Dépendances :** SEO-COM-0, Programme Estimateur livré.
+
+### SEO-COM-3A — Refonte visuelle de l'éditorial estimateur
+
+**État actuel : TERMINÉE** (2026-09-04)
+
+- [x] Diagnostiquer le déséquilibre visuel desktop (colonne unique étroite, variables CSS manquantes).
+- [x] Corriger le bug de contraste du lien hover (4.35:1 → 4.78:1 via suppression du fond rgba sur l'aside navy).
+- [x] Refonte en 4 bandes visuelles distinctes (fourchette, facteurs, principe Devzair, FAQ).
+- [x] Composition desktop : section A en 2 colonnes, section B en grille numérotée, section C navy avec aside bordé, section D FAQ 2 colonnes.
+- [x] Éliminer toutes les variables CSS inexistantes (`--color-sand-light`, `--color-sand-dark`, `--color-text-muted`).
+- [x] Axe WCAG 2.2 AA : aucune violation (16/16 tests verts).
+
+**Critère de sortie :** Composition graphique cohérente avec l'identité Devzair, responsive, accessible.
 
 ---
 

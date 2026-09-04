@@ -24,7 +24,7 @@ test.describe("EstimatorShell E2E", () => {
     const response = await page.goto(ESTIMATOR_PATH, { waitUntil: "commit" })
     expect(response?.status()).toBe(200)
     const h1 = await page.locator("h1").first().textContent()
-    expect(h1).toContain("Estimez votre projet digital")
+    expect(h1).toContain("Quel budget prévoir pour votre projet web ?")
   })
 
   test("progressbar avec aria-valuemin=1 et aria-valuemax=7 (parcours standard)", async ({

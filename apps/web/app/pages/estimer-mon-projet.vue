@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import EstimatorHero from "~/components/estimator/EstimatorHero.vue"
 import EstimatorShell from "~/components/estimator/EstimatorShell.vue"
+import EstimatorEditorial from "~/components/estimator/EstimatorEditorial.vue"
 
 usePageSeo({
-  title: "Estimer mon projet digital",
+  title: "Budget projet web : estimez votre fourchette en quelques questions",
   description:
-    "Estimez le budget de votre projet digital en quelques minutes. Site vitrine, e-commerce, application métier : obtenez une première fourchette sans engagement.",
+    "Quel budget pour votre site internet, boutique ou application web ? Quelques questions pour obtenir une première fourchette réaliste. Sans engagement.",
   path: "/estimer-mon-projet",
   noindex: false,
 })
@@ -15,6 +16,7 @@ usePageSeo({
   <main class="estimator-page" data-hydrated="false">
     <EstimatorHero />
     <EstimatorShell />
+    <EstimatorEditorial />
   </main>
 </template>
 

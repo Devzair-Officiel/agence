@@ -8,11 +8,12 @@
     <BaseContainer width="wide">
       <BaseEyebrow>Configurateur de projet</BaseEyebrow>
       <h1 id="estimator-hero-title" class="estimator-hero__title">
-        Estimez votre projet digital
+        Quel budget prévoir pour votre projet web ?
       </h1>
       <p class="estimator-hero__subtitle">
-        Répondez à quelques questions et recevez une première fourchette
-        budgétaire. Sans engagement, en moins de 3 minutes.
+        Répondez à quelques questions et obtenez une première fourchette
+        budgétaire adaptée à votre projet. Sans engagement, en moins de 3
+        minutes.
       </p>
     </BaseContainer>
   </section>
