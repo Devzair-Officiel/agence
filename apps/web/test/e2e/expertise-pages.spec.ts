@@ -1006,16 +1006,22 @@ test.describe("Direction propre à /expertises/visibilite (Search Territory / Si
     )
   })
 
-  test("expose les CTA validés (Parler de votre visibilité + Découvrir Faire évoluer)", async ({
+  test("expose les CTA validés (Parler de votre visibilité + SEO + Visibilité locale)", async ({
     page,
   }) => {
     await page.goto("/expertises/visibilite")
+    // CTA primaire → /contact
     await expect(
       page.getByRole("link", { name: /Parler de votre visibilit(?:é|e)/i }).first(),
     ).toBeVisible()
+    // CTAs secondaires → services (changés en SEO-COM-5C, commit 9d56539)
     await expect(
-      page.getByRole("link", { name: /D(?:é|e)couvrir Faire (?:é|e)voluer/i }).first(),
+      page.getByRole("link", { name: /SEO et r(?:é|e)f(?:é|e)rencement naturel/i }).first(),
     ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /Visibilit(?:é|e) locale/i }).first(),
+    ).toBeVisible()
+    // Liens /expertises/* présents via pôles connexes + footer
     await expect(
       page.locator('a[href="/expertises/faire-evoluer"]').first(),
     ).toBeVisible()
@@ -1232,16 +1238,19 @@ test.describe("Direction propre à /expertises/faire-evoluer (Living System / Co
     )
   })
 
-  test("expose les CTA validés (Parler de votre suivi + Découvrir Construire)", async ({
+  test("expose les CTA validés (Parler de votre suivi + Maintenance et accompagnement)", async ({
     page,
   }) => {
     await page.goto("/expertises/faire-evoluer")
+    // CTA primaire → /contact
     await expect(
       page.getByRole("link", { name: /Parler de votre suivi/i }).first(),
     ).toBeVisible()
+    // CTA secondaire → service maintenance (changé en SEO-COM-5C, commit 9d56539)
     await expect(
-      page.getByRole("link", { name: /D(?:é|e)couvrir Construire/i }).first(),
+      page.getByRole("link", { name: /Maintenance et accompagnement/i }).first(),
     ).toBeVisible()
+    // Liens /expertises/* présents via pôles connexes + footer
     await expect(
       page.locator('a[href="/expertises/construire"]').first(),
     ).toBeVisible()
