@@ -51,6 +51,7 @@ defineProps<Props>()
 .cs-card {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .cs-card__link {

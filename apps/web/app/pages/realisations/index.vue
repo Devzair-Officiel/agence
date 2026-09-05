@@ -225,17 +225,6 @@ useBreadcrumb(breadcrumbItems)
   }
 }
 
-@media (min-width: 1024px) {
-  .rp__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* Dernier item seul en pleine largeur si impair */
-  .rp__grid-item:last-child:nth-child(3n + 1) {
-    grid-column: 1 / -1;
-  }
-}
-
 @media (min-width: 768px) {
   .rp__grid-section {
     padding-block: var(--space-20);
