@@ -433,15 +433,13 @@ const faqItems = [
               {{ tag }}
             </span>
           </div>
-          <a
-            v-if="cs.href"
-            :href="cs.href"
-            target="_blank"
-            rel="noopener noreferrer"
+          <NuxtLink
+            v-if="cs.status === 'published'"
+            :to="cs.route"
             class="csi-page__case-link"
           >
-            Voir le site →
-          </a>
+            Voir l'étude de cas →
+          </NuxtLink>
         </li>
       </ul>
     </EditorialSection>

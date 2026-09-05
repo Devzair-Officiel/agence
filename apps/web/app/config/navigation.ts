@@ -43,6 +43,7 @@ export const primaryNavigation: readonly NavigationItem[] = [
   { label: "Accueil", to: "/", isRoute: true },
   { label: "Expertises", to: "/expertises", isRoute: true },
   { label: "Services", to: "/services", isRoute: true },
+  { label: "Réalisations", to: "/realisations", isRoute: true },
   { label: "Agence", to: "/agence", isRoute: true },
   { label: "Ressources", to: "/ressources", isRoute: true },
 ]
@@ -94,7 +95,7 @@ export const footerNavigation: readonly NavigationGroup[] = [
     title: "Découvrir",
     items: [
       { label: "L'agence", to: "/agence", isRoute: true },
-      { label: "Réalisations", to: "/#realisations", isRoute: false },
+      { label: "Réalisations", to: "/realisations", isRoute: true },
       { label: "Ressources", to: "/ressources", isRoute: true },
       { label: "Estimer mon projet", to: "/estimer-mon-projet", isRoute: true },
     ],

@@ -163,6 +163,13 @@ onBeforeUnmount(() => {
           rendre une entreprise visible, structurer une activité, faciliter le
           quotidien d'une équipe. La forme découle du fond, jamais l'inverse.
         </p>
+        <NuxtLink
+          to="/realisations"
+          class="home-case__hub-link"
+        >
+          Voir toutes les réalisations
+          <span aria-hidden="true">→</span>
+        </NuxtLink>
       </header>
 
       <div
@@ -228,11 +235,11 @@ onBeforeUnmount(() => {
                 </div>
               </dl>
               <NuxtLink
-                v-if="study.to"
-                :to="study.to"
+                v-if="study.status === 'published'"
+                :to="study.route"
                 class="home-case__cta"
               >
-                Voir le projet
+                Voir l'étude de cas
                 <span aria-hidden="true" class="home-case__cta-arrow">→</span>
               </NuxtLink>
               <a
@@ -383,6 +390,31 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
   margin: 0;
   max-width: 60ch;
+}
+
+.home-case__hub-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.9375rem;
+  color: var(--text-accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.home-case__hub-link:hover {
+  color: var(--text-primary);
+}
+
+.home-case__hub-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: 2px;
 }
 
 .home-case__carousel {

@@ -1,3 +1,4 @@
+import { caseStudies } from "./app/config/case-studies"
 import { expertisePages } from "./app/config/expertise-pages"
 import { robotsGroups } from "./app/config/robots"
 import { servicePages } from "./app/config/service-pages"
@@ -165,6 +166,11 @@ export default defineNuxtConfig({
         .filter((page) => page.status === 'published')
         .map((page) => ({ loc: page.route })),
       { loc: '/estimer-mon-projet' },
+      // SEO-COM-4 : hub réalisations + cinq pages détail publiées.
+      { loc: '/realisations' },
+      ...caseStudies
+        .filter((cs) => cs.status === 'published')
+        .map((cs) => ({ loc: cs.route })),
     ],
   },
 
@@ -229,5 +235,14 @@ export default defineNuxtConfig({
     '/services': { prerender: true },
     // SEO-COM-2 : première page fille publiée — contenu 100 % local.
     '/services/creation-site-internet': { prerender: true },
+    // SEO-COM-4 : hub réalisations + quatre pages détail publiées.
+    // Contenu 100 % local (config case-studies.ts) — aucune donnée dynamique.
+    // Haramain Prestige reste en `planned` (autorisation de publication client
+    // non confirmée — voir case-studies.ts).
+    '/realisations': { prerender: true },
+    '/realisations/kitchen-meat': { prerender: true },
+    '/realisations/nidemiel': { prerender: true },
+    '/realisations/mizan': { prerender: true },
+    '/realisations/al-mumayiz': { prerender: true },
   },
 })

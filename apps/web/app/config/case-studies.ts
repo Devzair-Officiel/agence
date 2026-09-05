@@ -1,29 +1,32 @@
 /**
- * Réalisations Devzair publiées sur la home.
+ * Réalisations Devzair — source de vérité unique.
  *
- * Source de vérité unique — consommée par HomeFeaturedCaseStudy. Le jour où
- * une page /realisations/[id] verra le jour, cette même liste alimentera la
- * grille détaillée : renseigner `to` (interne) ou `href` (site client
- * public) fait apparaître automatiquement le CTA « Voir le site » sans
- * autre modification.
+ * Consommée par HomeFeaturedCaseStudy (carrousel home) et les pages
+ * /realisations (hub) et /realisations/[slug] (études de cas).
  *
  * AGENTS.md rule 1 : n'inscrire ici que des projets réellement livrés par
  * Devzair, avec l'accord du client. Aucun chiffre inventé, aucun
  * témoignage, aucune image sans autorisation. `year` n'est renseigné que
- * si la date de livraison est confirmée ; `to` / `href` uniquement si la
- * cible existe réellement et que le client a autorisé le lien.
+ * si la date de livraison est confirmée ; `href` uniquement si la cible
+ * existe réellement et que le client a autorisé le lien.
  *
  * Pour ajouter un projet :
  *   1. déposer l'image principale dans `public/portfolio/{id}.webp` ;
- *   2. renseigner un `imageAlt` descriptif (lu par les lecteurs d'écran,
- *      pas décoratif — l'image porte du contenu) ;
- *   3. `category`, `description`, `longDescription`, `tags` doivent rester
+ *   2. renseigner un `imageAlt` descriptif (lu par les lecteurs d'écran) ;
+ *   3. fixer `status` à "published" une fois le contenu de la page vérifié ;
+ *   4. `category`, `description`, `longDescription`, `tags` doivent rester
  *      factuels — pas de superlatif, pas de résultat mesurable non
  *      vérifiable (chiffres de trafic, taux de conversion, CA, etc.).
  */
 
 export interface CaseStudy {
   readonly id: string
+  /** Slug d'URL — doit correspondre au nom du composant de la page détail. */
+  readonly slug: string
+  /** Route interne Nuxt — `/realisations/{slug}`. */
+  readonly route: string
+  /** "published" → page /realisations/[slug] livrée et indexable. */
+  readonly status: "published" | "planned"
   readonly name: string
   readonly category: string
   readonly description: string
@@ -31,12 +34,19 @@ export interface CaseStudy {
   readonly tags: readonly string[]
   readonly imageSrc: string
   readonly imageAlt: string
-  readonly to?: string
+  /**
+   * Titre SEO de la page détail — affiché dans <title> et OG:title.
+   * Ne doit pas contenir "| Devzair" (injecté par le titleTemplate global).
+   * Obligatoire pour les études `published`.
+   */
+  readonly seoTitle: string
+  /** Meta description de la page détail. Obligatoire pour les études `published`. */
+  readonly seoDescription: string
   /**
    * URL absolue du site client en production. Rendu comme lien externe
    * (`target="_blank"` + `rel="noopener noreferrer"`) par le CTA du
-   * carrousel. À ne renseigner que si le site est effectivement en ligne
-   * et que le client a autorisé la mise en avant depuis le portfolio.
+   * carrousel et de la page détail. À ne renseigner que si le site est
+   * effectivement en ligne et que le client a autorisé la mise en avant.
    */
   readonly href?: string
   readonly year?: string
@@ -53,6 +63,9 @@ export interface CaseStudy {
 export const caseStudies: readonly CaseStudy[] = [
   {
     id: "nidemiel",
+    slug: "nidemiel",
+    route: "/realisations/nidemiel",
+    status: "published",
     name: "Nidemiel",
     category: "E-commerce",
     description:
@@ -65,9 +78,15 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu du site Nidemiel : maquettes desktop et mobile de la boutique en ligne de miels artisanaux",
     overlayImageSrc: "/portfolio/nidemiel-honey-jar.webp",
+    seoTitle: "Boutique en ligne Nidemiel — E-commerce miels artisanaux",
+    seoDescription:
+      "Boutique e-commerce Nidemiel : architecture produit, éditorial sensoriel et tunnel d'achat pour une sélection de miels rares.",
   },
   {
     id: "kitchen-meat",
+    slug: "kitchen-meat",
+    route: "/realisations/kitchen-meat",
+    status: "published",
     name: "Kitchen Meat",
     category: "Site vitrine — Restauration",
     description:
@@ -80,9 +99,15 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu du site Kitchen Meat : maquette de la vitrine du restaurant de grillades lyonnais",
     overlayImageSrc: "/portfolio/kitchen-meat-plate.webp",
+    seoTitle: "Création de site vitrine Kitchen Meat — Restaurant à Lyon",
+    seoDescription:
+      "Site vitrine Kitchen Meat : vitrine immersive pour un restaurant lyonnais. Identité visuelle, UI/UX et parcours de réservation.",
   },
   {
     id: "e-shop-admin",
+    slug: "e-shop-admin",
+    route: "/realisations/e-shop-admin",
+    status: "planned",
     name: "E-Shop Admin",
     category: "SaaS — Interface d'administration",
     description:
@@ -94,9 +119,15 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu de l'interface E-Shop Admin : tableau de bord SaaS d'administration e-commerce avec ventes, statuts de commande et top produits",
     overlayImageSrc: "/portfolio/saas-ecommerce-phone.webp",
+    seoTitle: "Interface SaaS E-Shop Admin — Tableau de bord e-commerce",
+    seoDescription:
+      "Interface d'administration SaaS E-Shop Admin : dashboard centralisé, gestion des commandes et du catalogue, mobile et desktop.",
   },
   {
     id: "mizan",
+    slug: "mizan",
+    route: "/realisations/mizan",
+    status: "published",
     name: "Mizan",
     category: "SaaS — Gestion de commerce",
     description:
@@ -109,9 +140,15 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu du projet Mizan : maquette de l'application SaaS de gestion de commerce, vue laptop et mobile avec tableau de bord, stock et commandes",
     overlayImageSrc: "/portfolio/mizan-phone.webp",
+    seoTitle: "Application SaaS Mizan — Gestion de commerce mobile-first",
+    seoDescription:
+      "Application SaaS Mizan : interface mobile-first pour piloter stock, commandes, clients et calcul de zakat depuis un tableau de bord.",
   },
   {
     id: "haramain-prestige",
+    slug: "haramain-prestige",
+    route: "/realisations/haramain-prestige",
+    status: "planned",
     name: "Haramain Prestige",
     category: "Site vitrine — Conciergerie",
     description:
@@ -123,9 +160,15 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu du site Haramain Prestige : maquette tablette de la conciergerie de séjour à Makkah et Madinah, avec calendrier de réservation en avant-plan",
     overlayImageSrc: "/portfolio/haramain-prestige-calendar.webp",
+    seoTitle: "Site vitrine Haramain Prestige — Conciergerie Makkah et Madinah",
+    seoDescription:
+      "Site vitrine Haramain Prestige : conception pour une conciergerie de séjour à Makkah et Madinah. Lisibilité du service et prise de contact.",
   },
   {
     id: "al-mumayiz",
+    slug: "al-mumayiz",
+    route: "/realisations/al-mumayiz",
+    status: "published",
     name: "Al Mumayiz",
     category: "Site vitrine B2B",
     description:
@@ -138,5 +181,8 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Aperçu du site Al Mumayiz : maquette du site vitrine dédié aux professionnels des chachias",
     overlayImageSrc: "/portfolio/al-mumayiz-chechia.webp",
+    seoTitle: "Site vitrine B2B Al Mumayiz — Artisan spécialiste des chachias",
+    seoDescription:
+      "Site vitrine B2B Al Mumayiz : présentation du savoir-faire artisanal et structure professionnelle pour revendeurs et distributeurs de chachias.",
   },
 ]

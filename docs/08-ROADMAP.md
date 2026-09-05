@@ -1883,15 +1883,23 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-4 — Réalisations et études de cas
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE — Recette finale validée le 2026-09-05**
 
-- [ ] Créer `app/pages/realisations/index.vue` (hub éditorial).
-- [ ] Créer `app/pages/realisations/[slug].vue` (page détail).
-- [ ] Implémenter les premières études de cas depuis `case-studies.ts` (Kitchen Meat, Nidemiel, Mizan en priorité).
-- [ ] Ne jamais inventer de résultat quantifié.
-- [ ] Câbler le maillage : depuis chaque réalisation vers les services mobilisés.
-- [ ] Mettre à jour la navigation principale.
-- [ ] Écrire les tests.
+- [x] Étendre `case-studies.ts` : `slug`, `route`, `status`, `seoTitle`, `seoDescription` ajoutés à l'interface ; 4 études publiées (Kitchen Meat, Nidemiel, Mizan, Al Mumayiz) ; E-Shop Admin et Haramain Prestige maintenu `planned`.
+- [x] **Haramain Prestige `planned`** (recette 2026-09-05) : autorisation de publication client non confirmée. Composant `HaramainPrestigePage.vue` conservé mais route non générée, page retourne 404. Lien et contenu resteront invisibles jusqu'à confirmation explicite.
+- [x] Créer `app/pages/realisations/index.vue` (hub éditorial pré-rendu) : H1 "Des projets web conçus pour un besoin réel.", grille des 4 études publiées, section éditoriale + maillage `/services/creation-site-internet` + aside avec lien estimateur.
+- [x] Créer `app/pages/realisations/[slug].vue` (dispatcher + guard 404) : même pattern que `/expertises/[slug].vue`, `usePageSeo`, `useBreadcrumb`, Schema.org BreadcrumbList uniquement.
+- [x] Créer `CaseStudyCard.vue` pour la grille hub.
+- [x] Créer 5 composants de page détail (KitchenMeatPage, NidemielPage, MizanPage, HaramainPrestigePage, AlMumayizPage) — chacun avec hero, contexte projet, 4 livrables, section maillage, EditorialCallout.
+- [x] Ne jamais inventer de résultat quantifié.
+- [x] Maillage câblé : `/services/creation-site-internet` depuis vitrines, `/expertises/concevoir` depuis SaaS/e-commerce, `/realisations` depuis chaque page détail.
+- [x] Navigation principale : "Réalisations" ajouté entre Services et Agence (`navigation.ts` primary + footer `/#realisations` → `/realisations`).
+- [x] `nuxt.config.ts` : pré-rendu + sitemap pour hub + 4 pages détail publiées.
+- [x] `HomeFeaturedCaseStudy.vue` : CTA "Voir l'étude de cas →" utilise `study.route`, lien "Voir toutes les réalisations" ajouté.
+- [x] `CreationSiteInternetPage.vue` : cartes vitrines liées à `/realisations/{slug}` (plus d'externe direct).
+- [x] Contrôles : 1085 tests unitaires verts (+16), lint 0 error, vue-tsc exit 0, build OK.
+- [x] Tests : `test/unit/config/case-studies.spec.ts` (16 cas), `test/e2e/realisations-hub.spec.ts` (11 cas), `test/e2e/realisations-detail.spec.ts` (7 × 4 + 3 = 31 cas).
+- [x] Recette : Axe WCAG 2.2 AA 0 violation sur `/realisations` + 4 pages détail. SSR HTTP 200 sur 5 routes, 404 sur haramain-prestige + e-shop-admin + slug inconnu. Sitemap : 5 URLs (hub + 4 publiées, pas haramain). Médias : 150–256 KB webp, fetchpriority="high" sur hero images. Éditorial : 0 chiffre inventé, 0 superlatif, 0 résultat non vérifiable.
 
 **Critère de sortie :** Les réalisations sont publiées avec un contenu factuel, maillées vers les services réels.
 
