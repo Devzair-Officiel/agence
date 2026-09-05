@@ -1954,15 +1954,16 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-6 — Cluster « prix / site internet pas cher »
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE (2026-09-05)**
 
-- [ ] Rédiger et publier via le pipeline éditorial Symfony (jamais hardcodé dans Nuxt) :
-  - `site-internet-pas-cher`
-  - `prix-site-internet`
-  - `prix-site-vitrine`
-  - `refaire-site-internet-budget`
-- [ ] Commencer par un seul article — mesurer avant de continuer.
-- [ ] CTA vers `/estimer-mon-projet` dans chaque article.
+- [x] Micro-correction SEO-COM-5C : summary `seo-referencement-naturel` mis à jour ("structurel" au lieu de "local").
+- [x] Article `site-internet-pas-cher` rédigé et publié via `app:editorial:import` + `app:editorial:publish` (UUID `01a0725e-c287-7d87-a4a3-085fcb7fa668`, publishedAt 2026-09-05).
+- [x] Maillage sortant : `/services/photographie-creation-contenu`, `/services/maintenance-accompagnement`, `/estimer-mon-projet`.
+- [x] Maillage entrant : EstimatorEditorial FAQ item "réduire le budget" → BaseLink vers `/ressources/site-internet-pas-cher`.
+- [x] SSR vérifié : H1, title, BlogPosting + BreadcrumbList JSON-LD, canonical, sitemap.
+- [x] Tests E2E `resource-site-internet-pas-cher.spec.ts` : 17/17 verts (contre port 3001).
+- [x] Lint + typecheck + 1085 unit tests + build OK.
+- [x] Backlog documenté (non publié) : `prix-site-internet`, `prix-site-vitrine`, `refaire-site-internet-budget`.
 
 **Dépendances :** SEO-COM-3, pipeline éditorial Phase 8B fonctionnel.
 

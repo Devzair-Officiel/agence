@@ -107,7 +107,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     shortTitle: "SEO",
     title: "SEO et référencement naturel",
     summary:
-      "Un travail de fond sur la visibilité organique : technique, éditorial et local.",
+      "Un travail de fond sur la visibilité organique : technique, éditorial et structurel.",
     seoTitle: "SEO et référencement naturel — Visibilité organique",
     seoDescription:
       "Référencement naturel : audit technique, optimisation éditoriale et structure de pages. Résultats sur plusieurs mois, sans promesses inventées.",

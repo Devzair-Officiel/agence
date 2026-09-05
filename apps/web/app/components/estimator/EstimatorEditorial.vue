@@ -163,6 +163,12 @@ import BaseLink from "~/components/base/BaseLink.vue"
               par le client, design basé sur une identité existante — ces choix
               réduisent le temps de travail sans affecter la qualité technique ni
               le soin apporté au projet.
+              <BaseLink
+                to="/ressources/site-internet-pas-cher"
+                class="ee__faq-link"
+              >
+                Voir ce qu'il est possible de simplifier sans sacrifier l'essentiel
+              </BaseLink>
             </dd>
           </div>
           <div class="ee__faq-item">
@@ -451,6 +457,12 @@ import BaseLink from "~/components/base/BaseLink.vue"
   line-height: 1.7;
   color: var(--text-secondary);
   margin: 0;
+}
+
+.ee__faq-link {
+  display: block;
+  margin-top: var(--space-3);
+  font-size: 0.875rem;
 }
 
 @media (min-width: 768px) {
