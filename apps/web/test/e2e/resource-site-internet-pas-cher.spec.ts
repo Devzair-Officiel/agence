@@ -88,6 +88,11 @@ test.describe('resource site-internet-pas-cher — maillage sortant', () => {
     const html = await (await request.get(ARTICLE_URL)).text()
     expect(html).toContain('/services/maintenance-accompagnement')
   })
+
+  test('lien vers /services/creation-site-internet present', async ({ request }) => {
+    const html = await (await request.get(ARTICLE_URL)).text()
+    expect(html).toContain('/services/creation-site-internet')
+  })
 })
 
 test.describe('resource site-internet-pas-cher — listing et sitemap', () => {
