@@ -203,6 +203,30 @@ for (const p of PAGES) {
       await expect(current).toHaveText(p.shortTitle)
     })
 
+    test("émet un JSON-LD BreadcrumbList cohérent avec le fil d'Ariane HTML", async ({
+      request,
+    }) => {
+      const { body } = await fetchSSR(request, p.route)
+      // Regex tolère id avant ou après type (ordre d'attributs variable selon useHead)
+      const scripts = [...body.matchAll(
+        /<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g,
+      )]
+      const breadcrumbScript = scripts
+        .map((m) => m[1]!)
+        .map((raw) => {
+          try { return JSON.parse(raw) as Record<string, unknown> }
+          catch { return null }
+        })
+        .find((json) => json && json["@type"] === "BreadcrumbList")
+      expect(breadcrumbScript, "JSON-LD BreadcrumbList").toBeTruthy()
+      const items = (breadcrumbScript as Record<string, unknown>).itemListElement as Array<Record<string, unknown>>
+      expect(items).toHaveLength(3)
+      expect(items[0]!.name).toBe("Accueil")
+      expect(items[1]!.name).toBe("Expertises")
+      expect(items[2]!.name).toBe(p.shortTitle)
+      expect(String(items[2]!.item)).toMatch(new RegExp(`${p.route}$`))
+    })
+
     test("propose deux liens vers les pôles connexes attendus", async ({ page }) => {
       await page.goto(p.route)
       for (const relatedRoute of p.related) {
@@ -393,6 +417,14 @@ test.describe("Direction propre à /expertises/concevoir (Digital Blueprint)", (
     await expect(page.getByRole("link", { name: /Parler de votre projet/i }).first()).toBeVisible()
     await expect(page.getByRole("link", { name: /D(?:é|e)couvrir Construire/i }).first()).toBeVisible()
     await expect(page.locator('a[href="/expertises/construire"]').first()).toBeVisible()
+  })
+
+  test("propose un lien contextuel vers /services/design-ui-ux-identite-visuelle (maillage Concevoir → Service Design)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/concevoir")
+    const link = page.locator('a[href="/services/design-ui-ux-identite-visuelle"]').first()
+    await expect(link).toBeVisible()
   })
 
   test("rend le visuel blueprint comme purement décoratif (aria-hidden)", async ({
@@ -792,6 +824,14 @@ test.describe("Direction propre à /expertises/valoriser (Editorial Studio)", ()
     await expect(
       page.locator('a[href="/expertises/concevoir"]').first(),
     ).toBeVisible()
+  })
+
+  test("propose un lien contextuel vers /services/photographie-creation-contenu (maillage Valoriser → Service Photo)", async ({
+    page,
+  }) => {
+    await page.goto("/expertises/valoriser")
+    const link = page.locator('a[href="/services/photographie-creation-contenu"]').first()
+    await expect(link).toBeVisible()
   })
 
   test("ne déclenche aucun avertissement de mismatch d'hydratation", async ({

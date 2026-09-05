@@ -57,10 +57,10 @@ export function useArticleSeo({ article, path }: UseArticleSeoArgs): void {
     inLanguage: site.language,
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
-    author: {
-      "@type": article.author.type === "person" ? "Person" : "Organization",
-      name: article.author.name,
-    },
+    author:
+      article.author.type === "person"
+        ? { "@type": "Person", name: article.author.name }
+        : { "@id": `${origin}/#organization` },
     publisher: { "@id": `${origin}/#organization` },
   }
 

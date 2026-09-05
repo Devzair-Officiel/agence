@@ -1969,17 +1969,23 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ---
 
-### SEO-COM-7 — Maillage et architecture SEO
+### SEO-COM-7 — Audit global et consolidation SEO/Architecture
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE (2026-09-05)**
 
-- [ ] Ajouter des liens croisés depuis chaque page expertise vers ses services associés.
-- [ ] Réévaluer et mettre à jour la navigation principale.
-- [ ] Créer une vraie section services dans le footer.
-- [ ] Ajouter toutes les pages services publiées dans le sitemap.
-- [ ] Vérifier le fil d'Ariane sur toutes les pages profondes.
+- [x] Audit complet : routes, maillage, Schema.org, navigation, sitemap, breadcrumbs.
+- [x] Correction 1 — `useArticleSeo.ts` : `BlogPosting.author` bascule sur `{"@id": ".../#organization"}` (plus d'Organization inline dupliquée).
+- [x] Correction 2 — `[slug].vue` : injection `BreadcrumbList` JSON-LD cohérente avec le `<nav aria-label="Fil d'Ariane">` HTML (5 pages expertise).
+- [x] Correction 3 — `ValoriserNeedSection.vue` : lien contextuel `NuxtLink` vers `/services/photographie-creation-contenu` (maillage Valoriser → Photo).
+- [x] Correction 4 — `ConcevoirProjectCallout.vue` : note de service avec `BaseLink` vers `/services/design-ui-ux-identite-visuelle` (maillage Concevoir → Design).
+- [x] Correction 5 — `navigation.ts` : commentaire périmé corrigé (services publiés, non plus `planned`).
+- [x] Lint + typecheck + 1086 unit tests (dont nouveaux : Organization @id ×1) + build Docker OK.
+- [x] E2E : 7 nouveaux tests — BreadcrumbList JSON-LD sur 5 expertises, maillage concevoir→design, maillage valoriser→photo ; 134 verts sur expertise-pages.spec.ts.
+- [x] SSR vérifié : BreadcrumbList sur `/expertises/concevoir`, `/expertises/valoriser`, etc. ; author `@id` sur `/ressources/site-internet-pas-cher`.
 
-**Dépendances :** SEO-COM-1 à 5.
+**Périmètre audité — résultat :** navigation principale et footer conformes ; maillage expertise↔service partiellement renforcé (2 liens ajoutés) ; Schema.org consolidé ; breadcrumbs HTML + JSON-LD alignés sur les 5 expertises ; 2 pré-existants hors scope (visibilité/faire-évoluer CTA) documentés.
+
+**Dépendances :** SEO-COM-1 à 6.
 
 ---
 

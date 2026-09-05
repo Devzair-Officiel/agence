@@ -106,6 +106,16 @@ describe("useArticleSeo", () => {
     expect(author.name).toBe("Aurélien Boudon")
   })
 
+  it("utilise un @id reference (non inline Organization) quand l'auteur est Organization", () => {
+    useArticleSeo({ article: ARTICLE, path: "/ressources/un-article" })
+    const jsonLd = parseJsonLdByType(captures, "BlogPosting")
+    const author = jsonLd.author as Record<string, unknown>
+    // Doit être un @id reference — jamais un objet Organization inline
+    expect(author["@id"]).toBe("https://devzair.fr/#organization")
+    expect(author["@type"]).toBeUndefined()
+    expect(author.name).toBeUndefined()
+  })
+
   it("délègue title/description à usePageSeo (type article)", () => {
     useArticleSeo({ article: ARTICLE, path: "/ressources/un-article" })
     // usePageSeo appelle useSeoMeta — on retrouve le title et le description

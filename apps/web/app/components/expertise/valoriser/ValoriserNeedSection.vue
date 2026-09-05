@@ -34,6 +34,7 @@ interface Situation {
   readonly verb: string
   readonly label: string
   readonly format: string
+  readonly href?: string
 }
 
 const situations: readonly Situation[] = [
@@ -43,6 +44,7 @@ const situations: readonly Situation[] = [
     label:
       "Rendre visible ce que vous faites : lieux, gestes, produits, personnes.",
     format: "Photographie professionnelle",
+    href: "/services/photographie-creation-contenu",
   },
   {
     key: "expliquer",
@@ -101,7 +103,12 @@ const titleId = computed(() => `valoriser-need-title-${generatedId}`)
             </p>
             <p class="valoriser-need__panel-format">
               <span class="valoriser-need__panel-format-label">Format</span>
-              <span class="valoriser-need__panel-format-value">{{ situation.format }}</span>
+              <NuxtLink
+                v-if="situation.href"
+                :to="situation.href"
+                class="valoriser-need__panel-format-value valoriser-need__panel-format-link"
+              >{{ situation.format }}</NuxtLink>
+              <span v-else class="valoriser-need__panel-format-value">{{ situation.format }}</span>
             </p>
           </div>
         </li>
@@ -257,6 +264,17 @@ const titleId = computed(() => `valoriser-need-title-${generatedId}`)
   font-size: 0.75rem;
   font-family: var(--font-family-mono);
   color: var(--color-petrol);
+}
+
+.valoriser-need__panel-format-link {
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  transition: color var(--duration-fast, 0.12s) ease;
+}
+
+.valoriser-need__panel-format-link:hover {
+  color: var(--color-navy);
 }
 
 @media (min-width: 768px) {

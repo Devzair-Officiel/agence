@@ -3,6 +3,7 @@ import { computed, useId } from "vue"
 import BaseButton from "~/components/base/BaseButton.vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
+import BaseLink from "~/components/base/BaseLink.vue"
 
 /**
  * Callout de fin de page Concevoir.
@@ -41,6 +42,15 @@ const titleId = computed(() => `concevoir-callout-title-${generatedId}`)
           Avant de parler technologie, nous pouvons clarifier les usages, les
           contenus, l'expérience et l'identité qui donneront sa cohérence au
           projet.
+        </p>
+        <p class="concevoir-callout__service-note">
+          Ce travail inclut notamment
+          <BaseLink
+            to="/services/design-ui-ux-identite-visuelle"
+            class="concevoir-callout__service-link"
+          >
+            le service design UI/UX et identité visuelle
+          </BaseLink>.
         </p>
       </div>
       <div class="concevoir-callout__actions">
@@ -120,6 +130,14 @@ const titleId = computed(() => `concevoir-callout-title-${generatedId}`)
   color: var(--text-secondary);
   margin: 0;
   max-width: 60ch;
+}
+
+.concevoir-callout__service-note {
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .concevoir-callout__actions {

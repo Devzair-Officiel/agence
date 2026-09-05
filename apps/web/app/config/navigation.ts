@@ -72,9 +72,8 @@ const expertisesFooterItems: readonly NavigationItem[] = expertisePages
   .filter((p) => p.status === "published")
   .map((p): NavigationItem => ({ label: p.shortTitle, to: p.route, isRoute: true }))
 
-// Les services publiés, dérivés de `service-pages.ts`.
-// Vide tant que tous les services sont `planned` — le groupe Services
-// s'affichera dans le footer dès qu'un service passera à `published`.
+// Les services publiés, dérivés de `service-pages.ts` afin que le footer
+// reste synchronisé automatiquement avec leur statut de publication.
 const servicesFooterItems: readonly NavigationItem[] = servicePages
   .filter((p) => p.status === "published")
   .map((p): NavigationItem => ({ label: p.shortTitle, to: p.route, isRoute: true }))

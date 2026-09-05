@@ -14,6 +14,8 @@ import ValoriserExpertisePage from "~/components/expertise/valoriser/ValoriserEx
 import VisibiliteExpertisePage from "~/components/expertise/visibilite/VisibiliteExpertisePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { expertisePages } from "~/config/expertise-pages"
+import { buildCanonical } from "~/utils/canonical"
+import { normalizeSiteUrl } from "~/utils/site-url"
 
 /**
  * Route dynamique `/expertises/{slug}` — pages détaillées des cinq pôles
@@ -92,6 +94,45 @@ useExpertiseServiceSchema({
   description: resolvedPage.value.seoDescription,
   path: resolvedPage.value.route,
   serviceType: resolvedPage.value.shortTitle,
+})
+
+// BreadcrumbList JSON-LD — correspond au fil d'Ariane HTML visible (SiteBreadcrumb).
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl as string
+const origin = normalizeSiteUrl(siteUrl)
+
+useHead({
+  script: [
+    {
+      id: "devzair-expertise-breadcrumb",
+      type: "application/ld+json",
+      innerHTML: () =>
+        JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Accueil",
+              item: origin,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Expertises",
+              item: buildCanonical({ siteUrl, path: "/expertises" }),
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: resolvedPage.value.shortTitle,
+              item: buildCanonical({ siteUrl, path: resolvedPage.value.route }),
+            },
+          ],
+        }),
+    },
+  ],
 })
 
 // Direction visuelle propre à chaque pôle : les cinq pôles publiés basculent
