@@ -33,3 +33,6 @@ test-results/
 # seules les entrées ci-dessous sont exclues.
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+
+# Claude Code — worktrees temporaires locaux
+.claude/worktrees/
