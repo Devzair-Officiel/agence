@@ -51,7 +51,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "site-e-commerce",
     slug: "site-e-commerce",
     route: "/services/site-e-commerce",
-    status: "planned",
+    status: "published",
     shortTitle: "E-commerce",
     title: "Site e-commerce",
     summary:
@@ -64,7 +64,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "application-web-metier",
     slug: "application-web-metier",
     route: "/services/application-web-metier",
-    status: "planned",
+    status: "published",
     shortTitle: "Application métier",
     title: "Application web métier",
     summary:

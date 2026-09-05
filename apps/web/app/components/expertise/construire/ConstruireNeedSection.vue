@@ -30,6 +30,7 @@ interface Situation {
   readonly verb: string
   readonly label: string
   readonly format: string
+  readonly href: string
 }
 
 const situations: readonly Situation[] = [
@@ -38,18 +39,21 @@ const situations: readonly Situation[] = [
     verb: "Présenter",
     label: "Présenter votre activité clairement, avec un site cohérent avec votre identité.",
     format: "Site vitrine sur mesure",
+    href: "/services/creation-site-internet",
   },
   {
     key: "vendre",
     verb: "Vendre",
     label: "Vendre en ligne avec une plateforme fiable, adaptée à votre catalogue et à vos flux.",
     format: "Plateforme e-commerce",
+    href: "/services/site-e-commerce",
   },
   {
     key: "organiser",
     verb: "Organiser",
     label: "Organiser vos opérations quotidiennes avec un outil taillé pour vos processus.",
     format: "Application métier",
+    href: "/services/application-web-metier",
   },
 ]
 
@@ -93,7 +97,10 @@ const titleId = computed(() => `construire-need-title-${generatedId}`)
             </p>
             <p class="construire-need__situation-format">
               <span class="construire-need__situation-format-label">Format</span>
-              <span class="construire-need__situation-format-value">{{ situation.format }}</span>
+              <NuxtLink
+                :to="situation.href"
+                class="construire-need__situation-format-value construire-need__situation-format-link"
+              >{{ situation.format }}</NuxtLink>
             </p>
           </div>
         </li>
@@ -247,6 +254,17 @@ const titleId = computed(() => `construire-need-title-${generatedId}`)
   font-size: 0.75rem;
   font-family: var(--font-family-mono);
   color: var(--color-petrol);
+}
+
+.construire-need__situation-format-link {
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  transition: color var(--duration-fast, 0.12s) ease;
+}
+
+.construire-need__situation-format-link:hover {
+  color: var(--color-navy);
 }
 
 @media (min-width: 768px) {

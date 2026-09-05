@@ -1909,11 +1909,11 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-5A — Services construction
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE**
 
-- [ ] Publier `/services/site-e-commerce`.
-- [ ] Publier `/services/application-web-metier`.
-- [ ] Écrire les tests pour chaque page.
+- [x] Publier `/services/site-e-commerce`.
+- [x] Publier `/services/application-web-metier`.
+- [x] Écrire les tests pour chaque page.
 
 **Dépendances :** SEO-COM-1, SEO-COM-2.
 

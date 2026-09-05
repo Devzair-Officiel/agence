@@ -150,6 +150,15 @@ defineProps<Props>()
             </a>
           </div>
           <div class="mz-page__links-group">
+            <p class="mz-page__links-label">Service associé</p>
+            <NuxtLink
+              to="/services/application-web-metier"
+              class="mz-page__int-link"
+            >
+              Application web métier →
+            </NuxtLink>
+          </div>
+          <div class="mz-page__links-group">
             <p class="mz-page__links-label">Pôle d'expertise</p>
             <NuxtLink
               to="/expertises/concevoir"

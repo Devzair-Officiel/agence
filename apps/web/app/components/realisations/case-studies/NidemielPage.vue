@@ -151,6 +151,15 @@ defineProps<Props>()
             </a>
           </div>
           <div class="nd-page__links-group">
+            <p class="nd-page__links-label">Service associé</p>
+            <NuxtLink
+              to="/services/site-e-commerce"
+              class="nd-page__int-link"
+            >
+              Site e-commerce →
+            </NuxtLink>
+          </div>
+          <div class="nd-page__links-group">
             <p class="nd-page__links-label">Pôle d'expertise</p>
             <NuxtLink
               to="/expertises/concevoir"

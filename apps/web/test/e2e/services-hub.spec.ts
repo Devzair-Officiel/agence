@@ -101,11 +101,25 @@ test.describe("/services — SSR et contenu éditorial", () => {
     }
   })
 
-  test("la carte creation-site-internet est maintenant un lien cliquable", async ({ page }) => {
+  test("la carte creation-site-internet est un lien cliquable", async ({ page }) => {
     await page.goto("/services")
     const card = page.locator('a[href="/services/creation-site-internet"]')
     await expect(card).toBeVisible()
     await expect(card).toContainText("Création de site internet")
+  })
+
+  test("la carte site-e-commerce est maintenant un lien cliquable (SEO-COM-5A)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/site-e-commerce"]')
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("Site e-commerce")
+  })
+
+  test("la carte application-web-metier est maintenant un lien cliquable (SEO-COM-5A)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/application-web-metier"]')
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("Application web métier")
   })
 
   test("propose les CTA vers /estimer-mon-projet et /contact", async ({ page }) => {
@@ -136,8 +150,15 @@ test.describe("/services — sitemap", () => {
 })
 
 test.describe("/services/{slug} — route guard", () => {
+  test("retourne 200 pour les trois services publiés", async ({ request }) => {
+    for (const slug of ["creation-site-internet", "site-e-commerce", "application-web-metier"]) {
+      const response = await request.get(`/services/${slug}`)
+      expect(response.status(), `${slug} status`).toBe(200)
+    }
+  })
+
   test("retourne 404 pour un slug de service planifié", async ({ request }) => {
-    const response = await request.get("/services/creation-site-internet")
+    const response = await request.get("/services/design-ui-ux-identite-visuelle")
     expect(response.status()).toBe(404)
   })
 

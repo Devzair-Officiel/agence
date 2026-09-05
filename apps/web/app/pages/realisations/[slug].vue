@@ -9,7 +9,7 @@ import NidemielPage from "~/components/realisations/case-studies/NidemielPage.vu
 import { caseStudies } from "~/config/case-studies"
 
 /**
- * Route dynamique `/realisations/[slug]` — aiguilleur vers les cinq études
+ * Route dynamique `/realisations/[slug]` — aiguilleur vers les quatre études
  * de cas publiées (SEO-COM-4).
  *
  * Choix architectural : même dispatcher pattern que `/expertises/[slug].vue`.

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue"
+import ApplicationWebMetierPage from "~/components/services/application-web-metier/ApplicationWebMetierPage.vue"
 import CreationSiteInternetPage from "~/components/services/creation-site-internet/CreationSiteInternetPage.vue"
+import SiteEcommercePage from "~/components/services/site-e-commerce/SiteEcommercePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { servicePages } from "~/config/service-pages"
 
@@ -66,6 +68,8 @@ useServiceSchema({
 useBreadcrumb(breadcrumbItems.value)
 
 const isCreationSiteInternet = computed(() => resolvedPage.value.id === "creation-site-internet")
+const isSiteEcommerce = computed(() => resolvedPage.value.id === "site-e-commerce")
+const isApplicationWebMetier = computed(() => resolvedPage.value.id === "application-web-metier")
 </script>
 
 <template>
@@ -74,6 +78,14 @@ const isCreationSiteInternet = computed(() => resolvedPage.value.id === "creatio
 
     <CreationSiteInternetPage
       v-if="isCreationSiteInternet"
+      :page="resolvedPage"
+    />
+    <SiteEcommercePage
+      v-else-if="isSiteEcommerce"
+      :page="resolvedPage"
+    />
+    <ApplicationWebMetierPage
+      v-else-if="isApplicationWebMetier"
       :page="resolvedPage"
     />
   </div>
