@@ -147,12 +147,18 @@ defineProps<Props>()
             </a>
           </div>
           <div class="km-page__links-group">
-            <p class="km-page__links-label">Service associé</p>
+            <p class="km-page__links-label">Services associés</p>
             <NuxtLink
               to="/services/creation-site-internet"
               class="km-page__int-link"
             >
               Création de site internet →
+            </NuxtLink>
+            <NuxtLink
+              to="/services/design-ui-ux-identite-visuelle"
+              class="km-page__int-link"
+            >
+              Design et identité visuelle →
             </NuxtLink>
           </div>
           <div class="km-page__links-group">

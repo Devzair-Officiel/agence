@@ -122,6 +122,20 @@ test.describe("/services — SSR et contenu éditorial", () => {
     await expect(card).toContainText("Application web métier")
   })
 
+  test("la carte design-ui-ux-identite-visuelle est maintenant un lien cliquable (SEO-COM-5B)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/design-ui-ux-identite-visuelle"]').first()
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("Design")
+  })
+
+  test("la carte photographie-creation-contenu est maintenant un lien cliquable (SEO-COM-5B)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/photographie-creation-contenu"]').first()
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("contenu")
+  })
+
   test("propose les CTA vers /estimer-mon-projet et /contact", async ({ page }) => {
     await page.goto("/services")
     await expect(page.locator('a[href="/estimer-mon-projet"]').first()).toBeVisible()
@@ -150,15 +164,21 @@ test.describe("/services — sitemap", () => {
 })
 
 test.describe("/services/{slug} — route guard", () => {
-  test("retourne 200 pour les trois services publiés", async ({ request }) => {
-    for (const slug of ["creation-site-internet", "site-e-commerce", "application-web-metier"]) {
+  test("retourne 200 pour les cinq services publiés", async ({ request }) => {
+    for (const slug of [
+      "creation-site-internet",
+      "site-e-commerce",
+      "application-web-metier",
+      "design-ui-ux-identite-visuelle",
+      "photographie-creation-contenu",
+    ]) {
       const response = await request.get(`/services/${slug}`)
       expect(response.status(), `${slug} status`).toBe(200)
     }
   })
 
   test("retourne 404 pour un slug de service planifié", async ({ request }) => {
-    const response = await request.get("/services/design-ui-ux-identite-visuelle")
+    const response = await request.get("/services/seo-referencement-naturel")
     expect(response.status()).toBe(404)
   })
 

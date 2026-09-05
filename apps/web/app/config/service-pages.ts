@@ -77,7 +77,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "design-ui-ux-identite-visuelle",
     slug: "design-ui-ux-identite-visuelle",
     route: "/services/design-ui-ux-identite-visuelle",
-    status: "planned",
+    status: "published",
     shortTitle: "Design",
     title: "Design et identité visuelle",
     summary:
@@ -90,7 +90,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "photographie-creation-contenu",
     slug: "photographie-creation-contenu",
     route: "/services/photographie-creation-contenu",
-    status: "planned",
+    status: "published",
     shortTitle: "Contenu",
     title: "Photographie et contenu web",
     summary:

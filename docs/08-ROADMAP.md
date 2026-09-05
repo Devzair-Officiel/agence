@@ -1922,11 +1922,13 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-5B — Design et contenus
 
-**État actuel : À FAIRE**
+**État actuel : VALIDÉE**
 
-- [ ] Publier `/services/design-ui-ux-identite-visuelle`.
-- [ ] Publier `/services/photographie-creation-contenu`.
-- [ ] Écrire les tests pour chaque page.
+- [x] Publier `/services/design-ui-ux-identite-visuelle`.
+- [x] Publier `/services/photographie-creation-contenu`.
+- [x] Écrire les tests pour chaque page.
+- [x] Maillage : KitchenMeatPage lien design, SiteEcommercePage lien design restauré.
+- [x] 570/570 E2E verts, build Docker OK, SSR 8/8, sitemap 2/2 nouvelles routes.
 
 **Dépendances :** SEO-COM-1.
 

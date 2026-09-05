@@ -2,6 +2,8 @@
 import { computed } from "vue"
 import ApplicationWebMetierPage from "~/components/services/application-web-metier/ApplicationWebMetierPage.vue"
 import CreationSiteInternetPage from "~/components/services/creation-site-internet/CreationSiteInternetPage.vue"
+import DesignUiUxIdentiteVisuelePage from "~/components/services/design-ui-ux-identite-visuelle/DesignUiUxIdentiteVisuelePage.vue"
+import PhotographieCreationContenuPage from "~/components/services/photographie-creation-contenu/PhotographieCreationContenuPage.vue"
 import SiteEcommercePage from "~/components/services/site-e-commerce/SiteEcommercePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { servicePages } from "~/config/service-pages"
@@ -70,6 +72,8 @@ useBreadcrumb(breadcrumbItems.value)
 const isCreationSiteInternet = computed(() => resolvedPage.value.id === "creation-site-internet")
 const isSiteEcommerce = computed(() => resolvedPage.value.id === "site-e-commerce")
 const isApplicationWebMetier = computed(() => resolvedPage.value.id === "application-web-metier")
+const isDesignUiUx = computed(() => resolvedPage.value.id === "design-ui-ux-identite-visuelle")
+const isPhotographieContenu = computed(() => resolvedPage.value.id === "photographie-creation-contenu")
 </script>
 
 <template>
@@ -86,6 +90,14 @@ const isApplicationWebMetier = computed(() => resolvedPage.value.id === "applica
     />
     <ApplicationWebMetierPage
       v-else-if="isApplicationWebMetier"
+      :page="resolvedPage"
+    />
+    <DesignUiUxIdentiteVisuelePage
+      v-else-if="isDesignUiUx"
+      :page="resolvedPage"
+    />
+    <PhotographieCreationContenuPage
+      v-else-if="isPhotographieContenu"
       :page="resolvedPage"
     />
   </div>

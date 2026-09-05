@@ -266,9 +266,11 @@ const faqItems = [
             des informations sur la fiche — tout participe à l'impression finale.
           </p>
           <p class="sec-page__paragraph">
-            Si vous n'avez pas encore d'identité visuelle établie, un
-            accompagnement design et identité visuelle peut être
-            prévu en amont du développement de la boutique.
+            Si vous n'avez pas encore d'identité visuelle établie,
+            <NuxtLink to="/services/design-ui-ux-identite-visuelle" class="sec-page__inline-link">
+              un accompagnement design et identité visuelle
+            </NuxtLink>
+            peut être prévu en amont du développement de la boutique.
           </p>
         </div>
         <div class="sec-page__design-marks" aria-hidden="true">
