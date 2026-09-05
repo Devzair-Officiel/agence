@@ -1,28 +1,39 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import type { Component } from "vue"
 import ApplicationWebMetierPage from "~/components/services/application-web-metier/ApplicationWebMetierPage.vue"
 import CreationSiteInternetPage from "~/components/services/creation-site-internet/CreationSiteInternetPage.vue"
-import DesignUiUxIdentiteVisuelePage from "~/components/services/design-ui-ux-identite-visuelle/DesignUiUxIdentiteVisuelePage.vue"
+import DesignUiUxIdentiteVisuellePage from "~/components/services/design-ui-ux-identite-visuelle/DesignUiUxIdentiteVisuellePage.vue"
+import MaintenanceAccompagnementPage from "~/components/services/maintenance-accompagnement/MaintenanceAccompagnementPage.vue"
 import PhotographieCreationContenuPage from "~/components/services/photographie-creation-contenu/PhotographieCreationContenuPage.vue"
+import SeoReferencementNaturelPage from "~/components/services/seo-referencement-naturel/SeoReferencementNaturelPage.vue"
 import SiteEcommercePage from "~/components/services/site-e-commerce/SiteEcommercePage.vue"
+import VisibiliteLocalePage from "~/components/services/visibilite-locale/VisibiliteLocalePage.vue"
 import SiteBreadcrumb from "~/components/layout/SiteBreadcrumb.vue"
 import { servicePages } from "~/config/service-pages"
 
 /**
  * Route dynamique `/services/{slug}` — pages détaillées des services commerciaux.
  *
- * Choix architectural : route unique qui dispatche vers un composant par service
- * publié, calqué sur `pages/expertises/[slug].vue`.
+ * Dispatcher via table typée `componentMap` : plus lisible à 8 composants
+ * qu'une cascade v-if / v-else-if. Comportement identique.
  *
  * Guard 404 : tout slug non publié (planned ou inexistant) retourne un 404
- * explicite via `createError({ fatal: true })` — aucune page placeholder
- * ne peut fuiter (règle 11 du référentiel).
+ * explicite via `createError({ fatal: true })`.
  *
- * SEO : `usePageSeo` pour title/description/canonical/OG, `useServiceSchema`
- * pour le JSON-LD Service, `useBreadcrumb` pour le JSON-LD BreadcrumbList.
- * Ces trois appels sont posés dans ce dispatcher — jamais dupliqués dans
- * les composants fils.
+ * SEO : `usePageSeo`, `useServiceSchema`, `useBreadcrumb` posés ici —
+ * jamais dupliqués dans les composants fils.
  */
+
+const componentMap: Record<string, Component> = {
+  "creation-site-internet": CreationSiteInternetPage,
+  "site-e-commerce": SiteEcommercePage,
+  "application-web-metier": ApplicationWebMetierPage,
+  "design-ui-ux-identite-visuelle": DesignUiUxIdentiteVisuellePage,
+  "photographie-creation-contenu": PhotographieCreationContenuPage,
+  "seo-referencement-naturel": SeoReferencementNaturelPage,
+  "visibilite-locale": VisibiliteLocalePage,
+  "maintenance-accompagnement": MaintenanceAccompagnementPage,
+}
 
 const route = useRoute()
 
@@ -46,6 +57,7 @@ if (!page.value) {
 }
 
 const resolvedPage = computed(() => page.value!)
+const currentComponent = computed(() => componentMap[resolvedPage.value.id])
 
 const breadcrumbItems = computed(() => [
   { label: "Accueil", to: "/" },
@@ -68,36 +80,13 @@ useServiceSchema({
 })
 
 useBreadcrumb(breadcrumbItems.value)
-
-const isCreationSiteInternet = computed(() => resolvedPage.value.id === "creation-site-internet")
-const isSiteEcommerce = computed(() => resolvedPage.value.id === "site-e-commerce")
-const isApplicationWebMetier = computed(() => resolvedPage.value.id === "application-web-metier")
-const isDesignUiUx = computed(() => resolvedPage.value.id === "design-ui-ux-identite-visuelle")
-const isPhotographieContenu = computed(() => resolvedPage.value.id === "photographie-creation-contenu")
 </script>
 
 <template>
   <div class="service-page">
     <SiteBreadcrumb :items="breadcrumbItems" />
-
-    <CreationSiteInternetPage
-      v-if="isCreationSiteInternet"
-      :page="resolvedPage"
-    />
-    <SiteEcommercePage
-      v-else-if="isSiteEcommerce"
-      :page="resolvedPage"
-    />
-    <ApplicationWebMetierPage
-      v-else-if="isApplicationWebMetier"
-      :page="resolvedPage"
-    />
-    <DesignUiUxIdentiteVisuelePage
-      v-else-if="isDesignUiUx"
-      :page="resolvedPage"
-    />
-    <PhotographieCreationContenuPage
-      v-else-if="isPhotographieContenu"
+    <component
+      :is="currentComponent"
       :page="resolvedPage"
     />
   </div>

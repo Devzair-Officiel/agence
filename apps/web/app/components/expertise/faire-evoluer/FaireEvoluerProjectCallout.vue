@@ -65,11 +65,11 @@ const titleId = computed(() => `faire-evoluer-callout-title-${generatedId}`)
             Parler de votre suivi
           </BaseButton>
           <BaseButton
-            to="/expertises/construire"
+            to="/services/maintenance-accompagnement"
             variant="secondary"
             class="faire-evoluer-callout__cta"
           >
-            Découvrir Construire
+            Maintenance et accompagnement
           </BaseButton>
         </div>
 

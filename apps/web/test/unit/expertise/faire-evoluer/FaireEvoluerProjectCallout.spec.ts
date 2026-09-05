@@ -36,13 +36,13 @@ describe("FaireEvoluerProjectCallout", () => {
     expect(link.text()).toContain("Parler de votre suivi")
   })
 
-  it("propose un CTA secondaire « Découvrir Construire » vers /expertises/construire", () => {
+  it("propose un CTA secondaire « Maintenance et accompagnement » vers /services/maintenance-accompagnement (SEO-COM-5C)", () => {
     const wrapper = mount(FaireEvoluerProjectCallout, {
       global: { stubs: globalStubs },
     })
-    const link = wrapper.find('a[href="/expertises/construire"]')
+    const link = wrapper.find('a[href="/services/maintenance-accompagnement"]')
     expect(link.exists()).toBe(true)
-    expect(link.text()).toContain("Découvrir Construire")
+    expect(link.text()).toContain("Maintenance et accompagnement")
   })
 
   it("relie la section au H2 par aria-labelledby", () => {

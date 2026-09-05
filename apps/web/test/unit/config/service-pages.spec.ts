@@ -33,17 +33,20 @@ describe("servicePages", () => {
     }
   })
 
-  it("publishes exactly 5 services (SEO-COM-5B); the 3 others remain planned", () => {
+  it("publishes all eight services (SEO-COM-5C); zero remain planned", () => {
     const published = servicePages.filter((p) => p.status === "published")
     const planned = servicePages.filter((p) => p.status === "planned")
-    expect(published).toHaveLength(5)
+    expect(published).toHaveLength(8)
     const publishedIds = published.map((p) => p.id)
     expect(publishedIds).toContain("creation-site-internet")
     expect(publishedIds).toContain("site-e-commerce")
     expect(publishedIds).toContain("application-web-metier")
     expect(publishedIds).toContain("design-ui-ux-identite-visuelle")
     expect(publishedIds).toContain("photographie-creation-contenu")
-    expect(planned).toHaveLength(3)
+    expect(publishedIds).toContain("seo-referencement-naturel")
+    expect(publishedIds).toContain("visibilite-locale")
+    expect(publishedIds).toContain("maintenance-accompagnement")
+    expect(planned).toHaveLength(0)
   })
 
   it("never carries an empty title, shortTitle or summary", () => {

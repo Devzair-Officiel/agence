@@ -1936,12 +1936,17 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-5C — Visibilité et maintenance
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE**
 
-- [ ] Publier `/services/seo-referencement-naturel`.
-- [ ] Publier `/services/visibilite-locale` (uniquement si données locales validées).
-- [ ] Publier `/services/maintenance-accompagnement`.
-- [ ] Écrire les tests pour chaque page.
+- [x] Publier `/services/seo-referencement-naturel` — SeoReferencementNaturelPage.vue (SEO honnête, sans position garantie, audit + timeline + FAQ).
+- [x] Publier `/services/visibilite-locale` — VisibiliteLocalePage.vue (dots de proximité, Google Business Profile, cohérence NAP, pas de carte fictive).
+- [x] Publier `/services/maintenance-accompagnement` — MaintenanceAccompagnementPage.vue (corrective / préventive / évolution, cycle visuel, pas de promesse 24/7).
+- [x] Dispatcher `[slug].vue` refactorisé en `Record<string, Component>` (8 entrées, 0 v-if).
+- [x] Maillage : VisibiliteProjectCallout → SEO + Local ; FaireEvoluerProjectCallout → Maintenance.
+- [x] nuxt.config.ts : prerender des 3 nouvelles routes.
+- [x] `service-pages.ts` : 8 published, 0 planned.
+- [x] Tests : service-pages.spec.ts (8/0), services-hub.spec.ts (8 cartes + guard), 3 nouveaux specs E2E.
+- [x] Lint + typecheck + 1085 unit tests verts + build OK + SSR vérifié (Service JSON-LD + BreadcrumbList sur les 3 routes).
 
 **Dépendances :** SEO-COM-1.
 

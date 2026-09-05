@@ -103,7 +103,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "seo-referencement-naturel",
     slug: "seo-referencement-naturel",
     route: "/services/seo-referencement-naturel",
-    status: "planned",
+    status: "published",
     shortTitle: "SEO",
     title: "SEO et référencement naturel",
     summary:
@@ -116,7 +116,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "visibilite-locale",
     slug: "visibilite-locale",
     route: "/services/visibilite-locale",
-    status: "planned",
+    status: "published",
     shortTitle: "Visibilité locale",
     title: "Visibilité locale",
     summary:
@@ -129,7 +129,7 @@ export const servicePages: readonly ServicePageDefinition[] = [
     id: "maintenance-accompagnement",
     slug: "maintenance-accompagnement",
     route: "/services/maintenance-accompagnement",
-    status: "planned",
+    status: "published",
     shortTitle: "Maintenance",
     title: "Maintenance et accompagnement",
     summary:

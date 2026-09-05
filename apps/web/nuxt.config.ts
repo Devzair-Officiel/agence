@@ -241,6 +241,10 @@ export default defineNuxtConfig({
     // SEO-COM-5B : deux nouvelles pages filles publiées — contenu 100 % local.
     '/services/design-ui-ux-identite-visuelle': { prerender: true },
     '/services/photographie-creation-contenu': { prerender: true },
+    // SEO-COM-5C : trois dernières pages filles publiées — contenu 100 % local.
+    '/services/seo-referencement-naturel': { prerender: true },
+    '/services/visibilite-locale': { prerender: true },
+    '/services/maintenance-accompagnement': { prerender: true },
     // SEO-COM-4 : hub réalisations + quatre pages détail publiées.
     // Contenu 100 % local (config case-studies.ts) — aucune donnée dynamique.
     // Haramain Prestige reste en `planned` (autorisation de publication client

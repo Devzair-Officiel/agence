@@ -136,6 +136,27 @@ test.describe("/services — SSR et contenu éditorial", () => {
     await expect(card).toContainText("contenu")
   })
 
+  test("la carte seo-referencement-naturel est maintenant un lien cliquable (SEO-COM-5C)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/seo-referencement-naturel"]').first()
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("SEO")
+  })
+
+  test("la carte visibilite-locale est maintenant un lien cliquable (SEO-COM-5C)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/visibilite-locale"]').first()
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("locale")
+  })
+
+  test("la carte maintenance-accompagnement est maintenant un lien cliquable (SEO-COM-5C)", async ({ page }) => {
+    await page.goto("/services")
+    const card = page.locator('a[href="/services/maintenance-accompagnement"]').first()
+    await expect(card).toBeVisible()
+    await expect(card).toContainText("Maintenance")
+  })
+
   test("propose les CTA vers /estimer-mon-projet et /contact", async ({ page }) => {
     await page.goto("/services")
     await expect(page.locator('a[href="/estimer-mon-projet"]').first()).toBeVisible()
@@ -164,22 +185,20 @@ test.describe("/services — sitemap", () => {
 })
 
 test.describe("/services/{slug} — route guard", () => {
-  test("retourne 200 pour les cinq services publiés", async ({ request }) => {
+  test("retourne 200 pour les huit services publiés (SEO-COM-5C)", async ({ request }) => {
     for (const slug of [
       "creation-site-internet",
       "site-e-commerce",
       "application-web-metier",
       "design-ui-ux-identite-visuelle",
       "photographie-creation-contenu",
+      "seo-referencement-naturel",
+      "visibilite-locale",
+      "maintenance-accompagnement",
     ]) {
       const response = await request.get(`/services/${slug}`)
       expect(response.status(), `${slug} status`).toBe(200)
     }
-  })
-
-  test("retourne 404 pour un slug de service planifié", async ({ request }) => {
-    const response = await request.get("/services/seo-referencement-naturel")
-    expect(response.status()).toBe(404)
   })
 
   test("retourne 404 pour un slug inexistant", async ({ request }) => {

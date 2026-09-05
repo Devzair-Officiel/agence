@@ -32,11 +32,14 @@ describe("VisibiliteProjectCallout", () => {
     expect(link.text()).toContain("Parler de votre visibilité")
   })
 
-  it("propose un CTA secondaire « Découvrir Faire évoluer » vers /expertises/faire-evoluer", () => {
+  it("propose des CTAs secondaires vers les services SEO et Visibilité locale (SEO-COM-5C)", () => {
     const wrapper = mount(VisibiliteProjectCallout, { global: { stubs: globalStubs } })
-    const link = wrapper.find('a[href="/expertises/faire-evoluer"]')
-    expect(link.exists()).toBe(true)
-    expect(link.text()).toContain("Découvrir Faire évoluer")
+    const seoLink = wrapper.find('a[href="/services/seo-referencement-naturel"]')
+    expect(seoLink.exists()).toBe(true)
+    expect(seoLink.text()).toContain("SEO")
+    const localLink = wrapper.find('a[href="/services/visibilite-locale"]')
+    expect(localLink.exists()).toBe(true)
+    expect(localLink.text()).toContain("locale")
   })
 
   it("relie la section au H2 par aria-labelledby", () => {

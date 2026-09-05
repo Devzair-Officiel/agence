@@ -65,11 +65,18 @@ const titleId = computed(() => `visibilite-callout-title-${generatedId}`)
             Parler de votre visibilité
           </BaseButton>
           <BaseButton
-            to="/expertises/faire-evoluer"
+            to="/services/seo-referencement-naturel"
             variant="secondary"
             class="visibilite-callout__cta"
           >
-            Découvrir Faire évoluer
+            SEO et référencement naturel
+          </BaseButton>
+          <BaseButton
+            to="/services/visibilite-locale"
+            variant="secondary"
+            class="visibilite-callout__cta"
+          >
+            Visibilité locale
           </BaseButton>
         </div>
 
