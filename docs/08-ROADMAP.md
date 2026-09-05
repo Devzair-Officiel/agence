@@ -1909,11 +1909,12 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-5A — Services construction
 
-**État actuel : TERMINÉE**
+**État actuel : VALIDÉE**
 
 - [x] Publier `/services/site-e-commerce`.
 - [x] Publier `/services/application-web-metier`.
 - [x] Écrire les tests pour chaque page.
+- [x] Recette corrective SEO-COM-5A-R : lien planned supprimé, formulations factuelles corrigées, overflow header 1024px corrigé, 43/43 E2E verts, build OK.
 
 **Dépendances :** SEO-COM-1, SEO-COM-2.
 

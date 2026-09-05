@@ -37,7 +37,7 @@ const faqItems = [
   {
     question: "Comment gérer mes produits et mes commandes après la mise en ligne ?",
     answer:
-      "Chaque boutique que nous livrons est accompagnée d'une session de formation aux outils de gestion retenus. Selon le projet, cela peut couvrir l'ajout de produits, la mise à jour des stocks, le traitement des commandes et l'édition des contenus. L'autonomie de gestion fait partie du périmètre de livraison.",
+      "Une prise en main de l'outil peut être prévue au périmètre pour vous rendre autonome sur les opérations courantes. Selon le projet, cela peut couvrir l'ajout de produits, la mise à jour des stocks, le traitement des commandes et l'édition des contenus. Ce point est discuté et cadré au démarrage.",
   },
   {
     question: "Puis-je utiliser mon identité visuelle actuelle ?",
@@ -180,7 +180,7 @@ const faqItems = [
       tone="subtle"
       eyebrow="Parcours d'achat"
       title="De la fiche produit à la confirmation de commande."
-      intro="Un tunnel d'achat simplifié ne garantit pas un taux de conversion élevé — mais un tunnel inutilement long ou confus génère des abandons évitables."
+      intro="Un tunnel d'achat simplifié ne garantit pas un taux de conversion élevé — mais un tunnel inutilement long ou confus peut contribuer à des abandons évitables."
       section-id="parcours"
     >
       <ol class="sec-page__tunnel" role="list">
@@ -235,8 +235,8 @@ const faqItems = [
             <h3 class="sec-page__tunnel-title">Confirmation et suivi</h3>
             <p class="sec-page__tunnel-text">
               Page de confirmation, e-mail récapitulatif, accès au suivi de
-              commande — selon le périmètre retenu. Un client qui sait que
-              sa commande est bien enregistrée rappelle moins.
+              commande — selon le périmètre retenu. Un client informé de
+              l'état de sa commande a moins de raisons de contacter le support.
             </p>
           </div>
         </li>
@@ -266,9 +266,9 @@ const faqItems = [
             des informations sur la fiche — tout participe à l'impression finale.
           </p>
           <p class="sec-page__paragraph">
-            Si vous n'avez pas encore d'identité visuelle établie, notre service
-            de <NuxtLink to="/services/design-ui-ux-identite-visuelle" class="sec-page__inline-link">design et identité visuelle</NuxtLink> peut être
-            intégré en amont du développement de la boutique.
+            Si vous n'avez pas encore d'identité visuelle établie, un
+            accompagnement design et identité visuelle peut être
+            prévu en amont du développement de la boutique.
           </p>
         </div>
         <div class="sec-page__design-marks" aria-hidden="true">
@@ -369,9 +369,9 @@ const faqItems = [
           que personne n'utilise.
         </p>
         <p class="sec-page__paragraph">
-          La formation à l'outil est incluse dans la livraison. Vous repartez
-          avec les clés de votre boutique, pas avec une dépendance à l'agence
-          pour les opérations courantes.
+          Une prise en main de l'outil peut être prévue au périmètre. L'objectif
+          est que vous puissiez gérer les opérations courantes sans dépendre de
+          l'agence pour chaque modification.
         </p>
       </div>
     </EditorialSection>
@@ -385,7 +385,7 @@ const faqItems = [
     >
       <div class="sec-page__seo-split">
         <div>
-          <h3 class="sec-page__seo-subtitle">Ce qui est intégré dans tout projet</h3>
+          <h3 class="sec-page__seo-subtitle">Ce que nous visons à intégrer par défaut</h3>
           <ul class="sec-page__seo-list" role="list">
             <li>URLs propres pour chaque catégorie et chaque produit</li>
             <li>Balises title et meta description adaptées au produit</li>
@@ -450,7 +450,8 @@ const faqItems = [
             <p class="sec-page__budget-factor-text">
               Si la production de photos produits et la rédaction des fiches
               sont déléguées à Devzair, cela s'ajoute au périmètre technique.
-              C'est un investissement qui influe directement sur la conversion.
+              Des contenus soignés contribuent à la lisibilité des fiches et
+              à leur référencement.
             </p>
           </div>
         </div>

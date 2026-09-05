@@ -276,9 +276,30 @@ const onToggleMenu = () => {
 @media (min-width: 1024px) {
   .site-header__nav {
     display: flex;
+    gap: var(--space-4);
+  }
+  .site-header__list {
+    gap: var(--space-4);
+  }
+  .site-header__link {
+    font-size: 0.875rem;
+    padding-inline: var(--space-2);
   }
   .site-header__menu-button {
     display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .site-header__nav {
+    gap: var(--space-8);
+  }
+  .site-header__list {
+    gap: var(--space-8);
+  }
+  .site-header__link {
+    font-size: 0.9375rem;
+    padding-inline: var(--space-3);
   }
 }
 </style>

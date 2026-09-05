@@ -73,7 +73,7 @@ test.describe("/services — SSR et contenu éditorial", () => {
     // Fragments caractéristiques des trois blocs — encodage HTML possible pour apostrophes.
     expect(body).toMatch(/Vous n(?:'|&#39;)avez pas encore de site/)
     expect(body).toContain("Vous avez un site, mais peu de visiteurs qualifiés.")
-    expect(body).toContain("Vous avez un site en ligne et avez besoin d'un suivi dans le temps.")
+    expect(body).toMatch(/Vous avez un site en ligne et avez besoin d(?:'|&#39;)un suivi dans le temps\./)
   })
 
   test("expose le SEO complet dans le HTML initial", async ({ request }) => {
@@ -103,21 +103,21 @@ test.describe("/services — SSR et contenu éditorial", () => {
 
   test("la carte creation-site-internet est un lien cliquable", async ({ page }) => {
     await page.goto("/services")
-    const card = page.locator('a[href="/services/creation-site-internet"]')
+    const card = page.locator('a[href="/services/creation-site-internet"]').first()
     await expect(card).toBeVisible()
     await expect(card).toContainText("Création de site internet")
   })
 
   test("la carte site-e-commerce est maintenant un lien cliquable (SEO-COM-5A)", async ({ page }) => {
     await page.goto("/services")
-    const card = page.locator('a[href="/services/site-e-commerce"]')
+    const card = page.locator('a[href="/services/site-e-commerce"]').first()
     await expect(card).toBeVisible()
     await expect(card).toContainText("Site e-commerce")
   })
 
   test("la carte application-web-metier est maintenant un lien cliquable (SEO-COM-5A)", async ({ page }) => {
     await page.goto("/services")
-    const card = page.locator('a[href="/services/application-web-metier"]')
+    const card = page.locator('a[href="/services/application-web-metier"]').first()
     await expect(card).toBeVisible()
     await expect(card).toContainText("Application web métier")
   })

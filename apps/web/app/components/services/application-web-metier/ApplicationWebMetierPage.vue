@@ -32,7 +32,7 @@ const useCases = [
   {
     key: "disperse",
     title: "Des informations dispersées dans plusieurs outils.",
-    text: "Commandes dans les e-mails, stock dans un tableur, clients dans un autre fichier — à un certain volume, la friction devient coûteuse. Centraliser dans un outil adapté réduit les erreurs et libère du temps sur les tâches à faible valeur ajoutée.",
+    text: "Commandes dans les e-mails, stock dans un tableur, clients dans un autre fichier — à un certain volume, la friction devient coûteuse. Centraliser dans un outil adapté peut réduire les erreurs et dégager du temps sur les tâches à faible valeur ajoutée.",
   },
   {
     key: "repetitif",
@@ -86,7 +86,7 @@ const faqItems = [
     <EditorialHero
       eyebrow="Application web métier"
       title="Une application web conçue autour de votre façon de travailler."
-      lead="Avant d'ouvrir un éditeur de code, nous cherchons à comprendre les tâches réelles, les données manipulées, les personnes qui utilisent l'outil et les règles qui gouvernent votre activité. Un outil conçu à partir des processus existants est adopté plus facilement qu'un outil qui force à s'adapter."
+      lead="Avant d'ouvrir un éditeur de code, nous cherchons à comprendre les tâches réelles, les données manipulées, les personnes qui utilisent l'outil et les règles qui gouvernent votre activité. Un outil qui part des processus existants a davantage de chances d'être adopté qu'un outil qui force les utilisateurs à s'y adapter."
     >
       <template #actions>
         <NuxtLink
@@ -167,7 +167,7 @@ const faqItems = [
       tone="subtle"
       eyebrow="Méthode"
       title="Comprendre avant de concevoir."
-      intro="Un outil métier qui ne correspond pas aux habitudes de travail réelles ne sera pas utilisé — quelle que soit la qualité du développement."
+      intro="Un outil métier qui ne correspond pas aux habitudes de travail réelles risque de ne pas être adopté — quelle que soit la qualité du développement."
       section-id="methode"
     >
       <div class="awm-page__process">
@@ -339,7 +339,7 @@ const faqItems = [
       section-id="budget"
     >
       <div class="awm-page__budget">
-        <p class="awm-page__paragraph sec-page__paragraph--lead">
+        <p class="awm-page__paragraph awm-page__paragraph--lead">
           Le périmètre d'une application dépend de variables que seul un
           échange permet d'identifier précisément. Voici les plus déterminantes.
         </p>
@@ -356,9 +356,9 @@ const faqItems = [
           <div class="awm-page__budget-item">
             <span class="awm-page__budget-item-label">Rôles utilisateurs</span>
             <p class="awm-page__budget-item-text">
-              Chaque rôle distinct nécessite ses propres vues, ses propres
-              droits et ses propres scénarios de test. Deux rôles = deux
-              applications à concevoir dans le même outil.
+              Chaque rôle supplémentaire peut nécessiter des vues, des droits
+              et des scénarios de test spécifiques. Plus les rôles sont distincts,
+              plus le périmètre de conception et de développement s'étend.
             </p>
           </div>
           <div class="awm-page__budget-item">
@@ -380,9 +380,9 @@ const faqItems = [
         </div>
         <div class="awm-page__budget-cta">
           <p class="awm-page__budget-cta-text">
-            Un échange de vingt minutes suffit généralement à identifier les
-            grandes variables et à évaluer un ordre de grandeur. L'estimateur
-            de projet peut aussi vous donner un point de départ.
+            Un premier échange permet d'identifier les grandes variables du
+            projet et d'évaluer un ordre de grandeur. L'estimateur de projet
+            peut aussi vous donner un point de départ.
           </p>
           <div class="awm-page__budget-cta-actions">
             <NuxtLink to="/contact" class="awm-page__cta-link awm-page__cta-link--primary">
@@ -524,6 +524,11 @@ const faqItems = [
   color: var(--text-secondary);
   margin: 0;
   max-width: 62ch;
+}
+
+.awm-page__paragraph--lead {
+  font-size: clamp(1rem, 1.4vw, 1.0625rem);
+  color: var(--text-primary);
 }
 
 /* ── B. Distinction ───────────────────────────────────────────── */
