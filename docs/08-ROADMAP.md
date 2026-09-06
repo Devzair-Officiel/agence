@@ -2014,16 +2014,18 @@ Corrections livrées :
 
 ### SEO-COM-9 — Identité, local et autorité
 
-**État actuel : EN ATTENTE DE VALIDATION MÉTIER**
+**État actuel : TERMINÉE (2026-09-06)**
 
-Aucune action possible tant que les informations suivantes n'ont pas été validées par l'humain :
+**Audit effectué (DEV-086) :** recherche web Devzair, état de marque documenté, GBP classifié D (informations insuffisantes), corrections dépôt appliquées (aucune — aucune donnée validée disponible), `docs/14-BRAND-AUTHORITY.md` créé.
+
+Données encore à valider par l'humain (actions P0/P1 de `docs/14-BRAND-AUTHORITY.md`) :
 
 - [ ] Raison sociale / nom légal à publier.
 - [ ] E-mail professionnel.
 - [ ] Téléphone professionnel.
 - [ ] Ville et zone réellement desservie.
 - [ ] Profils sociaux officiels.
-- [ ] Logo et image Open Graph.
+- [ ] Logo officiel confirmé + image Open Graph.
 - [ ] Éligibilité réelle au référencement local (Google Business Profile).
 
 Une fois validées : mettre à jour `site.ts` et les données structurées pertinentes. Ne créer `LocalBusiness` que si réellement justifié (DEC à ouvrir).
