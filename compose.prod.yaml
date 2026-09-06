@@ -36,7 +36,11 @@ services:
       # ⚠  Seule la site-key PUBLIQUE Turnstile est ici — jamais TURNSTILE_SECRET.
       args:
         NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-https://devzair.fr}
-        NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-true}
+        # `:?` = échec du build si la variable est absente ou vide.
+        # L'indexation en production doit être un choix explicite : passer
+        # NUXT_PUBLIC_SITE_INDEXABLE=true dans .env.prod pour ouvrir le site,
+        # false pour le garder fermé. Jamais d'ouverture accidentelle par défaut.
+        NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:?NUXT_PUBLIC_SITE_INDEXABLE is required (true=indexable, false=noindex)}
         NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
         NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY}
         NUXT_PUBLIC_TURNSTILE_ENABLED: ${NUXT_PUBLIC_TURNSTILE_ENABLED:-true}
@@ -46,7 +50,7 @@ services:
     environment:
       NODE_ENV: production
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL}
-      NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:-true}
+      NUXT_PUBLIC_SITE_INDEXABLE: ${NUXT_PUBLIC_SITE_INDEXABLE:?NUXT_PUBLIC_SITE_INDEXABLE is required (true=indexable, false=noindex)}
       # Le navigateur appelle /api/… ; le Caddy global route vers api:8000.
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
       # SSR interne : Nitro appelle Symfony sans passer par le Caddy global.

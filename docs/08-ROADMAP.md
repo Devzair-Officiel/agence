@@ -2036,20 +2036,40 @@ Une fois validées : mettre à jour `site.ts` et les données structurées perti
 
 ### SEO-COM-10 — Recette production
 
-**État actuel : À FAIRE**
+**État actuel : TECHNIQUE — BLOQUÉE (rebuild production requis) / EXTERNE — EN ATTENTE ACTION HUMAINE**
 
-- [ ] Vérifier domaine canonique, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_SITE_INDEXABLE=true`.
-- [ ] Vérifier `X-Robots-Tag`, `<meta robots>`, robots.txt, sitemap.xml, canonicals.
-- [ ] Contrôler HTML SSR pour chaque page stratégique (title, H1, contenu, JSON-LD).
-- [ ] Vérifier HTTP (200, 301, 404, absence de soft-404, liens cassés).
-- [ ] Valider Schema.org (Organization, WebSite, Service, BreadcrumbList, BlogPosting).
-- [ ] Contrôler LCP, CLS, INP, images, fonts, JavaScript.
-- [ ] Soumettre le sitemap dans Search Console.
-- [ ] Inspecter les pages principales et surveiller les impressions.
+Audit live réalisé le 2026-09-06 sur `https://devzair.fr`.
 
-**Critère de sortie :** Toutes les pages commerciales publiées sont indexables, sans erreur, avec Schema.org valide.
+**Résultats audit :**
+- [x] Domaine live, HTTPS HTTP/2, certificat valide.
+- [x] `siteIndexable=true` confirmé dans le HTML production.
+- [x] Canonical homepage `https://devzair.fr/` correct.
+- [x] SSR homepage : title, OG, Schema.org Organization+WebSite présents.
+- [x] Redirections HTTP→HTTPS et www→non-www fonctionnelles.
+- [ ] **BLOQUANT** : image Docker antérieure à SEO-COM-4/5/6/8 → services, réalisations, article en 404.
+- [ ] Sitemap : 11 URLs seulement (services, réalisations, article manquants).
+- [ ] Navigation : Services et Réalisations absents du menu.
+- [ ] `/agence` : contenu pré-SEO-COM-8 (« Globale » au lieu d'« Intégrée »).
 
-**Dépendances :** SEO-COM-1 à 8, Phase 12 (production VPS).
+**Correctifs appliqués (code) :**
+- `compose.prod.yaml` : `NUXT_PUBLIC_SITE_INDEXABLE` passe de `:-true` à `:?` (build échoue si absent).
+- `.env.example` : note d'obligation production ajoutée.
+- `nuxt.config.ts` : 2 commentaires sitemap corrigés (services planned→published, réalisations cinq→quatre).
+- `docs/15-SEO-PRODUCTION.md` créé : plan complet rebuild + recette + Search Console + cadence.
+
+**Action humaine P0 (bloquante) :**
+- [ ] Rebuild production : `git pull origin main` + `docker compose build --no-cache web` + `up -d --no-deps web`.
+- [ ] Recette post-rebuild (voir `docs/15-SEO-PRODUCTION.md` §5).
+
+**Actions humaines P1 (après rebuild) :**
+- [ ] Créer propriété Domain `devzair.fr` dans Google Search Console.
+- [ ] Ajouter TXT DNS de validation Google.
+- [ ] Soumettre `sitemap.xml`.
+- [ ] Inspecter 5 URLs prioritaires.
+
+**Critère de sortie :** Rebuild production effectué, sitemap ≥ 26 URLs, propriété Search Console validée, sitemap soumis.
+
+**Dépendances :** SEO-COM-1 à 9, Phase 12 (production VPS). Voir `docs/15-SEO-PRODUCTION.md`.
 
 ---
 

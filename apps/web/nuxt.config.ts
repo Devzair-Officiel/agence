@@ -159,14 +159,14 @@ export default defineNuxtConfig({
       ...expertisePages
         .filter((page) => page.status === 'published')
         .map((page) => ({ loc: page.route })),
-      // SEO-COM-1 : le hub /services est publié ; les huit pages filles restent
-      // `planned` et sont exclues par le filtre ci-dessous.
+      // SEO-COM-1 : le hub /services est publié. Les huit pages filles sont
+      // incluses via le filtre `published` ci-dessous (toutes publiées en SEO-COM-5).
       { loc: '/services' },
       ...servicePages
         .filter((page) => page.status === 'published')
         .map((page) => ({ loc: page.route })),
       { loc: '/estimer-mon-projet' },
-      // SEO-COM-4 : hub réalisations + cinq pages détail publiées.
+      // SEO-COM-4 : hub réalisations + quatre pages détail publiées.
       { loc: '/realisations' },
       ...caseStudies
         .filter((cs) => cs.status === 'published')
