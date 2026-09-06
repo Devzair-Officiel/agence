@@ -1991,11 +1991,22 @@ Ne pas commencer automatiquement la phase suivante. Attendre une nouvelle instru
 
 ### SEO-COM-8 — Optimisation accueil et page Agence
 
-**État actuel : À FAIRE**
+**État actuel : TERMINÉE (2026-09-06)**
 
-- [ ] Rendre la définition de Devzair très explicite dans le premier écran ou immédiatement après.
-- [ ] Ajouter des liens contextuels vers les pages services depuis l'accueil.
-- [ ] Enrichir `/agence` de réponses naturelles aux questions des prospects (sans institutionnel impersonnel).
+Corrections livrées :
+
+1. `HomeFeaturedCaseStudy.vue` — filtrage `status === "published"` appliqué sur `publishedStudies` : total, preload, slides, pagination. Les études `e-shop-admin` et `haramain-prestige` (`planned`) n'apparaissent plus dans le DOM.
+2. `HomeHero.vue` — commentaire obsolète corrigé ("tant que la page cible n'existe pas" retiré) ; `#realisations` conservé (parcours Hero → preview → hub `/realisations` cohérent).
+3. `HomeCallToAction.vue` — CTA secondaire `/estimer-mon-projet` ajouté (2 niveaux d'engagement) ; CSS fond inverse pour bouton secondaire ; commentaire mis à jour.
+4. `HomeTrust.vue` — lead reformulé ("que nos clients retrouvent" → "Cinq principes qui orientent chaque décision, du premier brief au suivi post-lancement").
+5. `HomeExpertisePillars.vue` — lien discret "Voir les prestations détaillées → /services" ajouté dans l'intro (5 pôles = comment Devzair travaille / Services = ce que Devzair réalise concrètement).
+6. `AgenceHero.vue` — lead reformulé ("Une équipe réduite" → "Un interlocuteur direct") ; pilier "Globale" → "Intégrée".
+7. `agence.vue` — intro positionnement reformulée (suppression "l'équipe qui conçoit, celle qui construit") ; lien `/services` ajouté dans la section fonctionnement ; callout secondary `/contact` → `/realisations` (maillage agence → réalisations) ; commentaire "Phase 7A" supprimé.
+8. `home-sections-secondary.spec.ts` — test nav header "Réalisations" mis à jour (`#realisations` → `/realisations`, obsolète depuis SEO-COM-5).
+9. Tests unitaires mis à jour : `HomeCallToAction.spec.ts` (2 CTAs), `HomeFeaturedCaseStudy.spec.ts` (published seulement), `agence.spec.ts` (lead, pilier Intégrée, route `/realisations` autorisée).
+10. `home-cta-final.spec.ts` — test mis à jour (2 CTAs : /contact + /estimer-mon-projet).
+
+**Résultats :** 1086/1086 unit tests verts, 136/136 E2E expertise-pages, 45/45 E2E home-hero/structure/cta, 28/28 home-sections-secondary, lint 0 erreur, typecheck OK, build Docker OK, SSR vérifié.
 
 **Dépendances :** SEO-COM-1, pages services publiées.
 

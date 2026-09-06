@@ -57,6 +57,10 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
           vie d'une présence digitale, du premier trait de crayon aux
           évolutions post-lancement.
         </p>
+        <NuxtLink to="/services" class="home-pillars__services-link">
+          Voir les prestations détaillées
+          <span aria-hidden="true">→</span>
+        </NuxtLink>
       </header>
 
       <p class="home-pillars__hint" aria-hidden="true">
@@ -175,6 +179,31 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.home-pillars__services-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.9375rem;
+  color: var(--text-accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.home-pillars__services-link:hover {
+  color: var(--text-primary);
+}
+
+.home-pillars__services-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: 2px;
 }
 
 /* ----- Mobile : carrousel scroll-snap CSS-natif ----- */

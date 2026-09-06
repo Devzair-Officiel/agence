@@ -39,10 +39,12 @@ import { caseStudies } from "~/config/case-studies"
  * navigation « Réalisations ».
  */
 
+const publishedStudies = caseStudies.filter((s) => s.status === "published")
+
 const section = ref<HTMLElement | null>(null)
 const track = ref<HTMLElement | null>(null)
 const current = ref(0)
-const total = caseStudies.length
+const total = publishedStudies.length
 
 let slideObserver: IntersectionObserver | null = null
 let sectionObserver: IntersectionObserver | null = null
@@ -56,7 +58,7 @@ const preloaded = new Set<string>()
  */
 function preloadStudy(index: number) {
   if (typeof window === "undefined") return
-  const study = caseStudies[index]
+  const study = publishedStudies[index]
   if (!study) return
 
   for (const url of [study.imageSrc, study.overlayImageSrc]) {
@@ -185,7 +187,7 @@ onBeforeUnmount(() => {
             aria-label="Réalisations Devzair"
           >
           <li
-            v-for="(study, index) in caseStudies"
+            v-for="(study, index) in publishedStudies"
             :key="study.id"
             class="home-case__item"
             :data-slide-index="index"
@@ -292,7 +294,7 @@ onBeforeUnmount(() => {
 
           <ol class="home-case__pagination">
             <li
-              v-for="(study, index) in caseStudies"
+              v-for="(study, index) in publishedStudies"
               :key="study.id"
               class="home-case__pagination-item"
             >

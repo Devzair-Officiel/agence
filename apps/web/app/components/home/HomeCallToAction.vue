@@ -8,18 +8,18 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
  *
  * Depuis le déplacement du formulaire vers la page dédiée `/contact`, cette
  * section joue le rôle d'un panneau CTA compact : eyebrow, H2, paragraphe,
- * bouton qui pointe explicitement sur `/contact`. Elle conserve son ancre
- * `id="contact"` pour que les anciens liens (`/#contact` en cache moteur,
- * signets, partages) atterrissent quand même sur la bonne section — Nuxt
- * ne se plaint pas d'une ancre qui ne correspond à aucune cible interne.
+ * deux boutons. Elle conserve son ancre `id="contact"` pour que les anciens
+ * liens (`/#contact` en cache moteur, signets, partages) atterrissent quand
+ * même sur la bonne section.
  *
  * L'eyebrow, le H2 et le paragraphe éditoriaux restent verbatim (source
  * unique `docs/01-CONTENT.md §7.1`).
  *
  * Accessibilité :
  *   - un H2 unique pour la section, ancre `id="contact"` sur `<section>` ;
- *   - un seul CTA visible, libellé identique au CTA header/mobile pour
- *     renforcer la mémorisation.
+ *   - deux CTA : primaire vers `/contact` (engagement direct), secondaire
+ *     vers `/estimer-mon-projet` (engagement plus doux pour les visiteurs
+ *     qui souhaitent calibrer leur projet avant de contacter).
  */
 </script>
 
@@ -73,6 +73,9 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
         <BaseButton to="/contact" variant="primary" class="home-cta__button">
           Parler de votre projet
           <template #icon>→</template>
+        </BaseButton>
+        <BaseButton to="/estimer-mon-projet" variant="secondary" class="home-cta__button">
+          Estimer mon projet
         </BaseButton>
       </div>
     </BaseContainer>
@@ -163,6 +166,22 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
   justify-content: center;
   gap: var(--space-3);
   margin-top: var(--space-2);
+}
+
+/*
+ * Le fond de la section est `--background-inverse` (navy) : le bouton
+ * secondaire par défaut (contour sombre, texte sombre) serait illisible.
+ * On le bascule sur cream/cream-transparent pour garantir le contraste.
+ */
+.home-cta__actions :deep(.base-button[data-variant="secondary"]) {
+  color: var(--color-cream);
+  border-color: rgba(244, 241, 234, 0.28);
+}
+
+.home-cta__actions :deep(.base-button[data-variant="secondary"]:hover) {
+  background-color: var(--color-cream);
+  color: var(--color-navy);
+  border-color: var(--color-cream);
 }
 
 @media (min-width: 1024px) {

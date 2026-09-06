@@ -42,16 +42,16 @@ describe("/agence page", () => {
   it("publishes the hero lead verbatim", () => {
     const wrapper = mount(AgencePage)
     expect(wrapper.text()).toContain(
-      "Une équipe réduite, un lien direct, un engagement dans la durée avec chaque entreprise accompagnée.",
+      "Un interlocuteur direct, un engagement dans la durée avec chaque entreprise accompagnée.",
     )
   })
 
-  it("exposes the two hero pillars (Indépendante / Globale)", () => {
+  it("exposes the two hero pillars (Indépendante / Intégrée)", () => {
     const wrapper = mount(AgencePage)
     const text = wrapper.text()
     expect(text).toContain("Indépendante")
     expect(text).toContain("sans intermédiaire")
-    expect(text).toContain("Globale")
+    expect(text).toContain("Intégrée")
     expect(text).toContain("tous les métiers reliés")
   })
 
@@ -91,12 +91,12 @@ describe("/agence page", () => {
     const wrapper = mount(AgencePage)
     const hrefs = wrapper.findAll("a").map((a) => a.attributes("href") ?? "")
     for (const href of hrefs) {
-      // Aucun lien vers `/expertises/{slug}` — ces routes sont en Phase 7B.
+      // Aucun lien vers `/expertises/{slug}` hors du scope de cette page.
       expect(href).not.toMatch(/^\/expertises\/[a-z]/)
-      // Aucun lien vers `/realisations`, `/methode`, `/ressources` (non livrés).
+      // Aucun lien vers des pages non livrées.
       expect(href).not.toBe("/methode")
-      expect(href).not.toBe("/realisations")
       expect(href).not.toBe("/ressources")
+      // `/realisations` est une route livrée — un lien est attendu dans le callout.
     }
   })
 })

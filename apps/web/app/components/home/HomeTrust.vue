@@ -36,9 +36,9 @@ const promises = [...trustPromises].sort((a, b) => a.order - b.order)
           Ce qui fait la différence, concrètement.
         </h2>
         <p class="home-trust__lead">
-          Nous ne cherchons pas à être la plus grosse agence, mais celle qui
-          tient ses engagements. Cinq pratiques que nos clients retrouvent
-          projet après projet.
+          Nous ne cherchons pas à être la plus grosse agence, mais la plus
+          cohérente. Cinq principes qui orientent chaque décision, du premier
+          brief au suivi post-lancement.
         </p>
       </header>
 

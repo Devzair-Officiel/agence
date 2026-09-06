@@ -3,6 +3,8 @@ import { mount } from "@vue/test-utils"
 import HomeFeaturedCaseStudy from "~/components/home/HomeFeaturedCaseStudy.vue"
 import { caseStudies } from "~/config/case-studies"
 
+const publishedStudies = caseStudies.filter((s) => s.status === "published")
+
 describe("HomeFeaturedCaseStudy", () => {
   it("exposes the #realisations anchor on the section root", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
@@ -24,22 +26,22 @@ describe("HomeFeaturedCaseStudy", () => {
     expect(wrapper.text()).toContain("Réalisations")
   })
 
-  it("renders one composition per configured case study", () => {
+  it("renders one composition per published case study (planned studies excluded)", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
     const items = wrapper.findAll(".home-case__item")
-    expect(items).toHaveLength(caseStudies.length)
+    expect(items).toHaveLength(publishedStudies.length)
   })
 
   it("uses semantic list markup (ul > li) for the case studies", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
     const list = wrapper.get(".home-case__list")
     expect(list.element.tagName).toBe("UL")
-    expect(list.findAll(":scope > li")).toHaveLength(caseStudies.length)
+    expect(list.findAll(":scope > li")).toHaveLength(publishedStudies.length)
   })
 
   it("renders the main project image with the configured alt (required, not decorative)", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    for (const study of caseStudies) {
+    for (const study of publishedStudies) {
       const img = wrapper.find(`img[src="${study.imageSrc}"]`)
       expect(img.exists()).toBe(true)
       expect(img.attributes("alt")).toBe(study.imageAlt)
@@ -49,7 +51,7 @@ describe("HomeFeaturedCaseStudy", () => {
 
   it("renders the decorative overlay with empty alt + aria-hidden when configured", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    for (const study of caseStudies) {
+    for (const study of publishedStudies) {
       if (!study.overlayImageSrc) continue
       const overlay = wrapper.find(`img[src="${study.overlayImageSrc}"]`)
       expect(overlay.exists()).toBe(true)
@@ -61,7 +63,7 @@ describe("HomeFeaturedCaseStudy", () => {
 
   it("renders each configured tag as a list item", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    for (const study of caseStudies) {
+    for (const study of publishedStudies) {
       const rendered = wrapper.findAll(".home-case__tag").map((n) => n.text())
       for (const tag of study.tags) {
         expect(rendered).toContain(tag)
@@ -71,7 +73,7 @@ describe("HomeFeaturedCaseStudy", () => {
 
   it("renders the long editorial description of each project", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
-    for (const study of caseStudies) {
+    for (const study of publishedStudies) {
       expect(wrapper.text()).toContain(study.longDescription)
     }
   })

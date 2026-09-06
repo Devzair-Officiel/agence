@@ -206,18 +206,19 @@ test.describe('/ (home) — sections secondaires Phase 5C', () => {
     await expect(page.locator('#realisations h2')).toBeVisible()
   })
 
-  test('the header « Réalisations » nav link targets #realisations on the home page', async ({
+  test('the header « Réalisations » nav link targets /realisations', async ({
     page,
   }) => {
     await page.goto('/')
     // Le libellé « Réalisations » figure dans le nav principal + le footer.
-    // On cible spécifiquement le premier occurrence dans <header>.
+    // On cible spécifiquement la première occurrence dans <header>.
+    // Depuis SEO-COM-5, navigation.ts pointe sur la route /realisations livrée.
     const navLink = page
       .locator('header a', { hasText: 'Réalisations' })
       .first()
     await expect(navLink).toBeVisible()
     const href = await navLink.getAttribute('href')
-    expect(href === '/#realisations' || href === '#realisations').toBe(true)
+    expect(href).toBe('/realisations')
   })
 
   test('SSR HTML already contains every Phase 5C editorial signature', async ({

@@ -3,9 +3,9 @@ import { mount } from "@vue/test-utils"
 import HomeCallToAction from "~/components/home/HomeCallToAction.vue"
 
 // Depuis le split du formulaire vers la page dédiée `/contact`, cette section
-// n'est plus qu'un panneau CTA compact : eyebrow, H2, paragraphe, bouton
-// « Parler de votre projet » pointant sur `/contact`. Aucun formulaire, plus
-// aucun runtimeConfig consommé ici.
+// est un panneau CTA compact : eyebrow, H2, paragraphe, deux boutons.
+// CTA primaire → `/contact` ; CTA secondaire → `/estimer-mon-projet`.
+// Aucun formulaire, plus aucun runtimeConfig consommé ici.
 
 function mountSection() {
   return mount(HomeCallToAction, {
@@ -49,12 +49,14 @@ describe("HomeCallToAction", () => {
     )
   })
 
-  it("renders a single CTA button pointing to /contact", () => {
+  it("renders two CTAs: primary /contact and secondary /estimer-mon-projet", () => {
     const wrapper = mountSection()
     const buttons = wrapper.findAll(".home-cta__actions .base-button")
-    expect(buttons).toHaveLength(1)
+    expect(buttons).toHaveLength(2)
     expect(buttons[0]!.attributes("href")).toBe("/contact")
     expect(buttons[0]!.text()).toContain("Parler de votre projet")
+    expect(buttons[1]!.attributes("href")).toBe("/estimer-mon-projet")
+    expect(buttons[1]!.text()).toContain("Estimer mon projet")
   })
 
   it("no longer embeds the contact form nor any fictional coordinate", () => {

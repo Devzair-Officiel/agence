@@ -4,7 +4,7 @@ import EditorialCallout from "~/components/editorial/EditorialCallout.vue"
 import EditorialSection from "~/components/editorial/EditorialSection.vue"
 
 /**
- * Page `/agence` — présentation éditoriale de Devzair (Phase 7A).
+ * Page `/agence` — présentation éditoriale de Devzair.
  *
  * Rôle strict d'orchestration :
  *   - un H1 unique (AgenceHero, variante « portrait » avec visuel d'atelier)
@@ -37,7 +37,7 @@ usePageSeo({
       tone="default"
       eyebrow="Positionnement"
       title="Une agence indépendante, engagée dans la durée avec chaque entreprise accompagnée."
-      intro="Nous privilégions une relation directe, sans intermédiaire, entre l'équipe qui conçoit, celle qui construit et la personne qui décide côté client."
+      intro="Nous privilégions une relation directe, sans intermédiaire, avec la personne qui décide côté client."
     >
       <ol class="agence-page__principles" role="list">
         <li class="agence-page__principle">
@@ -105,6 +105,10 @@ usePageSeo({
           </p>
         </li>
       </ul>
+      <NuxtLink to="/services" class="agence-page__services-link">
+        Voir le détail de nos services
+        <span aria-hidden="true">→</span>
+      </NuxtLink>
     </EditorialSection>
 
     <EditorialSection
@@ -153,7 +157,7 @@ usePageSeo({
       title="Découvrez nos cinq pôles d'expertise."
       description="Stratégie et design, développement, contenus, visibilité, maintenance : cinq domaines connectés qui portent chaque projet Devzair."
       :primary="{ label: 'Voir nos expertises', to: '/expertises' }"
-      :secondary="{ label: 'Parler de votre projet', to: '/contact' }"
+      :secondary="{ label: 'Voir nos réalisations', to: '/realisations' }"
     />
   </div>
 </template>
@@ -236,6 +240,31 @@ usePageSeo({
   color: var(--text-secondary);
   margin: 0;
   max-width: 44ch;
+}
+
+.agence-page__services-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body-strong);
+  font-size: 0.9375rem;
+  color: var(--text-accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.agence-page__services-link:hover {
+  color: var(--text-primary);
+}
+
+.agence-page__services-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: 2px;
 }
 
 .agence-page__practice,

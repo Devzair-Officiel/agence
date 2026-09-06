@@ -110,15 +110,17 @@ test.describe('/ (home) — CTA final #contact', () => {
     await expect(page.locator('form.contact-form')).toHaveCount(0)
   })
 
-  test('renders a single CTA in the section pointing to /contact', async ({
+  test('renders two CTAs in the section: /contact (primary) and /estimer-mon-projet (secondary)', async ({
     page,
   }) => {
     await page.goto('/')
     const contact = page.locator(CONTACT_SECTION)
     const buttons = contact.locator('.home-cta__actions a.base-button')
-    await expect(buttons).toHaveCount(1)
-    await expect(buttons.first()).toHaveAttribute('href', CTA_HREF)
-    await expect(buttons.first()).toContainText('Parler de votre projet')
+    await expect(buttons).toHaveCount(2)
+    await expect(buttons.nth(0)).toHaveAttribute('href', CTA_HREF)
+    await expect(buttons.nth(0)).toContainText('Parler de votre projet')
+    await expect(buttons.nth(1)).toHaveAttribute('href', '/estimer-mon-projet')
+    await expect(buttons.nth(1)).toContainText('Estimer mon projet')
   })
 
   test('hero primary CTA navigates to /contact', async ({ page }) => {

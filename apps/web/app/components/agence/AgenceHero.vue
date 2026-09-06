@@ -99,8 +99,8 @@ const heroImageSrc = "/brand/agence-devzair.png"
         Une agence digitale à taille humaine.
       </h1>
       <p class="agence-hero__lead">
-        Une équipe réduite, un lien direct, un engagement dans la durée avec
-        chaque entreprise accompagnée.
+        Un interlocuteur direct, un engagement dans la durée avec chaque
+        entreprise accompagnée.
       </p>
       <dl class="agence-hero__pillars">
         <div class="agence-hero__pillar">
@@ -108,7 +108,7 @@ const heroImageSrc = "/brand/agence-devzair.png"
           <dd class="agence-hero__pillar-desc">sans intermédiaire</dd>
         </div>
         <div class="agence-hero__pillar">
-          <dt class="agence-hero__pillar-term">Globale</dt>
+          <dt class="agence-hero__pillar-term">Intégrée</dt>
           <dd class="agence-hero__pillar-desc">tous les métiers reliés</dd>
         </div>
       </dl>

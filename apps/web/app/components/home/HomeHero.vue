@@ -22,8 +22,8 @@ import HomeEcosystemGraph from "~/components/home/HomeEcosystemGraph.vue"
  *     ayant un libellé fort et un complément mesuré ;
  *   - les deux CTA sont des liens sémantiques : « Parler de votre projet »
  *     pointe sur la page dédiée `/contact` ; « Découvrir nos réalisations »
- *     pointe sur l'ancre locale `#realisations` tant que la page cible
- *     n'existe pas (cf. AGENTS.md — pas de placeholder de route).
+ *     pointe sur l'ancre `#realisations` — la section carrousel en bas de
+ *     la home, qui inclut le lien « Voir toutes les réalisations → /realisations ».
  *
  * Responsive :
  *   - ≥1100px : deux colonnes équilibrées (~55/45), graphe posé sur un halo
