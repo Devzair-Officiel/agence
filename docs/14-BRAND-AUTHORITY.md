@@ -92,24 +92,24 @@ Aucune violation de marque identifiée. Aucune analyse juridique — observation
 Les règles officielles Google exigent, pour une fiche d'établissement ou de zone de service :
 - Un contact direct ou physique avec les clients (réception dans un établissement ou déplacement réel sur place)
 - Des horaires d'ouverture réels
-- Une localisation professionnelle vérifiable
+- Une adresse réelle pour validation (une adresse résidentielle est acceptée si l'entreprise se déplace chez ses clients — elle peut être masquée au public, seule la zone desservie étant affichée)
+
+Ce qui reste interdit quelle que soit la situation :
+- Adresse fictive, bureau virtuel non occupé, boîte postale, adresse choisie uniquement pour le SEO
 
 Les questions suivantes **n'ont pas de réponse documentée** :
 
-- Devzair reçoit-il des clients dans un établissement physique ?
-- Devzair se déplace-t-il physiquement chez ses clients dans une zone définie ?
-- Quelle est cette zone réelle ?
-- Existe-t-il une adresse professionnelle dédiée (ni domicile, ni bureau virtuel non occupé) ?
-- Y a-t-il des horaires de contact direct réels ?
+1. Devzair reçoit-il physiquement des clients à une adresse ?
+2. Devzair se déplace-t-il réellement chez des clients ?
+3. Si oui, dans quelles zones réelles ?
+4. Quelle adresse réelle pourrait servir à la validation Google ?
+5. Quels horaires correspondent à une présence/contact réel ?
 
 **Décision opérationnelle : ne pas créer de fiche Google Business Profile à ce stade.**
 
 Cette décision ne signifie pas que Devzair n'est pas éligible. Elle signifie que les données nécessaires ne sont pas disponibles pour créer une fiche conforme et exacte.
 
-Réévaluation possible dès qu'un ou plusieurs des éléments suivants sont documentés :
-1. Adresse postale professionnelle réelle (non personnelle, non fictive)
-2. Confirmation que Devzair se déplace physiquement chez ses clients avec une zone identifiable
-3. Téléphone professionnel dédié entrant
+Réévaluation possible dès que les questions ci-dessus ont une réponse documentée et honnête.
 
 ---
 
@@ -137,7 +137,7 @@ Réévaluation possible dès qu'un ou plusieurs des éléments suivants sont doc
 | Canal | Existe | Vérifié | Priorité | Action | Données nécessaires |
 |---|---|---|---|---|---|
 | LinkedIn (page entreprise) | INCONNU | NON | **P1 haute** | Créer si inexistant — action humaine | Raison sociale, email admin, description, logo |
-| GitHub (organisation) | INCONNU | NON | **P1 haute** | Vérifier si `Devzair` org existe, compléter profil | Description, site devzair.fr, avatar |
+| GitHub (`Devzair-Officiel`) | EXISTE — compte User public | NON (profil officiel non validé) | **P1 haute** | Confirmer que ce compte est le profil officiel Devzair, puis compléter : nom, avatar, bio, site devzair.fr | Validation humaine — ne pas renseigner `sameAs` avant confirmation |
 | Instagram | INCONNU | NON | P2 moyenne | Évaluer selon activité visuelle | Logo, bio, contenu |
 | Facebook (page) | INCONNU | NON | P3 faible | Peu pertinent pour B2B agence digitale | — |
 | Google Business Profile | INCONNU | NON | BLOQUÉ — ÉLIGIBILITÉ | Voir §4 — ne pas créer maintenant | Adresse, zone, horaires validés |
@@ -157,19 +157,20 @@ Un profil externe est prioritaire si :
 
 ## 7. GitHub
 
-### État observable
+### État observable (2026-09-06)
 
-Le dépôt de développement est hébergé sous un compte GitHub (`Devzair` selon `docs/00-PROJECT.md` : « Monorepo Git unique à la racine `devzair/` »). Aucun profil public `github.com/Devzair` (organisation) n'a été trouvé dans les résultats de recherche au 2026-09-06.
+Un compte GitHub public `Devzair-Officiel` existe et possède au moins le dépôt public `agence` (ce monorepo). Ce compte est de type **User**, pas Organization.
+
+Son statut comme profil public officiel de marque Devzair **n'est pas encore validé humainement** — il ne peut pas être ajouté à `site.socialProfiles` sans confirmation explicite.
 
 ### Actions humaines recommandées (P1)
 
-Si une organisation GitHub publique `Devzair` est créée ou existe :
-- [ ] Ajouter `https://devzair.fr` comme site web de l'organisation
-- [ ] Ajouter une description courte : « Agence digitale — sites web, applications, design, contenus et SEO »
-- [ ] Ajouter un avatar/logo cohérent
-- [ ] Ne pas rendre public le monorepo privé du projet
+- [ ] Confirmer que `github.com/Devzair-Officiel` est bien le profil GitHub officiel public de Devzair
+- [ ] Confirmer que la visibilité publique du dépôt `agence` est volontaire
+- [ ] Si profil confirmé : compléter le profil — nom affiché, avatar/logo, bio courte, site `https://devzair.fr`
+- [ ] Après confirmation : renseigner `site.socialProfiles` avec l'URL exacte vérifiée
 
-Ne pas confondre le dépôt de travail (privé) avec un éventuel profil organisation public.
+Ne pas rendre le dépôt privé sans décision explicite — vérifier simplement que cette visibilité est intentionnelle.
 
 ---
 
@@ -286,7 +287,7 @@ Quand des avis deviennent pertinents (GBP ou plateforme confirmée) :
 
 | Action | Priorité | Condition |
 |---|---|---|
-| Compléter le profil GitHub organisation | P1 | Si profil public Devzair créé |
+| Compléter le profil `Devzair-Officiel` sur GitHub | P1 | Si compte confirmé comme profil officiel |
 | Créer la page LinkedIn entreprise | P1 | Dès validation raison sociale + email |
 | Partager `/ressources/site-internet-pas-cher` sur LinkedIn | P2 | Après création page LinkedIn |
 | Demander un lien « Réalisé par Devzair » aux clients des 4 études de cas | P2 | Accord client explicite requis |
@@ -334,7 +335,8 @@ Stratégie : présenter un projet réel → partager l'étude de cas → permett
 - [ ] **Raison sociale (legalName)** — confirmer le nom légal exact pour `site.ts` et les profils externes
 - [ ] **E-mail professionnel public** — valider et confirmer (ex. contact@devzair.fr)
 - [ ] **Créer la page LinkedIn entreprise Devzair** — utiliser la bio courte, le logo officiel, le lien devzair.fr
-- [ ] **Vérifier/créer l'organisation GitHub publique `Devzair`** — ajouter site, description, avatar
+- [ ] **Confirmer que `github.com/Devzair-Officiel` est le profil public officiel Devzair** — puis compléter avatar, bio, site devzair.fr
+- [ ] **Confirmer que la visibilité publique du dépôt `agence` est volontaire**
 
 ### P2 — Signaux complémentaires
 
