@@ -22,13 +22,17 @@ describe("ResourceListItem", () => {
     expect(link.attributes("href")).toBe("/ressources/un-titre-de-ressource")
   })
 
-  it("affiche titre, extrait, auteur et date lisible française", () => {
+  it("affiche titre, extrait, expertise et date lisible française", () => {
     const wrapper = mount(ResourceListItem, { props: { article } })
     const text = wrapper.text()
     expect(text).toContain("Un titre de ressource")
     expect(text).toContain("Un extrait explicite.")
-    expect(text).toContain("Devzair")
     expect(text).toMatch(/15 janvier 2026/)
+  })
+
+  it("affiche le label de la première expertise dans les métas", () => {
+    const wrapper = mount(ResourceListItem, { props: { article } })
+    expect(wrapper.text()).toContain("Concevoir")
   })
 
   it("expose la date machine via <time datetime>", () => {

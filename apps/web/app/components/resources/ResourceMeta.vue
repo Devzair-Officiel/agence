@@ -42,11 +42,6 @@ interface ExpertiseLink {
   readonly route: string | null
 }
 
-// Les deux dates sont formatées via `formatEditorialDate` : le TZ
-// `Europe/Paris` y est explicite, ce qui rend le SSR (Docker `UTC`) et
-// l'hydratation client (navigateur en heure locale) déterministes et
-// évite le warning « Hydration text content mismatch » sur les ISO à
-// cheval sur minuit UTC. Voir `app/utils/editorial-date.ts`.
 const publishedLabel = computed(() => formatEditorialDate(props.publishedAt))
 const updatedLabel = computed(() => formatEditorialDate(props.updatedAt))
 const showUpdated = computed(() => props.updatedAt !== props.publishedAt)
@@ -70,7 +65,7 @@ const expertiseLinks = computed<readonly ExpertiseLink[]>(() => {
 <template>
   <dl class="resource-meta">
     <div class="resource-meta__row">
-      <dt class="resource-meta__label">Auteur</dt>
+      <dt class="resource-meta__label">Par</dt>
       <dd class="resource-meta__value">{{ author.name }}</dd>
     </div>
     <div class="resource-meta__row">
@@ -85,7 +80,7 @@ const expertiseLinks = computed<readonly ExpertiseLink[]>(() => {
         <time :datetime="updatedAt">{{ updatedLabel }}</time>
       </dd>
     </div>
-    <div v-if="expertiseLinks.length > 0" class="resource-meta__row">
+    <div v-if="expertiseLinks.length > 0" class="resource-meta__row resource-meta__row--full">
       <dt class="resource-meta__label">Expertises</dt>
       <dd class="resource-meta__value">
         <ul class="resource-meta__chips" role="list">
@@ -112,36 +107,56 @@ const expertiseLinks = computed<readonly ExpertiseLink[]>(() => {
 </template>
 
 <style scoped>
+/* Layout horizontal : auteur + dates en ligne, expertises en dessous */
 .resource-meta {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
   margin: 0;
   padding: 0;
 }
 
 .resource-meta__row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+/* La ligne d'expertises prend toute la largeur */
+.resource-meta__row--full {
+  flex-basis: 100%;
+  align-items: center;
+  margin-top: var(--space-2);
 }
 
 .resource-meta__label {
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-muted);
   margin: 0;
+  flex-shrink: 0;
 }
 
 .resource-meta__value {
   font-family: var(--font-family-body);
   font-size: 0.9375rem;
-  line-height: 1.5;
-  color: var(--text-primary);
+  line-height: 1.4;
+  color: var(--text-secondary);
   margin: 0;
+}
+
+/* Séparateur visuel entre items (sauf premier) */
+.resource-meta__row:not(.resource-meta__row--full) + .resource-meta__row:not(.resource-meta__row--full)::before {
+  content: "·";
+  color: var(--text-muted);
+  margin-right: calc(-1 * var(--space-3));
+  font-size: 1rem;
+  line-height: 1;
+  align-self: center;
 }
 
 .resource-meta__chips {
@@ -161,33 +176,28 @@ const expertiseLinks = computed<readonly ExpertiseLink[]>(() => {
 .resource-meta__chip-static {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.6rem;
+  padding: 0.2rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--border-default);
   background-color: var(--background-secondary);
   font-family: var(--font-family-body);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.4;
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
 .resource-meta__chip-link {
   text-decoration: none;
   transition: border-color var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .resource-meta__chip-link:hover,
 .resource-meta__chip-link:focus-visible {
   border-color: var(--color-devzair-blue);
   color: var(--text-accent);
-}
-
-@media (min-width: 640px) {
-  .resource-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3) var(--space-6);
-  }
+  background-color: color-mix(in srgb, var(--color-devzair-blue) 6%, var(--background-secondary));
 }
 
 @media (prefers-reduced-motion: reduce) {

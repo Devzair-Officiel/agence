@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { ArticleSummary } from "~/types/editorial"
+import { expertisePillars } from "~/config/expertise-pillars"
 import { formatEditorialDate } from "~/utils/editorial-date"
 
 /**
@@ -34,18 +35,24 @@ const href = computed(() => `/ressources/${props.article.slug}`)
 const publishedLabel = computed(() =>
   formatEditorialDate(props.article.publishedAt),
 )
+
+// Premier label d'expertise affiché en meta (si disponible).
+const firstExpertiseLabel = computed(() => {
+  const id = props.article.expertiseIds[0]
+  if (!id) return null
+  return expertisePillars.find((p) => p.id === id)?.label ?? null
+})
 </script>
 
 <template>
   <article class="resource-list-item">
     <NuxtLink :to="href" class="resource-list-item__link">
       <!--
-        Vignette (Phase 9B) : optionnelle — pas de placeholder, pas de
-        visuel de remplissage quand l'éditeur n'a rien associé. Lazy
-        loading par défaut car les cartes hors du viewport LCP ne
-        justifient pas un fetch prioritaire.
+        Vignette (Phase 9B) : optionnelle — pas de placeholder. Lazy
+        loading car les cartes hors viewport ne justifient pas de fetch
+        prioritaire. L'overflow: hidden de la figure contient le zoom hover.
       -->
-      <div v-if="article.heroImage" class="resource-list-item__figure">
+      <figure v-if="article.heroImage" class="resource-list-item__figure">
         <img
           class="resource-list-item__image"
           :src="article.heroImage.url"
@@ -55,10 +62,10 @@ const publishedLabel = computed(() =>
           loading="lazy"
           decoding="async"
         >
-      </div>
+      </figure>
       <p class="resource-list-item__meta">
-        <span class="resource-list-item__author">{{ article.author.name }}</span>
-        <span class="resource-list-item__separator" aria-hidden="true">·</span>
+        <span v-if="firstExpertiseLabel" class="resource-list-item__expertise">{{ firstExpertiseLabel }}</span>
+        <span v-if="firstExpertiseLabel" class="resource-list-item__separator" aria-hidden="true">·</span>
         <time
           class="resource-list-item__date"
           :datetime="article.publishedAt"
@@ -84,22 +91,39 @@ const publishedLabel = computed(() =>
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
-  padding: var(--space-6);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  background-color: var(--background-primary);
+  height: 100%;
+  padding: var(--space-3);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-md);
+  /*
+   * Ombre micro au repos pour délimiter la carte sur fond sable.
+   * Hover : légère élévation, sans translateY (layout stable).
+   */
+  box-shadow: 0 1px 6px rgba(22, 25, 28, 0.07);
   color: var(--text-primary);
   text-decoration: none;
-  transition: border-color var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  transition:
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
 }
 
+.resource-list-item__link:hover,
+.resource-list-item__link:focus-visible {
+  box-shadow: 0 4px 16px -4px rgba(22, 25, 28, 0.13);
+  background-color: var(--color-cream-elevated);
+}
+
+/* ── Vignette ────────────────────────────────────────────────────── */
+
 .resource-list-item__figure {
-  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-2);
+  /* Marges négatives = l'image déborde jusqu'aux bords de la carte */
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0;
   overflow: hidden;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  /* Coins hauts = radius de la carte ; coins bas = 0 (jonction avec le texte) */
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   aspect-ratio: 16 / 9;
-  background-color: var(--background-secondary, transparent);
+  background-color: var(--background-primary);
+  flex-shrink: 0;
 }
 
 .resource-list-item__image {
@@ -107,13 +131,15 @@ const publishedLabel = computed(() =>
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 400ms var(--ease-out);
 }
 
-.resource-list-item__link:hover,
-.resource-list-item__link:focus-visible {
-  border-color: var(--color-devzair-blue);
-  transform: translateY(-2px);
+.resource-list-item__link:hover .resource-list-item__image,
+.resource-list-item__link:focus-visible .resource-list-item__image {
+  transform: scale(1.04);
 }
+
+/* ── Métadonnées ──────────────────────────────────────────────────── */
 
 .resource-list-item__meta {
   display: flex;
@@ -129,9 +155,15 @@ const publishedLabel = computed(() =>
   color: var(--text-muted);
 }
 
+.resource-list-item__expertise {
+  color: var(--color-petrol);
+}
+
 .resource-list-item__separator {
   color: var(--border-default);
 }
+
+/* ── Titre + excerpt ──────────────────────────────────────────────── */
 
 .resource-list-item__title {
   font-family: var(--font-family-heading);
@@ -141,9 +173,17 @@ const publishedLabel = computed(() =>
   letter-spacing: -0.01em;
   color: var(--text-primary);
   margin: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.resource-list-item__link:hover .resource-list-item__title,
+.resource-list-item__link:focus-visible .resource-list-item__title {
+  color: var(--color-petrol);
 }
 
 .resource-list-item__excerpt {
+  /* flex-grow pousse le CTA vers le bas quelle que soit la hauteur du titre */
+  flex-grow: 1;
   font-family: var(--font-family-body);
   font-size: 0.9375rem;
   line-height: 1.55;
@@ -152,7 +192,7 @@ const publishedLabel = computed(() =>
 }
 
 .resource-list-item__cta {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   font-family: var(--font-family-body);
   font-size: 0.875rem;
   font-weight: 700;
@@ -164,9 +204,17 @@ const publishedLabel = computed(() =>
     transition: none;
   }
 
-  .resource-list-item__link:hover,
-  .resource-list-item__link:focus-visible {
+  .resource-list-item__image {
+    transition: none;
+  }
+
+  .resource-list-item__link:hover .resource-list-item__image,
+  .resource-list-item__link:focus-visible .resource-list-item__image {
     transform: none;
+  }
+
+  .resource-list-item__title {
+    transition: none;
   }
 }
 </style>
