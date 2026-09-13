@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 const footerSelector = 'footer.site-footer'
 
 test.describe('Footer Devzair', () => {
-  test('est présent dans le HTML SSR avec ses deux groupes et ses vrais liens', async ({
+  test('est présent dans le HTML SSR avec ses trois groupes et ses vrais liens', async ({
     request,
   }) => {
     const response = await request.get('/')
@@ -12,27 +12,29 @@ test.describe('Footer Devzair', () => {
     const html = await response.text()
     expect(html).toMatch(/<footer class="site-footer"(?:\s|>)/)
     expect(html).toContain('Agence digitale')
-    expect(html).toContain('Sites. Applications.')
+    expect(html).toContain('Sites –')
     expect(html).toContain('Expertises')
+    expect(html).toContain('Services')
     expect(html).toContain('Découvrir')
     expect(html).toContain('Parler de votre projet')
     expect(html).toContain('Retour en haut')
   })
 
-  test('rend cinq expertises, le CTA intégré et aucun lien vide', async ({ page }) => {
+  test('rend cinq expertises, les CTAs et aucun lien vide', async ({ page }) => {
     await page.goto('/')
 
     const footer = page.locator(footerSelector)
     await expect(footer).toBeVisible()
     await expect(footer.locator('.site-footer__column-title')).toHaveText([
       'Expertises',
+      'Services',
       'Découvrir',
     ])
     await expect(footer.locator('a[href^="/expertises/"]')).toHaveCount(5)
 
-    const discover = footer.locator('.site-footer__column').nth(1)
-    await expect(discover.locator('a[href="/ressources"]')).toHaveCount(1)
-    const cta = discover.locator('.site-footer__cta[href="/contact"]')
+    const discoverCol = footer.locator('.site-footer__column').nth(2)
+    await expect(discoverCol.locator('a[href="/ressources"]')).toHaveCount(1)
+    const cta = discoverCol.locator('.site-footer__cta[href="/contact"]')
     await expect(cta).toHaveText(/Parler de votre projet/)
 
     await cta.focus()
@@ -51,7 +53,7 @@ test.describe('Footer Devzair', () => {
     await expect(footer.locator('a[href=""], a:not([href])')).toHaveCount(0)
   })
 
-  test('empile marque, Expertises et Découvrir sans débordement sur mobile', async ({
+  test('empile marque et colonnes de navigation sans débordement sur mobile', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -59,17 +61,17 @@ test.describe('Footer Devzair', () => {
 
     const footer = page.locator(footerSelector)
     const brand = await footer.locator('.site-footer__brand').boundingBox()
-    const expertise = await footer.locator('.site-footer__column').nth(0).boundingBox()
-    const discover = await footer.locator('.site-footer__column').nth(1).boundingBox()
+    const col0 = await footer.locator('.site-footer__column').nth(0).boundingBox()
+    const col1 = await footer.locator('.site-footer__column').nth(1).boundingBox()
     const legal = await footer.locator('.site-footer__legal').boundingBox()
 
     expect(brand).not.toBeNull()
-    expect(expertise).not.toBeNull()
-    expect(discover).not.toBeNull()
+    expect(col0).not.toBeNull()
+    expect(col1).not.toBeNull()
     expect(legal).not.toBeNull()
-    expect(brand!.y + brand!.height).toBeLessThan(expertise!.y)
-    expect(expertise!.y + expertise!.height).toBeLessThan(discover!.y)
-    expect(discover!.y + discover!.height).toBeLessThanOrEqual(legal!.y)
+    expect(brand!.y + brand!.height).toBeLessThan(col0!.y)
+    expect(col0!.y + col0!.height).toBeLessThan(col1!.y)
+    expect(col1!.y + col1!.height).toBeLessThanOrEqual(legal!.y)
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -77,7 +79,7 @@ test.describe('Footer Devzair', () => {
     expect(overflow).toBeLessThanOrEqual(1)
   })
 
-  test('conserve la marque au-dessus de deux colonnes lisibles sur tablette', async ({
+  test('conserve la marque au-dessus des trois colonnes lisibles sur tablette', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 768, height: 1024 })
@@ -85,19 +87,19 @@ test.describe('Footer Devzair', () => {
 
     const footer = page.locator(footerSelector)
     const brand = await footer.locator('.site-footer__brand').boundingBox()
-    const expertise = await footer.locator('.site-footer__column').nth(0).boundingBox()
-    const discover = await footer.locator('.site-footer__column').nth(1).boundingBox()
+    const col0 = await footer.locator('.site-footer__column').nth(0).boundingBox()
+    const col1 = await footer.locator('.site-footer__column').nth(1).boundingBox()
 
     expect(brand).not.toBeNull()
-    expect(expertise).not.toBeNull()
-    expect(discover).not.toBeNull()
-    expect(brand!.y + brand!.height).toBeLessThan(expertise!.y)
-    expect(Math.abs(expertise!.y - discover!.y)).toBeLessThanOrEqual(1)
-    expect(expertise!.x + expertise!.width).toBeLessThanOrEqual(discover!.x)
+    expect(col0).not.toBeNull()
+    expect(col1).not.toBeNull()
+    expect(brand!.y + brand!.height).toBeLessThan(col0!.y)
+    expect(Math.abs(col0!.y - col1!.y)).toBeLessThanOrEqual(1)
+    expect(col0!.x + col0!.width).toBeLessThanOrEqual(col1!.x)
   })
 
   for (const width of [1024, 1440]) {
-    test(`équilibre la marque et les deux colonnes de navigation à ${width}px`, async ({
+    test(`équilibre la marque et les trois colonnes de navigation à ${width}px`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 1000 })
@@ -105,17 +107,20 @@ test.describe('Footer Devzair', () => {
 
       const footer = page.locator(footerSelector)
       const brand = await footer.locator('.site-footer__brand').boundingBox()
-      const expertise = await footer.locator('.site-footer__column').nth(0).boundingBox()
-      const discover = await footer.locator('.site-footer__column').nth(1).boundingBox()
+      const col0 = await footer.locator('.site-footer__column').nth(0).boundingBox()
+      const col1 = await footer.locator('.site-footer__column').nth(1).boundingBox()
+      const col2 = await footer.locator('.site-footer__column').nth(2).boundingBox()
 
       expect(brand).not.toBeNull()
-      expect(expertise).not.toBeNull()
-      expect(discover).not.toBeNull()
-      expect(Math.abs(brand!.y - expertise!.y)).toBeLessThanOrEqual(1)
-      expect(expertise!.x).toBeGreaterThan(brand!.x + brand!.width)
-      expect(discover!.x).toBeGreaterThan(expertise!.x)
-      expect(brand!.width).toBeGreaterThan(expertise!.width)
-      expect(brand!.width).toBeGreaterThan(discover!.width)
+      expect(col0).not.toBeNull()
+      expect(col1).not.toBeNull()
+      expect(col2).not.toBeNull()
+      expect(Math.abs(brand!.y - col0!.y)).toBeLessThanOrEqual(1)
+      expect(col0!.x).toBeGreaterThan(brand!.x + brand!.width)
+      expect(col1!.x).toBeGreaterThan(col0!.x)
+      expect(col2!.x).toBeGreaterThan(col1!.x)
+      expect(brand!.width).toBeGreaterThan(col0!.width)
+      expect(brand!.width).toBeGreaterThan(col2!.width)
     })
   }
 
@@ -127,6 +132,7 @@ test.describe('Footer Devzair', () => {
 
     const transitionDuration = await page
       .locator(`${footerSelector} .site-footer__cta`)
+      .first()
       .evaluate((element) =>
         Number.parseFloat(getComputedStyle(element).transitionDuration),
       )
