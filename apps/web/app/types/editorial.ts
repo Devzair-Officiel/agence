@@ -24,14 +24,22 @@ export interface ArticleSeo {
 }
 
 /**
- * Image principale d'un article (Phase 9B).
+ * Variant WebP optimisé (card ≤768×432, hero ≤1600×900, ratio 16:9 exact).
+ * Absent si l'asset est antérieur à la Phase 9C (pipeline GD non encore exécuté).
+ */
+export interface ArticleHeroImageVariant {
+  url: string
+  width: number
+  height: number
+}
+
+/**
+ * Image principale d'un article (Phase 9B/9C).
  *
- * Le contrat côté API expose déjà l'URL absolue relative au domaine
- * (`/api/media/{uuid}`) — le front ne préfixe rien : Caddy sert
- * indifféremment `/api/*` et les pages Nuxt sur le même domaine, un
- * chemin absolu suffit. Les dimensions sont conservées telles quelles
- * pour permettre au template de poser `<img width height>` et éviter
- * tout Cumulative Layout Shift.
+ * `url` : original normalisé — fallback legacy.
+ * `card` / `hero` : variants WebP 16:9 générés par le pipeline d'upload (Phase 9C).
+ * Utiliser `card?.url ?? url` dans les listes, `hero?.url ?? url` sur le détail.
+ * Les dimensions exposées par le variant sont réelles (pas de valeurs par défaut hardcodées).
  */
 export interface ArticleHeroImage {
   url: string
@@ -39,6 +47,8 @@ export interface ArticleHeroImage {
   width: number
   height: number
   mimeType: string
+  card: ArticleHeroImageVariant | null
+  hero: ArticleHeroImageVariant | null
 }
 
 /** Résumé d'article servi dans les listes paginées. */

@@ -10,12 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Agrégat racine du domaine EditorialMedia (Phase 9A).
+ * Agrégat racine du domaine EditorialMedia (Phase 9A/9C).
  *
- * Représente uniquement le fichier téléversé + ses métadonnées serveur.
- * Aucune référence à un `Article`, aucune notion d'alt-text contextuel, de
- * caption ou de publication. Ces éléments appartiennent à l'usage du média
- * (Phase 9B) et ne doivent pas polluer cet agrégat.
+ * Représente le fichier téléversé + ses métadonnées serveur + les variants
+ * WebP générés à l'upload (Phase 9C).
  *
  * Invariants :
  * - `id` UUID v7 fourni par la couche applicative.
@@ -27,6 +25,9 @@ use Symfony\Component\Uid\Uuid;
  * - `sizeBytes` > 0.
  * - `sha256` : 64 caractères hex (imposé par `Sha256`).
  * - `createdAt` fourni par le `ClockInterface`.
+ * - Colonnes variant `card_*` / `hero_*` : toutes renseignées ou toutes NULL
+ *   (paire atomique garantie par la CHECK constraint en base et par le fait
+ *   que `attachVariants` est atomique sur l'objet).
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'editorial_media_asset')]
@@ -64,6 +65,40 @@ class MediaAsset
     #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    // ── Variants WebP (Phase 9C) ───────────────────────────────────────────
+    // NULL pour les assets uploadés avant Phase 9C (legacy).
+    // Paires atomiques : card_* toutes NULL ou toutes non-NULL, idem hero_*.
+
+    #[ORM\Column(name: 'card_storage_key', type: Types::STRING, length: 255, nullable: true)]
+    private ?string $cardStorageKey = null;
+
+    #[ORM\Column(name: 'card_width', type: Types::INTEGER, nullable: true)]
+    private ?int $cardWidth = null;
+
+    #[ORM\Column(name: 'card_height', type: Types::INTEGER, nullable: true)]
+    private ?int $cardHeight = null;
+
+    #[ORM\Column(name: 'card_size_bytes', type: Types::BIGINT, nullable: true)]
+    private ?int $cardSizeBytes = null;
+
+    #[ORM\Column(name: 'card_sha256', type: Types::STRING, length: 64, nullable: true)]
+    private ?string $cardSha256 = null;
+
+    #[ORM\Column(name: 'hero_storage_key', type: Types::STRING, length: 255, nullable: true)]
+    private ?string $heroStorageKey = null;
+
+    #[ORM\Column(name: 'hero_width', type: Types::INTEGER, nullable: true)]
+    private ?int $heroWidth = null;
+
+    #[ORM\Column(name: 'hero_height', type: Types::INTEGER, nullable: true)]
+    private ?int $heroHeight = null;
+
+    #[ORM\Column(name: 'hero_size_bytes', type: Types::BIGINT, nullable: true)]
+    private ?int $heroSizeBytes = null;
+
+    #[ORM\Column(name: 'hero_sha256', type: Types::STRING, length: 64, nullable: true)]
+    private ?string $heroSha256 = null;
+
     private function __construct(
         Uuid $id,
         StorageKey $storageKey,
@@ -99,6 +134,28 @@ class MediaAsset
         \DateTimeImmutable $now,
     ): self {
         return new self($id, $storageKey, $originalFilename, $mimeType, $sizeBytes, $dimensions, $sha256, $now);
+    }
+
+    /**
+     * Attache les deux variants WebP générés à l'upload (Phase 9C).
+     *
+     * Appelé par le handler AVANT le premier `flush` Doctrine, juste après que
+     * les trois fichiers ont été déplacés dans le stockage final. L'appel est
+     * atomique sur l'objet : soit les deux variants sont présents, soit aucun.
+     */
+    public function attachVariants(MediaVariantRecord $card, MediaVariantRecord $hero): void
+    {
+        $this->cardStorageKey  = $card->storageKey->toString();
+        $this->cardWidth       = $card->width;
+        $this->cardHeight      = $card->height;
+        $this->cardSizeBytes   = $card->sizeBytes;
+        $this->cardSha256      = $card->sha256->toString();
+
+        $this->heroStorageKey  = $hero->storageKey->toString();
+        $this->heroWidth       = $hero->width;
+        $this->heroHeight      = $hero->height;
+        $this->heroSizeBytes   = $hero->sizeBytes;
+        $this->heroSha256      = $hero->sha256->toString();
     }
 
     public function id(): Uuid
@@ -149,6 +206,67 @@ class MediaAsset
     public function createdAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    // ── Accesseurs variants (Phase 9C) ─────────────────────────────────────
+
+    public function cardStorageKey(): ?VariantStorageKey
+    {
+        return $this->cardStorageKey !== null
+            ? VariantStorageKey::fromString($this->cardStorageKey)
+            : null;
+    }
+
+    public function cardWidth(): ?int
+    {
+        return $this->cardWidth;
+    }
+
+    public function cardHeight(): ?int
+    {
+        return $this->cardHeight;
+    }
+
+    public function cardSizeBytes(): ?int
+    {
+        return $this->cardSizeBytes;
+    }
+
+    public function cardSha256(): ?Sha256
+    {
+        return $this->cardSha256 !== null ? Sha256::fromString($this->cardSha256) : null;
+    }
+
+    public function heroStorageKey(): ?VariantStorageKey
+    {
+        return $this->heroStorageKey !== null
+            ? VariantStorageKey::fromString($this->heroStorageKey)
+            : null;
+    }
+
+    public function heroWidth(): ?int
+    {
+        return $this->heroWidth;
+    }
+
+    public function heroHeight(): ?int
+    {
+        return $this->heroHeight;
+    }
+
+    public function heroSizeBytes(): ?int
+    {
+        return $this->heroSizeBytes;
+    }
+
+    public function heroSha256(): ?Sha256
+    {
+        return $this->heroSha256 !== null ? Sha256::fromString($this->heroSha256) : null;
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->cardStorageKey !== null && $this->heroStorageKey !== null;
     }
 
     /**

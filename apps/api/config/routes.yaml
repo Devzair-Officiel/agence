@@ -42,6 +42,16 @@ editorial_public_media:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+# Route publique de diffusion des variants WebP (Phase 9C).
+# `{variant}` contraint à `card|hero` : toute autre valeur → 404 routeur.
+editorial_public_media_variant:
+    path: /media/{id}/{variant}
+    controller: App\Editorial\Presentation\Http\GetPublicArticleMediaVariantController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+        variant: 'card|hero'
+
 editorial_automated_draft_create:
     path: /internal/editorial/articles/drafts
     controller: App\Editorial\Presentation\Http\Api\CreateAutomatedDraftArticleController::__invoke

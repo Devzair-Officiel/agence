@@ -92,10 +92,10 @@ useArticleSeo({ article: article.value, path: path.value })
         <figure class="resource-detail__hero-figure">
           <img
             class="resource-hero__image"
-            :src="article.heroImage.url"
+            :src="article.heroImage.hero?.url ?? article.heroImage.url"
             :alt="article.heroImage.alt"
-            :width="article.heroImage.width"
-            :height="article.heroImage.height"
+            :width="article.heroImage.hero?.width ?? article.heroImage.width"
+            :height="article.heroImage.hero?.height ?? article.heroImage.height"
             loading="eager"
             decoding="async"
             fetchpriority="high"

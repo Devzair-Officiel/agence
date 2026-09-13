@@ -12,6 +12,35 @@ const article: ArticleSummary = {
   expertiseIds: ["concevoir"],
   publishedAt: "2026-01-15T10:00:00Z",
   updatedAt: "2026-01-15T10:00:00Z",
+  heroImage: null,
+}
+
+const MEDIA_UUID = "0193b1a0-1c7d-7000-8000-000000000001"
+
+const articleWithHeroLegacy: ArticleSummary = {
+  ...article,
+  heroImage: {
+    url: `/api/media/${MEDIA_UUID}`,
+    alt: "Vignette test",
+    width: 1200,
+    height: 675,
+    mimeType: "image/webp",
+    card: null,
+    hero: null,
+  },
+}
+
+const articleWithHeroVariants: ArticleSummary = {
+  ...article,
+  heroImage: {
+    url: `/api/media/${MEDIA_UUID}`,
+    alt: "Vignette test",
+    width: 1200,
+    height: 675,
+    mimeType: "image/webp",
+    card: { url: `/api/media/${MEDIA_UUID}/card`, width: 768, height: 432 },
+    hero: { url: `/api/media/${MEDIA_UUID}/hero`, width: 1200, height: 675 },
+  },
 }
 
 describe("ResourceListItem", () => {
@@ -44,5 +73,27 @@ describe("ResourceListItem", () => {
   it("le titre est un H3 (la page porte H1+H2)", () => {
     const wrapper = mount(ResourceListItem, { props: { article } })
     expect(wrapper.find("h3").exists()).toBe(true)
+  })
+
+  it("n'affiche pas de figure si heroImage est null", () => {
+    const wrapper = mount(ResourceListItem, { props: { article } })
+    expect(wrapper.find("figure").exists()).toBe(false)
+  })
+
+  it("utilise l'url originale et les dimensions originales pour un asset legacy (card null)", () => {
+    const wrapper = mount(ResourceListItem, { props: { article: articleWithHeroLegacy } })
+    const img = wrapper.find("img")
+    expect(img.attributes("src")).toBe(`/api/media/${MEDIA_UUID}`)
+    expect(img.attributes("width")).toBe("1200")
+    expect(img.attributes("height")).toBe("675")
+    expect(img.attributes("alt")).toBe("Vignette test")
+  })
+
+  it("utilise l'url et les dimensions du variant card quand disponible", () => {
+    const wrapper = mount(ResourceListItem, { props: { article: articleWithHeroVariants } })
+    const img = wrapper.find("img")
+    expect(img.attributes("src")).toBe(`/api/media/${MEDIA_UUID}/card`)
+    expect(img.attributes("width")).toBe("768")
+    expect(img.attributes("height")).toBe("432")
   })
 })

@@ -17,6 +17,7 @@ import type {
   ArticleAuthor,
   ArticleDetail,
   ArticleHeroImage,
+  ArticleHeroImageVariant,
   ArticleListResult,
   ArticleSummary,
   AuthorType,
@@ -118,6 +119,28 @@ function requireStringArray(
  * sur la liste, on relaie sans en faire une frontière de confiance.
  */
 const HERO_IMAGE_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}$/u
+const HERO_IMAGE_VARIANT_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}\/(card|hero)$/u
+
+function mapVariant(
+  raw: unknown,
+  name: "card" | "hero",
+): ArticleHeroImageVariant | null {
+  if (raw === null || raw === undefined) return null
+  if (!isRecord(raw)) {
+    throw new EditorialContractError(`hero_image.${name} doit être un objet ou null.`)
+  }
+  const url = requireString(raw, "url", `hero_image.${name}.url`)
+  if (!HERO_IMAGE_VARIANT_URL_PATTERN.test(url)) {
+    throw new EditorialContractError(
+      `hero_image.${name}.url ne suit pas /api/media/{uuid}/${name} (${url}).`,
+    )
+  }
+  return {
+    url,
+    width: requireInteger(raw, "width", `hero_image.${name}.width`, 1),
+    height: requireInteger(raw, "height", `hero_image.${name}.height`, 1),
+  }
+}
 
 function mapHeroImage(raw: unknown): ArticleHeroImage | null {
   if (raw === null || raw === undefined) return null
@@ -136,6 +159,8 @@ function mapHeroImage(raw: unknown): ArticleHeroImage | null {
     width: requireInteger(raw, "width", "hero_image.width", 1),
     height: requireInteger(raw, "height", "hero_image.height", 1),
     mimeType: requireString(raw, "mime_type", "hero_image.mime_type"),
+    card: mapVariant(raw.card, "card"),
+    hero: mapVariant(raw.hero, "hero"),
   }
 }
 

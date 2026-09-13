@@ -33,6 +33,10 @@ final class MediaAssetDescriptor
         public readonly string $mimeType,
         public readonly int $sizeBytes,
         public readonly string $sha256,
+        /** Variant card WebP, null pour les assets legacy sans variants. */
+        public readonly ?MediaVariantDescriptor $card = null,
+        /** Variant hero WebP, null pour les assets legacy sans variants. */
+        public readonly ?MediaVariantDescriptor $hero = null,
     ) {
     }
 }

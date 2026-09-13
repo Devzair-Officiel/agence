@@ -7,6 +7,7 @@ namespace App\EditorialMedia\Infrastructure\Adapter;
 use App\Editorial\Application\Media\MediaAssetDescriptor;
 use App\Editorial\Application\Media\MediaAssetLookupInterface;
 use App\Editorial\Application\Media\MediaAssetReaderInterface;
+use App\Editorial\Application\Media\MediaVariantDescriptor;
 use App\EditorialMedia\Domain\MediaAsset;
 use App\EditorialMedia\Domain\MediaAssetRepositoryInterface;
 use Symfony\Component\Uid\Uuid;
@@ -50,6 +51,26 @@ final class EditorialMediaAssetLookup implements MediaAssetLookupInterface, Medi
             return null;
         }
 
+        $uuid = $asset->id()->toRfc4122();
+
+        $card = ($asset->cardWidth() !== null && $asset->cardHeight() !== null && $asset->cardSha256() !== null)
+            ? new MediaVariantDescriptor(
+                url: '/api/media/' . $uuid . '/card',
+                width: $asset->cardWidth(),
+                height: $asset->cardHeight(),
+                sha256: $asset->cardSha256()->toString(),
+            )
+            : null;
+
+        $hero = ($asset->heroWidth() !== null && $asset->heroHeight() !== null && $asset->heroSha256() !== null)
+            ? new MediaVariantDescriptor(
+                url: '/api/media/' . $uuid . '/hero',
+                width: $asset->heroWidth(),
+                height: $asset->heroHeight(),
+                sha256: $asset->heroSha256()->toString(),
+            )
+            : null;
+
         return new MediaAssetDescriptor(
             id: $asset->id(),
             width: $asset->width(),
@@ -57,6 +78,8 @@ final class EditorialMediaAssetLookup implements MediaAssetLookupInterface, Medi
             mimeType: $asset->mimeType()->mime(),
             sizeBytes: $asset->sizeBytes(),
             sha256: $asset->sha256()->toString(),
+            card: $card,
+            hero: $hero,
         );
     }
 }

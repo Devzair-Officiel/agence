@@ -248,3 +248,18 @@ services:
     App\EditorialMedia\Infrastructure\Adapter\EditorialMediaPublicStreamer:
         arguments:
             $editorialMediaLogger: '@logger'
+
+    # Phase 9C — variant WebP. Deux ports supplémentaires :
+    #   - `ImageVariantProcessorInterface` : GD génère les variants 16:9 ;
+    #   - `MediaVariantStorageInterface`   : `LocalMediaStorage` implémente
+    #     aussi ce port (ISP) en plus du port original.
+    # L'alias variant streamer branche le port `PublicMediaVariantStreamerInterface`
+    # sur l'adaptateur ACL du contexte `EditorialMedia`.
+    App\EditorialMedia\Application\Image\ImageVariantProcessorInterface:
+        alias: App\EditorialMedia\Infrastructure\Image\GdImageVariantProcessor
+
+    App\EditorialMedia\Application\Storage\MediaVariantStorageInterface:
+        alias: App\EditorialMedia\Infrastructure\Storage\LocalMediaStorage
+
+    App\Editorial\Application\Media\PublicMediaVariantStreamerInterface:
+        alias: App\EditorialMedia\Infrastructure\Adapter\EditorialMediaVariantStreamer

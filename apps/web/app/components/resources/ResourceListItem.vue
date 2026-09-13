@@ -55,10 +55,10 @@ const firstExpertiseLabel = computed(() => {
       <figure v-if="article.heroImage" class="resource-list-item__figure">
         <img
           class="resource-list-item__image"
-          :src="article.heroImage.url"
+          :src="article.heroImage.card?.url ?? article.heroImage.url"
           :alt="article.heroImage.alt"
-          :width="article.heroImage.width"
-          :height="article.heroImage.height"
+          :width="article.heroImage.card?.width ?? article.heroImage.width"
+          :height="article.heroImage.card?.height ?? article.heroImage.height"
           loading="lazy"
           decoding="async"
         >

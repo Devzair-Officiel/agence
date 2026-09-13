@@ -6,7 +6,9 @@ namespace App\EditorialMedia\Infrastructure\Storage;
 
 use App\EditorialMedia\Application\Exception\MediaStorageException;
 use App\EditorialMedia\Application\Storage\MediaStorageInterface;
+use App\EditorialMedia\Application\Storage\MediaVariantStorageInterface;
 use App\EditorialMedia\Domain\StorageKey;
+use App\EditorialMedia\Domain\VariantStorageKey;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -25,7 +27,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * Ne loggue rien ici : c'est la couche audit (contrôleur) qui décide de quoi
  * consigner et à quel niveau.
  */
-final class LocalMediaStorage implements MediaStorageInterface
+final class LocalMediaStorage implements MediaStorageInterface, MediaVariantStorageInterface
 {
     private readonly string $normalizedRoot;
 
@@ -104,6 +106,70 @@ final class LocalMediaStorage implements MediaStorageInterface
         }
     }
 
+    // ── MediaVariantStorageInterface ──────────────────────────────────────
+
+    public function moveVariantInto(string $temporaryPath, VariantStorageKey $destination): void
+    {
+        $absolute = $this->resolveVariantInsideRoot($destination);
+        $parent = \dirname($absolute);
+
+        try {
+            $this->filesystem->mkdir($parent, 0750);
+        } catch (\Throwable) {
+            throw MediaStorageException::writeFailed();
+        }
+
+        if (!@rename($temporaryPath, $absolute)) {
+            throw MediaStorageException::writeFailed();
+        }
+        @chmod($absolute, 0640);
+    }
+
+    public function openVariantReadStream(VariantStorageKey $key)
+    {
+        $absolute = $this->resolveVariantInsideRoot($key);
+
+        if (!is_file($absolute)) {
+            throw MediaStorageException::readFailed();
+        }
+
+        $handle = @fopen($absolute, 'rb');
+        if ($handle === false) {
+            throw MediaStorageException::readFailed();
+        }
+
+        return $handle;
+    }
+
+    public function variantExists(VariantStorageKey $key): bool
+    {
+        try {
+            $absolute = $this->resolveVariantInsideRoot($key);
+        } catch (MediaStorageException) {
+            return false;
+        }
+
+        return is_file($absolute);
+    }
+
+    public function deleteVariant(VariantStorageKey $key): void
+    {
+        $absolute = $this->resolveVariantInsideRoot($key);
+
+        if (is_file($absolute) && !@unlink($absolute)) {
+            throw MediaStorageException::writeFailed();
+        }
+
+        $parent = \dirname($absolute);
+        if (
+            $parent !== $this->normalizedRoot
+            && is_dir($parent)
+            && self::isDirectoryEmpty($parent)
+        ) {
+            @rmdir($parent);
+        }
+    }
+
     /**
      * Défense en profondeur : la clé de stockage est déjà normalisée par le
      * VO `StorageKey` (regex `{uuid}/original.{ext}`), qui exclut toute
@@ -111,6 +177,21 @@ final class LocalMediaStorage implements MediaStorageInterface
      * dont la concaténation ne resterait pas préfixée par la racine.
      */
     private function resolveInsideRoot(StorageKey $key): string
+    {
+        $raw = $key->toString();
+        if (str_contains($raw, '..') || str_contains($raw, "\0")) {
+            throw MediaStorageException::writeFailed();
+        }
+
+        $absolute = $this->normalizedRoot . \DIRECTORY_SEPARATOR . $raw;
+        if (!str_starts_with($absolute, $this->normalizedRoot . \DIRECTORY_SEPARATOR)) {
+            throw MediaStorageException::writeFailed();
+        }
+
+        return $absolute;
+    }
+
+    private function resolveVariantInsideRoot(VariantStorageKey $key): string
     {
         $raw = $key->toString();
         if (str_contains($raw, '..') || str_contains($raw, "\0")) {

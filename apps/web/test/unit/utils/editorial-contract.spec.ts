@@ -22,6 +22,20 @@ const VALID_HERO_IMAGE = {
   width: 1600,
   height: 900,
   mime_type: "image/jpeg",
+  card: null,
+  hero: null,
+}
+
+const VALID_CARD_VARIANT = {
+  url: "/api/media/0193b1a0-1c7d-7000-8000-000000000001/card",
+  width: 768,
+  height: 432,
+}
+
+const VALID_HERO_VARIANT = {
+  url: "/api/media/0193b1a0-1c7d-7000-8000-000000000001/hero",
+  width: 1600,
+  height: 900,
 }
 
 function summary(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -124,7 +138,7 @@ describe("mapping hero_image (Phase 9B)", () => {
     expect(result.heroImage).toBeNull()
   })
 
-  it("mappe hero_image complet en heroImage camelCase avec dimensions", () => {
+  it("mappe hero_image complet en heroImage camelCase avec dimensions (variants null pour legacy)", () => {
     const result = mapArticleDetailResponse(detail({ hero_image: VALID_HERO_IMAGE }))
     expect(result.heroImage).toEqual({
       url: "/api/media/0193b1a0-1c7d-7000-8000-000000000001",
@@ -132,6 +146,8 @@ describe("mapping hero_image (Phase 9B)", () => {
       width: 1600,
       height: 900,
       mimeType: "image/jpeg",
+      card: null,
+      hero: null,
     })
   })
 
@@ -170,5 +186,53 @@ describe("mapping hero_image (Phase 9B)", () => {
       hero_image: { ...VALID_HERO_IMAGE, alt: "" },
     })
     expect(() => mapArticleDetailResponse(raw)).toThrow(/alt/)
+  })
+})
+
+describe("mapping hero_image variants WebP (Phase 9C)", () => {
+  it("mappe card et hero quand ils sont présents", () => {
+    const raw = detail({
+      hero_image: {
+        ...VALID_HERO_IMAGE,
+        card: VALID_CARD_VARIANT,
+        hero: VALID_HERO_VARIANT,
+      },
+    })
+    const result = mapArticleDetailResponse(raw)
+    expect(result.heroImage?.card).toEqual({ url: VALID_CARD_VARIANT.url, width: 768, height: 432 })
+    expect(result.heroImage?.hero).toEqual({ url: VALID_HERO_VARIANT.url, width: 1600, height: 900 })
+  })
+
+  it("accepte card null et hero null (asset legacy sans variants)", () => {
+    const result = mapArticleDetailResponse(detail({ hero_image: { ...VALID_HERO_IMAGE, card: null, hero: null } }))
+    expect(result.heroImage?.card).toBeNull()
+    expect(result.heroImage?.hero).toBeNull()
+  })
+
+  it("accepte hero_image sans clé card/hero (backend legacy antérieur 9C)", () => {
+    const { card: _c, hero: _h, ...legacyImage } = VALID_HERO_IMAGE
+    const result = mapArticleDetailResponse(detail({ hero_image: legacyImage }))
+    expect(result.heroImage?.card).toBeNull()
+    expect(result.heroImage?.hero).toBeNull()
+  })
+
+  it("refuse une url de variant hors pattern /api/media/{uuid}/card|hero", () => {
+    const raw = detail({
+      hero_image: {
+        ...VALID_HERO_IMAGE,
+        card: { ...VALID_CARD_VARIANT, url: "https://cdn.example.com/card.webp" },
+      },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/hero_image\.card\.url/)
+  })
+
+  it("refuse une largeur de variant non entière", () => {
+    const raw = detail({
+      hero_image: {
+        ...VALID_HERO_IMAGE,
+        card: { ...VALID_CARD_VARIANT, width: 768.5 },
+      },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/width/)
   })
 })
