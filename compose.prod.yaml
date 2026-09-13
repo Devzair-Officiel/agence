@@ -55,7 +55,7 @@ services:
       NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-/api}
       # SSR interne : Nitro appelle Symfony sans passer par le Caddy global.
       # Symfony expose ses routes sans le préfixe /api (strip_prefix côté Caddy).
-      NUXT_EDITORIAL_API_BASE_URL: ${NUXT_EDITORIAL_API_BASE_URL:-http://api:8000}
+      NUXT_EDITORIAL_API_BASE_URL: ${NUXT_EDITORIAL_API_BASE_URL:-http://devzair-agence-api:8000}
       NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${NUXT_PUBLIC_TURNSTILE_SITE_KEY}
       NUXT_PUBLIC_TURNSTILE_ENABLED: ${NUXT_PUBLIC_TURNSTILE_ENABLED:-true}
     networks:
