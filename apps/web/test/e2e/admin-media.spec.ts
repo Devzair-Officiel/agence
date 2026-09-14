@@ -25,12 +25,13 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 // `scripts/e2e-admin-media.sh`. Toute divergence casse le nettoyage.
 const FILENAME_PREFIX = 'e2e-9a-'
 
-// PNG 4×4 pixels réellement produit par GD (`imagecreatetruecolor` +
-// `imagepng`) puis figé en hexadécimal.
+// PNG 32×18 pixels (ratio 16:9) — taille minimale pour que GdImageVariantProcessor
+// puisse générer les variants card et hero (Phase 9C exige k≥1, ce qui requiert
+// au moins 16×9 px utiles après crop). Généré par Python `struct`+`zlib`, fond blanc.
 const TINY_PNG = Buffer.from(
-  '89504e470d0a1a0a0000000d494844520000000400000004080200000026930929' +
-    '000000097048597300000ec400000ec401952b0e1b0000001449444154089963e412' +
-    '91638001260624809b03000ca80044af72a26c0000000049454e44ae426082',
+  '89504e470d0a1a0a0000000d4948445200000020000000120802000000b5aa4b05' +
+    '0000001d4944415478da63f84f63c0306ac1a805a3168c5a306ac1a805f4b00000' +
+    '1a13b99bc3e48cb20000000049454e44ae426082',
   'hex',
 )
 

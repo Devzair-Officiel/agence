@@ -53,14 +53,14 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const SLUG_PREFIX = 'e2e-9b-'
 const FILENAME_PREFIX = 'e2e-9b-'
 
-// PNG 4×4 pixels réellement produit par GD, figé en hexadécimal. Le pipeline
-// d'upload le décode avec `imagecreatefrompng` : générer le fixture avec la
-// même bibliothèque garantit qu'il passe la validation formelle. ~100 octets,
-// largement en-deçà des bornes (8 Mio, 8000×8000 px).
+// PNG 32×18 pixels (ratio 16:9) — Phase 9C exige k≥1 pour générer les variants
+// card et hero (GdImageVariantProcessor lève InvalidImageException si k<1).
+// Un 4×4 produisait k=0 et faisait échouer l'upload avec 422. Fond blanc, généré
+// par Python `struct`+`zlib`. Largement en-deçà des bornes (8 Mio, 8000×8000 px).
 const TINY_PNG = Buffer.from(
-  '89504e470d0a1a0a0000000d494844520000000400000004080200000026930929' +
-    '000000097048597300000ec400000ec401952b0e1b0000001449444154089963e412' +
-    '91638001260624809b03000ca80044af72a26c0000000049454e44ae426082',
+  '89504e470d0a1a0a0000000d4948445200000020000000120802000000b5aa4b05' +
+    '0000001d4944415478da63f84f63c0306ac1a805a3168c5a306ac1a805f4b00000' +
+    '1a13b99bc3e48cb20000000049454e44ae426082',
   'hex',
 )
 
@@ -273,8 +273,8 @@ test.describe.serial('Phase 9B — cycle complet image principale', () => {
     // LCP-critical → eager + fetchpriority=high (voir ResourceHero.vue).
     await expect(heroImg).toHaveAttribute('loading', 'eager')
     await expect(heroImg).toHaveAttribute('fetchpriority', 'high')
-    // src pointe sur /media/{uuid} (route publique).
-    await expect(heroImg).toHaveAttribute('src', new RegExp(`/media/${mediaUuid}$`))
+    // src pointe sur /media/{uuid}/hero (variant Phase 9C) ou /media/{uuid} (fallback).
+    await expect(heroImg).toHaveAttribute('src', new RegExp(`/media/${mediaUuid}(/hero)?$`))
 
     // Scan Axe sur la page publique avec image.
     await scanAxe(page, `/ressources/${slug} (avec hero image)`)
