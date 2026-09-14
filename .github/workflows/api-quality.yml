@@ -54,12 +54,15 @@ jobs:
           --health-retries 10
 
     env:
-      # APP_ENV=test est indispensable : `composer install` déclenche les
-      # auto-scripts (cache:clear) qui ont besoin d'APP_SECRET pour compiler
-      # le conteneur Symfony. APP_SECRET est fourni par .env.test.
+      # APP_ENV=test force la cascade Symfony vers .env.test.
       APP_ENV: test
-      # Le service Postgres du workflow est exposé sur 127.0.0.1:5432.
+      # Le service Postgres du workflow est exposé sur 127.0.0.1:5432 (pas
+      # de résolution DNS "postgres" en dehors de Docker). Cette valeur écrase
+      # DATABASE_URL définie dans .env.test (qui pointe vers le hostname Docker).
       DATABASE_URL: "postgresql://devzair:devzair_local_password@127.0.0.1:5432/devzair_test?serverVersion=17&charset=utf8"
+      # EDITORIAL_MEDIA_STORAGE_DIR écrase la valeur de .env.test (/app/...) qui
+      # n'est pas accessible sur le runner GitHub (pas de conteneur Docker).
+      EDITORIAL_MEDIA_STORAGE_DIR: "${{ github.workspace }}/apps/api/var/test-storage/editorial-media"
 
     steps:
       - name: Checkout
@@ -75,6 +78,48 @@ jobs:
 
       - name: Verify GD + WebP support
         run: php -r "if (!extension_loaded('gd') || !function_exists('imagewebp')) { echo 'GD/WebP manquant'; exit(1); }"
+
+      - name: Prepare Symfony test environment
+        # apps/api/.env et apps/api/.env.test sont gitignorés.
+        # Symfony Runtime (autoload_runtime.php) appelle loadEnv('.env') qui
+        # lève PathException si le fichier n'existe pas — avant même d'exécuter
+        # composer install. On recrée les deux fichiers ici avec des valeurs
+        # de test non-sensibles. Les variables critiques (DATABASE_URL,
+        # EDITORIAL_MEDIA_STORAGE_DIR) sont surchargées par le job env ci-dessus.
+        working-directory: apps/api
+        run: |
+          echo "APP_ENV=dev" > .env
+          cat > .env.test << 'ENVEOF'
+          APP_ENV=test
+          APP_DEBUG=0
+          APP_SECRET=test_secret_static_for_deterministic_hashing
+          MAILER_DSN=null://null
+          CONTACT_FROM_EMAIL=no-reply@devzair.test
+          CONTACT_FROM_NAME="Devzair — Site"
+          CONTACT_RECIPIENT=contact@devzair.test
+          TURNSTILE_ENABLED=false
+          TURNSTILE_SECRET=
+          CONTACT_RATE_LIMIT=100
+          CONTACT_RATE_INTERVAL="1 hour"
+          CONTACT_ORIGIN_ALLOWLIST=http://localhost:3001,http://api.test
+          TRUSTED_PROXIES=127.0.0.1,REMOTE_ADDR
+          TRUSTED_HEADERS=x-forwarded-for,x-forwarded-proto,x-forwarded-host
+          DATABASE_URL="postgresql://devzair:devzair_local_password@postgres:5432/devzair_test?serverVersion=17&charset=utf8"
+          ADMIN_SESSION_LIFETIME=28800
+          ADMIN_LOGIN_MAX_ATTEMPTS=5
+          ADMIN_LOGIN_INTERVAL="15 minutes"
+          EDITORIAL_MEDIA_STORAGE_DIR=/app/var/test-storage/editorial-media
+          ADMIN_MEDIA_UPLOAD_LIMIT=1000
+          ADMIN_MEDIA_UPLOAD_INTERVAL="1 hour"
+          ESTIMATE_RATE_LIMIT=5
+          ESTIMATE_RATE_INTERVAL="1 hour"
+          ESTIMATE_LEAD_RATE_LIMIT=3
+          ESTIMATE_LEAD_RATE_INTERVAL="1 hour"
+          ESTIMATE_PARTNERSHIP_RATE_LIMIT=3
+          ESTIMATE_PARTNERSHIP_RATE_INTERVAL="1 hour"
+          APP_ADMIN_BASE_URL=http://localhost:8000
+          N8N_EDITORIAL_TOKEN=test_n8n_token_static_for_deterministic_auth
+          ENVEOF
 
       - name: Get Composer cache directory
         id: composer-cache

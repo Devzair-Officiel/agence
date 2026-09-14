@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\EditorialMedia\Presentation\Console;
 
 use App\EditorialMedia\Domain\MediaAsset;
+use App\EditorialMedia\Domain\MediaAssetRepositoryInterface;
 use App\EditorialMedia\Presentation\Console\CleanupOrphanMediaCommand;
 use App\Tests\EditorialMedia\Support\FakeMediaStorage;
 use App\Tests\EditorialMedia\Support\InMemoryMediaAssetRepository;
@@ -28,7 +29,7 @@ use Symfony\Component\Uid\Uuid;
 final class CleanupOrphanMediaCommandTest extends TestCase
 {
     private function makeCommand(
-        InMemoryMediaAssetRepository $repo,
+        MediaAssetRepositoryInterface $repo,
         FakeMediaStorage $storage,
         Connection $connection,
         EntityManagerInterface $em,
@@ -206,26 +207,79 @@ final class CleanupOrphanMediaCommandTest extends TestCase
         self::assertSame(0, $storage->deleteCallCount);
     }
 
-    public function testAssetAlreadyDeletedBetweenSnapshotAndProcessingIsSkipped(): void
+    /**
+     * Régressi­on : UUID présent dans le snapshot mais `findById()` retourne null
+     * (suppression concurrente après `listAllIds()` et avant le traitement).
+     *
+     * Couvre la ligne `if ($asset === null) { continue; }` dans `execute()`.
+     * L'implémentation utilise un wrapper anonyme : listAllIds() inclut l'UUID
+     * fantôme, mais findById() retourne null pour lui — sans modifier le repo.
+     */
+    public function testAssetDeletedAfterSnapshotIsSkippedWithoutStorageDeletion(): void
     {
-        $repo    = new InMemoryMediaAssetRepository();
-        $storage = new FakeMediaStorage();
+        $innerRepo = new InMemoryMediaAssetRepository();
+        $storage   = new FakeMediaStorage();
 
-        $asset = (new MediaAssetBuilder())->build();
-        $repo->save($asset);
+        $ghost = (new MediaAssetBuilder())->build();
+        $innerRepo->save($ghost);
+        $ghostId = $ghost->id();
 
-        // Simule un asset supprimé entre le snapshot et le traitement
-        // en le retirant du repo AVANT que la commande ne l'inspecte.
-        $orphanIds = [$asset->id()->toRfc4122()];
-        $repo->remove($asset->id());
+        // Wrapper : listAllIds() expose $ghostId, findById() retourne null pour lui.
+        // Simule exactement la suppression concurrente entre snapshot et traitement.
+        $repo = new class($innerRepo, $ghostId) implements MediaAssetRepositoryInterface {
+            public function __construct(
+                private readonly InMemoryMediaAssetRepository $inner,
+                private readonly Uuid $ghostId,
+            ) {
+            }
 
-        $conn = $this->connectionMock($orphanIds);
-        $em   = $this->emMock($repo);
+            public function save(MediaAsset $asset): void
+            {
+                $this->inner->save($asset);
+            }
+
+            public function findById(Uuid $id): ?MediaAsset
+            {
+                // L'UUID fantôme "n'existe plus" — comme s'il avait été supprimé
+                // entre le snapshot et ce findById.
+                return $id->toRfc4122() === $this->ghostId->toRfc4122()
+                    ? null
+                    : $this->inner->findById($id);
+            }
+
+            public function getById(Uuid $id): MediaAsset
+            {
+                return $this->inner->getById($id);
+            }
+
+            public function list(int $page, int $perPage): array
+            {
+                return $this->inner->list($page, $perPage);
+            }
+
+            public function count(): int
+            {
+                return $this->inner->count();
+            }
+
+            public function listAllIds(): array
+            {
+                // Le snapshot inclut bien l'UUID fantôme (il était présent lors du scan).
+                return $this->inner->listAllIds();
+            }
+        };
+
+        $conn = $this->connectionMock([$ghostId->toRfc4122()]);
+        $em   = $this->emMock($innerRepo);
 
         $tester = new CommandTester($this->makeCommand($repo, $storage, $conn, $em));
         $exit   = $tester->execute([]);
 
         self::assertSame(Command::SUCCESS, $exit);
-        self::assertSame(0, $storage->deleteCallCount, 'Un asset disparu entre snapshot et traitement doit être ignoré.');
+        self::assertSame(
+            0,
+            $storage->deleteCallCount,
+            'Un asset retourné null par findById (suppression concurrente post-snapshot) ne doit déclencher aucune suppression fichier.',
+        );
     }
 }
