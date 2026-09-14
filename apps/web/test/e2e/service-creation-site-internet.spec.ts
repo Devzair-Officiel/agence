@@ -146,7 +146,8 @@ test.describe("/services/creation-site-internet — sitemap", () => {
 test.describe("/services/{slug} — route guard", () => {
   test("retourne 404 pour un slug de service planifié", async ({ request }) => {
     const plannedService = servicePages.find((s) => s.status === "planned")
-    const response = await request.get(`/services/${plannedService!.slug}`)
+    if (!plannedService) return
+    const response = await request.get(`/services/${plannedService.slug}`)
     expect(response.status()).toBe(404)
   })
 

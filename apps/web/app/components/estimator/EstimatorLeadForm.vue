@@ -72,6 +72,9 @@ async function handleSubmit(): Promise<void> {
   if (leadStatus.value === "success") {
     await nextTick()
     successRef.value?.focus()
+    // Délai pour laisser l'utilisateur lire le message de confirmation
+    // avant que le formulaire soit démonté par le parent (@submitted).
+    await new Promise<void>((resolve) => setTimeout(resolve, 2000))
     emit("submitted", {
       name:    fields.name.trim(),
       email:   fields.email.trim(),

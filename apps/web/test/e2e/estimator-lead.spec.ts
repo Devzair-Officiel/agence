@@ -116,7 +116,7 @@ test("Résultat toujours visible après ouverture du formulaire", async ({ page 
   await page.getByRole("button", { name: /Parler de mon projet/i }).click()
 
   // Le résultat doit toujours être visible
-  await expect(page.getByText("estimation")).toBeVisible()
+  await expect(page.locator(".result__heading")).toBeVisible()
   // Le formulaire est aussi visible
   await expect(page.locator('input[name="name"]')).toBeVisible()
 })

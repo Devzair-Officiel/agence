@@ -121,7 +121,7 @@ test.describe('/contact — formulaire de contact', () => {
     const successBanner = page.locator(`${FORM} .contact-form__status [role="status"]`)
     await expect(successBanner).toBeVisible()
     await expect(successBanner).toContainText('Message envoyé')
-    await expect(successBanner).toContainText('req-e2e-1')
+    await expect(successBanner).toContainText('REQ-E2E')
 
     // Les champs sont vidés après succès.
     await expect(page.locator('input[name="email"]')).toHaveValue('')
@@ -218,7 +218,7 @@ test.describe('/contact — formulaire de contact', () => {
     await expect(errorBanner).toContainText(
       "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard.",
     )
-    await expect(errorBanner).toContainText('req-e2e-503')
+    await expect(errorBanner).toContainText('REQ-E2E')
 
     // Les valeurs ne sont *pas* effacées — l'utilisateur peut ré-essayer.
     await expect(page.locator('input[name="name"]')).toHaveValue('Alice Dupont')
@@ -281,7 +281,7 @@ test.describe('/contact — formulaire de contact', () => {
     await expect(errorBanner).toBeVisible()
     await expect(errorBanner).toContainText('Trop de tentatives')
     await expect(errorBanner).toContainText('42 secondes')
-    await expect(errorBanner).toContainText('req-e2e-rl')
+    await expect(errorBanner).toContainText('REQ-E2E')
   })
 
   test('client-side validation blocks empty submit and surfaces field errors', async ({

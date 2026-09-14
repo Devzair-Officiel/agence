@@ -198,7 +198,7 @@ test("Soumission valide → message de confirmation (no commit price fields)", a
   await page.getByRole("button", { name: /partenariat/i }).click()
 
   await fillPartnershipForm(page)
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
 
   await expect(page.getByRole("status")).toBeVisible()
   await expect(page.getByText(/transmise/i)).toBeVisible()
@@ -212,7 +212,7 @@ test("Soumission valide human_scoping → confirmation", async ({ page }) => {
   await page.getByRole("button", { name: /partenariat/i }).click()
 
   await fillPartnershipForm(page)
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
 
   await expect(page.getByRole("status")).toBeVisible()
 })
@@ -236,7 +236,7 @@ test("Payload envoyé ne contient pas de champs de prix frontend", async ({ page
   await page.getByRole("button", { name: /Voir mon estimation/i }).click()
   await page.getByRole("button", { name: /partenariat/i }).click()
   await fillPartnershipForm(page)
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
 
   await expect(page.getByRole("status")).toBeVisible()
 
@@ -256,7 +256,7 @@ test("Nom manquant → erreur de validation inline", async ({ page }) => {
   await page.getByRole("button", { name: /Voir mon estimation/i }).click()
   await page.getByRole("button", { name: /partenariat/i }).click()
 
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
   await expect(page.locator('[aria-invalid="true"]')).toBeVisible()
   await expect(page.getByText(/requis/i)).toBeVisible()
 })
@@ -268,7 +268,7 @@ test("Email invalide → erreur inline", async ({ page }) => {
   await page.getByRole("button", { name: /partenariat/i }).click()
 
   await page.locator('input[name="name"]').fill("Jean Dupont")
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
   await expect(page.getByText(/e-mail valide/i)).toBeVisible()
 })
 
@@ -280,7 +280,7 @@ test("Type de partenariat manquant → erreur inline", async ({ page }) => {
 
   await page.locator('input[name="name"]').fill("Jean Dupont")
   await page.locator('input[name="email"]').fill("jean@example.com")
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
   await expect(page.getByText(/nature de proposition/i)).toBeVisible()
 })
 
@@ -294,7 +294,7 @@ test("Erreur 429 → message rate limited dans le formulaire", async ({ page }) 
   await page.getByRole("button", { name: /partenariat/i }).click()
 
   await fillPartnershipForm(page)
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
 
   await expect(page.getByRole("alert")).toBeVisible()
   await expect(page.getByText(/patienter/i)).toBeVisible()
@@ -315,7 +315,7 @@ test("Honeypot rempli → 202 silencieux → succès UX invisible", async ({ pag
     const hp = document.querySelector<HTMLInputElement>('input[name="website"]')
     if (hp) hp.value = "https://bot.example"
   })
-  await page.getByRole("button", { name: /Envoyer ma proposition/i }).click()
+  await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
 
   // UX identique à un succès — aucun message d'erreur "bot"
   await expect(page.getByRole("status")).toBeVisible()

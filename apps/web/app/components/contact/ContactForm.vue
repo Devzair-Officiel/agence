@@ -500,10 +500,10 @@ async function onSubmit(): Promise<void> {
   font-size: 0.75rem;
   font-weight: var(--font-weight-body-strong);
   letter-spacing: 0.06em;
-  color: var(--color-devzair-blue, #2e86d9);
+  color: var(--color-petrol, #0c5b57);
   padding: 0.1875rem 0.4375rem;
   border-radius: var(--radius-sm);
-  background: rgba(46, 134, 217, 0.1);
+  background: rgba(12, 91, 87, 0.1);
 }
 
 .contact-form__grid {

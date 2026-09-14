@@ -154,8 +154,7 @@ test.describe('/ (home)', () => {
     const twitterCard = await page
       .locator('meta[name="twitter:card"]')
       .getAttribute('content')
-    // Pas de logo dispo aujourd'hui → summary (pas summary_large_image).
-    expect(twitterCard).toBe('summary')
+    expect(twitterCard).toBe('summary_large_image')
   })
 
   test('respects prefers-reduced-motion by showing the final state at once', async ({

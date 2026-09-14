@@ -70,7 +70,7 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     // dépendre d'un détail d'encodage.
     expect(body).toMatch(/L(?:'|&#39;)agence/)
     expect(body).toContain(
-      "Une équipe réduite, un lien direct, un engagement dans la durée avec chaque entreprise accompagnée.",
+      "Un interlocuteur direct, un engagement dans la durée avec chaque entreprise accompagnée.",
     )
   })
 
@@ -97,10 +97,10 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
   })
 
-  test("ne contient aucun lien vers `/expertises/{slug}` (Phase 7B)", async ({ page }) => {
+  test("contient des liens vers les pages expertises individuelles", async ({ page }) => {
     await page.goto("/agence")
-    const badLinks = await page.locator('a[href^="/expertises/"]').count()
-    expect(badLinks).toBe(0)
+    const expertiseLinks = await page.locator('a[href^="/expertises/"]').count()
+    expect(expertiseLinks).toBeGreaterThan(0)
   })
 
   test("respecte la responsivité 390 / 768 / 1440 sans débordement", async ({ page }) => {
@@ -291,7 +291,7 @@ test.describe("Maillage inter-pages institutionnelles", () => {
     const nav = page.locator(".site-header__nav")
     await expect(nav.locator('a[href="/agence"]').first()).toBeVisible()
     await expect(nav.locator('a[href="/expertises"]').first()).toBeVisible()
-    await expect(nav.locator('a[href="/#realisations"]').first()).toBeVisible()
+    await expect(nav.locator('a[href="/realisations"]').first()).toBeVisible()
     // Le CTA « Parler de votre projet » reste présent et pointe sur /contact.
     await expect(
       nav.locator('a.base-button[href="/contact"]').first(),

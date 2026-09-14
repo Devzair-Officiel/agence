@@ -204,15 +204,15 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A / R5)', () => {
     // Filename affiché dans la carte
     await expect(card.locator('.admin-media-card__filename')).toContainText(filename)
 
-    // Dimensions présentes (TINY_PNG = 4×4)
-    await expect(card.locator('.admin-media-card__dimensions')).toBeVisible()
+    // Métadonnées présentes dans la zone __meta (dimensions, type, poids, date)
+    const meta = card.locator('.admin-media-card__meta')
+    await expect(meta).toBeVisible()
+    await expect(meta).toContainText('px')
+    await expect(meta).toContainText('PNG')
+    await expect(meta).toContainText('Kio')
 
-    // Type humain (PNG) et poids présents
-    await expect(card.locator('.admin-media-card__type-weight')).toContainText('PNG')
-    await expect(card.locator('.admin-media-card__type-weight')).toContainText('Kio')
-
-    // Date présente (attribut datetime ISO-8601)
-    const timeEl = card.locator('.admin-media-card__date')
+    // Date présente avec attribut datetime ISO-8601
+    const timeEl = card.locator('.admin-media-card__meta time')
     await expect(timeEl).toBeVisible()
     const datetime = await timeEl.getAttribute('datetime')
     expect(datetime, 'datetime ISO-8601').toMatch(/^\d{4}-\d{2}-\d{2}T/)

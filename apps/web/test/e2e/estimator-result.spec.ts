@@ -121,7 +121,7 @@ test.describe("Déclenchement du calcul", () => {
     })
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     expect(requestBody).toBeDefined()
   })
 
@@ -141,7 +141,7 @@ test.describe("Déclenchement du calcul", () => {
     // Saisir une note sur l'étape features si champ présent
     // (on ne garantit pas l'existence du champ — on vérifie juste le payload)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     expect(requestBody["additionalFeatureNote"]).toBeUndefined()
     expect(requestBody["additional_feature_note"]).toBeUndefined()
   })
@@ -169,7 +169,7 @@ test.describe("État de chargement", () => {
     })
 
     await completeVitrineToLastStep(page)
-    void page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
 
     // Pendant le chargement : bouton désactivé
     await expect(
@@ -191,7 +191,7 @@ test.describe("Écran résultat — estimated", () => {
   test("affiche la fourchette principale en euros", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("900")
     expect(text).toContain("€")
@@ -201,7 +201,7 @@ test.describe("Écran résultat — estimated", () => {
   test("affiche 'Investissement initial' avec les line items", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("Investissement initial")
     expect(text).toContain("Conception et développement")
@@ -212,7 +212,7 @@ test.describe("Écran résultat — estimated", () => {
   }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("Accompagnement après lancement")
     expect(text).toContain("Maintenance technique")
@@ -222,7 +222,7 @@ test.describe("Écran résultat — estimated", () => {
   test("affiche les assumptions avec texte éditorial humain", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("scope_to_confirm")
     expect(text).toContain("précisé")
@@ -231,7 +231,7 @@ test.describe("Écran résultat — estimated", () => {
   test("le type recommandé s'affiche en français", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("vitrinesite")
     expect(text).toContain("vitrine")
@@ -240,7 +240,7 @@ test.describe("Écran résultat — estimated", () => {
   test("n'affiche pas pricing_version à l'utilisateur", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("2026-v1")
   })
@@ -248,7 +248,7 @@ test.describe("Écran résultat — estimated", () => {
   test("mentionne 'non contractuelle'", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = (await page.locator("body").textContent())!.toLowerCase()
     expect(text).toContain("non contractuelle")
   })
@@ -256,14 +256,14 @@ test.describe("Écran résultat — estimated", () => {
   test("la progression est masquée dans l'écran résultat", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     await expect(page.getByRole("progressbar")).not.toBeVisible()
   })
 
   test("Axe WCAG 2.2 AA sur l'écran résultat estimated", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze()
@@ -278,7 +278,7 @@ test.describe("Écran résultat — estimated", () => {
     await mockEstimateResponse(page, MOCK_ESTIMATED)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("€")
   })
@@ -308,7 +308,7 @@ test.describe("Note complémentaire", () => {
       await page.getByRole("button", { name: /Continuer/i }).click()
     }
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     // La note doit apparaître visuellement dans le résultat
     // (uniquement si le champ existait et a été rempli — test conditionnel)
   })
@@ -326,7 +326,7 @@ test.describe("Écran résultat — human_scoping_required", () => {
   }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("cadrage")
     // La fourchette fallback (900 € – 4 000 €) ne doit pas s'afficher
@@ -337,7 +337,7 @@ test.describe("Écran résultat — human_scoping_required", () => {
   test("n'affiche PAS 'Investissement initial'", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("Investissement initial")
   })
@@ -345,7 +345,7 @@ test.describe("Écran résultat — human_scoping_required", () => {
   test("n'affiche PAS '/ mois' (aucune fourchette récurrente)", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("/ mois")
   })
@@ -353,7 +353,7 @@ test.describe("Écran résultat — human_scoping_required", () => {
   test("n'affiche pas 'erreur' ni message rouge d'erreur", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const alerts = page.locator("[role='alert']")
     await expect(alerts).toHaveCount(0)
   })
@@ -361,7 +361,7 @@ test.describe("Écran résultat — human_scoping_required", () => {
   test("Axe WCAG 2.2 AA sur l'écran human scoping", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze()
@@ -382,14 +382,14 @@ test.describe("Invalidation du résultat", () => {
     await mockEstimateResponse(page, MOCK_ESTIMATED)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
 
     // Modifier les réponses
     await page.getByRole("button", { name: /Modifier mes réponses/i }).click()
 
     // Le résultat doit avoir disparu — le questionnaire est de retour
     await expect(page.getByRole("progressbar")).toBeVisible()
-    await expect(page.getByRole("heading", { level: 2 })).not.toBeVisible()
+    await expect(page.locator(".result__heading")).not.toBeVisible()
 
     // Deuxième calcul : on mock une réponse différente
     await page.route("**/api/estimate", (route) =>
@@ -400,7 +400,7 @@ test.describe("Invalidation du résultat", () => {
       }),
     )
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
   })
 })
 
@@ -416,7 +416,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, mock)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("2 échéances")
     expect(text).not.toContain("3 échéances")
@@ -428,7 +428,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, MOCK_ESTIMATED) // max = 130 000
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("3 échéances")
     expect(text).not.toContain("2 échéances")
@@ -444,7 +444,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, mock)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).toContain("4 échéances")
     expect(text).not.toContain("2 échéances")
@@ -458,7 +458,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, MOCK_ESTIMATED)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     // Les récurrents affichent bien '/ mois'
     const text = await page.locator("body").textContent()
     expect(text).toContain("/ mois")
@@ -476,7 +476,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, MOCK_HUMAN_SCOPING)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("échéance")
     expect(text).not.toContain("Modalités de règlement")
@@ -488,7 +488,7 @@ test.describe("Modalités de paiement — estimated", () => {
     await mockEstimateResponse(page, MOCK_ESTIMATED)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
+    await expect(page.locator(".result__heading")).toBeVisible()
     const text = await page.locator("body").textContent()
     expect(text).not.toContain("433")
   })
@@ -501,7 +501,8 @@ test.describe("Erreurs API — UX", () => {
     await mockEstimateResponse(page, {}, 429)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    const text = await page.locator("body").textContent()
+    await expect(page.locator(".estimator-shell__error")).toBeVisible()
+    const text = await page.locator(".estimator-shell__error").textContent()
     expect(text).toContain("patienter")
     expect(text).not.toContain("429")
     expect(text).not.toContain("rate")
@@ -511,9 +512,9 @@ test.describe("Erreurs API — UX", () => {
     await mockEstimateResponse(page, {}, 500)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    const text = await page.locator("body").textContent()
-    expect(text).toContain("n'avons pas pu")
     await expect(page.getByRole("button", { name: /Réessayer/i })).toBeVisible()
+    const text = await page.locator(".estimator-shell__error").textContent()
+    expect(text).toContain("n'avons pas pu")
   })
 
   test("erreur réseau : message générique + bouton Réessayer", async ({ page }) => {
@@ -527,7 +528,8 @@ test.describe("Erreurs API — UX", () => {
     await mockEstimateResponse(page, { detail: "validation failed" }, 400)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
-    const text = await page.locator("body").textContent()
+    await expect(page.locator(".estimator-shell__error")).toBeVisible()
+    const text = await page.locator(".estimator-shell__error").textContent()
     expect(text).not.toContain("validation failed")
     expect(text).not.toContain("400")
   })

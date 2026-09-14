@@ -413,7 +413,7 @@ test.describe("Garanties d'isolation (pas d'API, pas de prix)", () => {
     })
 
     await completeRequiredStepsStandard(page, "vitrinesite")
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       await page.getByRole("button", { name: /(Continuer|Voir mon estimation)/i }).click()
     }
 
@@ -462,6 +462,7 @@ test.describe("Accessibilité WCAG 2.2 AA", () => {
     page,
   }) => {
     await page.goto(ESTIMATOR_PATH)
+    await waitForEstimatorHydrated(page)
     await page.locator("label:has(input[value='unknown'])").click()
     await page.getByRole("button", { name: /Continuer/i }).click()
     const results = await new AxeBuilder({ page })
