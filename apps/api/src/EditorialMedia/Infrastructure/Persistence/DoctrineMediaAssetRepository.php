@@ -78,4 +78,13 @@ final class DoctrineMediaAssetRepository implements MediaAssetRepositoryInterfac
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
+
+    public function listAllIds(): array
+    {
+        $ids = $this->entityManager->getConnection()->fetchFirstColumn(
+            'SELECT id FROM editorial_media_asset ORDER BY created_at DESC, id DESC',
+        );
+
+        return array_map(static fn (string $id): Uuid => Uuid::fromString($id), $ids);
+    }
 }

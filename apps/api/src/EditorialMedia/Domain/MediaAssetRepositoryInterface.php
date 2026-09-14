@@ -48,4 +48,13 @@ interface MediaAssetRepositoryInterface
     public function list(int $page, int $perPage): array;
 
     public function count(): int;
+
+    /**
+     * Retourne tous les UUID connus au moment de l'appel, triés par
+     * `createdAt DESC, id DESC`. Ce snapshot est lu en une seule requête
+     * pour éviter le bug de pagination OFFSET lors d'une suppression simultanée.
+     *
+     * @return list<Uuid>
+     */
+    public function listAllIds(): array;
 }

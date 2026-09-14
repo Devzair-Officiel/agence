@@ -119,7 +119,10 @@ function requireStringArray(
  * sur la liste, on relaie sans en faire une frontière de confiance.
  */
 const HERO_IMAGE_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}$/u
-const HERO_IMAGE_VARIANT_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}\/(card|hero)$/u
+// Patterns stricts par variant : chaque champ n'accepte QUE son propre suffixe.
+// Un champ `card` avec une URL `.../hero` est un contrat cassé côté backend.
+const CARD_VARIANT_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}\/card$/u
+const HERO_VARIANT_URL_PATTERN = /^\/api\/media\/[0-9a-f-]{36}\/hero$/u
 
 function mapVariant(
   raw: unknown,
@@ -130,7 +133,8 @@ function mapVariant(
     throw new EditorialContractError(`hero_image.${name} doit être un objet ou null.`)
   }
   const url = requireString(raw, "url", `hero_image.${name}.url`)
-  if (!HERO_IMAGE_VARIANT_URL_PATTERN.test(url)) {
+  const pattern = name === "card" ? CARD_VARIANT_URL_PATTERN : HERO_VARIANT_URL_PATTERN
+  if (!pattern.test(url)) {
     throw new EditorialContractError(
       `hero_image.${name}.url ne suit pas /api/media/{uuid}/${name} (${url}).`,
     )

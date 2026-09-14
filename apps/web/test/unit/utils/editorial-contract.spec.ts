@@ -235,4 +235,26 @@ describe("mapping hero_image variants WebP (Phase 9C)", () => {
     })
     expect(() => mapArticleDetailResponse(raw)).toThrow(/width/)
   })
+
+  it("refuse une url /hero dans le champ card (rejet croisé)", () => {
+    const raw = detail({
+      hero_image: {
+        ...VALID_HERO_IMAGE,
+        card: { ...VALID_CARD_VARIANT, url: VALID_HERO_VARIANT.url },
+        hero: VALID_HERO_VARIANT,
+      },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/hero_image\.card\.url/)
+  })
+
+  it("refuse une url /card dans le champ hero (rejet croisé)", () => {
+    const raw = detail({
+      hero_image: {
+        ...VALID_HERO_IMAGE,
+        card: VALID_CARD_VARIANT,
+        hero: { ...VALID_HERO_VARIANT, url: VALID_CARD_VARIANT.url },
+      },
+    })
+    expect(() => mapArticleDetailResponse(raw)).toThrow(/hero_image\.hero\.url/)
+  })
 })

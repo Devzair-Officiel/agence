@@ -54,6 +54,10 @@ jobs:
           --health-retries 10
 
     env:
+      # APP_ENV=test est indispensable : `composer install` déclenche les
+      # auto-scripts (cache:clear) qui ont besoin d'APP_SECRET pour compiler
+      # le conteneur Symfony. APP_SECRET est fourni par .env.test.
+      APP_ENV: test
       # Le service Postgres du workflow est exposé sur 127.0.0.1:5432.
       DATABASE_URL: "postgresql://devzair:devzair_local_password@127.0.0.1:5432/devzair_test?serverVersion=17&charset=utf8"
 
@@ -65,9 +69,12 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: intl, mbstring, ctype, iconv, opcache, pdo_pgsql
+          extensions: intl, mbstring, ctype, iconv, opcache, pdo_pgsql, gd
           coverage: none
           tools: composer:v2
+
+      - name: Verify GD + WebP support
+        run: php -r "if (!extension_loaded('gd') || !function_exists('imagewebp')) { echo 'GD/WebP manquant'; exit(1); }"
 
       - name: Get Composer cache directory
         id: composer-cache

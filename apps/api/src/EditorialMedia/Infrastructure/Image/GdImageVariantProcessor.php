@@ -82,6 +82,17 @@ final class GdImageVariantProcessor implements ImageVariantProcessorInterface
             throw InvalidImageException::undecodable();
         }
 
+        // Préserve le canal alpha pour les sources PNG/WebP avec transparence.
+        // Sans ces appels, les pixels transparents sont composités sur le fond
+        // noir opaque de imagecreatetruecolor, produisant des artefacts noirs.
+        // imagealphablending(false) + imagesavealpha(true) : les valeurs alpha
+        // de la source sont copiées telles quelles (pas de composition sur le fond
+        // noir). Sans ces appels, les pixels transparents PNG/WebP deviennent noirs.
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+        imagefill($dst, 0, 0, $transparent);
+
         try {
             $ok = imagecopyresampled($dst, $src, 0, 0, $offX, $offY, $outW, $outH, $cropW, $cropH);
             if ($ok === false) {

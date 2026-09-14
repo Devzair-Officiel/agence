@@ -104,6 +104,63 @@ final class GdImageVariantProcessorTest extends TestCase
         ];
     }
 
+    /**
+     * Source PNG avec zone de transparence totale en bas à droite.
+     * Vérifie que les pixels transparents restent transparents dans le WebP
+     * de sortie (alpha ≥ 120 dans GD, soit ≥ 47 % de transparence).
+     */
+    public function testPngTransparencyIsPreservedInOutputWebp(): void
+    {
+        $srcW = 800;
+        $srcH = 600;
+
+        $img = imagecreatetruecolor($srcW, $srcH);
+        self::assertInstanceOf(\GdImage::class, $img);
+        imagealphablending($img, false);
+        imagesavealpha($img, true);
+
+        // Moitié gauche : rouge opaque
+        $red  = imagecolorallocatealpha($img, 255, 0, 0, 0);
+        imagefilledrectangle($img, 0, 0, $srcW / 2 - 1, $srcH - 1, $red);
+        // Moitié droite : transparent total
+        $clear = imagecolorallocatealpha($img, 0, 0, 0, 127);
+        imagefilledrectangle($img, $srcW / 2, 0, $srcW - 1, $srcH - 1, $clear);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'gd-alpha-src-') . '.png';
+        imagepng($img, $tmp);
+        imagedestroy($img);
+
+        $processor = new GdImageVariantProcessor();
+        $result    = $processor->generateVariants($tmp, MediaType::Png);
+
+        try {
+            $webp = @imagecreatefromwebp($result->card->temporaryPath);
+            self::assertInstanceOf(\GdImage::class, $webp, 'Le WebP card doit être décodable.');
+
+            $outW = imagesx($webp);
+            // Pixel au centre droit du WebP (zone originellement transparente)
+            $x = intdiv($outW * 3, 4); // 3/4 de la largeur
+            $y = intdiv(imagesy($webp), 2);
+            $color = imagecolorat($webp, $x, $y);
+            if ($color === false) {
+                self::fail('Impossible de lire la couleur du pixel.');
+            }
+
+            $alpha = ($color >> 24) & 0x7F; // canal alpha GD : 127 = transparent total
+            self::assertGreaterThan(
+                60,
+                $alpha,
+                \sprintf('Le pixel transparent de la source doit rester transparent (alpha GD=%d, attendu >60).', $alpha),
+            );
+
+            imagedestroy($webp);
+        } finally {
+            @unlink($tmp);
+            @unlink($result->card->temporaryPath);
+            @unlink($result->hero->temporaryPath);
+        }
+    }
+
     private static function assertIsDecodableWebp(string $path): void
     {
         $img = @imagecreatefromwebp($path);

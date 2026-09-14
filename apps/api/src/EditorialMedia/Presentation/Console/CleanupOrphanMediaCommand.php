@@ -17,7 +17,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * `bin/console editorial:media:cleanup-orphans [--dry-run]`
@@ -26,7 +25,9 @@ use Symfony\Component\Uid\Uuid;
  * confondus). Un asset orphelin est un asset dont l'UUID n'apparaît dans
  * aucune ligne de `editorial_article.hero_media_id`.
  *
- * Seuls les MediaAsset existants sont lus via le repository paginé.
+ * Les UUID de tous les médias connus sont lus en un seul snapshot avant
+ * tout traitement, ce qui évite le bug de pagination OFFSET (les suppressions
+ * en cours de parcours décalaient les offsets et faisaient sauter des entrées).
  * La vérification d'orphelin se fait via une sous-requête DBAL légère.
  *
  * `--dry-run` : liste les orphelins sans les supprimer (toujours recommandé
@@ -68,22 +69,26 @@ final class CleanupOrphanMediaCommand extends Command
             $io->note('Mode dry-run : aucune suppression ne sera effectuée.');
         }
 
-        $totalAssets   = $this->repository->count();
-        $page          = 1;
-        $orphanCount   = 0;
-        $errorCount    = 0;
-        $deletedCount  = 0;
+        // Snapshot de tous les UUIDs avant tout traitement. Sans snapshot,
+        // les suppressions en cours de parcours décalent les offsets OFFSET et
+        // font sauter des médias (bug pagination + suppression simultanée).
+        $allIds       = $this->repository->listAllIds();
+        $totalAssets  = \count($allIds);
+        $orphanCount  = 0;
+        $errorCount   = 0;
+        $deletedCount = 0;
 
         $io->progressStart($totalAssets);
 
-        while (true) {
-            $batch = $this->repository->list($page, self::BATCH_SIZE);
-            if ($batch === []) {
-                break;
-            }
-
-            foreach ($batch as $asset) {
+        foreach (array_chunk($allIds, self::BATCH_SIZE) as $chunk) {
+            foreach ($chunk as $id) {
                 $io->progressAdvance();
+
+                $asset = $this->repository->findById($id);
+                if ($asset === null) {
+                    // Déjà supprimé entre le snapshot et ce passage.
+                    continue;
+                }
 
                 if (!$this->isOrphan($asset)) {
                     continue;
@@ -111,7 +116,6 @@ final class CleanupOrphanMediaCommand extends Command
                 }
             }
 
-            ++$page;
             $this->entityManager->clear();
         }
 

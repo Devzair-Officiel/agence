@@ -51,6 +51,20 @@ final class InMemoryMediaAssetRepository implements MediaAssetRepositoryInterfac
         return \count($this->assets);
     }
 
+    public function listAllIds(): array
+    {
+        return array_map(
+            static fn (MediaAsset $a): Uuid => $a->id(),
+            $this->orderedByRecent(),
+        );
+    }
+
+    /** Helper de test : retire un asset de la collection (simule un flush Doctrine). */
+    public function remove(Uuid $id): void
+    {
+        unset($this->assets[$id->toRfc4122()]);
+    }
+
     /**
      * @return list<MediaAsset>
      */

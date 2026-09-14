@@ -123,6 +123,13 @@ jobs:
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
 
+      - name: Prepare .env for docker compose
+        # docker compose lit .env à la racine pour substituer les variables
+        # dans compose.yaml. Sans ce fichier, les variables sans défaut (ex.
+        # APP_SECRET dans les services non couverts par le fallback compose.yaml)
+        # seraient vides — entraînant un crash du conteneur Symfony au démarrage.
+        run: cp .env.example .env
+
       - name: Start docker compose stack
         # `--wait` fait attendre les services ayant un healthcheck (postgres).
         # api/web/caddy n'ont pas de healthcheck dans compose.yaml — on gère
