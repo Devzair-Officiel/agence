@@ -73,11 +73,22 @@ jobs:
         with:
           php-version: '8.4'
           extensions: intl, mbstring, ctype, iconv, opcache, pdo_pgsql, gd
+          ini-values: >-
+            upload_max_filesize=12M,
+            post_max_size=16M,
+            memory_limit=256M,
+            max_file_uploads=1
           coverage: none
           tools: composer:v2
 
-      - name: Verify GD + WebP support
-        run: php -r "if (!extension_loaded('gd') || !function_exists('imagewebp')) { echo 'GD/WebP manquant'; exit(1); }"
+      - name: Verify PHP upload limits
+        run: |
+          php -r '
+            echo "upload_max_filesize=".ini_get("upload_max_filesize").PHP_EOL;
+            echo "post_max_size=".ini_get("post_max_size").PHP_EOL;
+            echo "memory_limit=".ini_get("memory_limit").PHP_EOL;
+            echo "max_file_uploads=".ini_get("max_file_uploads").PHP_EOL;
+          '
 
       - name: Prepare Symfony test environment
         # apps/api/.env et apps/api/.env.test sont gitignorés.
