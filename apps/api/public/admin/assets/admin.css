@@ -372,7 +372,8 @@ body {
     padding: 2rem 1.5rem 4rem;
 }
 
-.admin-workspace__inner--wide { max-width: 96rem; }
+.admin-workspace__inner--wide    { max-width: 96rem; }
+.admin-workspace__inner--preview { max-width: 106rem; }
 
 /* ─────────────────────────────────────────────────────────────────────────
    9. Auth wrapper + login (page de connexion)
@@ -948,34 +949,64 @@ button:hover { background: #2a2f36; }
     color: #7c2d12;
 }
 
-.preview-metadata,
-.preview-seo {
+/* Métadonnées courtes : deux colonnes label / valeur */
+.preview-metadata {
     margin: 0;
     display: grid;
-    grid-template-columns: minmax(12rem, max-content) 1fr;
-    gap: 0.5rem 1.5rem;
+    grid-template-columns: max-content 1fr;
+    gap: 0.375rem 0.875rem;
     align-items: baseline;
 }
 
-.preview-metadata dt,
-.preview-seo dt {
+.preview-metadata dt {
     margin-top: 0;
-    color: #374151;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
-.preview-metadata dd,
+.preview-metadata dd {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 0.875rem;
+}
+
+/* Champs SEO longs : label dessus, valeur pleine largeur du panneau */
+.preview-seo {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-seo dt {
+    margin-top: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.preview-seo dt:first-child {
+    margin-top: 0;
+}
+
 .preview-seo dd {
     margin: 0;
-    color: #111;
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    overflow-wrap: break-word;
 }
 
 .preview-metadata code {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     background: #f3f4f6;
     padding: 0.125rem 0.375rem;
     border-radius: 3px;
-    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .preview-metadata__hint {
@@ -1025,6 +1056,7 @@ button:hover { background: #2a2f36; }
    directement les descendants — pas de classe injectée dans le rendu
    Markdown pour ne pas polluer le pipeline de conversion. */
 .preview-prose {
+    max-width: min(78ch, 100%);
     color: #111;
     font-size: 1rem;
     line-height: 1.6;
@@ -1144,19 +1176,16 @@ button:hover { background: #2a2f36; }
 }
 
 @media (max-width: 40rem) {
-    .preview-metadata,
-    .preview-seo {
+    .preview-metadata {
         grid-template-columns: 1fr;
         gap: 0.25rem 0;
     }
 
-    .preview-metadata dt,
-    .preview-seo dt {
+    .preview-metadata dt {
         margin-top: 0.75rem;
     }
 
-    .preview-metadata dt:first-child,
-    .preview-seo dt:first-child {
+    .preview-metadata dt:first-child {
         margin-top: 0;
     }
 }
@@ -1265,12 +1294,13 @@ button:hover { background: #2a2f36; }
 
 .hero-image-grid__dims { color: #4b5563; }
 
-.preview-hero-image { margin: 0 0 1.5rem; }
+.preview-hero-image { margin: 0; }
 
 .preview-hero-image img {
     display: block;
-    max-width: 100%;
-    height: auto;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
     border-radius: var(--radius-md);
     border: 1px solid rgba(22, 25, 28, 0.1);
 }
@@ -2191,9 +2221,9 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     align-items: start;
 }
 
-@media (min-width: 64em) {
+@media (min-width: 80em) {
     .admin-preview-grid {
-        grid-template-columns: minmax(0, 1fr) 340px;
+        grid-template-columns: minmax(0, 1fr) minmax(330px, 360px);
         gap: 2rem;
     }
 }
@@ -2202,7 +2232,7 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.75rem;
 }
 
 .admin-preview-sidebar {
@@ -2211,7 +2241,7 @@ fieldset.admin-editor-card .admin-editor-card__heading {
     gap: 0.75rem;
 }
 
-@media (min-width: 64em) {
+@media (min-width: 80em) {
     .admin-preview-sidebar {
         position: sticky;
         top: 1.5rem;
@@ -2223,9 +2253,9 @@ fieldset.admin-editor-card .admin-editor-card__heading {
 .admin-preview-header { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .admin-preview-title {
-    font-size: 1.5rem;
+    font-size: clamp(1.5rem, 2.5vw, 2.25rem);
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 1.2;
     margin: 0;
     color: var(--color-ink);
 }
