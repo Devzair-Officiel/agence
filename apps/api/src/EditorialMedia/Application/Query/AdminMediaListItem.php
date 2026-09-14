@@ -22,6 +22,7 @@ final class AdminMediaListItem
         public readonly int $height,
         public readonly \DateTimeImmutable $createdAt,
         public readonly int $usageCount = 0,
+        public readonly bool $hasVariants = false,
     ) {
     }
 
@@ -36,6 +37,7 @@ final class AdminMediaListItem
             height: $asset->height(),
             createdAt: $asset->createdAt(),
             usageCount: $usageCount,
+            hasVariants: $asset->hasVariants(),
         );
     }
 }

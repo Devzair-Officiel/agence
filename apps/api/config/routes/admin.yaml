@@ -110,6 +110,13 @@ admin_media_preview:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+admin_media_card:
+    path: /admin/media/{id}/card
+    controller: App\Admin\Presentation\Http\AdminMediaCardPreviewController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
 admin_media_delete:
     path: /admin/media/{id}/delete
     controller: App\Admin\Presentation\Http\AdminMediaDeleteController::__invoke

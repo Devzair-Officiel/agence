@@ -6,11 +6,14 @@ namespace App\Tests\EditorialMedia\Application\Query;
 
 use App\EditorialMedia\Application\Query\ListAdminMedia;
 use App\EditorialMedia\Application\Query\ListAdminMediaHandler;
+use App\EditorialMedia\Domain\ImageVariant;
 use App\EditorialMedia\Domain\MediaAsset;
 use App\EditorialMedia\Domain\MediaDimensions;
 use App\EditorialMedia\Domain\MediaType;
+use App\EditorialMedia\Domain\MediaVariantRecord;
 use App\EditorialMedia\Domain\Sha256;
 use App\EditorialMedia\Domain\StorageKey;
+use App\EditorialMedia\Domain\VariantStorageKey;
 use App\Tests\EditorialMedia\Support\InMemoryMediaAssetRepository;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -120,6 +123,32 @@ final class ListAdminMediaHandlerTest extends TestCase
         // Ordered createdAt DESC: used first, free second
         self::assertSame(2, $page->items[0]->usageCount);
         self::assertSame(0, $page->items[1]->usageCount);
+    }
+
+    public function testHasVariantsFalseForLegacyAsset(): void
+    {
+        $repository = new InMemoryMediaAssetRepository();
+        $repository->save($this->makeAsset('2026-08-01T10:00:00+00:00', 'legacy.jpg'));
+
+        $page = (new ListAdminMediaHandler($repository))(new ListAdminMedia(1, 20));
+
+        self::assertFalse($page->items[0]->hasVariants);
+    }
+
+    public function testHasVariantsTrueForPhase9CAsset(): void
+    {
+        $repository = new InMemoryMediaAssetRepository();
+        $asset = $this->makeAsset('2026-08-01T10:00:00+00:00', 'modern.jpg');
+        $id    = $asset->id();
+        $asset->attachVariants(
+            new MediaVariantRecord(VariantStorageKey::forVariant($id, ImageVariant::Card), 768, 432, 51200, Sha256::fromString(str_repeat('b', 64))),
+            new MediaVariantRecord(VariantStorageKey::forVariant($id, ImageVariant::Hero), 1600, 900, 204800, Sha256::fromString(str_repeat('c', 64))),
+        );
+        $repository->save($asset);
+
+        $page = (new ListAdminMediaHandler($repository))(new ListAdminMedia(1, 20));
+
+        self::assertTrue($page->items[0]->hasVariants);
     }
 
     private function makeAsset(string $createdAt, string $filename): MediaAsset

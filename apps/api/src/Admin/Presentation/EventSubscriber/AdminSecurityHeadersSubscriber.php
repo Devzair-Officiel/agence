@@ -11,10 +11,12 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * Injecte les en-têtes de sécurité sur toutes les réponses `/admin/*`.
  *
- * Phase 8C1 : aucune ressource externe, aucun JavaScript, styles servis
- * en fichier statique dédié (`/admin/assets/admin.css`, exclu du firewall
- * par `access_control` — voir ADR-012). La CSP est donc très stricte :
- *   default-src 'none' ; script-src 'none' ; style-src 'self' ;
+ * Phase 8C1 : aucune ressource externe, styles servis en fichier statique
+ * dédié (`/admin/assets/admin.css`, exclu du firewall par `access_control`
+ * — voir ADR-012). Phase 9D : `script-src 'self'` pour permettre
+ * `/admin/assets/admin.js` (fallback image cassée, pas de framework JS).
+ * La CSP :
+ *   default-src 'none' ; script-src 'self' ; style-src 'self' ;
  *   img-src 'self' data: ; font-src 'self' ; form-action 'self' ;
  *   base-uri 'none' ; frame-ancestors 'none'.
  *
@@ -35,7 +37,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class AdminSecurityHeadersSubscriber implements EventSubscriberInterface
 {
     private const HEADERS = [
-        'Content-Security-Policy' => "default-src 'none'; script-src 'none'; style-src 'self'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+        'Content-Security-Policy' => "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'DENY',
         'Referrer-Policy' => 'no-referrer',

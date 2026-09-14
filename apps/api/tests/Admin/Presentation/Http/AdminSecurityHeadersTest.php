@@ -27,7 +27,7 @@ final class AdminSecurityHeadersTest extends WebTestCase
         $headers = $client->getResponse()->headers;
 
         self::assertSame(
-            "default-src 'none'; script-src 'none'; style-src 'self'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+            "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
             $headers->get('Content-Security-Policy'),
         );
         self::assertSame('DENY', $headers->get('X-Frame-Options'));

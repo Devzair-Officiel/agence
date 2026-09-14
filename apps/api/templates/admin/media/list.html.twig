@@ -34,15 +34,31 @@
             </a>
         </div>
     {% else %}
+
+        <div class="admin-media-header">
+            <p class="admin-media-header__count">
+                {{ result.total }} média{{ result.total > 1 ? 's' : '' }}
+                — page {{ result.page }}/{{ result.lastPage() }}
+            </p>
+        </div>
+
         <ul class="admin-media-grid" role="list">
             {% for item in result.items %}
-                {%- set _label       = 'Prévisualiser « ' ~ item.originalFilename ~ ' »' -%}
-                {%- set _mime_human  = _mime_labels[item.mimeType.value] ?? item.mimeType.value -%}
+                {%- set _label      = 'Prévisualiser « ' ~ item.originalFilename ~ ' »' -%}
+                {%- set _mime_human = _mime_labels[item.mimeType.value] ?? item.mimeType.value -%}
+                {%- set _thumb_url  = item.hasVariants
+                    ? path('admin_media_card',    { id: item.id })
+                    : path('admin_media_preview', { id: item.id }) -%}
+                {%- if item.sizeBytes >= 1048576 -%}
+                    {%- set _size_human = (item.sizeBytes / 1048576)|number_format(1, ',', ' ') ~ ' Mio' -%}
+                {%- else -%}
+                    {%- set _size_human = (item.sizeBytes / 1024)|number_format(1, ',', ' ') ~ ' Kio' -%}
+                {%- endif -%}
                 <li class="admin-media-card">
                     <a href="{{ path('admin_media_preview', { id: item.id }) }}"
                        class="admin-media-card__preview"
                        aria-label="{{ _label }}">
-                        <img src="{{ path('admin_media_preview', { id: item.id }) }}"
+                        <img src="{{ _thumb_url }}"
                              alt=""
                              class="admin-media-card__image"
                              width="{{ item.width }}"
@@ -50,24 +66,13 @@
                              loading="lazy">
                     </a>
                     <div class="admin-media-card__body">
-                        <p class="admin-media-card__filename">{{ item.originalFilename }}</p>
+                        <p class="admin-media-card__filename"
+                           title="{{ item.originalFilename }}">{{ item.originalFilename }}</p>
                         <p class="admin-media-card__meta">
-                            <span class="admin-media-card__dimensions">
-                                {{- item.width }}&nbsp;×&nbsp;{{ item.height }}&nbsp;px
-                            </span>
-                            <span class="admin-media-card__type-weight">
-                                {{- _mime_human -}}
-                                &nbsp;·&nbsp;
-                                {%- if item.sizeBytes >= 1048576 -%}
-                                    {{- (item.sizeBytes / 1048576)|number_format(1, ',', ' ') -}}&nbsp;Mio
-                                {%- else -%}
-                                    {{- (item.sizeBytes / 1024)|number_format(1, ',', ' ') -}}&nbsp;Kio
-                                {%- endif -%}
-                            </span>
-                            <time class="admin-media-card__date"
-                                  datetime="{{ item.createdAt|date('c') }}">
-                                {{ item.createdAt|date('d/m/Y') }}
-                            </time>
+                            {{- item.width }}&thinsp;×&thinsp;{{ item.height }}&thinsp;px
+                            &middot; {{ _mime_human }}
+                            &middot; {{ _size_human }}
+                            &middot; <time datetime="{{ item.createdAt|date('c') }}">{{ item.createdAt|date('d/m/Y') }}</time>
                         </p>
                         <p class="admin-media-card__usage">
                             {%- if item.usageCount > 0 -%}
@@ -80,31 +85,32 @@
                             {%- endif -%}
                         </p>
                     </div>
+                    {%- if item.usageCount == 0 -%}
                     <div class="admin-media-card__actions">
-                        {%- if item.usageCount == 0 -%}
-                            <form method="post"
-                                  action="{{ path('admin_media_delete', { id: item.id }) }}"
-                                  class="admin-media-card__delete-form"
-                                  onsubmit="return confirm('Supprimer définitivement « {{ item.originalFilename|e('js') }} » ? Cette action est irréversible.')">
-                                <input type="hidden" name="_csrf_token"
-                                       value="{{ csrf_token('media_delete_' ~ item.id) }}">
-                                <button type="submit"
-                                        class="button-link button-danger button-sm"
-                                        aria-label="Supprimer « {{ item.originalFilename }} »">
-                                    Supprimer
-                                </button>
-                            </form>
-                        {%- endif -%}
+                        <form method="post"
+                              action="{{ path('admin_media_delete', { id: item.id }) }}"
+                              class="admin-media-card__delete-form"
+                              onsubmit="return confirm('Supprimer définitivement « {{ item.originalFilename|e('js') }} » ? Cette action est irréversible.')">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('media_delete_' ~ item.id) }}">
+                            <button type="submit"
+                                    class="button-danger-ghost"
+                                    aria-label="Supprimer « {{ item.originalFilename }} »">
+                                Supprimer
+                            </button>
+                        </form>
                     </div>
+                    {%- endif -%}
                 </li>
             {% endfor %}
         </ul>
 
-        <nav class="pagination" aria-label="Pagination des médias">
-            <p class="pagination-summary">
-                Page {{ result.page }} sur {{ result.lastPage() }} — {{ result.total }} média{{ result.total > 1 ? 's' : '' }}.
+        <nav class="admin-media-pagination" aria-label="Pagination des médias">
+            <p class="admin-media-pagination__summary">
+                Page {{ result.page }} sur {{ result.lastPage() }}
+                — {{ result.total }} média{{ result.total > 1 ? 's' : '' }}
             </p>
-            <ul class="pagination-links">
+            <ul class="admin-media-pagination__links">
                 {% if result.hasPrevious() %}
                     <li>
                         <a href="{{ path('admin_media_list', { page: result.page - 1 }) }}">

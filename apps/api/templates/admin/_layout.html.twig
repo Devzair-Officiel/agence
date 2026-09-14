@@ -7,6 +7,8 @@
     <title>{% block title %}Administration — Devzair{% endblock %}</title>
     {# Style externalisé pour permettre `style-src 'self'` sans `unsafe-inline` (voir ADR-012). #}
     <link rel="stylesheet" href="/admin/assets/admin.css">
+    {# Script externalisé (CSP: script-src 'self'). Fallback image cassée. #}
+    <script src="/admin/assets/admin.js" defer></script>
 </head>
 <body>
 {% set _is_admin = is_granted('ROLE_ADMIN') %}
