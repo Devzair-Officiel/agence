@@ -60,7 +60,8 @@ describe("usePageSeo — page indexable", () => {
       ogUrl: "https://devzair.fr/",
       ogSiteName: "Devzair",
       ogLocale: "fr_FR",
-      twitterCard: "summary",
+      ogImage: "https://devzair.fr/og-image.png",
+      twitterCard: "summary_large_image",
     })
     expect(captures.seo).not.toHaveProperty("robots")
     expect(captures.head).toEqual({

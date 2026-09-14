@@ -108,6 +108,16 @@ services:
       EDITORIAL_MEDIA_STORAGE_DIR: ${EDITORIAL_MEDIA_STORAGE_DIR:-/app/var/editorial-media}
       ADMIN_MEDIA_UPLOAD_LIMIT: ${ADMIN_MEDIA_UPLOAD_LIMIT:-20}
       ADMIN_MEDIA_UPLOAD_INTERVAL: ${ADMIN_MEDIA_UPLOAD_INTERVAL:-10 minutes}
+      # Estimateur (EST-1C, EST-6, EST-7). Ces variables alimentent les rate
+      # limiters `estimate_ip`, `estimate_lead_ip` et `estimate_partnership_ip`
+      # définis dans framework.yaml. Sans elles, le DI container ne peut pas
+      # être compilé correctement en l'absence de .env.
+      ESTIMATE_RATE_LIMIT: ${ESTIMATE_RATE_LIMIT:-30}
+      ESTIMATE_RATE_INTERVAL: ${ESTIMATE_RATE_INTERVAL:-1 minute}
+      ESTIMATE_LEAD_RATE_LIMIT: ${ESTIMATE_LEAD_RATE_LIMIT:-10}
+      ESTIMATE_LEAD_RATE_INTERVAL: ${ESTIMATE_LEAD_RATE_INTERVAL:-1 minute}
+      ESTIMATE_PARTNERSHIP_RATE_LIMIT: ${ESTIMATE_PARTNERSHIP_RATE_LIMIT:-5}
+      ESTIMATE_PARTNERSHIP_RATE_INTERVAL: ${ESTIMATE_PARTNERSHIP_RATE_INTERVAL:-1 minute}
       # Token partagé avec le workflow n8n pour l'endpoint automatisé de
       # création de brouillon d'article. Vide = endpoint refuse tout.
       N8N_EDITORIAL_TOKEN: ${N8N_EDITORIAL_TOKEN:-}

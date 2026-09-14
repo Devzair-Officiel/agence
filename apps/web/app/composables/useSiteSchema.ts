@@ -62,8 +62,8 @@ export function useSiteSchema(): void {
     description: site.description,
   }
   if (site.legalName) organization.legalName = site.legalName
-  if (site.defaultOgImage) {
-    organization.logo = buildAbsoluteAssetUrl(origin, site.defaultOgImage)
+  if (site.organizationLogo) {
+    organization.logo = buildAbsoluteAssetUrl(origin, site.organizationLogo)
   }
   if (site.socialProfiles.length > 0) {
     organization.sameAs = [...site.socialProfiles]

@@ -28,18 +28,24 @@ import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
  * `margin-top` ni `top` négatif).
  */
 
-const heroImageSrc = "/brand/agence-devzair.png"
+const heroMobileSrc = "/brand/agence-devzair-mobile.webp"
+const heroMobileFallbackSrc = "/brand/agence-devzair.png"
+const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
 </script>
 
 <template>
   <section class="agence-hero" aria-labelledby="agence-hero-title">
     <!-- Mobile : image rectangulaire pleine largeur en fond. -->
-    <img
-      class="agence-hero__mobile-image"
-      :src="heroImageSrc"
-      alt=""
-      aria-hidden="true"
-    >
+    <picture class="agence-hero__mobile-picture">
+      <source :srcset="heroMobileSrc" type="image/webp">
+      <img
+        class="agence-hero__mobile-image"
+        :src="heroMobileFallbackSrc"
+        alt=""
+        aria-hidden="true"
+        fetchpriority="high"
+      >
+    </picture>
 
     <!--
       Desktop : silhouette SVG.
@@ -74,7 +80,7 @@ const heroImageSrc = "/brand/agence-devzair.png"
           </clipPath>
         </defs>
         <image
-          :href="heroImageSrc"
+          :href="heroDesktopSrc"
           x="0"
           y="0"
           width="1200"
@@ -175,14 +181,19 @@ const heroImageSrc = "/brand/agence-devzair.png"
   display: none;
 }
 
-.agence-hero__mobile-image {
+.agence-hero__mobile-picture {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 0;
+}
+
+.agence-hero__mobile-image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   object-position: center;
-  z-index: 0;
 }
 
 .agence-hero::before {
@@ -296,7 +307,7 @@ const heroImageSrc = "/brand/agence-devzair.png"
     content: none;
   }
 
-  .agence-hero__mobile-image {
+  .agence-hero__mobile-picture {
     display: none;
   }
 

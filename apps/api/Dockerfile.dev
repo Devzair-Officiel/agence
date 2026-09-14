@@ -48,8 +48,8 @@ COPY docker/php/editorial-media.ini /usr/local/etc/php/conf.d/zz-editorial-media
 
 WORKDIR /app
 
-# Copie manifeste seul pour profiter du cache Docker.
-COPY composer.json ./
+# Copie manifeste + lock pour profiter du cache Docker et garantir des versions exactes.
+COPY composer.json composer.lock ./
 RUN composer install \
         --no-interaction \
         --no-scripts \

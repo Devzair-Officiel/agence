@@ -29,7 +29,10 @@ export interface SiteConfig {
   readonly locale: string
   readonly defaultTitle: string
   readonly titleTemplate: string
+  /** Chemin absolu vers l'image Open Graph par défaut (1200×630, pour og:image). */
   readonly defaultOgImage: string | null
+  /** Chemin absolu vers le logo de l'organisation (Schema.org Organization.logo). */
+  readonly organizationLogo: string | null
   readonly contact: SiteContact
   readonly socialProfiles: readonly string[]
 }
@@ -44,7 +47,8 @@ export const site: SiteConfig = {
   locale: "fr_FR",
   defaultTitle: "Devzair — Agence digitale",
   titleTemplate: "%s | Devzair",
-  defaultOgImage: null,
+  defaultOgImage: "/og-image.png",
+  organizationLogo: "/brand/logo_devzaire_agency.png",
   contact: {
     email: null,
     phone: null,

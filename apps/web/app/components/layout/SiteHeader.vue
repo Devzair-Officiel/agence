@@ -27,15 +27,18 @@ const onToggleMenu = () => {
   <header class="site-header">
     <BaseContainer as="div" width="wide" class="site-header__inner">
       <NuxtLink to="/" class="site-header__brand" :aria-label="`${site.name} — Accueil`">
-        <img
-          class="site-header__logo"
-          src="/brand/logo_devzaire_agency.png"
-          alt=""
-          width="56"
-          height="56"
-          decoding="async"
-          fetchpriority="high"
-        >
+        <picture>
+          <source srcset="/brand/logo_devzaire_agency.webp" type="image/webp">
+          <img
+            class="site-header__logo"
+            src="/brand/logo_devzaire_agency.png"
+            alt=""
+            width="56"
+            height="56"
+            decoding="async"
+            fetchpriority="high"
+          >
+        </picture>
       </NuxtLink>
 
       <nav class="site-header__nav" aria-label="Navigation principale">
