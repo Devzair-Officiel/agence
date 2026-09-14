@@ -59,7 +59,7 @@ jobs:
       # Le service Postgres du workflow est exposé sur 127.0.0.1:5432 (pas
       # de résolution DNS "postgres" en dehors de Docker). Cette valeur écrase
       # DATABASE_URL définie dans .env.test (qui pointe vers le hostname Docker).
-      DATABASE_URL: "postgresql://devzair:devzair_local_password@127.0.0.1:5432/devzair_test?serverVersion=17&charset=utf8"
+      DATABASE_URL: "postgresql://devzair:devzair_local_password@127.0.0.1:5432/devzair?serverVersion=17&charset=utf8"
       # EDITORIAL_MEDIA_STORAGE_DIR écrase la valeur de .env.test (/app/...) qui
       # n'est pas accessible sur le runner GitHub (pas de conteneur Docker).
       EDITORIAL_MEDIA_STORAGE_DIR: "${{ github.workspace }}/apps/api/var/test-storage/editorial-media"
