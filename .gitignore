@@ -18,6 +18,10 @@ test-results/
 .env.*
 !.env.example
 !.env.prod.example
+# apps/api/.env contient uniquement APP_ENV=dev (aucun secret) et est requis
+# par Symfony (Dotenv::bootEnv) aussi bien en local qu'en CI. Ce fichier DOIT
+# être versionné — sans lui, bin/console lève PathException au démarrage.
+!apps/api/.env
 
 # OS / IDE
 .DS_Store
