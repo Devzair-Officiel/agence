@@ -110,6 +110,13 @@ admin_media_preview:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+admin_media_delete:
+    path: /admin/media/{id}/delete
+    controller: App\Admin\Presentation\Http\AdminMediaDeleteController::__invoke
+    methods: [POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
 # Administration des grilles tarifaires estimateur (EST-8).
 # Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
 admin_pricing_list:

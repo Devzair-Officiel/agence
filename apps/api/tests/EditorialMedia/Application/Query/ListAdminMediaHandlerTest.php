@@ -84,6 +84,44 @@ final class ListAdminMediaHandlerTest extends TestCase
         self::assertSame(800, $item->height);
     }
 
+    public function testUsageCountIsZeroForUnreferencedAsset(): void
+    {
+        $repository = new InMemoryMediaAssetRepository();
+        $repository->save($this->makeAsset('2026-08-01T10:00:00+00:00', 'libre.jpg'));
+
+        $page = (new ListAdminMediaHandler($repository))(new ListAdminMedia(1, 20));
+
+        self::assertSame(0, $page->items[0]->usageCount);
+    }
+
+    public function testUsageCountReflectsArticleReferences(): void
+    {
+        $repository = new InMemoryMediaAssetRepository();
+        $asset      = $this->makeAsset('2026-08-01T10:00:00+00:00', 'utilise.jpg');
+        $repository->save($asset);
+        $repository->markAsReferenced($asset->id(), 3);
+
+        $page = (new ListAdminMediaHandler($repository))(new ListAdminMedia(1, 20));
+
+        self::assertSame(3, $page->items[0]->usageCount);
+    }
+
+    public function testUsageCountBatchDoesNotCauseSeparateQueryPerItem(): void
+    {
+        $repository = new InMemoryMediaAssetRepository();
+        $used       = $this->makeAsset('2026-08-02T10:00:00+00:00', 'used.jpg');
+        $free       = $this->makeAsset('2026-08-01T10:00:00+00:00', 'free.jpg');
+        $repository->save($used);
+        $repository->save($free);
+        $repository->markAsReferenced($used->id(), 2);
+
+        $page = (new ListAdminMediaHandler($repository))(new ListAdminMedia(1, 20));
+
+        // Ordered createdAt DESC: used first, free second
+        self::assertSame(2, $page->items[0]->usageCount);
+        self::assertSame(0, $page->items[1]->usageCount);
+    }
+
     private function makeAsset(string $createdAt, string $filename): MediaAsset
     {
         $id = Uuid::v7();

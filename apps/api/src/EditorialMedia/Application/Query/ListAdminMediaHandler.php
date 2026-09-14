@@ -21,8 +21,15 @@ final class ListAdminMediaHandler
     public function __invoke(ListAdminMedia $query): AdminMediaListPage
     {
         $assets = $this->repository->list($query->page, $query->perPage);
+
+        $ids = array_map(static fn ($a) => $a->id(), $assets);
+        $usageCounts = $this->repository->countUsagesBatch($ids);
+
         $items = array_map(
-            static fn ($asset) => AdminMediaListItem::fromEntity($asset),
+            static fn ($asset) => AdminMediaListItem::fromEntity(
+                $asset,
+                $usageCounts[$asset->id()->toRfc4122()] ?? 0,
+            ),
             $assets,
         );
         $total = $this->repository->count();

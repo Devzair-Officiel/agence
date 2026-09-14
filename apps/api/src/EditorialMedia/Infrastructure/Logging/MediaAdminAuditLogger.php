@@ -17,7 +17,11 @@ use Psr\Log\LoggerInterface;
  *   - `admin.media.upload_rate_limited` : refus par le limiteur ;
  *   - `admin.media.previewed`         : rendu binaire renvoyé par le contrôleur
  *                                       de prévisualisation (utile pour
- *                                       corréler un accès admin à un asset).
+ *                                       corréler un accès admin à un asset) ;
+ *   - `admin.media.deleted`           : suppression physique + DB réussie ;
+ *   - `admin.media.delete_failed`     : tentative de suppression refusée
+ *                                       (csrf_invalid, media_in_use, not_found,
+ *                                       rate_limited, storage_failure).
  *
  * Le seul identifiant de l'admin dans les logs est son UUID. Le SHA-256 est
  * tronqué à ses 12 premiers caractères — assez pour corréler avec l'entité
@@ -72,6 +76,24 @@ final class MediaAdminAuditLogger
             'admin_id' => $admin->id()->toRfc4122(),
             'asset_id' => $assetId,
             'mime' => $mime,
+        ]);
+    }
+
+    public function deleted(AdminUser $admin, string $assetId, string $mime): void
+    {
+        $this->adminLogger->info('admin.media.deleted', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'asset_id' => $assetId,
+            'mime' => $mime,
+        ]);
+    }
+
+    public function deleteFailed(AdminUser $admin, string $reasonCode, ?string $assetId = null): void
+    {
+        $this->adminLogger->warning('admin.media.delete_failed', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'asset_id' => $assetId,
+            'reason'   => $reasonCode,
         ]);
     }
 }

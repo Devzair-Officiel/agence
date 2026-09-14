@@ -69,6 +69,32 @@
                                 {{ item.createdAt|date('d/m/Y') }}
                             </time>
                         </p>
+                        <p class="admin-media-card__usage">
+                            {%- if item.usageCount > 0 -%}
+                                <span class="badge badge--used"
+                                      title="Utilisé par {{ item.usageCount }} article{{ item.usageCount > 1 ? 's' : '' }}">
+                                    Utilisé ({{ item.usageCount }})
+                                </span>
+                            {%- else -%}
+                                <span class="badge badge--unused">Non utilisé</span>
+                            {%- endif -%}
+                        </p>
+                    </div>
+                    <div class="admin-media-card__actions">
+                        {%- if item.usageCount == 0 -%}
+                            <form method="post"
+                                  action="{{ path('admin_media_delete', { id: item.id }) }}"
+                                  class="admin-media-card__delete-form"
+                                  onsubmit="return confirm('Supprimer définitivement « {{ item.originalFilename|e('js') }} » ? Cette action est irréversible.')">
+                                <input type="hidden" name="_csrf_token"
+                                       value="{{ csrf_token('media_delete_' ~ item.id) }}">
+                                <button type="submit"
+                                        class="button-link button-danger button-sm"
+                                        aria-label="Supprimer « {{ item.originalFilename }} »">
+                                    Supprimer
+                                </button>
+                            </form>
+                        {%- endif -%}
                     </div>
                 </li>
             {% endfor %}

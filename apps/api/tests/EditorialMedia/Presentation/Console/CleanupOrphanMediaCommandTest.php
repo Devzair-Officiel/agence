@@ -267,6 +267,21 @@ final class CleanupOrphanMediaCommandTest extends TestCase
                 // Le snapshot inclut bien l'UUID fantôme (il était présent lors du scan).
                 return $this->inner->listAllIds();
             }
+
+            public function isReferencedByAnyArticle(Uuid $id): bool
+            {
+                return $this->inner->isReferencedByAnyArticle($id);
+            }
+
+            public function countUsagesBatch(array $ids): array
+            {
+                return $this->inner->countUsagesBatch($ids);
+            }
+
+            public function delete(\App\EditorialMedia\Domain\MediaAsset $asset): void
+            {
+                $this->inner->delete($asset);
+            }
         };
 
         $conn = $this->connectionMock([$ghostId->toRfc4122()]);

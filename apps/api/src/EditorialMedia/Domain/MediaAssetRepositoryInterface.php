@@ -57,4 +57,36 @@ interface MediaAssetRepositoryInterface
      * @return list<Uuid>
      */
     public function listAllIds(): array;
+
+    /**
+     * Vérifie rapidement (LIMIT 1) si le média est référencé par au moins
+     * un article (tous statuts confondus : draft, published, archived).
+     *
+     * Utilisé par le handler de suppression pour refuser une suppression
+     * qui provoquerait une image cassée.
+     */
+    public function isReferencedByAnyArticle(Uuid $id): bool;
+
+    /**
+     * Compte le nombre d'articles qui référencent chaque UUID de la liste.
+     *
+     * Renvoie un tableau indexé par rfc4122 string → nombre d'articles.
+     * Les UUIDs sans référence ne sont pas présents dans le tableau
+     * (valeur par défaut = 0 côté appelant).
+     *
+     * Utilisé pour enrichir le modèle de lecture de la liste admin sans N+1.
+     *
+     * @param list<Uuid> $ids
+     *
+     * @return array<string, int>
+     */
+    public function countUsagesBatch(array $ids): array;
+
+    /**
+     * Supprime le média de la base de données.
+     *
+     * Ne supprime PAS les fichiers physiques — c'est le handler applicatif
+     * qui orchestre la suppression fichiers-puis-DB.
+     */
+    public function delete(MediaAsset $asset): void;
 }

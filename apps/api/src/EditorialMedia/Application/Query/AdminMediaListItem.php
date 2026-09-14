@@ -21,10 +21,11 @@ final class AdminMediaListItem
         public readonly int $width,
         public readonly int $height,
         public readonly \DateTimeImmutable $createdAt,
+        public readonly int $usageCount = 0,
     ) {
     }
 
-    public static function fromEntity(MediaAsset $asset): self
+    public static function fromEntity(MediaAsset $asset, int $usageCount = 0): self
     {
         return new self(
             id: $asset->id()->toRfc4122(),
@@ -34,6 +35,7 @@ final class AdminMediaListItem
             width: $asset->width(),
             height: $asset->height(),
             createdAt: $asset->createdAt(),
+            usageCount: $usageCount,
         );
     }
 }

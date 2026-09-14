@@ -18,6 +18,14 @@ final class InMemoryMediaAssetRepository implements MediaAssetRepositoryInterfac
     /** @var array<string, MediaAsset> */
     private array $assets = [];
 
+    /**
+     * UUIDs rfc4122 considérés référencés par au moins un article.
+     * Configuré par les tests via `markAsReferenced()`.
+     *
+     * @var array<string, int>
+     */
+    private array $usageCounts = [];
+
     public function save(MediaAsset $asset): void
     {
         $this->assets[$asset->id()->toRfc4122()] = $asset;
@@ -63,6 +71,35 @@ final class InMemoryMediaAssetRepository implements MediaAssetRepositoryInterfac
     public function remove(Uuid $id): void
     {
         unset($this->assets[$id->toRfc4122()]);
+    }
+
+    /** Helper de test : configure le nombre d'articles référençant ce média. */
+    public function markAsReferenced(Uuid $id, int $count = 1): void
+    {
+        $this->usageCounts[$id->toRfc4122()] = $count;
+    }
+
+    public function isReferencedByAnyArticle(Uuid $id): bool
+    {
+        return ($this->usageCounts[$id->toRfc4122()] ?? 0) > 0;
+    }
+
+    public function countUsagesBatch(array $ids): array
+    {
+        $result = [];
+        foreach ($ids as $id) {
+            $rfc = $id->toRfc4122();
+            if (isset($this->usageCounts[$rfc]) && $this->usageCounts[$rfc] > 0) {
+                $result[$rfc] = $this->usageCounts[$rfc];
+            }
+        }
+
+        return $result;
+    }
+
+    public function delete(MediaAsset $asset): void
+    {
+        unset($this->assets[$asset->id()->toRfc4122()]);
     }
 
     /**

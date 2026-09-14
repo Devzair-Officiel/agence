@@ -87,4 +87,44 @@ final class DoctrineMediaAssetRepository implements MediaAssetRepositoryInterfac
 
         return array_map(static fn (string $id): Uuid => Uuid::fromString($id), $ids);
     }
+
+    public function isReferencedByAnyArticle(Uuid $id): bool
+    {
+        $result = $this->entityManager->getConnection()->fetchOne(
+            'SELECT 1 FROM editorial_article WHERE hero_media_id = :id LIMIT 1',
+            ['id' => $id->toRfc4122()],
+        );
+
+        return $result !== false;
+    }
+
+    public function countUsagesBatch(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $rfc = array_map(static fn (Uuid $id): string => $id->toRfc4122(), $ids);
+
+        $placeholders = implode(',', array_fill(0, \count($rfc), '?'));
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            \sprintf(
+                'SELECT hero_media_id, COUNT(*) AS cnt FROM editorial_article WHERE hero_media_id IN (%s) GROUP BY hero_media_id',
+                $placeholders,
+            ),
+            $rfc,
+        );
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(string) $row['hero_media_id']] = (int) $row['cnt'];
+        }
+
+        return $result;
+    }
+
+    public function delete(MediaAsset $asset): void
+    {
+        $this->entityManager->remove($asset);
+    }
 }
