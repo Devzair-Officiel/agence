@@ -76,10 +76,11 @@ final class AdminMediaListControllerTest extends WebTestCase
             $crawler->filterXPath("//*[contains(concat(' ', normalize-space(@class), ' '), ' admin-media-card ')]")->count(),
         );
         // Un lien « Suivant → » doit apparaître puisqu'il reste 2 médias.
-        self::assertGreaterThan(
-            0,
-            $crawler->filterXPath('//ul[contains(@class, "pagination-links")]//a')->count(),
+        $nextLink = $crawler->filterXPath(
+            '//nav[@aria-label="Pagination des médias"]//a[contains(normalize-space(.), "Suivant")]',
         );
+        self::assertSame(1, $nextLink->count(), 'Le lien Suivant doit être présent sur la page 1.');
+        self::assertStringContainsString('page=2', (string) $nextLink->attr('href'));
     }
 
     public function testCacheControlHeadersDenyCaching(): void
@@ -119,6 +120,13 @@ final class AdminMediaListControllerTest extends WebTestCase
             2,
             $crawler->filterXPath("//*[contains(concat(' ', normalize-space(@class), ' '), ' admin-media-card ')]")->count(),
             'La page 2 doit contenir exactement les 2 médias restants.',
+        );
+        self::assertSame(
+            1,
+            $crawler->filterXPath(
+                '//nav[@aria-label="Pagination des médias"]//a[contains(normalize-space(.), "Précédent")]',
+            )->count(),
+            'Le lien Précédent doit être présent sur la page 2.',
         );
     }
 
