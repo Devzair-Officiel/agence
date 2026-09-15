@@ -245,12 +245,13 @@ test.describe("Écran résultat — estimated", () => {
     expect(text).not.toContain("2026-v1")
   })
 
-  test("mentionne 'non contractuelle'", async ({ page }) => {
+  test("mentionne que l'estimation ne constitue pas un devis", async ({ page }) => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
     await expect(page.locator(".result__heading")).toBeVisible()
     const text = (await page.locator("body").textContent())!.toLowerCase()
-    expect(text).toContain("non contractuelle")
+    // Q-05 : "ne constitue pas un devis" a remplacé "non contractuelle"
+    expect(text).toContain("ne constitue pas un devis")
   })
 
   test("la progression est masquée dans l'écran résultat", async ({ page }) => {
