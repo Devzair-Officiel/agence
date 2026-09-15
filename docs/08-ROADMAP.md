@@ -2073,6 +2073,30 @@ Audit live réalisé le 2026-09-06 sur `https://devzair.fr`.
 
 ---
 
+---
+
+## Pages légales — LEGAL-1
+
+### LEGAL-1 — Mentions légales et politique de confidentialité
+
+**État actuel : TERMINÉE (2026-09-15)**
+
+- [x] Créer `app/config/legal.ts` — constantes légales centralisées (SIREN, SIRET, RCS, NAF, TVA, hébergeur OVHcloud). Identité éditeur `null` jusqu'à validation légale.
+- [x] Créer `app/pages/mentions-legales.vue` — SSR, `robots: "noindex, follow"`, WCAG 2.2 AA, contenu LCEN (éditeur, hébergeur, PI, données, liens, droit applicable).
+- [x] Créer `app/pages/politique-de-confidentialite.vue` — SSR, `robots: "noindex, follow"`, WCAG 2.2 AA, contenu RGPD (responsable, données, finalité, base légale intérêt légitime, destinataires, conservation, droits, CNIL, sécurité).
+- [x] Mettre à jour `navigation.ts` — `legalNavigation` passe de `[]` à 2 entrées réelles (`/mentions-legales`, `/politique-de-confidentialite`). Footer auto-rendu via `v-if="legalNavigation.length > 0"`.
+- [x] Mettre à jour `ContactForm.vue` — label consentement reformulé ("J'ai pris connaissance de la politique de confidentialité." avec NuxtLink) ; base légale corrigée ("intérêt légitime / mesures précontractuelles, art. 6-1-b et 6-1-f" au lieu de "consentement art. 6-1-a").
+- [x] Mettre à jour `nuxt.config.ts` — `prerender: true` pour les deux routes ; `exclude: ['/mentions-legales', '/politique-de-confidentialite']` dans sitemap.
+- [x] Créer `test/unit/config/legal.spec.ts` — 11 cas (SIREN, SIRET, cohérence SIREN↔SIRET, RCS, NAF, TVA, cohérence TVA↔SIREN, hébergeur, adresse, URL https, identité null).
+- [x] Mettre à jour `test/unit/layout/SiteFooter.spec.ts` — tests explicites sur les 2 liens légaux.
+- [x] Créer `test/e2e/legal-pages.spec.ts` — SSR, meta robots noindex/follow, sitemap exclusion, footer, contenu LCEN/RGPD, Axe WCAG 2.2 AA.
+
+**Contrainte non levée :** Conformité LCEN complète bloquée tant que `publisherName`, `publisherAddress`, `publisherPhone` sont `null`. Décision à ouvrir (DEV-LEGAL-1).
+
+**Dépendances :** SEO-COM-9 (identité éditeur — action humaine).
+
+---
+
 ## Règle de maintenance
 
 Ce fichier doit être modifié uniquement lorsque les règles de son domaine évoluent.  

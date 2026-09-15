@@ -150,6 +150,9 @@ export default defineNuxtConfig({
     // retourne un tableau enrichi de `lastmod`. Il refuse de renvoyer une
     // liste vide silencieuse en cas d'indisponibilité (503) — cf. ADR-011.
     sources: ['/__sitemap__/resources'],
+    // Pages légales exclues du sitemap : `noindex, follow` → aucune valeur
+    // SEO, présence dans le sitemap serait contradictoire.
+    exclude: ['/mentions-legales', '/politique-de-confidentialite'],
     // Phase 10A2 : sans `prerender: true`, @nuxtjs/sitemap ne détecte plus
     // les cinq pages `/expertises/{slug}` (route dynamique). On les
     // énumère explicitement pour préserver leur présence dans le sitemap.
@@ -254,5 +257,11 @@ export default defineNuxtConfig({
     '/realisations/nidemiel': { prerender: true },
     '/realisations/mizan': { prerender: true },
     '/realisations/al-mumayiz': { prerender: true },
+    // Pages légales pré-rendues (contenu 100 % local). Non indexées via
+    // meta robots `noindex, follow` posé dans usePageSeo — PAS via
+    // routeRules headers (cf. commentaire ci-dessus : @nuxtjs/sitemap
+    // écarte toute route portant `noindex` dans ses routeRules headers).
+    '/mentions-legales': { prerender: true },
+    '/politique-de-confidentialite': { prerender: true },
   },
 })

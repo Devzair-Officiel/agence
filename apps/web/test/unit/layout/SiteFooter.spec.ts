@@ -149,15 +149,27 @@ describe("SiteFooter", () => {
     expect(mountFooter().find('a[href="#top"].site-footer__back-to-top').exists()).toBe(true)
   })
 
-  it("does not render legal list when legalNavigation is empty", () => {
+  it("renders legal list when legalNavigation is populated", () => {
     const wrapper = mountFooter()
     if (legalNavigation.length === 0) {
       expect(wrapper.find(".site-footer__legal-list").exists()).toBe(false)
     } else {
+      expect(wrapper.find(".site-footer__legal-list").exists()).toBe(true)
       for (const item of legalNavigation) {
-        expect(wrapper.find(`a[href="${item.to}"]`).exists()).toBe(true)
+        const link = wrapper.find(`a[href="${item.to}"]`)
+        expect(link.exists(), `legal link to ${item.to} should exist`).toBe(true)
+        expect(link.text()).toContain(item.label)
       }
     }
+  })
+
+  it("renders mentions-legales and politique-de-confidentialite in footer", () => {
+    expect(legalNavigation).toHaveLength(2)
+    expect(legalNavigation[0].to).toBe("/mentions-legales")
+    expect(legalNavigation[1].to).toBe("/politique-de-confidentialite")
+    const wrapper = mountFooter()
+    expect(wrapper.find('a[href="/mentions-legales"]').exists()).toBe(true)
+    expect(wrapper.find('a[href="/politique-de-confidentialite"]').exists()).toBe(true)
   })
 
   // ── Sécurité ───────────────────────────────────────────────────────

@@ -102,7 +102,7 @@ export const footerNavigation: readonly NavigationGroup[] = [
   },
 ]
 
-// Les mentions légales et la politique de confidentialité seront ajoutées
-// quand les pages correspondantes seront livrées (phase à venir).
-// Aucune entrée listée ici tant que la route n'existe pas — cf. AGENTS.md §11.
-export const legalNavigation: readonly NavigationItem[] = []
+export const legalNavigation: readonly NavigationItem[] = [
+  { label: "Mentions légales", to: "/mentions-legales", isRoute: true },
+  { label: "Politique de confidentialité", to: "/politique-de-confidentialite", isRoute: true },
+]

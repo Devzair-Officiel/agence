@@ -374,8 +374,10 @@ async function onSubmit(): Promise<void> {
             >
             <span class="contact-form__consent-box" aria-hidden="true" />
             <span class="contact-form__consent-text">
-              J'accepte que Devzair utilise ces informations pour répondre à ma
-              demande. Aucune donnée n'est transmise à un tiers.
+              J'ai pris connaissance de la
+              <NuxtLink to="/politique-de-confidentialite" class="contact-form__consent-link">
+                politique de confidentialité
+              </NuxtLink>.
             </span>
           </label>
           <p v-if="form.fieldErrors.value.consent" class="contact-form__consent-error">
@@ -428,8 +430,8 @@ async function onSubmit(): Promise<void> {
 
     <p :id="privacyId" class="contact-form__privacy">
       Vos données sont traitées par Devzair pour répondre à votre demande.
-      Base légale : votre consentement (RGPD, art. 6-1-a). Conservation :
-      trente-six mois après le dernier contact, sauf demande de suppression.
+      Base légale : intérêt légitime / mesures précontractuelles (RGPD, art. 6-1-b et 6-1-f).
+      Conservation : trente-six mois après le dernier contact, sauf demande de suppression.
       Vous pouvez exercer vos droits d'accès, rectification et suppression à
       tout moment en nous écrivant.
     </p>
@@ -773,6 +775,22 @@ async function onSubmit(): Promise<void> {
 
 .contact-form__consent-text {
   flex: 1;
+}
+
+.contact-form__consent-link {
+  color: var(--color-petrol);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.contact-form__consent-link:hover {
+  color: var(--color-petrol-hover);
+}
+
+.contact-form__consent-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-gap);
+  border-radius: 2px;
 }
 
 .contact-form__consent-error {

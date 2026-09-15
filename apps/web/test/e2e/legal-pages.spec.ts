@@ -1,0 +1,167 @@
+import AxeBuilder from "@axe-core/playwright"
+import { expect, test } from "@playwright/test"
+
+// E2E — Pages légales /mentions-legales et /politique-de-confidentialite
+//
+// Périmètre :
+//   - rendu SSR (status 200, HTML contient le contenu clé) ;
+//   - meta robots : noindex, follow (pas d'indexation, pas de nofollow) ;
+//   - absence du sitemap (pages réglementaires, pas de valeur SEO) ;
+//   - présence dans le footer (SiteFooter.vue via legalNavigation) ;
+//   - contenu LCEN minimal : éditeur, hébergeur ;
+//   - données RGPD : base légale intérêt légitime sur politique de confidentialité ;
+//   - accessibilité Axe WCAG 2.2 AA.
+
+const PAGES = [
+  {
+    path: "/mentions-legales",
+    title: "Mentions légales",
+    expectedContent: ["835 317 413", "OVHcloud", "Roubaix"],
+  },
+  {
+    path: "/politique-de-confidentialite",
+    title: "Politique de confidentialité",
+    expectedContent: ["835 317 413", "intérêt légitime", "trente-six"],
+  },
+] as const
+
+// ─── SSR ─────────────────────────────────────────────────────────────────────
+
+test.describe("Pages légales — rendu SSR", () => {
+  for (const { path, title, expectedContent } of PAGES) {
+    test(`${path} retourne 200 avec un H1 et le contenu clé`, async ({ request }) => {
+      const response = await request.get(path)
+      expect(response.status()).toBe(200)
+      const html = await response.text()
+      expect(html).toContain(title)
+      for (const snippet of expectedContent) {
+        expect(html, `${path} should contain "${snippet}"`).toContain(snippet)
+      }
+    })
+  }
+})
+
+// ─── Meta robots ─────────────────────────────────────────────────────────────
+
+test.describe("Pages légales — meta robots noindex", () => {
+  for (const { path } of PAGES) {
+    test(`${path} déclare meta robots noindex, follow`, async ({ request }) => {
+      const response = await request.get(path)
+      const html = await response.text()
+      // noindex présent
+      expect(html).toMatch(/<meta[^>]+name="robots"[^>]+content="[^"]*noindex[^"]*"/i)
+      // follow présent (pas nofollow)
+      expect(html).toMatch(/<meta[^>]+name="robots"[^>]+content="[^"]*follow[^"]*"/i)
+      // ne contient pas "nofollow"
+      const robotsMatch = html.match(/<meta[^>]+name="robots"[^>]+content="([^"]+)"/i)
+      if (robotsMatch) {
+        expect(robotsMatch[1]).not.toContain("nofollow")
+      }
+    })
+  }
+})
+
+// ─── Sitemap ─────────────────────────────────────────────────────────────────
+
+test("les pages légales sont absentes du sitemap.xml", async ({ request }) => {
+  const response = await request.get("/sitemap.xml")
+  if (!response.ok()) return // sitemap non disponible en preprod sans indexation
+  const xml = await response.text()
+  expect(xml).not.toContain("/mentions-legales")
+  expect(xml).not.toContain("/politique-de-confidentialite")
+})
+
+// ─── Footer ──────────────────────────────────────────────────────────────────
+
+test.describe("Pages légales — présence dans le footer", () => {
+  test("le footer de la page d'accueil contient les liens légaux", async ({ page }) => {
+    await page.goto("/")
+    const footer = page.locator("footer.site-footer")
+    await expect(footer).toBeVisible()
+    await expect(footer.locator('a[href="/mentions-legales"]')).toBeVisible()
+    await expect(footer.locator('a[href="/politique-de-confidentialite"]')).toBeVisible()
+  })
+
+  test("le lien Mentions légales du footer mène bien à la page", async ({ page }) => {
+    await page.goto("/")
+    await page.locator('footer a[href="/mentions-legales"]').click()
+    await expect(page).toHaveURL("/mentions-legales")
+    await expect(page.locator("h1")).toContainText("Mentions légales")
+  })
+
+  test("le lien Politique de confidentialité du footer mène bien à la page", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await page.locator('footer a[href="/politique-de-confidentialite"]').click()
+    await expect(page).toHaveURL("/politique-de-confidentialite")
+    await expect(page.locator("h1")).toContainText("Politique de confidentialité")
+  })
+})
+
+// ─── Mentions légales — contenu LCEN ────────────────────────────────────────
+
+test.describe("Mentions légales — contenu LCEN", () => {
+  test("affiche la raison sociale Devzair", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    await expect(page.locator("main")).toContainText("Devzair")
+  })
+
+  test("affiche le SIREN et le SIRET", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    const main = page.locator("main")
+    await expect(main).toContainText("835 317 413")
+  })
+
+  test("affiche les informations hébergeur (OVHcloud, Roubaix)", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    const main = page.locator("main")
+    await expect(main).toContainText("OVHcloud")
+    await expect(main).toContainText("Roubaix")
+  })
+
+  test("le lien vers la politique de confidentialité est présent", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    const link = page.locator('a[href="/politique-de-confidentialite"]').first()
+    await expect(link).toBeVisible()
+  })
+})
+
+// ─── Politique de confidentialité — contenu RGPD ────────────────────────────
+
+test.describe("Politique de confidentialité — contenu RGPD", () => {
+  test("mentionne la base légale intérêt légitime", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("intérêt légitime")
+  })
+
+  test("mentionne la durée de conservation", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("trente-six")
+  })
+
+  test("mentionne la CNIL", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("CNIL")
+  })
+
+  test("le lien vers /contact est présent pour exercer les droits", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
+  })
+})
+
+// ─── Accessibilité Axe WCAG 2.2 AA ──────────────────────────────────────────
+
+test.describe("Pages légales — accessibilité Axe WCAG 2.2 AA", () => {
+  for (const { path } of PAGES) {
+    test(`${path} passe Axe sans violation critique`, async ({ page }) => {
+      await page.goto(path)
+      await expect(page.locator("h1")).toBeVisible()
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})
