@@ -214,9 +214,9 @@ test.describe('/contact — formulaire de contact', () => {
 
     const errorBanner = page.locator(`${FORM} .contact-form__status [role="alert"]`)
     await expect(errorBanner).toBeVisible()
-    await expect(errorBanner).toContainText('Service momentanément indisponible')
+    await expect(errorBanner).toContainText("Votre message n'a pas pu être envoyé")
     await expect(errorBanner).toContainText(
-      "Le service est momentanément indisponible. Votre message n'a pas été envoyé. Merci de réessayer plus tard.",
+      "Un problème technique a empêché l'envoi. Vos informations sont conservées. Merci de réessayer dans quelques instants.",
     )
     await expect(errorBanner).toContainText('REQ-E2E')
 

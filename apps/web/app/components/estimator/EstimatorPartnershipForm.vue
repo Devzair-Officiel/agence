@@ -161,6 +161,7 @@ async function handleSubmit(): Promise<void> {
   if (partnershipStatus.value === "success") {
     await nextTick()
     successRef.value?.focus()
+    await new Promise<void>((resolve) => setTimeout(resolve, 2000))
     emit("submitted")
   }
 }

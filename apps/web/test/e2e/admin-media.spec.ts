@@ -83,9 +83,9 @@ test.describe.serial('Admin — médias éditoriaux (Phase 9A / R5)', () => {
       page.getByRole('heading', { name: 'Médias éditoriaux', level: 1 }),
     ).toBeVisible()
 
-    // CTA upload présent dans le header
+    // CTA upload présent dans le header (2 liens possibles : header + empty/grid)
     await expect(
-      page.getByRole('link', { name: /Téléverser un média/ }),
+      page.getByRole('link', { name: /Téléverser un média/ }).first(),
     ).toBeVisible()
 
     // État vide ou grille : l'un des deux doit être présent
