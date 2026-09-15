@@ -36,6 +36,8 @@ on:
       - 'scripts/e2e-admin-preview.sh'
       - 'scripts/e2e-admin-media.sh'
       - 'scripts/e2e-9b-hero-image.sh'
+      - 'scripts/editorial-content-bootstrap.sh'
+      - 'content/resources/**'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -51,6 +53,8 @@ on:
       - 'scripts/e2e-admin-preview.sh'
       - 'scripts/e2e-admin-media.sh'
       - 'scripts/e2e-9b-hero-image.sh'
+      - 'scripts/editorial-content-bootstrap.sh'
+      - 'content/resources/**'
       - 'compose.yaml'
       - '.env.example'
       - '.github/workflows/web-quality.yml'
@@ -211,6 +215,15 @@ jobs:
         # une ceinture supplémentaire (bretelles) : si le `webServer`
         # Playwright plante avant `beforeAll`, la base reste propre.
         run: ./scripts/e2e-9b-hero-image.sh load
+
+      - name: Bootstrap editorial content (Phase 10 + SEO-COM articles)
+        # Charge et publie les articles pillar depuis content/resources/*.md.
+        # Idempotent : la commande `app:editorial:import` est create-only ;
+        # `app:editorial:publish` sort en WARNING (exit 0) si déjà publié.
+        # Ces articles sont nécessaires pour resources-phase10.spec.ts et
+        # resource-site-internet-pas-cher.spec.ts — sans ce step, toutes
+        # leurs assertions retournent 404.
+        run: ./scripts/editorial-content-bootstrap.sh
 
       - name: Run Playwright tests
         working-directory: apps/web

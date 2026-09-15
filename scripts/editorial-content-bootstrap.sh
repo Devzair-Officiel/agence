@@ -47,6 +47,7 @@ declare -A PUBLISHED_AT=(
   [application-metier-remplacer-excel]="2026-08-07T09:00:00+00:00"
   [ameliorer-visibilite-locale-entreprise]="2026-08-08T09:00:00+00:00"
   [maintenance-site-internet]="2026-08-09T01:30:00+00:00"
+  [site-internet-pas-cher]="2026-09-05T09:00:00+00:00"
 )
 
 SLUGS=(
@@ -56,6 +57,7 @@ SLUGS=(
   application-metier-remplacer-excel
   ameliorer-visibilite-locale-entreprise
   maintenance-site-internet
+  site-internet-pas-cher
 )
 
 echo "== Étape 1 : copie des fichiers Markdown dans le conteneur api =="
