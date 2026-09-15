@@ -171,10 +171,11 @@ test.describe("État de chargement", () => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
 
-    // Pendant le chargement : bouton désactivé
+    // Pendant le chargement : indicateur visible, bouton de navigation retiré du DOM
+    await expect(page.locator('.estimator-shell__loading')).toBeVisible()
     await expect(
       page.getByRole("button", { name: /Voir mon estimation/i }),
-    ).toBeDisabled()
+    ).not.toBeVisible()
 
     // Nettoyage
     resolve?.()

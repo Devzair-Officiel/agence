@@ -353,7 +353,6 @@ async function onPartnershipClosed(): Promise<void> {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-petrol);
-  opacity: 0.7;
   margin: 0;
 }
 

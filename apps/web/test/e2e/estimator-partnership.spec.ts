@@ -257,7 +257,7 @@ test("Nom manquant → erreur de validation inline", async ({ page }) => {
   await page.getByRole("button", { name: /partenariat/i }).click()
 
   await page.getByRole("button", { name: /Transmettre ma proposition/i }).click()
-  await expect(page.locator('[aria-invalid="true"]')).toBeVisible()
+  await expect(page.locator('[aria-invalid="true"]').first()).toBeVisible()
   await expect(page.getByText(/requis/i)).toBeVisible()
 })
 
