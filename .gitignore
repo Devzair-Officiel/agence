@@ -40,3 +40,5 @@ test-results/
 
 # Claude Code — worktrees temporaires locaux
 .claude/worktrees/
+
+settings.json
