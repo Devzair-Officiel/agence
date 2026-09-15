@@ -75,12 +75,12 @@ echo "== Étape 2 : import (create-only, saute si slug existe) =="
 for slug in "${SLUGS[@]}"; do
   echo "  → $slug"
   if [[ -n "$DRY_RUN" ]]; then
-    docker compose exec -T api bin/console app:editorial:import "/tmp/$slug.md" --dry-run --silent
+    docker compose exec -T api bin/console app:editorial:import "/tmp/$slug.md" --dry-run
     continue
   fi
-  # Import réel — si le slug existe déjà, la commande sort en erreur.
-  # On l'accepte silencieusement pour rendre le script idempotent.
-  if docker compose exec -T api bin/console app:editorial:import "/tmp/$slug.md" --silent 2>/dev/null; then
+  # Import réel — si le slug existe déjà, la commande sort en erreur (exit 1).
+  # On l'accepte pour rendre le script idempotent.
+  if docker compose exec -T api bin/console app:editorial:import "/tmp/$slug.md" >/dev/null 2>&1; then
     echo "    importé (draft)"
   else
     echo "    déjà en base — saute (idempotent)"
