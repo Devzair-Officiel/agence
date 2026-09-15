@@ -34,8 +34,16 @@ usePageSeo({
             <h2 id="section-editeur" class="legal-section__title">Éditeur du site</h2>
             <dl class="legal-dl">
               <div class="legal-dl__row">
-                <dt>Raison sociale</dt>
+                <dt>Nom commercial</dt>
                 <dd>Devzair</dd>
+              </div>
+              <div class="legal-dl__row">
+                <dt>Forme juridique</dt>
+                <dd>Entrepreneur individuel</dd>
+              </div>
+              <div v-if="legalConfig.publisherName" class="legal-dl__row">
+                <dt>Éditeur</dt>
+                <dd>{{ legalConfig.publisherName }}</dd>
               </div>
               <div class="legal-dl__row">
                 <dt>SIREN</dt>
@@ -57,10 +65,6 @@ usePageSeo({
                 <dt>Numéro de TVA intracommunautaire</dt>
                 <dd>{{ legalConfig.vatNumber }}</dd>
               </div>
-              <div v-if="legalConfig.publisherName" class="legal-dl__row">
-                <dt>Directeur de la publication</dt>
-                <dd>{{ legalConfig.publisherName }}</dd>
-              </div>
               <div v-if="legalConfig.publisherAddress" class="legal-dl__row">
                 <dt>Adresse</dt>
                 <dd>{{ legalConfig.publisherAddress }}</dd>
@@ -68,6 +72,10 @@ usePageSeo({
               <div v-if="legalConfig.publisherPhone" class="legal-dl__row">
                 <dt>Téléphone</dt>
                 <dd>{{ legalConfig.publisherPhone }}</dd>
+              </div>
+              <div v-if="legalConfig.publicationDirector" class="legal-dl__row">
+                <dt>Directeur de la publication</dt>
+                <dd>{{ legalConfig.publicationDirector }}</dd>
               </div>
             </dl>
             <p v-if="!legalConfig.publisherName || !legalConfig.publisherAddress || !legalConfig.publisherPhone" class="legal-section__notice">

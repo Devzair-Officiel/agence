@@ -16,7 +16,14 @@ const PAGES = [
   {
     path: "/mentions-legales",
     title: "Mentions légales",
-    expectedContent: ["835 317 413", "OVHcloud", "Roubaix"],
+    expectedContent: [
+      "835 317 413",
+      "OVHcloud",
+      "Roubaix",
+      "AURELIEN BOUDON",
+      "39 avenue Edouard Herriot",
+      "06 87 76 37 84",
+    ],
   },
   {
     path: "/politique-de-confidentialite",
@@ -102,7 +109,7 @@ test.describe("Pages légales — présence dans le footer", () => {
 // ─── Mentions légales — contenu LCEN ────────────────────────────────────────
 
 test.describe("Mentions légales — contenu LCEN", () => {
-  test("affiche la raison sociale Devzair", async ({ page }) => {
+  test("affiche le nom commercial Devzair", async ({ page }) => {
     await page.goto("/mentions-legales")
     await expect(page.locator("main")).toContainText("Devzair")
   })
@@ -124,6 +131,41 @@ test.describe("Mentions légales — contenu LCEN", () => {
     await page.goto("/mentions-legales")
     const link = page.locator('a[href="/politique-de-confidentialite"]').first()
     await expect(link).toBeVisible()
+  })
+})
+
+// ─── Mentions légales — identité éditeur (DEV-LEGAL-1) ───────────────────────
+
+test.describe("Mentions légales — identité éditeur LCEN (DEV-LEGAL-1)", () => {
+  test("affiche le nom de l'éditeur AURELIEN BOUDON", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    await expect(page.locator("main")).toContainText("AURELIEN BOUDON")
+  })
+
+  test("affiche l'adresse de l'éditeur", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    await expect(page.locator("main")).toContainText("39 avenue Edouard Herriot")
+  })
+
+  test("affiche le téléphone de l'éditeur", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    await expect(page.locator("main")).toContainText("06 87 76 37 84")
+  })
+
+  test("affiche la forme juridique Entrepreneur individuel", async ({ page }) => {
+    await page.goto("/mentions-legales")
+    await expect(page.locator("main")).toContainText("Entrepreneur individuel")
+  })
+
+  test("les trois informations obligatoires LCEN sont présentes dans le HTML SSR", async ({
+    request,
+  }) => {
+    const response = await request.get("/mentions-legales")
+    expect(response.status()).toBe(200)
+    const html = await response.text()
+    expect(html, "SSR doit contenir le nom").toContain("AURELIEN BOUDON")
+    expect(html, "SSR doit contenir l'adresse").toContain("39 avenue Edouard Herriot")
+    expect(html, "SSR doit contenir le téléphone").toContain("06 87 76 37 84")
   })
 })
 

@@ -45,10 +45,26 @@ describe("legalConfig — constantes légales Devzair", () => {
     expect(legalConfig.hostWebsite).toMatch(/^https:\/\//)
   })
 
-  it("les champs d'identité éditeur sont null (validation légale en attente)", () => {
-    expect(legalConfig.publisherName).toBeNull()
-    expect(legalConfig.publisherAddress).toBeNull()
-    expect(legalConfig.publisherPhone).toBeNull()
-    expect(legalConfig.publicationDirector).toBeNull()
+  it("expose le nom de l'éditeur validé", () => {
+    expect(legalConfig.publisherName).toBe("AURELIEN BOUDON")
+  })
+
+  it("expose l'adresse de l'éditeur validée", () => {
+    expect(legalConfig.publisherAddress).toBe("39 avenue Edouard Herriot, Lyon")
+  })
+
+  it("expose le téléphone de l'éditeur validé", () => {
+    expect(legalConfig.publisherPhone).toBe("06 87 76 37 84")
+  })
+
+  it("expose le directeur de la publication validé", () => {
+    expect(legalConfig.publicationDirector).toBe("AURELIEN BOUDON")
+  })
+
+  it("aucun champ d'identité éditeur n'est null (DEV-LEGAL-1 levé)", () => {
+    expect(legalConfig.publisherName).not.toBeNull()
+    expect(legalConfig.publisherAddress).not.toBeNull()
+    expect(legalConfig.publisherPhone).not.toBeNull()
+    expect(legalConfig.publicationDirector).not.toBeNull()
   })
 })

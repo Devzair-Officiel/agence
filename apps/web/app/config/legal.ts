@@ -3,13 +3,11 @@
  *
  * SIREN, SIRET, numéro TVA et hébergeur : données vérifiées.
  * Identité de l'éditeur (nom, adresse, téléphone, directeur de publication) :
- * volontairement `null` jusqu'à validation explicite par le responsable légal.
- * Ne jamais inventer ou deviner ces valeurs — cf. AGENTS.md règle 1.
+ * validée le 2026-09-15 par le responsable légal.
  *
  * Conformité LCEN art. 6-III-1 : les mentions obligatoires pour un éditeur
- * professionnel personne physique incluent nom, adresse et numéro de téléphone.
- * La conformité reste BLOQUÉE tant que `publisherName` / `publisherAddress` /
- * `publisherPhone` sont null.
+ * professionnel personne physique (nom, adresse, téléphone) sont renseignées.
+ * Ne jamais modifier ces valeurs sans validation explicite — cf. AGENTS.md règle 1.
  */
 
 export interface LegalConfig {
@@ -42,11 +40,11 @@ export interface LegalConfig {
 }
 
 export const legalConfig: LegalConfig = {
-  // Identité éditeur — à renseigner lors de la validation légale finale.
-  publisherName: null,
-  publisherAddress: null,
-  publisherPhone: null,
-  publicationDirector: null,
+  // Identité éditeur — validée le 2026-09-15.
+  publisherName: "AURELIEN BOUDON",
+  publisherAddress: "39 avenue Edouard Herriot, Lyon",
+  publisherPhone: "06 87 76 37 84",
+  publicationDirector: "AURELIEN BOUDON",
 
   // Données entreprise vérifiées.
   siren: "835 317 413",
