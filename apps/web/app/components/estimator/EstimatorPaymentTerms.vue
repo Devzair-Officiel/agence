@@ -50,7 +50,7 @@ const maxInstallments = computed(() => getMaxInstallments(props.estimateMaximumM
 
 .payment-terms__note {
   font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 75%, transparent);
   font-style: italic;
   margin: 0;
 }
