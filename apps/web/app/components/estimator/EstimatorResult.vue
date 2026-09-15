@@ -400,7 +400,7 @@ async function onPartnershipClosed(): Promise<void> {
 
 .result__range-disclaimer {
   font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 75%, transparent);
   margin: 0;
   font-style: italic;
   line-height: 1.5;
@@ -462,7 +462,7 @@ async function onPartnershipClosed(): Promise<void> {
 
 .result__no-recurring {
   font-size: 0.875rem;
-  color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 75%, transparent);
   font-style: italic;
   margin: 0;
 }
@@ -536,7 +536,7 @@ async function onPartnershipClosed(): Promise<void> {
 
 .result__note-disclaimer {
   font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+  color: color-mix(in srgb, var(--color-ink) 75%, transparent);
   font-style: italic;
   margin: 0;
   line-height: 1.5;
