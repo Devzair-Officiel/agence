@@ -37,10 +37,7 @@ export interface LegalConfig {
   readonly hostAddress: string
   /** Site web de l'hébergeur. */
   readonly hostWebsite: string
-  /**
-   * Numéro de téléphone de l'hébergeur.
-   * Null = non renseigné (à compléter après vérification auprès de l'hébergeur).
-   */
+  /** Numéro de téléphone de l'hébergeur. Null = non renseigné. */
   readonly hostPhone: string | null
 }
 
@@ -59,10 +56,8 @@ export const legalConfig: LegalConfig = {
   vatNumber: "FR28835317413",
 
   // Hébergeur déclaré.
-  hostName: "OVHcloud",
+  hostName: "OVH SAS",
   hostAddress: "2 rue Kellermann, 59100 Roubaix, France",
   hostWebsite: "https://www.ovhcloud.com",
-  // Téléphone hébergeur : non renseigné — à vérifier sur https://www.ovhcloud.com/fr/contact/
-  // avant toute publication. Ne pas inventer cette valeur.
-  hostPhone: null,
+  hostPhone: "+33 9 72 10 10 07",
 }

@@ -18,7 +18,7 @@ const PAGES = [
     title: "Mentions légales",
     expectedContent: [
       "835 317 413",
-      "OVHcloud",
+      "OVH SAS",
       "Roubaix",
       "AURELIEN BOUDON",
       "39 avenue Edouard Herriot",
@@ -120,11 +120,12 @@ test.describe("Mentions légales — contenu LCEN", () => {
     await expect(main).toContainText("835 317 413")
   })
 
-  test("affiche les informations hébergeur (OVHcloud, Roubaix)", async ({ page }) => {
+  test("affiche les informations hébergeur (OVH SAS, Roubaix, téléphone)", async ({ page }) => {
     await page.goto("/mentions-legales")
     const main = page.locator("main")
-    await expect(main).toContainText("OVHcloud")
+    await expect(main).toContainText("OVH SAS")
     await expect(main).toContainText("Roubaix")
+    await expect(main).toContainText("+33 9 72 10 10 07")
   })
 
   test("le lien vers la politique de confidentialité est présent", async ({ page }) => {

@@ -33,8 +33,8 @@ describe("legalConfig — constantes légales Devzair", () => {
     expect(legalConfig.vatNumber).toContain(sirenDigits)
   })
 
-  it("expose OVHcloud comme hébergeur", () => {
-    expect(legalConfig.hostName).toBe("OVHcloud")
+  it("expose OVH SAS comme hébergeur", () => {
+    expect(legalConfig.hostName).toBe("OVH SAS")
   })
 
   it("expose l'adresse hébergeur attendue", () => {
@@ -68,7 +68,7 @@ describe("legalConfig — constantes légales Devzair", () => {
     expect(legalConfig.publicationDirector).not.toBeNull()
   })
 
-  it("hostPhone est null (téléphone OVHcloud non vérifié — à renseigner après vérification)", () => {
-    expect(legalConfig.hostPhone).toBeNull()
+  it("expose le téléphone OVH SAS attendu", () => {
+    expect(legalConfig.hostPhone).toBe("+33 9 72 10 10 07")
   })
 })
