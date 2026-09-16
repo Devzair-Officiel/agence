@@ -2109,7 +2109,29 @@ Audit live réalisé le 2026-09-06 sur `https://devzair.fr`.
 - [x] Vérifier SSR : `noindex, follow` confirmé, tous contenus présents, absences confirmées.
 - [x] 1127/1127 tests unitaires verts, lint OK, typecheck OK, build OK.
 
-**Dette documentée :** `legalConfig.hostPhone` est `null` — à renseigner après vérification sur ovhcloud.com/fr/contact/.
+**Dette documentée :** aucune.
+
+**Dépendances :** rebuild Docker production (DEV-084) avant ouverture de l'indexation.
+
+---
+
+### LEGAL-3 — Gestionnaire de préférences de cookies (DEV-089)
+
+**État actuel : TERMINÉE (2026-09-16)**
+
+- [x] Créer `app/composables/useCookieConsent.ts` — état singleton, localStorage avec guards SSR, catégories `necessary`/`analytics`/`marketing`, `hasConsentRequiredServices = false`, `CONSENT_VERSION = 1`.
+- [x] Créer `app/components/cookie/CookieConsentManager.vue` — modale accessible (role dialog, aria-modal, focus trap, Escape, retour focus, Teleport body, toggles visuels).
+- [x] Créer `app/components/cookie/CookieConsentBanner.vue` — bandeau conditionnel (actuellement toujours masqué car `hasConsentRequiredServices = false`).
+- [x] Modifier `app/layouts/default.vue` — ajout `<ClientOnly>` avec les deux composants cookie.
+- [x] Modifier `app/components/layout/SiteFooter.vue` — bouton "Gérer mes cookies" dans la barre légale.
+- [x] Modifier `app/pages/politique-de-confidentialite.vue` — section cookies réécrite (situation réelle, pas de traceurs actifs, explication stockage, Turnstile optionnel, lien "Gérer mes cookies").
+- [x] Créer `test/unit/composables/useCookieConsent.spec.ts` — 28 tests (defaults, acceptAll, rejectOptional, savePreferences, open/close, reset, persistance, version, SSR).
+- [x] Créer `test/e2e/cookie-consent.spec.ts` — 14 tests Playwright (footer, ouverture, catégories, actions, persistance, focus, pas de bandeau automatique).
+- [x] Mettre à jour `docs/05-SECURITY-PRIVACY.md` — section gestionnaire de préférences.
+
+**État du tracking :** aucun traceur non essentiel actif. `hasConsentRequiredServices = false`. Bandeau auto désactivé.
+
+**Pour activer le bandeau à l'avenir :** passer `hasConsentRequiredServices` à `true` dans `useCookieConsent.ts` et connecter le script analytics/marketing via `if (preferences.value.analytics) { ... }`.
 
 **Dépendances :** rebuild Docker production (DEV-084) avant ouverture de l'indexation.
 

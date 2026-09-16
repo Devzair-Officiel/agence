@@ -8,6 +8,8 @@
 import SiteHeader from "~/components/layout/SiteHeader.vue"
 import MobileNavigation from "~/components/layout/MobileNavigation.vue"
 import SiteFooter from "~/components/layout/SiteFooter.vue"
+import CookieConsentBanner from "~/components/cookie/CookieConsentBanner.vue"
+import CookieConsentManager from "~/components/cookie/CookieConsentManager.vue"
 
 useSiteSchema()
 </script>
@@ -21,6 +23,10 @@ useSiteSchema()
       <slot />
     </main>
     <SiteFooter />
+    <ClientOnly>
+      <CookieConsentBanner />
+      <CookieConsentManager />
+    </ClientOnly>
   </div>
 </template>
 

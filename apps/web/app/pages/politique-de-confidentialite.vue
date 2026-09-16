@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import { legalConfig } from "~/config/legal"
+import { useCookieConsent } from "~/composables/useCookieConsent"
+
+const { openPreferences } = useCookieConsent()
 
 // Page non indexée : URL purement réglementaire, pas de valeur SEO organique.
 // `robots: "noindex, follow"` pour conserver le canonical (cf. nuxt.config).
@@ -207,14 +210,47 @@ usePageSeo({
           <section class="legal-section" aria-labelledby="section-cookies">
             <h2 id="section-cookies" class="legal-section__title">Cookies et traceurs</h2>
             <p>
-              Nous n'utilisons pas de cookies de traçage, de scripts d'analyse
-              d'audience tiers ni de pixels publicitaires.
+              Devzair n'utilise actuellement pas de traceurs publicitaires ou
+              de mesure d'audience nécessitant un consentement préalable.
+              Aucun cookie de traçage, script d'analyse d'audience tiers ni
+              pixel publicitaire n'est actif sur ce site.
+            </p>
+
+            <h3 class="legal-section__subtitle">Cookies strictement nécessaires</h3>
+            <p>
+              Certains mécanismes strictement nécessaires au fonctionnement ou
+              à la sécurité du site peuvent utiliser des données techniques
+              (session de navigation, préférences de consentement stockées
+              localement). Ces mécanismes ne nécessitent pas de consentement
+              préalable.
             </p>
             <p>
-              Lorsque Cloudflare Turnstile est activé, un script tiers de
-              Cloudflare est chargé et peut déposer un cookie technique lié à
-              la vérification anti-robots. Ce cookie est fonctionnel et
-              strictement nécessaire à la protection du service.
+              Les préférences de cookies sont conservées dans le stockage local
+              de votre navigateur (<em>localStorage</em>) sous la clé
+              <code>dz_cookie_prefs</code>. Elles ne contiennent aucune donnée
+              personnelle et peuvent être modifiées ou supprimées à tout moment.
+            </p>
+
+            <h3 class="legal-section__subtitle">Cloudflare Turnstile</h3>
+            <p>
+              Lorsque Cloudflare Turnstile est activé (désactivé par défaut),
+              un script tiers de Cloudflare est chargé et peut déposer un
+              cookie technique lié à la vérification anti-robots. Ce cookie est
+              strictement nécessaire à la protection du service contre les
+              soumissions automatisées. Cloudflare intervient alors en qualité
+              de sous-traitant.
+            </p>
+
+            <h3 class="legal-section__subtitle">Gestion de vos préférences</h3>
+            <p>
+              Vous pouvez consulter et modifier vos préférences de cookies à
+              tout moment via le lien
+              <button
+                class="legal-link legal-link--btn"
+                type="button"
+                @click="openPreferences"
+              >Gérer mes cookies</button>
+              disponible dans le pied de page.
             </p>
           </section>
 
@@ -377,6 +413,15 @@ usePageSeo({
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-gap);
   border-radius: 2px;
+}
+
+.legal-link--btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .legal-dl {

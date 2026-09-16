@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { footerNavigation, legalNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
+import { useCookieConsent } from "~/composables/useCookieConsent"
 
 const currentYear = new Date().getFullYear()
+const { openPreferences } = useCookieConsent()
 </script>
 
 <template>
@@ -84,6 +86,15 @@ const currentYear = new Date().getFullYear()
             :external="item.isRoute ? undefined : true"
             class="site-footer__legal-link"
           >{{ item.label }}</NuxtLink>
+        </li>
+        <li>
+          <button
+            class="site-footer__legal-link site-footer__cookie-btn"
+            type="button"
+            @click="openPreferences"
+          >
+            Gérer mes cookies
+          </button>
         </li>
       </ul>
       <a href="#top" class="site-footer__back-to-top">
@@ -339,6 +350,14 @@ const currentYear = new Date().getFullYear()
 
 .site-footer__legal-link { transition: color 150ms var(--ease-out); }
 .site-footer__legal-link:hover { color: var(--text-inverse); }
+
+.site-footer__cookie-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
 
 .site-footer__back-to-top {
   display: inline-flex;

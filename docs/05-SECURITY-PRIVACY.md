@@ -538,6 +538,34 @@ Pour chaque collecte :
 
 Pour une mesure d’audience présentée comme exemptée de consentement, vérifier que la solution et sa configuration satisfont réellement toutes les conditions de la CNIL.
 
+### Gestionnaire de préférences (DEV-089 — 2026-09-16)
+
+**Composable :** `app/composables/useCookieConsent.ts` — source de vérité unique.
+
+**Catégories :**
+- `necessary` (toujours `true`, non modifiable)
+- `analytics` (défaut `false`, prévue pour futurs outils de mesure)
+- `marketing` (défaut `false`, prévue pour futurs outils publicitaires)
+
+**Stockage :** `localStorage`, clé `dz_cookie_prefs`, version `1`. Format : `{ version, necessary, analytics, marketing, updatedAt }`. Aucune donnée personnelle stockée. Guards SSR (`typeof window !== ‘undefined’`).
+
+**`hasConsentRequiredServices = false`** — aucun traceur non essentiel actif. Passer à `true` dans `useCookieConsent.ts` pour activer le bandeau automatique dès qu’un service analytics ou marketing est configuré.
+
+**Bandeau automatique :** `showBanner = hasConsentRequiredServices && !hasSavedPreferences`. Actuellement jamais affiché.
+
+**Composants :** `CookieConsentManager.vue` (modale accessible, Teleport body, focus trap, Escape, retour focus ouvreur), `CookieConsentBanner.vue` (bandeau fixe bas de page, conditionnellement affiché).
+
+**Footer :** bouton "Gérer mes cookies" toujours accessible dans la barre légale.
+
+**Règle pour les futurs scripts non essentiels :**
+```typescript
+if (preferences.value.analytics) { loadAnalytics() }
+if (preferences.value.marketing) { loadMarketing() }
+```
+Ne jamais charger un traceur non essentiel sans vérifier la préférence correspondante.
+
+**Cloudflare Turnstile :** classifié `necessary` — mécanisme anti-abus, pas un traceur. Optionnel, désactivé par défaut. Aucune modification de son fonctionnement requise.
+
 ### Formulaires
 
 - information courte à proximité ;
