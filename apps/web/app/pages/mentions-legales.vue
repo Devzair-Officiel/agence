@@ -104,6 +104,10 @@ usePageSeo({
                   </a>
                 </dd>
               </div>
+              <div v-if="legalConfig.hostPhone" class="legal-dl__row">
+                <dt>Téléphone</dt>
+                <dd>{{ legalConfig.hostPhone }}</dd>
+              </div>
             </dl>
           </section>
 
@@ -152,8 +156,8 @@ usePageSeo({
             <h2 id="section-droit" class="legal-section__title">Droit applicable</h2>
             <p>
               Les présentes mentions légales sont soumises au droit français.
-              En cas de litige, les tribunaux compétents de Versailles seront
-              seuls habilités.
+              En cas de litige, les juridictions compétentes seront déterminées
+              conformément aux règles de droit applicables.
             </p>
           </section>
 

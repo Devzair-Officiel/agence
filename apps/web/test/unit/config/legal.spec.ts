@@ -67,4 +67,8 @@ describe("legalConfig — constantes légales Devzair", () => {
     expect(legalConfig.publisherPhone).not.toBeNull()
     expect(legalConfig.publicationDirector).not.toBeNull()
   })
+
+  it("hostPhone est null (téléphone OVHcloud non vérifié — à renseigner après vérification)", () => {
+    expect(legalConfig.hostPhone).toBeNull()
+  })
 })

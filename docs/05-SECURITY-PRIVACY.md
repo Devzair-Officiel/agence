@@ -592,6 +592,23 @@ Pour une mesure d’audience présentée comme exemptée de consentement, vérif
 
 **Droits :** accès, rectification, suppression sur demande écrite. Purge automatique après 24 mois. Effacement anticipé sur demande : procédure manuelle à définir par Devzair.
 
+### Pages légales (LEGAL-1 / LEGAL-2 — 2026-09-15/16)
+
+**Fichiers :** `app/config/legal.ts`, `app/pages/mentions-legales.vue`, `app/pages/politique-de-confidentialite.vue`.
+
+**`legalConfig`** — source de vérité unique pour SIREN, SIRET, RCS, NAF, TVA, identité éditeur et hébergeur. `hostPhone: string | null` (valeur `null` — téléphone OVHcloud non vérifié).
+
+**politique-de-confidentialite.vue** — 3 traitements distincts documentés :
+- Formulaire contact : nom, email, société (opt.), téléphone (opt.), type projet, message, consentement. Transmis par e-mail uniquement, pas de stockage DB. Conservation : max 36 mois dans la messagerie Devzair.
+- Estimateur / lead : nom, email, téléphone (opt.), société (opt.), questionnaire, résultat. Stocké en PostgreSQL. Conservation : **24 mois** purge automatique (`EstimatorRetentionPolicy::MONTHS`).
+- Partenariat : idem lead + nature partenariat, stade projet, revenus (opt.), description, complément (opt.). Stocké en PostgreSQL. Conservation : **24 mois** purge automatique.
+
+Cloudflare Turnstile : optionnel, désactivé par défaut (`turnstileEnabled: false`). Documenté comme sous-traitant quand activé.
+
+**mentions-legales.vue** — clause juridictionnelle neutre (pas de désignation de tribunal compétent — conforme RGPD/LCEN sans imposer de for contractuel). Hébergeur : OVHcloud, Roubaix. `hostPhone` non affiché tant que `null`.
+
+**SEO :** `robots: "noindex, follow"` sur les deux pages. Exclues du sitemap.
+
 ---
 
 ---

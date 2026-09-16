@@ -2097,6 +2097,24 @@ Audit live réalisé le 2026-09-06 sur `https://devzair.fr`.
 
 ---
 
+### LEGAL-2 — Correction pré-production des pages légales (DEV-088)
+
+**État actuel : TERMINÉE (2026-09-16)**
+
+- [x] Réécrire `politique-de-confidentialite.vue` — données collectées exhaustives (3 traitements : contact, estimateur lead, partenariat) ; PostgreSQL déclaré pour leads/partenariats ; conservation 24 mois purge automatique (estimateur/partenariat) vs 36 mois e-mail (contact) ; Cloudflare Turnstile optionnel documenté ; "Aucune autre donnée n'est collectée" supprimé.
+- [x] Corriger `mentions-legales.vue` — clause juridictionnelle neutralisée (suppression mention "Versailles") ; ligne téléphone hébergeur conditionnelle (`v-if="legalConfig.hostPhone"`).
+- [x] Étendre `legal.ts` — champ `hostPhone: string | null` ajouté à l'interface et à la valeur (`null` — téléphone OVHcloud non vérifié, commentaire de dette documenté).
+- [x] Mettre à jour `legal.spec.ts` — +1 cas `hostPhone null` (16 tests total).
+- [x] Mettre à jour `legal-pages.spec.ts` — +6 cas (présence vingt-quatre, PostgreSQL, estimateur, partenariat ; absence des deux anciens textes erronés).
+- [x] Vérifier SSR : `noindex, follow` confirmé, tous contenus présents, absences confirmées.
+- [x] 1127/1127 tests unitaires verts, lint OK, typecheck OK, build OK.
+
+**Dette documentée :** `legalConfig.hostPhone` est `null` — à renseigner après vérification sur ovhcloud.com/fr/contact/.
+
+**Dépendances :** rebuild Docker production (DEV-084) avant ouverture de l'indexation.
+
+---
+
 ## Règle de maintenance
 
 Ce fichier doit être modifié uniquement lorsque les règles de son domaine évoluent.  

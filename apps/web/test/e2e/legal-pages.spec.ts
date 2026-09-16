@@ -28,7 +28,7 @@ const PAGES = [
   {
     path: "/politique-de-confidentialite",
     title: "Politique de confidentialité",
-    expectedContent: ["835 317 413", "intérêt légitime", "trente-six"],
+    expectedContent: ["835 317 413", "intérêt légitime", "trente-six", "vingt-quatre"],
   },
 ] as const
 
@@ -177,9 +177,14 @@ test.describe("Politique de confidentialité — contenu RGPD", () => {
     await expect(page.locator("main")).toContainText("intérêt légitime")
   })
 
-  test("mentionne la durée de conservation", async ({ page }) => {
+  test("mentionne la durée de conservation contact (trente-six mois)", async ({ page }) => {
     await page.goto("/politique-de-confidentialite")
     await expect(page.locator("main")).toContainText("trente-six")
+  })
+
+  test("mentionne la durée de conservation estimateur/partenariat (vingt-quatre mois)", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("vingt-quatre")
   })
 
   test("mentionne la CNIL", async ({ page }) => {
@@ -190,6 +195,41 @@ test.describe("Politique de confidentialité — contenu RGPD", () => {
   test("le lien vers /contact est présent pour exercer les droits", async ({ page }) => {
     await page.goto("/politique-de-confidentialite")
     await expect(page.locator('a[href="/contact"]').first()).toBeVisible()
+  })
+})
+
+// ─── Politique de confidentialité — corrections pré-production ──────────────
+
+test.describe("Politique de confidentialité — corrections pré-production", () => {
+  test("ne contient plus l'ancien texte erroné sur les données collectées", async ({ request }) => {
+    const response = await request.get("/politique-de-confidentialite")
+    const html = await response.text()
+    expect(html).not.toContain("Aucune autre donnée n'est collectée")
+  })
+
+  test("mentionne le stockage PostgreSQL pour les leads estimateur et partenariats", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("PostgreSQL")
+  })
+
+  test("mentionne l'estimateur de projet dans les données collectées", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("estimateur")
+  })
+
+  test("mentionne le formulaire de partenariat dans les données collectées", async ({ page }) => {
+    await page.goto("/politique-de-confidentialite")
+    await expect(page.locator("main")).toContainText("partenariat")
+  })
+})
+
+// ─── Mentions légales — corrections pré-production ───────────────────────────
+
+test.describe("Mentions légales — corrections pré-production", () => {
+  test("ne contient plus la clause juridictionnelle erronée de Versailles", async ({ request }) => {
+    const response = await request.get("/mentions-legales")
+    const html = await response.text()
+    expect(html).not.toContain("tribunaux compétents de Versailles seront seuls habilités")
   })
 })
 

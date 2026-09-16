@@ -31,12 +31,16 @@ usePageSeo({
             <h2 id="section-responsable" class="legal-section__title">Responsable du traitement</h2>
             <dl class="legal-dl">
               <div class="legal-dl__row">
-                <dt>Raison sociale</dt>
+                <dt>Nom commercial</dt>
                 <dd>Devzair</dd>
               </div>
               <div class="legal-dl__row">
                 <dt>SIREN</dt>
                 <dd>{{ legalConfig.siren }}</dd>
+              </div>
+              <div v-if="legalConfig.publisherName" class="legal-dl__row">
+                <dt>Responsable</dt>
+                <dd>{{ legalConfig.publisherName }}</dd>
               </div>
               <div v-if="legalConfig.publisherAddress" class="legal-dl__row">
                 <dt>Adresse</dt>
@@ -45,50 +49,128 @@ usePageSeo({
             </dl>
           </section>
 
-          <!-- Données collectées -->
+          <!-- Données collectées par traitement -->
           <section class="legal-section" aria-labelledby="section-collecte">
             <h2 id="section-collecte" class="legal-section__title">Données collectées</h2>
+            <p>
+              Devzair collecte des données personnelles dans le cadre de trois
+              traitements distincts décrits ci-dessous.
+            </p>
+
+            <h3 class="legal-section__subtitle">Formulaire de contact</h3>
             <p>
               Lorsque vous soumettez le formulaire de contact, nous collectons :
             </p>
             <ul class="legal-list">
-              <li>votre nom ou prénom,</li>
+              <li>votre nom,</li>
               <li>votre adresse e-mail,</li>
-              <li>le contenu du message que vous nous transmettez.</li>
+              <li>votre société (facultatif),</li>
+              <li>votre numéro de téléphone (facultatif),</li>
+              <li>le type de projet concerné,</li>
+              <li>le contenu de votre message,</li>
+              <li>votre prise de connaissance de la présente politique (case à cocher).</li>
             </ul>
             <p>
-              Aucune autre donnée n'est collectée sur ce site. Nous n'utilisons
-              pas de cookies de traçage, de scripts d'analyse tiers ni de
-              pixels publicitaires.
+              Ces données sont transmises par e-mail à l'équipe Devzair et ne
+              sont pas enregistrées dans une base de données.
             </p>
+
+            <h3 class="legal-section__subtitle">Estimateur de projet — formulaire de suivi</h3>
+            <p>
+              Si vous demandez à être recontacté après avoir utilisé notre
+              estimateur de projet, nous collectons et conservons en base de données :
+            </p>
+            <ul class="legal-list">
+              <li>votre nom,</li>
+              <li>votre adresse e-mail,</li>
+              <li>votre numéro de téléphone (facultatif),</li>
+              <li>votre société (facultatif),</li>
+              <li>vos réponses au questionnaire de l'estimateur,</li>
+              <li>le résultat de l'estimation recalculé côté serveur.</li>
+            </ul>
+
+            <h3 class="legal-section__subtitle">Formulaire de proposition de partenariat</h3>
+            <p>
+              Si vous soumettez une proposition de partenariat, nous collectons
+              et conservons en base de données, en plus des données de contact
+              ci-dessus :
+            </p>
+            <ul class="legal-list">
+              <li>la nature du partenariat envisagé,</li>
+              <li>le stade d'avancement de votre projet,</li>
+              <li>des informations sur les revenus générés (facultatif),</li>
+              <li>la description de votre proposition,</li>
+              <li>tout complément d'information (facultatif),</li>
+              <li>vos réponses au questionnaire de l'estimateur et le résultat associé.</li>
+            </ul>
           </section>
 
           <!-- Finalité et base légale -->
           <section class="legal-section" aria-labelledby="section-finalite">
-            <h2 id="section-finalite" class="legal-section__title">Finalité et base légale</h2>
+            <h2 id="section-finalite" class="legal-section__title">Finalités et bases légales</h2>
             <p>
-              Les données collectées ont pour seule finalité de traiter votre
-              demande de contact et d'assurer le suivi de notre relation commerciale.
+              Les données sont collectées pour les finalités suivantes :
             </p>
+            <ul class="legal-list">
+              <li>répondre à votre demande de contact et assurer le suivi précontractuel ;</li>
+              <li>produire une estimation indicative du budget de votre projet ;</li>
+              <li>vous recontacter au sujet de votre projet si vous en faites la demande ;</li>
+              <li>étudier et traiter une proposition de partenariat commercial ;</li>
+              <li>protéger nos formulaires contre les soumissions abusives et automatisées.</li>
+            </ul>
             <p>
-              La base légale du traitement est l'<strong>intérêt légitime</strong>
-              de Devzair à répondre aux demandes entrantes, et les
-              <strong>mesures précontractuelles</strong> prises à la demande de
-              la personne concernée (RGPD, art. 6-1-b et 6-1-f).
+              Les bases légales applicables sont l'<strong>intérêt légitime</strong>
+              de Devzair à répondre aux demandes entrantes et à protéger son service,
+              et les <strong>mesures précontractuelles</strong> prises à la demande
+              de la personne concernée (RGPD, art. 6-1-b et 6-1-f).
             </p>
           </section>
 
-          <!-- Destinataires -->
+          <!-- Destinataires et infrastructure -->
           <section class="legal-section" aria-labelledby="section-destinataires">
-            <h2 id="section-destinataires" class="legal-section__title">Destinataires des données</h2>
+            <h2 id="section-destinataires" class="legal-section__title">Destinataires et infrastructure</h2>
             <p>
-              Vos données sont transmises exclusivement par e-mail à l'équipe
-              Devzair. Elles ne sont ni vendues, ni cédées, ni partagées avec
-              des tiers à des fins commerciales.
+              Vos données ne sont ni vendues, ni cédées, ni partagées avec des
+              tiers à des fins commerciales.
             </p>
             <p>
-              Nos courriels transitent via un serveur hébergé par
-              <strong>{{ legalConfig.hostName }}</strong>.
+              Selon le formulaire utilisé, vos données sont traitées comme suit :
+            </p>
+            <ul class="legal-list">
+              <li>
+                <strong>Formulaire de contact :</strong> vos données sont transmises par
+                e-mail à l'équipe Devzair via un serveur de messagerie hébergé par
+                {{ legalConfig.hostName }}. Elles ne sont pas conservées dans notre
+                base de données applicative.
+              </li>
+              <li>
+                <strong>Estimateur / suivi de projet et partenariat :</strong> vos données
+                sont enregistrées dans une base de données PostgreSQL hébergée par
+                {{ legalConfig.hostName }} ({{ legalConfig.hostAddress }}). Une
+                notification e-mail est également envoyée à l'équipe Devzair.
+              </li>
+            </ul>
+            <p>
+              {{ legalConfig.hostName }} intervient en qualité de sous-traitant
+              au sens du RGPD pour l'hébergement de l'infrastructure.
+            </p>
+          </section>
+
+          <!-- Protection anti-abus -->
+          <section class="legal-section" aria-labelledby="section-anti-abus">
+            <h2 id="section-anti-abus" class="legal-section__title">Protection contre les abus</h2>
+            <p>
+              Nos formulaires sont protégés par des mécanismes techniques
+              anti-abus : limitation de débit par adresse IP et champ leurre
+              (honeypot) invisible des utilisateurs humains.
+            </p>
+            <p>
+              Lorsqu'il est activé en production, Cloudflare Turnstile peut
+              également être utilisé. Ce service de vérification anti-robots
+              de Cloudflare, Inc. traite des données techniques (empreinte de
+              navigateur, adresse IP) selon sa propre politique de confidentialité.
+              Cloudflare intervient alors en qualité de sous-traitant.
+              Par défaut, ce service est désactivé.
             </p>
           </section>
 
@@ -96,10 +178,43 @@ usePageSeo({
           <section class="legal-section" aria-labelledby="section-conservation">
             <h2 id="section-conservation" class="legal-section__title">Durée de conservation</h2>
             <p>
-              Nous conservons vos données pendant une durée maximale de
-              <strong>trente-six (36) mois</strong> à compter de votre dernière
-              prise de contact, sauf obligation légale contraire ou demande de
-              suppression de votre part.
+              Les durées de conservation varient selon le traitement :
+            </p>
+            <ul class="legal-list">
+              <li>
+                <strong>Formulaire de contact :</strong> vos données ne sont pas
+                conservées dans notre base de données. Elles sont présentes dans la
+                messagerie de l'équipe Devzair le temps nécessaire au traitement de
+                votre demande, sans excéder <strong>trente-six (36) mois</strong>.
+              </li>
+              <li>
+                <strong>Estimateur — suivi de projet :</strong> les données enregistrées
+                en base sont supprimées automatiquement au bout de
+                <strong>vingt-quatre (24) mois</strong> à compter de la date de
+                soumission.
+              </li>
+              <li>
+                <strong>Propositions de partenariat :</strong> même durée, soit
+                <strong>vingt-quatre (24) mois</strong>, avec purge automatique.
+              </li>
+            </ul>
+            <p>
+              Ces durées peuvent être réduites sur demande de suppression de votre part.
+            </p>
+          </section>
+
+          <!-- Cookies et traceurs -->
+          <section class="legal-section" aria-labelledby="section-cookies">
+            <h2 id="section-cookies" class="legal-section__title">Cookies et traceurs</h2>
+            <p>
+              Nous n'utilisons pas de cookies de traçage, de scripts d'analyse
+              d'audience tiers ni de pixels publicitaires.
+            </p>
+            <p>
+              Lorsque Cloudflare Turnstile est activé, un script tiers de
+              Cloudflare est chargé et peut déposer un cookie technique lié à
+              la vérification anti-robots. Ce cookie est fonctionnel et
+              strictement nécessaire à la protection du service.
             </p>
           </section>
 
@@ -220,6 +335,14 @@ usePageSeo({
   margin: 0;
   padding-block-end: var(--space-2);
   border-bottom: 1px solid var(--border-default);
+}
+
+.legal-section__subtitle {
+  font-family: var(--font-family-heading);
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-body-strong);
+  color: var(--color-ink);
+  margin: 0;
 }
 
 .legal-section p {
