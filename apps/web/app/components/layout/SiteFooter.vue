@@ -1,10 +1,18 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue"
 import { footerNavigation, legalNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
 import { useCookieConsent } from "~/composables/useCookieConsent"
 
 const currentYear = new Date().getFullYear()
 const { openPreferences } = useCookieConsent()
+
+// Signal d'hydratation pour les tests E2E — même pattern que SiteHeader.vue.
+// Garantit que Vue a attaché le listener @click avant que Playwright ne clique.
+const isHydrated = ref(false)
+onMounted(() => {
+  isHydrated.value = true
+})
 </script>
 
 <template>
@@ -91,6 +99,7 @@ const { openPreferences } = useCookieConsent()
           <button
             class="site-footer__legal-link site-footer__cookie-btn"
             type="button"
+            :data-hydrated="isHydrated || undefined"
             @click="openPreferences"
           >
             Gérer mes cookies
