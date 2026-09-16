@@ -23,10 +23,8 @@ useSiteSchema()
       <slot />
     </main>
     <SiteFooter />
-    <ClientOnly>
-      <CookieConsentBanner />
-      <CookieConsentManager />
-    </ClientOnly>
+    <CookieConsentBanner />
+    <CookieConsentManager />
   </div>
 </template>
 
