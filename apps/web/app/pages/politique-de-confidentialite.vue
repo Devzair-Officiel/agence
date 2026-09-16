@@ -13,7 +13,7 @@ usePageSeo({
 </script>
 
 <template>
-  <main id="main-content" class="legal-page">
+  <div class="legal-page">
     <BaseContainer>
       <div class="legal-page__wrapper">
         <header class="legal-page__header">
@@ -281,7 +281,7 @@ usePageSeo({
         </div>
       </div>
     </BaseContainer>
-  </main>
+  </div>
 </template>
 
 <style scoped>
