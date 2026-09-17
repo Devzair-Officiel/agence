@@ -157,4 +157,4 @@ networks:
     # Réseau Docker externe pré-créé sur le VPS par `docker network create web`.
     # Le Caddy global est sur ce réseau et atteint web et api via leurs aliases.
     external: true
-    name: ${PUBLIC_PROXY_NETWORK:-web}
+    name: proxy
