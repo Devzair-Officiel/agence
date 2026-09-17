@@ -201,6 +201,16 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    // Assets versionnés (noms avec hash de contenu) — cache immuable 1 an.
+    // Sûr car un rebuild génère de nouveaux noms dès qu'un fichier change.
+    '/_nuxt/**': {
+      headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+    },
+    // Images portfolio — pas de hash de nom, mais changements rares.
+    // 30 jours laissent le temps de re-télécharger si les variantes changent.
+    '/portfolio/**': {
+      headers: { 'Cache-Control': 'public, max-age=2592000' },
+    },
     // Pré-rendu limité aux pages marketing réellement existantes.
     // Phase 5D : accueil `/` (8 sections stables, 100 % SSR, données typées
     // locales). Phase 7A : ajout de `/agence` (positionnement + valeurs) et

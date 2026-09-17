@@ -3,9 +3,26 @@ import type { CaseStudy } from "~/config/case-studies"
 
 interface Props {
   study: CaseStudy
+  /** Position dans la grille (0 = premier visible = LCP candidate). */
+  index?: number
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { index: 1 })
+
+/**
+ * Srcset responsive : variantes 400w et 800w générées au build par
+ * apps/web/scripts/optimize-portfolio-images.
+ * Convention : /portfolio/{name}.webp → /portfolio/{name}-400.webp …
+ */
+const imageSrcset = computed(() => {
+  const src = props.study.imageSrc
+  if (!src.startsWith('/portfolio/') || !src.endsWith('.webp')) return undefined
+  const base = src.slice(0, -5)
+  // 400w : 1× DPR (écrans budget)
+  // 760w : couvre Lighthouse mobile (412px×1.75=658px), Android 2× (412px×2=752px),
+  //        desktop 1× 2-col (≤672px) — seuil minimal calculé sur DPR 1.75 Nexus 5X
+  return `${base}-400.webp 400w, ${base}-760.webp 760w`
+})
 </script>
 
 <template>
@@ -18,9 +35,12 @@ defineProps<Props>()
       <div class="cs-card__visual">
         <img
           :src="study.imageSrc"
+          :srcset="imageSrcset"
+          sizes="(max-width: 639px) calc(100vw - 2.25rem), calc(50vw - 3rem)"
           :alt="study.imageAlt"
           class="cs-card__img"
-          loading="lazy"
+          :loading="props.index === 0 ? 'eager' : 'lazy'"
+          :fetchpriority="props.index === 0 ? 'high' : 'auto'"
           decoding="async"
           width="800"
           height="500"

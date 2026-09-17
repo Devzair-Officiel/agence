@@ -29,6 +29,26 @@ const breadcrumbItems = [
   { label: "Réalisations" },
 ]
 
+// Preload SSR de l'image LCP (première carte, visible immédiatement sur mobile).
+// imagesrcset + imagesizes permettent au navigateur de précharger la bonne
+// variante responsive (400w sur mobile 1x, 800w sur mobile 2x HiDPI).
+const lcpStudy = publishedStudies[0]
+if (lcpStudy?.imageSrc.startsWith('/portfolio/') && lcpStudy.imageSrc.endsWith('.webp')) {
+  const base = lcpStudy.imageSrc.slice(0, -5)
+  useServerHead({
+    link: [
+      {
+        rel: 'preload',
+        as: 'image',
+        href: lcpStudy.imageSrc,
+        imagesrcset: `${base}-400.webp 400w, ${base}-760.webp 760w`,
+        imagesizes: '(max-width: 639px) calc(100vw - 2.25rem), calc(50vw - 3rem)',
+        fetchpriority: 'high',
+      },
+    ],
+  })
+}
+
 usePageSeo({
   title: "Nos réalisations — projets web conçus par Devzair",
   description:
@@ -70,11 +90,11 @@ useBreadcrumb(breadcrumbItems)
         </h2>
         <ul class="rp__grid" role="list">
           <li
-            v-for="study in publishedStudies"
+            v-for="(study, i) in publishedStudies"
             :key="study.id"
             class="rp__grid-item"
           >
-            <CaseStudyCard :study="study" />
+            <CaseStudyCard :study="study" :index="i" />
           </li>
         </ul>
       </BaseContainer>
