@@ -37,9 +37,14 @@ export default defineNuxtConfig({
   // un CDN tiers en production.
   fonts: {
     families: [
-      { name: 'Schibsted Grotesk', weights: [600, 700], subsets: ['latin'] },
-      { name: 'Hanken Grotesk', weights: [400, 600], subsets: ['latin'] },
-      { name: 'Space Mono', weights: [700], subsets: ['latin'] },
+      // preload: true rétablit le préchargement supprimé par `subsets`.
+      // styles: ['normal'] exclut les variantes italiques, non utilisées dans
+      // le design system. Cela réduit le nombre de fichiers woff2 et garantit
+      // que le `preload` cible Hanken Grotesk 400 normal (police du LCP) et
+      // Schibsted Grotesk (titres above-fold), et non leurs variantes italiques.
+      { name: 'Schibsted Grotesk', weights: [600, 700], styles: ['normal'], subsets: ['latin'], preload: true },
+      { name: 'Hanken Grotesk', weights: [400, 600], styles: ['normal'], subsets: ['latin'], preload: true },
+      { name: 'Space Mono', weights: [700], styles: ['normal'], subsets: ['latin'] },
     ],
     defaults: {
       fallbacks: {
@@ -205,6 +210,12 @@ export default defineNuxtConfig({
     // Sûr car un rebuild génère de nouveaux noms dès qu'un fichier change.
     '/_nuxt/**': {
       headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+    },
+    // Images de marque — noms stables, changements rares. 1 an sans `immutable`
+    // (pas de hash dans le nom) : le proxy invalide si nécessaire, et un
+    // ?v= suffira à contourner le cache navigateur en cas de mise à jour.
+    '/brand/**': {
+      headers: { 'Cache-Control': 'public, max-age=31536000' },
     },
     // Images portfolio — pas de hash de nom, mais changements rares.
     // 30 jours laissent le temps de re-télécharger si les variantes changent.

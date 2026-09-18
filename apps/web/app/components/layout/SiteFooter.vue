@@ -27,15 +27,18 @@ onMounted(() => {
             class="site-footer__logo-link"
             aria-label="Devzair — accueil"
           >
-            <img
-              class="site-footer__logo"
-              alt=""
-              src="/brand/logo_devzaire_agency.png"
-              width="128"
-              height="128"
-              loading="lazy"
-              decoding="async"
-            >
+            <picture>
+              <source srcset="/brand/logo_devzaire_agency.webp" type="image/webp">
+              <img
+                class="site-footer__logo"
+                alt=""
+                src="/brand/logo_devzaire_agency.png"
+                width="128"
+                height="128"
+                loading="lazy"
+                decoding="async"
+              >
+            </picture>
           </NuxtLink>
           <p class="site-footer__tagline">Sites – Applications – Image – Visibilité</p>
           <p class="site-footer__description">

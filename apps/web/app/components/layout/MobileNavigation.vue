@@ -83,14 +83,17 @@ watch(isOpen, async (opened) => {
         <div class="mobile-navigation__inner">
           <div class="mobile-navigation__header">
             <div class="mobile-navigation__brand">
-              <img
-                class="mobile-navigation__logo"
-                :alt="site.name"
-                src="/brand/logo_devzaire_agency.png"
-                width="56"
-                height="56"
-                decoding="async"
-              >
+              <picture>
+                <source srcset="/brand/logo_devzaire_agency.webp" type="image/webp">
+                <img
+                  class="mobile-navigation__logo"
+                  :alt="site.name"
+                  src="/brand/logo_devzaire_agency.png"
+                  width="56"
+                  height="56"
+                  decoding="async"
+                >
+              </picture>
             </div>
             <button
               ref="closeButtonRef"
