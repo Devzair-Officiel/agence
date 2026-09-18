@@ -40,7 +40,7 @@ const imageSrcset = computed(() => {
           :alt="study.imageAlt"
           class="cs-card__img"
           :loading="props.index === 0 ? 'eager' : 'lazy'"
-          :fetchpriority="props.index === 0 ? 'high' : 'auto'"
+          :fetchpriority="props.index === 0 ? 'high' : 'low'"
           decoding="async"
           width="800"
           height="500"
