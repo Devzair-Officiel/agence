@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue"
 
+// rootMargin utilisé par l'IntersectionObserver pour déclencher le
+// chargement du script Turnstile ~600px avant que le widget entre dans
+// le viewport. Évite de charger ~527KB depuis challenges.cloudflare.com
+// pendant le premier rendu de la page (impact FCP/LCP).
+const TURNSTILE_PRELOAD_MARGIN = "600px"
+
 /**
  * Wrapper Cloudflare Turnstile — chargement conditionnel + événements typés.
  *
@@ -70,6 +76,7 @@ const emit = defineEmits<{
 
 const container = ref<HTMLElement | null>(null)
 const widgetId = ref<string | null>(null)
+const visibilityObserver = ref<IntersectionObserver | null>(null)
 // Le mode "dev-noop" s'active dès que Turnstile est explicitement désactivé
 // OU que la site-key est vide. Ceci évite tout appel réseau vers
 // challenges.cloudflare.com en dev/test et permet de garantir en E2E qu'aucun
@@ -127,20 +134,37 @@ function reset(): void {
 
 defineExpose({ reset })
 
-onMounted(async () => {
+onMounted(() => {
   if (isDevNoop) {
     emit("success", "dev-noop")
     return
   }
-  try {
-    await loadScript()
-    await renderWidget()
-  } catch {
-    emit("error")
+  // Chargement différé : le script Cloudflare (~527KB) ne démarre que
+  // lorsque le widget approche du viewport (rootMargin 600px). Cela
+  // évite que ces ressources pèsent sur le FCP/LCP de la page /contact.
+  // Le formulaire reste sécurisé : le token n'est émis qu'après le rendu
+  // du widget, et le bouton submit est désactivé jusqu'à `success`.
+  visibilityObserver.value = new IntersectionObserver(
+    async ([entry]: IntersectionObserverEntry[]) => {
+      if (!entry?.isIntersecting) return
+      visibilityObserver.value?.disconnect()
+      visibilityObserver.value = null
+      try {
+        await loadScript()
+        await renderWidget()
+      } catch {
+        emit("error")
+      }
+    },
+    { rootMargin: TURNSTILE_PRELOAD_MARGIN },
+  )
+  if (container.value) {
+    visibilityObserver.value.observe(container.value)
   }
 })
 
 onBeforeUnmount(() => {
+  visibilityObserver.value?.disconnect()
   if (widgetId.value && window.turnstile) {
     try {
       window.turnstile.remove(widgetId.value)

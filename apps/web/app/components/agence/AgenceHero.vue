@@ -35,7 +35,23 @@ const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
 
 <template>
   <section class="agence-hero" aria-labelledby="agence-hero-title">
-    <!-- Mobile : image rectangulaire pleine largeur en fond. -->
+    <!--
+      Définition du clip-path (forme feuille) dans un SVG de taille zéro
+      situé HORS du parent display:none.
+      Raison : SVG <image> ignore display:none sur son ancêtre et déclenche
+      le téléchargement de l'image. Un <img> HTML respecte ce display:none.
+      Coordonnées objectBoundingBox normalisées sur le viewBox 1214×604 :
+      x/1214, y/604 — même forme, scalable à toute taille.
+    -->
+    <svg width="0" height="0" class="agence-hero__clip-defs" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="agence-hero-clip" clipPathUnits="objectBoundingBox">
+          <path d="M 0 0 C 0.0494 0.3974 0.3294 0.9438 0.5107 0.9438 C 0.6920 0.9438 0.9390 0.3974 0.9884 0 Z" />
+        </clipPath>
+      </defs>
+    </svg>
+
+    <!-- Mobile : image LCP pleine largeur — dimensions explicites pour éviter CLS. -->
     <picture class="agence-hero__mobile-picture">
       <source :srcset="heroMobileSrc" type="image/webp">
       <img
@@ -44,50 +60,36 @@ const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
         alt=""
         aria-hidden="true"
         fetchpriority="high"
+        width="900"
+        height="675"
       >
     </picture>
 
     <!--
-      Desktop : silhouette SVG.
-
-      viewBox 0 0 1200 590. Le path démarre à (-20, -20) et rejoint
-      (1220, -20) : ces deux points sortent du viewBox par le haut, ce qui
-      garantit qu'aucun segment horizontal supérieur n'est visible.
-
-      Path (identique pour le clip fermé et le contour ouvert) :
-        M 0 0                              angle supérieur gauche du viewBox
-        C 60 240 400 570 620 570           courbe bombée gauche
-        C 840 570 1140 240 1200 0          courbe bombée droite
-        [ Z ]                              uniquement pour le clip
-
-      Endpoints AU bord haut du viewBox (y=0) : la fermeture du clip est
-      la ligne y=0 elle-même — aucune bande d'image ne dépasse au-dessus
-      du contour. Les deux courbes se rejoignent en (620, 570) avec des
-      tangentes horizontales (raccord C¹ lisse, sans U ni pointe cassée).
+      Desktop : silhouette feuille via <img> HTML + clip-path CSS.
+      Le preload scanner HTML ignore display:none et déclencherait le fetch de
+      heroDesktopSrc sur mobile. On utilise <picture> avec un <source media>
+      pour que le navigateur ne télécharge la source desktop que si le media
+      query (min-width:768px) est satisfait — même avant l'application du CSS.
+      Le <img> de fallback n'a pas de src : aucun fetch inutile sur mobile.
     -->
     <figure class="agence-hero__visual" aria-hidden="true">
+      <picture>
+        <source media="(min-width: 768px)" :srcset="heroDesktopSrc" type="image/webp">
+        <img
+          class="agence-hero__visual-img"
+          alt=""
+          width="1200"
+          height="590"
+        >
+      </picture>
       <svg
         class="agence-hero__frame"
         viewBox="0 0 1214 604"
         preserveAspectRatio="xMidYMid meet"
         focusable="false"
+        aria-hidden="true"
       >
-        <defs>
-          <clipPath id="agence-hero-clip" clipPathUnits="userSpaceOnUse">
-            <path
-              d="M 0 0 C 60 240 400 570 620 570 C 840 570 1140 240 1200 0 Z"
-            />
-          </clipPath>
-        </defs>
-        <image
-          :href="heroDesktopSrc"
-          x="0"
-          y="0"
-          width="1200"
-          height="590"
-          preserveAspectRatio="xMidYMid slice"
-          clip-path="url(#agence-hero-clip)"
-        />
         <path
           d="M 0 0 C 60 240 400 570 620 570 C 840 570 1140 240 1200 0"
           fill="none"
@@ -176,6 +178,14 @@ const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
 /* -------------------------------------------------------------------------
    MOBILE (par défaut, <768px)
    ------------------------------------------------------------------------- */
+
+.agence-hero__clip-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 
 .agence-hero__visual {
   display: none;
@@ -327,15 +337,34 @@ const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
     top: 0;
     left: 0;
     width: min(56vw, 1080px);
+    /* aspect-ratio dérivé du viewBox 1214×604 — remplace height:auto du SVG */
+    aspect-ratio: 1214 / 604;
     margin: 0;
     pointer-events: none;
     filter: drop-shadow(0 32px 60px rgba(12, 91, 87, 0.22));
   }
 
+  /* Image desktop : position absolute pour couvrir le figure, clip en feuille */
+  .agence-hero__visual-img {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    clip-path: url(#agence-hero-clip);
+  }
+
+  /* SVG overlay : ne contient que le tracé de contour (stroke) */
   .agence-hero__frame {
     display: block;
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
   }
 
   /*

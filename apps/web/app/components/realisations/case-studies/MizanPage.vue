@@ -35,6 +35,8 @@ defineProps<Props>()
           <div class="mz-page__hero-visual" aria-hidden="true">
             <img
               :src="study.imageSrc"
+              :srcset="study.imageSrcset"
+              sizes="(min-width: 900px) 45vw, 100vw"
               :alt="study.imageAlt"
               class="mz-page__hero-img"
               width="960"

@@ -66,6 +66,21 @@ usePageSeo({
 
 useBreadcrumb(breadcrumbItems.value)
 
+if (resolvedStudy.value.imageSrcset) {
+  useHead({
+    link: [
+      {
+        rel: "preload",
+        as: "image",
+        href: resolvedStudy.value.imageSrc,
+        imagesrcset: resolvedStudy.value.imageSrcset,
+        imagesizes: "(min-width: 900px) 45vw, 100vw",
+        fetchpriority: "high",
+      },
+    ],
+  })
+}
+
 const isKitchenMeat = computed(() => resolvedStudy.value.id === "kitchen-meat")
 const isNidemiel = computed(() => resolvedStudy.value.id === "nidemiel")
 const isMizan = computed(() => resolvedStudy.value.id === "mizan")

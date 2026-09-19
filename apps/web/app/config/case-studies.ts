@@ -35,6 +35,13 @@ export interface CaseStudy {
   readonly imageSrc: string
   readonly imageAlt: string
   /**
+   * Valeur srcset pour le hero de la page détail — variantes responsive
+   * en WebP (400w, 650w, 760w, 800w) générées manuellement dans public/portfolio/.
+   * Absent quand les variantes n'existent pas. Utilisé avec
+   * sizes="(min-width: 900px) 45vw, 100vw".
+   */
+  readonly imageSrcset?: string
+  /**
    * Titre SEO de la page détail — affiché dans <title> et OG:title.
    * Ne doit pas contenir "| Devzair" (injecté par le titleTemplate global).
    * Obligatoire pour les études `published`.
@@ -75,6 +82,7 @@ export const caseStudies: readonly CaseStudy[] = [
     tags: ["E-commerce", "UX/UI", "Éditorial produit"],
     href: "https://nidemiel.com",
     imageSrc: "/portfolio/nidemiel.webp",
+    imageSrcset: "/portfolio/nidemiel-400.webp 400w, /portfolio/nidemiel-650.webp 650w, /portfolio/nidemiel-760.webp 760w, /portfolio/nidemiel-800.webp 800w",
     imageAlt:
       "Aperçu du site Nidemiel : maquettes desktop et mobile de la boutique en ligne de miels artisanaux",
     overlayImageSrc: "/portfolio/nidemiel-honey-jar.webp",
@@ -96,6 +104,7 @@ export const caseStudies: readonly CaseStudy[] = [
     tags: ["Site vitrine", "Identité visuelle", "UI/UX", "Réservation"],
     href: "https://kitchen-meat.fr",
     imageSrc: "/portfolio/kitchen-meat.webp",
+    imageSrcset: "/portfolio/kitchen-meat-400.webp 400w, /portfolio/kitchen-meat-650.webp 650w, /portfolio/kitchen-meat-760.webp 760w, /portfolio/kitchen-meat-800.webp 800w",
     imageAlt:
       "Aperçu du site Kitchen Meat : maquette de la vitrine du restaurant de grillades lyonnais",
     overlayImageSrc: "/portfolio/kitchen-meat-plate.webp",
@@ -137,6 +146,7 @@ export const caseStudies: readonly CaseStudy[] = [
     tags: ["SaaS", "Mobile-first", "UI/UX", "Dashboard"],
     href: "https://mizan-commerce.com",
     imageSrc: "/portfolio/mizan.webp",
+    imageSrcset: "/portfolio/mizan-400.webp 400w, /portfolio/mizan-650.webp 650w, /portfolio/mizan-760.webp 760w, /portfolio/mizan-800.webp 800w",
     imageAlt:
       "Aperçu du projet Mizan : maquette de l'application SaaS de gestion de commerce, vue laptop et mobile avec tableau de bord, stock et commandes",
     overlayImageSrc: "/portfolio/mizan-phone.webp",
@@ -178,6 +188,7 @@ export const caseStudies: readonly CaseStudy[] = [
     tags: ["Site vitrine", "B2B", "UX/UI"],
     href: "https://al-mumayiz.com",
     imageSrc: "/portfolio/al-mumayiz.webp",
+    imageSrcset: "/portfolio/al-mumayiz-400.webp 400w, /portfolio/al-mumayiz-650.webp 650w, /portfolio/al-mumayiz-760.webp 760w, /portfolio/al-mumayiz-800.webp 800w",
     imageAlt:
       "Aperçu du site Al Mumayiz : maquette du site vitrine dédié aux professionnels des chachias",
     overlayImageSrc: "/portfolio/al-mumayiz-chechia.webp",

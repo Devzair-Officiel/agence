@@ -231,75 +231,60 @@ export default defineNuxtConfig({
     '/portfolio/**': {
       headers: { 'Cache-Control': 'public, max-age=2592000' },
     },
-    // Pré-rendu limité aux pages marketing réellement existantes.
-    // Phase 5D : accueil `/` (8 sections stables, 100 % SSR, données typées
-    // locales). Phase 7A : ajout de `/agence` (positionnement + valeurs) et
-    // `/expertises` (vue d'ensemble des cinq pôles) — même contrat : contenu
-    // 100 % local, aucune donnée dynamique, HTML statique livrable.
-    // Phase 7B : ajout des cinq pages filles `/expertises/{slug}` — servies
-    // par une route dynamique Nuxt (`pages/expertises/[slug].vue`) qui
-    // résout le slug via `expertise-pages.ts` et retourne un 404 explicite
-    // (`createError`) pour toute autre valeur.
+    // Politique Cache-Control HTML — pages marketing prérendues :
     //
-    // Phase 10A2 (DEC-095) : les pages `/expertises/{slug}` embarquent une
-    // section « Ressources liées » qui interroge l'API éditoriale au SSR.
-    // Sans mécanisme d'ISR (Incremental Static Regeneration) branché sur les
-    // publications côté back-office, un pré-rendu figerait la liste au
-    // moment du build : après publication d'un article, la page expertise
-    // serait obsolète jusqu'au prochain déploiement. On bascule donc sur du
-    // SSR à la volée, mitigé par un `Cache-Control` court côté client et
-    // plus long côté reverse proxy (identique à `/api/resources`), et par
-    // le cache Nitro `editorialCache` qui négocie l'ETag JSON avec Symfony.
+    //   max-age=0           → le navigateur ne garde PAS le HTML en cache local ;
+    //                         cold browser cache garanti à chaque visite.
+    //   s-maxage=86400      → Cloudflare (proxy CDN) cache le HTML 24 h ;
+    //                         TTFB cold ≈ 20–50 ms depuis l'edge.
+    //   stale-while-revalidate=60 → Cloudflare continue de servir le cache
+    //                         pendant 60 s après expiration le temps de refetch.
     //
-    // On n'attache PAS `headers['X-Robots-Tag']` ici : @nuxtjs/sitemap
-    // inspecte les headers de chaque routeRule et écarte silencieusement
-    // toute URL dont le header contient `noindex` (sitemap/nitro.js:70).
-    // L'en-tête est posé côté runtime par `server/plugins/x-robots-tag.ts`.
-    // SWR 60s sur /ressources : cache le rendu SSR complet en mémoire Nitro.
-    // Clé de cache = URL complète (path + query string) → ?page=N et
-    // ?expertise=<id> sont cachés séparément, aucun risque de collision.
-    // Le premier visiteur après expiration absorbe le coût SSR ; les suivants
-    // reçoivent le HTML immédiatement depuis le cache Nitro en mémoire.
-    // NE couvre pas /ressources?page=N (pagination) ni les variantes filtrées —
-    // ce sont des URLs distinctes. max-age=0 côté client pour que le proxy
-    // décide du cache, pas le navigateur.
+    // Seules les pages marketing entrent dans cette politique (contenu stable,
+    // données 100 % locales). Les routes avec données dynamiques ou utilisateur
+    // conservent leur comportement propre (SWR Nitro, no-cache, etc.).
+    //
+    // Note : X-Robots-Tag n'est pas posé ici (@nuxtjs/sitemap écarte toute route
+    // portant `noindex` dans ses headers routeRules — cf. sitemap/nitro.js:70).
+    // L'en-tête est posé par server/plugins/x-robots-tag.ts.
+    //
+    // Phase 10A2 (DEC-095) : /expertises/{slug} font des appels API SSR
+    // (ExpertiseRelatedResources). Pas de prerender ; Cache-Control court
+    // côté client + s-maxage 5 min côté proxy.
+    //
+    // SWR 60s sur /ressources : rendu SSR en mémoire Nitro, clé = URL complète.
     '/ressources': { swr: 60 },
-    '/': { prerender: true },
-    '/agence': { prerender: true },
-    '/contact': { prerender: true },
-    '/expertises': { prerender: true },
+    '/': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/agence': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/contact': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    // Contenu 100 % local (config estimator-*.ts) — l'API n'est appelée
+    // qu'en client après soumission du formulaire, jamais au SSR.
+    // Prérendu : TTFB 1ms (vs 11–90ms SSR froid) + HTML compressé statique.
+    '/estimer-mon-projet': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/expertises': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
     '/expertises/**': {
-      headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300' },
+      headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=60' },
     },
-    // SEO-COM-1 : hub services pré-rendu (contenu 100 % local, aucune donnée
-    // dynamique). Les pages filles `/services/**` restent en SSR à la volée
-    // jusqu'à leur publication effective (SEO-COM-2 et suivants).
-    '/services': { prerender: true },
-    // SEO-COM-2 : première page fille publiée — contenu 100 % local.
-    '/services/creation-site-internet': { prerender: true },
-    // SEO-COM-5A : deux nouvelles pages filles publiées — contenu 100 % local.
-    '/services/site-e-commerce': { prerender: true },
-    '/services/application-web-metier': { prerender: true },
-    // SEO-COM-5B : deux nouvelles pages filles publiées — contenu 100 % local.
-    '/services/design-ui-ux-identite-visuelle': { prerender: true },
-    '/services/photographie-creation-contenu': { prerender: true },
-    // SEO-COM-5C : trois dernières pages filles publiées — contenu 100 % local.
-    '/services/seo-referencement-naturel': { prerender: true },
-    '/services/visibilite-locale': { prerender: true },
-    '/services/maintenance-accompagnement': { prerender: true },
+    // SEO-COM-1..5 : pages services — contenu 100 % local.
+    '/services': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/creation-site-internet': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/site-e-commerce': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/application-web-metier': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/design-ui-ux-identite-visuelle': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/photographie-creation-contenu': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/seo-referencement-naturel': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/visibilite-locale': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/services/maintenance-accompagnement': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
     // SEO-COM-4 : hub réalisations + quatre pages détail publiées.
-    // Contenu 100 % local (config case-studies.ts) — aucune donnée dynamique.
-    // Haramain Prestige reste en `planned` (autorisation de publication client
-    // non confirmée — voir case-studies.ts).
-    '/realisations': { prerender: true },
-    '/realisations/kitchen-meat': { prerender: true },
-    '/realisations/nidemiel': { prerender: true },
-    '/realisations/mizan': { prerender: true },
-    '/realisations/al-mumayiz': { prerender: true },
-    // Pages légales pré-rendues (contenu 100 % local). Non indexées via
-    // meta robots `noindex, follow` posé dans usePageSeo — PAS via
-    // routeRules headers (cf. commentaire ci-dessus : @nuxtjs/sitemap
-    // écarte toute route portant `noindex` dans ses routeRules headers).
+    // Haramain Prestige reste en `planned` (autorisation client non confirmée).
+    '/realisations': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/realisations/kitchen-meat': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/realisations/nidemiel': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/realisations/mizan': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    '/realisations/al-mumayiz': { prerender: true, headers: { 'Cache-Control': 'public, max-age=0, s-maxage=86400, stale-while-revalidate=60' } },
+    // Pages légales — non indexées via usePageSeo (noindex, follow).
+    // PAS de noindex dans ces headers : @nuxtjs/sitemap écarte silencieusement
+    // toute route portant noindex dans ses routeRules headers.
     '/mentions-legales': { prerender: true },
     '/politique-de-confidentialite': { prerender: true },
   },

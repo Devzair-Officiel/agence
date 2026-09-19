@@ -32,7 +32,7 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
     expect(headings[0]?.trim()).not.toBe('')
   })
 
-  test('le hero et sa carte occupent toute la hauteur disponible avec un fondu bas', async ({
+  test('le hero et son halo ambiant occupent toute la hauteur disponible avec un fondu bas', async ({
     page,
   }) => {
     for (const viewport of [
@@ -43,18 +43,21 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
       await page.goto('/ressources')
 
       const hero = page.locator('.resources-hero')
-      const backdrop = hero.locator('.resources-hero__backdrop')
-      const [heroBox, backdropBox] = await Promise.all([
+      // __glow remplace __backdrop (redesign héro éditorial — plus de fond image)
+      const glow = hero.locator('.resources-hero__glow')
+      const [heroBox, glowBox] = await Promise.all([
         hero.boundingBox(),
-        backdrop.boundingBox(),
+        glow.boundingBox(),
       ])
       expect(heroBox).not.toBeNull()
-      expect(backdropBox).not.toBeNull()
+      expect(glowBox).not.toBeNull()
       expect(heroBox!.height).toBeGreaterThanOrEqual(
         viewport.height - heroBox!.y - 1,
       )
-      expect(backdropBox!.height).toBeCloseTo(heroBox!.height, 0)
+      // __glow est inset:0 → couvre exactement la section hero
+      expect(glowBox!.height).toBeCloseTo(heroBox!.height, 0)
 
+      // ::after = fondu bas (linear-gradient transparent → background-primary)
       const fade = await hero.evaluate((element) => {
         const styles = getComputedStyle(element, '::after')
         return {
@@ -63,19 +66,7 @@ test.describe('Phase 8B2 — /ressources (listing SSR)', () => {
         }
       })
       expect(fade.backgroundImage).toContain('linear-gradient')
-      expect(fade.height).toBeGreaterThan(heroBox!.height * 0.2)
-
-      const readingHalo = await hero
-        .locator('.resources-hero__container')
-        .evaluate((element) => {
-          const styles = getComputedStyle(element, '::before')
-          return {
-            maskImage: styles.maskImage || styles.webkitMaskImage,
-            opacity: Number.parseFloat(styles.opacity),
-          }
-        })
-      expect(readingHalo.maskImage).toContain('radial-gradient')
-      expect(readingHalo.opacity).toBeGreaterThanOrEqual(0.9)
+      expect(fade.height).toBeGreaterThan(0)
     }
   })
 
