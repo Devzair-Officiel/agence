@@ -1,0 +1,142 @@
+/*
+ * CSS de la route /ressources — spécifique à ResourceListItem.
+ *
+ * Importé statiquement dans pages/ressources/index.vue pour que Vite/Nuxt
+ * associe ce CSS au chunk de la page (chargement conditionnel à la route)
+ * plutôt qu'à un composant enfant séparé (qui produirait une requête
+ * render-blocking indépendante).
+ *
+ * Sélecteurs BEM identiques aux anciens <style scoped> de ResourceListItem.vue.
+ */
+
+/* ── ResourceListItem ───────────────────────────────────────────────── */
+
+.resource-list-item {
+  display: flex;
+  height: 100%;
+}
+
+.resource-list-item__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 6px rgba(22, 25, 28, 0.07);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition:
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.resource-list-item__link:hover,
+.resource-list-item__link:focus-visible {
+  box-shadow: 0 4px 16px -4px rgba(22, 25, 28, 0.13);
+  background-color: var(--color-cream-elevated);
+}
+
+/* ── Vignette ────────────────────────────────────────────────────── */
+
+.resource-list-item__figure {
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0;
+  overflow: hidden;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  aspect-ratio: 16 / 9;
+  background-color: var(--background-primary);
+  flex-shrink: 0;
+}
+
+.resource-list-item__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 400ms var(--ease-out);
+}
+
+.resource-list-item__link:hover .resource-list-item__image,
+.resource-list-item__link:focus-visible .resource-list-item__image {
+  transform: scale(1.04);
+}
+
+/* ── Métadonnées ──────────────────────────────────────────────────── */
+
+.resource-list-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.resource-list-item__expertise {
+  color: var(--color-petrol);
+}
+
+.resource-list-item__separator {
+  color: var(--border-default);
+}
+
+/* ── Titre + excerpt ──────────────────────────────────────────────── */
+
+.resource-list-item__title {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-heading);
+  font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.resource-list-item__link:hover .resource-list-item__title,
+.resource-list-item__link:focus-visible .resource-list-item__title {
+  color: var(--color-petrol);
+}
+
+.resource-list-item__excerpt {
+  flex-grow: 1;
+  font-family: var(--font-family-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.resource-list-item__cta {
+  margin: 0;
+  font-family: var(--font-family-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-petrol);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resource-list-item__link {
+    transition: none;
+  }
+
+  .resource-list-item__image {
+    transition: none;
+  }
+
+  .resource-list-item__link:hover .resource-list-item__image,
+  .resource-list-item__link:focus-visible .resource-list-item__image {
+    transform: none;
+  }
+
+  .resource-list-item__title {
+    transition: none;
+  }
+}

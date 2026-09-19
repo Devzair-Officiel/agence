@@ -68,6 +68,7 @@ export default defineNuxtConfig({
     '~/assets/css/fonts.css',
     '~/assets/css/animations.css',
     '~/assets/css/global.css',
+    '~/assets/css/primitives.css',
   ],
 
   app: {
@@ -205,6 +206,14 @@ export default defineNuxtConfig({
     payloadExtraction: false,
   },
 
+  nitro: {
+    // Génère des variantes .gz et .br de tous les assets statiques (_nuxt/**).
+    // Nitro les sert automatiquement quand le browser envoie Accept-Encoding.
+    // En prod réelle Caddy gère la compression ; ici cela permet de tester
+    // les performances en standalone sans passer par le proxy.
+    compressPublicAssets: { gzip: true, brotli: true },
+  },
+
   routeRules: {
     // Assets versionnés (noms avec hash de contenu) — cache immuable 1 an.
     // Sûr car un rebuild génère de nouveaux noms dès qu'un fichier change.
@@ -246,6 +255,15 @@ export default defineNuxtConfig({
     // inspecte les headers de chaque routeRule et écarte silencieusement
     // toute URL dont le header contient `noindex` (sitemap/nitro.js:70).
     // L'en-tête est posé côté runtime par `server/plugins/x-robots-tag.ts`.
+    // SWR 60s sur /ressources : cache le rendu SSR complet en mémoire Nitro.
+    // Clé de cache = URL complète (path + query string) → ?page=N et
+    // ?expertise=<id> sont cachés séparément, aucun risque de collision.
+    // Le premier visiteur après expiration absorbe le coût SSR ; les suivants
+    // reçoivent le HTML immédiatement depuis le cache Nitro en mémoire.
+    // NE couvre pas /ressources?page=N (pagination) ni les variantes filtrées —
+    // ce sont des URLs distinctes. max-age=0 côté client pour que le proxy
+    // décide du cache, pas le navigateur.
+    '/ressources': { swr: 60 },
     '/': { prerender: true },
     '/agence': { prerender: true },
     '/contact': { prerender: true },

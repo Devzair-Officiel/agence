@@ -20,19 +20,3 @@ withDefaults(defineProps<Props>(), {
     <slot />
   </component>
 </template>
-
-<style scoped>
-.base-eyebrow {
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-mono);
-  font-size: 0.6875rem; /* 11px */
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-accent);
-  margin: 0;
-}
-
-.base-eyebrow[data-tone="inverse"] {
-  color: var(--color-devzair-blue);
-}
-</style>

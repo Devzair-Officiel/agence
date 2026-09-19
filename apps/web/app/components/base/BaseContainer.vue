@@ -28,39 +28,3 @@ withDefaults(defineProps<Props>(), {
     <slot />
   </component>
 </template>
-
-<style scoped>
-.base-container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: var(--container-gutter-mobile);
-}
-
-.base-container[data-width="wide"] {
-  max-width: var(--container-max-wide);
-}
-
-.base-container[data-width="full"] {
-  max-width: var(--container-max-full);
-}
-
-@media (min-width: 480px) {
-  .base-container {
-    padding-inline: var(--container-gutter-tablet);
-  }
-}
-
-@media (min-width: 1024px) {
-  .base-container {
-    padding-inline: var(--container-gutter-desktop);
-  }
-}
-
-@media (min-width: 1440px) {
-  .base-container[data-width="wide"],
-  .base-container[data-width="full"] {
-    padding-inline: var(--container-gutter-wide);
-  }
-}
-</style>

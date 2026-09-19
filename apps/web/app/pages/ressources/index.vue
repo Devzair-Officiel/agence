@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '~/assets/css/routes/resources-index.css'
 import { computed } from "vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
@@ -191,20 +192,64 @@ const isEmpty = computed(() => pagination.value.total === 0)
 
 <template>
   <div class="resources-index">
-    <!--
-      Hero éditorial spécifique aux ressources — fond cream (cohérent avec
-      les autres pages institutionnelles) avec une carte du monde en
-      pointillés en arrière-plan. L'image source est en dots blancs sur
-      fond noir : `filter: invert(1)` la retourne en dots sombres sur
-      blanc, puis `mix-blend-mode: multiply` fait disparaître le blanc
-      dans le cream et ne laisse voir que les dots. Un voile radial
-      allège les bords pour éviter tout effet « poster collé ».
-    -->
     <section
       class="resources-hero"
       aria-labelledby="resources-hero-title"
     >
-      <div class="resources-hero__backdrop" aria-hidden="true" />
+      <!-- Halos ambiants CSS — bleu Devzair coin sup-droit + pétrole coin inf-gauche -->
+      <div class="resources-hero__glow" aria-hidden="true" />
+      <!-- Motif éditorial : grille de points + graphe de nœuds, desktop uniquement -->
+      <div class="resources-hero__decor" aria-hidden="true">
+        <svg viewBox="0 0 520 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="rh-dots" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+              <circle cx="0.5" cy="0.5" r="1" fill="currentColor" />
+            </pattern>
+          </defs>
+          <rect width="520" height="400" fill="url(#rh-dots)" opacity="0.55" />
+          <g stroke="currentColor" stroke-width="0.75">
+            <line x1="110" y1="75" x2="255" y2="45" />
+            <line x1="255" y1="45" x2="400" y2="90" />
+            <line x1="400" y1="90" x2="465" y2="45" />
+            <line x1="110" y1="75" x2="55" y2="200" />
+            <line x1="110" y1="75" x2="175" y2="210" />
+            <line x1="255" y1="45" x2="175" y2="210" />
+            <line x1="255" y1="45" x2="310" y2="225" />
+            <line x1="400" y1="90" x2="310" y2="225" />
+            <line x1="400" y1="90" x2="445" y2="195" />
+            <line x1="55" y1="200" x2="120" y2="330" />
+            <line x1="175" y1="210" x2="120" y2="330" />
+            <line x1="175" y1="210" x2="260" y2="340" />
+            <line x1="310" y1="225" x2="260" y2="340" />
+            <line x1="310" y1="225" x2="395" y2="355" />
+            <line x1="445" y1="195" x2="395" y2="355" />
+            <line x1="120" y1="330" x2="260" y2="340" />
+            <line x1="260" y1="340" x2="395" y2="355" />
+            <line x1="465" y1="45" x2="520" y2="10" stroke-dasharray="5 9" opacity="0.5" />
+            <line x1="445" y1="195" x2="520" y2="200" stroke-dasharray="5 9" opacity="0.5" />
+            <line x1="395" y1="355" x2="465" y2="400" stroke-dasharray="5 9" opacity="0.5" />
+          </g>
+          <circle cx="255" cy="45" r="5" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="400" cy="90" r="5" stroke="currentColor" stroke-width="1.5" />
+          <g fill="currentColor">
+            <circle cx="175" cy="210" r="3" />
+            <circle cx="310" cy="225" r="3" />
+            <circle cx="120" cy="330" r="2.5" />
+            <circle cx="260" cy="340" r="3" />
+            <circle cx="395" cy="355" r="2.5" />
+          </g>
+          <g stroke="currentColor" fill="none" stroke-width="1">
+            <circle cx="110" cy="75" r="2.5" />
+            <circle cx="465" cy="45" r="2" />
+            <circle cx="55" cy="200" r="2" />
+            <circle cx="445" cy="195" r="2" />
+          </g>
+          <g stroke="currentColor" stroke-width="0.75" stroke-linecap="round">
+            <line x1="248" y1="45" x2="262" y2="45" />
+            <line x1="255" y1="38" x2="255" y2="52" />
+          </g>
+        </svg>
+      </div>
       <ResourcesPointerTrail />
       <BaseContainer width="wide" class="resources-hero__container">
         <BaseEyebrow class="resources-hero__eyebrow">
@@ -219,6 +264,11 @@ const isEmpty = computed(() => pagination.value.total === 0)
           ont émergé de nos projets. Aucune publication de remplissage : chaque
           ressource est écrite parce qu'elle avait quelque chose à documenter.
         </p>
+        <ul class="resources-hero__tags" role="list">
+          <li class="resources-hero__tag">Analyses</li>
+          <li class="resources-hero__tag">Méthodes</li>
+          <li class="resources-hero__tag">Retours d'expérience</li>
+        </ul>
       </BaseContainer>
     </section>
 
@@ -310,14 +360,10 @@ const isEmpty = computed(() => pagination.value.total === 0)
 }
 
 /*
- * Hero ressources — fond cream (cohérent avec les pages institutionnelles).
- *   1. `__backdrop` : la carte du monde en pointillés sert de MASK
- *      (image blanc / noir : blanc = visible). Le fond du backdrop est
- *      peint en `--color-petrol` — les dots héritent donc directement
- *      de la couleur de marque, aucune teinte parasite héritée du blend.
- *      Deux masques combinés en `intersect` : la carte + un fondu radial
- *      pour dissoudre les bords dans le cream.
- *   2. `__container` : texte au-dessus, centré et respirant.
+ * Hero ressources — "Système éditorial"
+ *   `__glow`  : halos ambiants CSS (bleu + pétrole), sans asset externe.
+ *   `__decor` : SVG inline nœuds/connexions + grille de points, desktop.
+ *   `__tags`  : labels thématiques monospace sous le lead.
  */
 .resources-hero {
   position: relative;
@@ -328,116 +374,92 @@ const isEmpty = computed(() => pagination.value.total === 0)
   min-height: calc(100vh - var(--site-header-height));
   min-height: calc(100svh - var(--site-header-height));
   overflow: hidden;
-  color: var(--text-primary);
   background-color: var(--background-primary);
-  padding-block: var(--space-16) var(--space-16);
+  padding-block: var(--space-16);
 }
 
-/*
- * La carte occupe tout le premier écran, mais ne se termine pas sur une
- * ligne horizontale. Ce voile reprend exactement le fond de la section
- * suivante et dissout progressivement les pointillés dans le flux de page.
- */
 .resources-hero::after {
   content: "";
   position: absolute;
-  z-index: 0;
+  z-index: 1;
   inset-inline: 0;
-  bottom: -1px;
-  height: clamp(9rem, 28%, 18rem);
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--background-primary) 100%
-  );
+  bottom: 0;
+  height: clamp(6rem, 20%, 12rem);
+  background: linear-gradient(to bottom, transparent 0%, var(--background-primary) 100%);
   pointer-events: none;
 }
 
-.resources-hero__backdrop {
+.resources-hero__glow {
   position: absolute;
   inset: 0;
-  background-color: var(--color-devzair-blue);
-  opacity: 0.75;
-  pointer-events: none;
   z-index: 0;
-  -webkit-mask-image: url("/brand/world-dots.webp"),
-    radial-gradient(
-      ellipse 90% 95% at 50% 50%,
-      black 0%,
-      black 55%,
-      transparent 100%
-    );
-  mask-image: url("/brand/world-dots.webp"),
-    radial-gradient(
-      ellipse 90% 95% at 50% 50%,
-      black 0%,
-      black 55%,
-      transparent 100%
-    );
-  -webkit-mask-repeat: no-repeat, no-repeat;
-  mask-repeat: no-repeat, no-repeat;
-  -webkit-mask-position: center, center;
-  mask-position: center, center;
-  -webkit-mask-size: cover, cover;
-  mask-size: cover, cover;
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-  /*
-   * Modes distincts par couche :
-   *   - image (dots) → `luminance` : les pixels blancs deviennent visibles ;
-   *   - gradient radial → `alpha` : la couleur noire opaque = visible au
-   *     centre, `transparent` = caché sur les bords (fondu doux).
-   * Sans ceci, `luminance` sur le gradient rendrait `transparent` comme
-   * `rgba(0,0,0,0)` → luminance 0 → tout caché.
-   */
-  -webkit-mask-mode: luminance, alpha;
-  mask-mode: luminance, alpha;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 60% at 88% 12%, rgba(46, 134, 217, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 70% at 6% 92%, rgba(12, 91, 87, 0.07) 0%, transparent 70%);
+}
+
+.resources-hero__decor {
+  display: none;
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  inset-block: 0;
+  inset-inline-end: -4%;
+  width: 58%;
+  color: var(--color-ink);
+  opacity: 0.065;
+}
+
+.resources-hero__decor svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .resources-hero__decor {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .resources-hero__decor {
+    animation: rh-decor-in 1.4s var(--ease-out) both;
+  }
+}
+
+@keyframes rh-decor-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 0.065;
+    transform: translateX(0);
+  }
 }
 
 .resources-hero__container {
   position: relative;
-  z-index: 1;
-  isolation: isolate;
+  z-index: 2;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--space-4);
-  max-width: 62rem;
+  gap: var(--space-5);
 }
 
-/*
- * Halo de lecture : la carte reste perceptible autour du contenu, tandis
- * que sa densité baisse progressivement sous les titres et le paragraphe.
- * Le masque radial évite l'apparence d'une carte rectangulaire rapportée.
- */
-.resources-hero__container::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: -4rem -2rem;
-  background-color: var(--background-primary);
-  opacity: 0.9;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(
-    ellipse at center,
-    black 0%,
-    black 42%,
-    rgba(0, 0, 0, 0.78) 58%,
-    transparent 82%
-  );
-  mask-image: radial-gradient(
-    ellipse at center,
-    black 0%,
-    black 42%,
-    rgba(0, 0, 0, 0.78) 58%,
-    transparent 82%
-  );
+@media (min-width: 900px) {
+  .resources-hero__container {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 
 .resources-hero__eyebrow {
-  margin-bottom: var(--space-1);
+  margin-bottom: 0;
 }
 
 .resources-hero__title {
@@ -475,14 +497,44 @@ const isEmpty = computed(() => pagination.value.total === 0)
   font-family: var(--font-family-body);
   font-size: clamp(1rem, 1.4vw, 1.0625rem);
   line-height: 1.6;
-  color: var(--text-primary);
-  max-width: 60ch;
+  color: var(--text-secondary);
+  max-width: 56ch;
   text-wrap: pretty;
+}
+
+.resources-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+}
+
+.resources-hero__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-family-mono);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 900px) {
+  .resources-hero__tags {
+    justify-content: flex-start;
+  }
 }
 
 @media (min-width: 768px) {
   .resources-hero {
-    padding-block: var(--space-20) var(--space-20);
+    padding-block: var(--space-20);
   }
 }
 
