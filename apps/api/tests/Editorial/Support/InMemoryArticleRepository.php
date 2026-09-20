@@ -106,6 +106,11 @@ final class InMemoryArticleRepository implements ArticleRepositoryInterface
         ));
     }
 
+    public function remove(Article $article): void
+    {
+        unset($this->articles[$article->id()->toRfc4122()]);
+    }
+
     private function isVisiblyPublished(
         Article $article,
         \DateTimeImmutable $now,

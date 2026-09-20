@@ -110,6 +110,15 @@ final class EditorialAdminAuditLogger
         ]);
     }
 
+    public function deleted(AdminUser $admin, string $articleId, string $slug): void
+    {
+        $this->adminLogger->info('admin.article.deleted', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'article_id' => $articleId,
+            'slug' => $slug,
+        ]);
+    }
+
     public function heroImageSet(AdminUser $admin, string $articleId, string $mediaId): void
     {
         $this->adminLogger->info('admin.article.hero_image_set', [

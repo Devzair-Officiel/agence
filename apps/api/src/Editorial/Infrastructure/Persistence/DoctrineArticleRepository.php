@@ -135,6 +135,11 @@ final class DoctrineArticleRepository implements ArticleRepositoryInterface
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
+    public function remove(Article $article): void
+    {
+        $this->entityManager->remove($article);
+    }
+
     /**
      * Filtrage JSONB `expertise_ids @> '["<value>"]'` via DBAL brut : Doctrine
      * ORM ne dispose pas d'opérateur natif pour l'inclusion dans un tableau

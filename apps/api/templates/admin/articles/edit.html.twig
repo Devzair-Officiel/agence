@@ -53,6 +53,12 @@
 
                 <dl class="admin-publication-card__meta">
                     {% if _is_draft %}
+                        <dt>Créé le</dt>
+                        <dd>
+                            <time datetime="{{ view.createdAt|date('c') }}">
+                                {{ view.createdAt|date('d/m/Y · H:i') }}
+                            </time>
+                        </dd>
                         <dt>Modifié le</dt>
                         <dd>
                             <time datetime="{{ view.updatedAt|date('c') }}">
@@ -60,6 +66,21 @@
                             </time>
                         </dd>
                     {% elseif _is_published %}
+                        {% if view.publishedAt %}
+                            <dt>Publié le</dt>
+                            <dd>
+                                <time datetime="{{ view.publishedAt|date('c') }}">
+                                    {{ view.publishedAt|date('d/m/Y · H:i') }}
+                                </time>
+                            </dd>
+                        {% endif %}
+                        <dt>Modifié le</dt>
+                        <dd>
+                            <time datetime="{{ view.updatedAt|date('c') }}">
+                                {{ view.updatedAt|date('d/m/Y · H:i') }}
+                            </time>
+                        </dd>
+                    {% else %}{# archived #}
                         {% if view.publishedAt %}
                             <dt>Publié le</dt>
                             <dd>
@@ -123,6 +144,10 @@
                                 Restaurer comme brouillon
                             </button>
                         </form>
+                        <a href="{{ path('admin_article_delete', { id: view.id }) }}"
+                           class="button-small button-danger">
+                            Supprimer définitivement
+                        </a>
                     {% endif %}
                 </div>
             </div>
@@ -165,8 +190,13 @@
                         </figcaption>
                     </figure>
 
-                    {% if _is_draft %}
-                        <div class="admin-editor-hero__actions">
+                    <div class="admin-editor-hero__actions">
+                        <a href="{{ path('admin_article_image_download', { id: view.id }) }}"
+                           class="button-link button-small"
+                           download>
+                            Télécharger l'image
+                        </a>
+                        {% if _is_draft %}
                             <a href="{{ path('admin_article_hero_image', { id: view.id }) }}"
                                class="button-link button-small">Modifier</a>
                             {# Formulaire séparé — ne s'imbrique pas dans article-edit-form #}
@@ -177,12 +207,12 @@
                                        value="{{ csrf_token('article_hero_image_remove_' ~ view.id) }}">
                                 <button type="submit" class="button-small button-danger-subtle">Retirer</button>
                             </form>
-                        </div>
-                    {% else %}
-                        <p class="admin-editor-hero__locked">
-                            Modifiable uniquement à l'état brouillon.
-                        </p>
-                    {% endif %}
+                        {% else %}
+                            <p class="admin-editor-hero__locked">
+                                Modifiable uniquement à l'état brouillon.
+                            </p>
+                        {% endif %}
+                    </div>
                 {% else %}
                     <p class="admin-editor-hero__empty">Aucune image principale.</p>
                     {% if _is_draft %}

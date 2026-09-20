@@ -23,22 +23,26 @@ final class ArticleEditData
 {
     public function __construct(
         public readonly ArticleFormPayload $payload,
+        public readonly ?\DateTimeImmutable $createdAt = null,
     ) {
     }
 
     public static function fromView(AdminArticleEditView $view): self
     {
-        return new self(new ArticleFormPayload(
-            slug: $view->slug,
-            title: $view->title,
-            excerpt: $view->excerpt,
-            bodyMarkdown: $view->bodyMarkdown,
-            seoTitle: $view->seoTitle,
-            seoDescription: $view->seoDescription,
-            authorName: $view->authorName,
-            authorType: $view->authorType->value,
-            expertises: ExpertiseIdentifier::toList($view->expertises),
-        ));
+        return new self(
+            new ArticleFormPayload(
+                slug: $view->slug,
+                title: $view->title,
+                excerpt: $view->excerpt,
+                bodyMarkdown: $view->bodyMarkdown,
+                seoTitle: $view->seoTitle,
+                seoDescription: $view->seoDescription,
+                authorName: $view->authorName,
+                authorType: $view->authorType->value,
+                expertises: ExpertiseIdentifier::toList($view->expertises),
+            ),
+            $view->createdAt,
+        );
     }
 
     public static function hydrate(Request $request, AdminArticleEditView $view): self
@@ -56,7 +60,7 @@ final class ArticleEditData
             expertises: self::readExpertises($request),
         );
 
-        return new self($payload);
+        return new self($payload, self::readCreatedAt($request, $view->createdAt));
     }
 
     /**
@@ -99,5 +103,34 @@ final class ArticleEditData
         }
 
         return $values;
+    }
+
+    /**
+     * Lit le champ `created_at` depuis la requête (format HTML `datetime-local` :
+     * `Y-m-d\TH:i` ou `Y-m-d\TH:i:s`).
+     *
+     * Si la valeur est absente, vide ou non parsable, on retourne la valeur
+     * courante de la vue — pas de régression silencieuse sur un champ mal
+     * renseigné : le contrôleur transmet `null` à la commande si la valeur
+     * n'a pas changé, et le handler ne touche pas à `createdAt`.
+     *
+     * La conversion conserve la timezone serveur (UTC en production). On ne
+     * change pas la convention de timezone du projet.
+     */
+    private static function readCreatedAt(Request $request, \DateTimeImmutable $fallback): \DateTimeImmutable
+    {
+        $raw = $request->request->get('created_at', '');
+        if (!\is_string($raw) || $raw === '') {
+            return $fallback;
+        }
+
+        $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $raw)
+            ?: \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $raw);
+
+        if ($parsed === false) {
+            return $fallback;
+        }
+
+        return $parsed;
     }
 }

@@ -89,6 +89,20 @@ admin_article_hero_image_remove:
     requirements:
         id: '[0-9a-fA-F-]{36}'
 
+admin_article_image_download:
+    path: /admin/articles/{id}/image/download
+    controller: App\Admin\Presentation\Http\AdminArticleImageDownloadController::__invoke
+    methods: [GET]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
+admin_article_delete:
+    path: /admin/articles/{id}/delete
+    controller: App\Admin\Presentation\Http\AdminArticleDeleteController::__invoke
+    methods: [GET, POST]
+    requirements:
+        id: '[0-9a-fA-F-]{36}'
+
 # Administration des médias éditoriaux (Phase 9A).
 # Toutes ces routes sont protégées par `access_control ^/admin ROLE_ADMIN`.
 # En 9A, seules la liste, la création (formulaire + POST) et la prévisualisation

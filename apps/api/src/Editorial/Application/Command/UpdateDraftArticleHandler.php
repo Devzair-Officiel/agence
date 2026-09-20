@@ -102,6 +102,9 @@ final class UpdateDraftArticleHandler
         if ($command->expertises !== null) {
             $article->changeExpertises($command->expertises, $now);
         }
+        if ($command->createdAt !== null) {
+            $article->changeCreatedAt($command->createdAt, $now);
+        }
 
         $mutated = $article->updatedAt() !== $before;
 

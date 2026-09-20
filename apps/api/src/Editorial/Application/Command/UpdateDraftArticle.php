@@ -37,6 +37,7 @@ final class UpdateDraftArticle
         public readonly ?string $authorName = null,
         public readonly ?\App\Editorial\Domain\AuthorType $authorType = null,
         public readonly ?array $expertises = null,
+        public readonly ?\DateTimeImmutable $createdAt = null,
     ) {
     }
 }

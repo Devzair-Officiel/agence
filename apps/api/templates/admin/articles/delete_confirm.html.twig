@@ -1,0 +1,68 @@
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}Supprimer définitivement — Administration Devzair{% endblock %}
+
+{% block body %}
+<div class="admin-editor-page">
+
+    <header class="admin-page-header">
+        <div class="admin-page-header__titles">
+            <h1 class="admin-page-header__title">Supprimer définitivement cet article&nbsp;?</h1>
+            <p class="admin-page-header__subtitle">
+                <code class="admin-editor-slug">{{ view.slug }}</code>
+            </p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="{{ path('admin_article_edit', { id: view.id }) }}" class="button-link">
+                ← Retour à l'article
+            </a>
+        </div>
+    </header>
+
+    <div class="admin-editor-grid">
+        <main class="admin-editor-main">
+
+            <div class="admin-editor-card">
+                <p class="admin-delete-warning">
+                    Cette action est irréversible. L'article et les données qui lui sont
+                    exclusivement rattachées ne pourront pas être restaurés.
+                </p>
+
+                <dl class="admin-publication-card__meta" style="margin-bottom: 1.5rem;">
+                    <dt>Titre</dt>
+                    <dd>{{ view.title }}</dd>
+                    <dt>Statut</dt>
+                    <dd>Archivé</dd>
+                    {% if view.publishedAt %}
+                        <dt>Première publication</dt>
+                        <dd>
+                            <time datetime="{{ view.publishedAt|date('c') }}">
+                                {{ view.publishedAt|date('d/m/Y · H:i') }}
+                            </time>
+                        </dd>
+                    {% endif %}
+                </dl>
+
+                <div class="admin-editor-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="{{ path('admin_article_edit', { id: view.id }) }}"
+                       class="button-link">
+                        Annuler
+                    </a>
+
+                    <form method="post"
+                          action="{{ path('admin_article_delete', { id: view.id }) }}"
+                          class="inline-form">
+                        <input type="hidden" name="_csrf_token"
+                               value="{{ csrf_token('article_delete_' ~ view.id) }}">
+                        <button type="submit" class="button-danger">
+                            Supprimer définitivement
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+</div>
+{% endblock %}

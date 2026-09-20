@@ -96,6 +96,7 @@ final class AdminArticleEditController extends AbstractController
                 authorName: $data->payload->authorName,
                 authorType: $data->authorType(),
                 expertises: $data->expertises(),
+                createdAt: $data->createdAt,
             ));
         } catch (ArticleNotEditableException $e) {
             $this->audit->actionFailed($admin, 'edit', 'not_editable', $view->id);

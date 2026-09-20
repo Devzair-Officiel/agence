@@ -78,4 +78,13 @@ interface ArticleRepositoryInterface
      * même filtre facultatif d'expertise que `listPublished()`.
      */
     public function countPublished(\DateTimeImmutable $now, ?ExpertiseIdentifier $expertise = null): int;
+
+    /**
+     * Supprime définitivement un article de la persistance.
+     *
+     * N'applique aucune règle métier : c'est au handler appelant de vérifier
+     * que l'article est en statut `Archived` avant d'invoquer cette méthode.
+     * Ne déclenche pas de `flush` — c'est l'appelant (handler) qui décide.
+     */
+    public function remove(Article $article): void;
 }

@@ -306,4 +306,120 @@ final class UpdateDraftArticleHandlerTest extends TestCase
 
         $handler(new UpdateDraftArticle(Uuid::v7(), title: 'Titre valide pour cet article introuvable'));
     }
+
+    public function testChangesCreatedAt(): void
+    {
+        $id = Uuid::v7();
+        $originalCreatedAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $repository = new InMemoryArticleRepository();
+        $repository->save(
+            (new ArticleBuilder())
+                ->withId($id)
+                ->withSlug('created-at-change')
+                ->withNow($originalCreatedAt)
+                ->build(),
+        );
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+        $newCreatedAt = new \DateTimeImmutable('2026-07-15T08:00:00+00:00');
+
+        $result = $handler(new UpdateDraftArticle($id, createdAt: $newCreatedAt));
+
+        self::assertTrue($result->mutated);
+        self::assertSame(
+            $newCreatedAt->getTimestamp(),
+            $result->article->createdAt()->getTimestamp(),
+        );
+    }
+
+    public function testPublishedAtIsUnchangedAfterCreatedAtChange(): void
+    {
+        $id = Uuid::v7();
+        $repository = new InMemoryArticleRepository();
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('publishedat-invariant')
+            ->withNow(new \DateTimeImmutable('2026-08-01T09:00:00+00:00'))
+            ->published()
+            ->build();
+        $originalPublishedAt = $article->publishedAt();
+        // Restaurer en brouillon pour permettre l'édition.
+        $article->archive(new \DateTimeImmutable('2026-08-02T09:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-03T09:00:00+00:00'));
+        $repository->save($article);
+
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        $result = $handler(new UpdateDraftArticle(
+            $id,
+            createdAt: new \DateTimeImmutable('2026-07-01T00:00:00+00:00'),
+        ));
+
+        self::assertNotNull($originalPublishedAt);
+        self::assertSame(
+            $originalPublishedAt->getTimestamp(),
+            $result->article->publishedAt()?->getTimestamp(),
+            'publishedAt ne doit jamais être modifié lors d\'un changement de createdAt.',
+        );
+    }
+
+    public function testCreatedAtIsNoOpWhenValueUnchanged(): void
+    {
+        $id = Uuid::v7();
+        $createdAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $repository = new InMemoryArticleRepository();
+        $repository->save(
+            (new ArticleBuilder())
+                ->withId($id)
+                ->withSlug('created-at-noop')
+                ->withNow($createdAt)
+                ->build(),
+        );
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        // Même valeur → no-op, pas de flush.
+        $result = $handler(new UpdateDraftArticle($id, createdAt: $createdAt));
+
+        self::assertFalse($result->mutated);
+    }
+
+    public function testCreatedAtNullIsIgnored(): void
+    {
+        $id = Uuid::v7();
+        $createdAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $repository = new InMemoryArticleRepository();
+        $repository->save(
+            (new ArticleBuilder())
+                ->withId($id)
+                ->withSlug('created-at-null-ignored')
+                ->withNow($createdAt)
+                ->build(),
+        );
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        // createdAt null → commande ne porte pas de changement de date.
+        $result = $handler(new UpdateDraftArticle($id, createdAt: null));
+
+        self::assertFalse($result->mutated);
+        self::assertSame($createdAt->getTimestamp(), $result->article->createdAt()->getTimestamp());
+    }
 }

@@ -367,6 +367,33 @@ class Article
     }
 
     /**
+     * Modifie la date de création d'un brouillon.
+     *
+     * `createdAt` est une métadonnée éditoriale : la date à laquelle l'article
+     * a été créé dans le système. Elle est distincte de `publishedAt` (première
+     * publication — invariant protégé) et d'`updatedAt` (dernière modification).
+     *
+     * Comportement :
+     * - Draft uniquement : cohérent avec toutes les mutations du domaine.
+     * - No-op si la valeur est identique (égalité de timestamp).
+     * - `publishedAt` est strictement inchangé.
+     * - `updatedAt` est mis à jour pour refléter la mutation (`$now`).
+     */
+    public function changeCreatedAt(\DateTimeImmutable $date, \DateTimeImmutable $now): void
+    {
+        $this->assertDraftEditable();
+
+        if ($this->createdAt == $date) {
+            return;
+        }
+
+        $this->assertMonotonicNow($now);
+
+        $this->createdAt = $date;
+        $this->updatedAt = $now;
+    }
+
+    /**
      * Change (ou retire) l'image principale du brouillon.
      *
      * - `Draft` : mutation autorisée. Passer `null` retire l'image et son

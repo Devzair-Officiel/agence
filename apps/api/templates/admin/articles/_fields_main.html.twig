@@ -9,6 +9,22 @@
     Les champs ne portent PAS d'attribut `form=` car ils sont toujours imbriqués
     directement dans leur `<form>` parent.
 #}
+{% if not is_create and data.createdAt is not null %}
+    <div class="field">
+        <label for="article-created-at">Date de création</label>
+        <input
+            id="article-created-at"
+            type="datetime-local"
+            name="created_at"
+            value="{{ data.createdAt|date('Y-m-d\\TH:i') }}"
+        >
+        <p class="field-hint">
+            Date de création éditoriale de l'article. Ne modifie pas la date
+            de première publication (<code>publishedAt</code>), qui reste immuable.
+        </p>
+    </div>
+{% endif %}
+
 {% if is_create %}
     <div class="field">
         <label for="article-slug">Slug (URL publique, immuable après création)</label>
