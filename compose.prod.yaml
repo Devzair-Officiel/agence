@@ -133,6 +133,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     # Réseau privé uniquement : postgres ne rejoint JAMAIS le réseau « web ».
     # Le Caddy global ne peut donc pas l'atteindre directement.
+    ports:
+      - "127.0.0.1:5433:5432"
     networks:
       devzair_internal: {}
     healthcheck:
