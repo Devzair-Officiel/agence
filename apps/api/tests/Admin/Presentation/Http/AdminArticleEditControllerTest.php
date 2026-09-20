@@ -184,6 +184,30 @@ final class AdminArticleEditControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testEmptyCreatedAtReturns422(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('edit-empty-created-at');
+        $id = $article->id()->toRfc4122();
+        $token = $this->fetchEditToken($id);
+
+        // Champ présent mais vide : ne doit pas être silencieusement ignoré.
+        $this->client->request('POST', '/admin/articles/'.$id.'/edit', [
+            '_csrf_token' => $token,
+            'title' => $article->title(),
+            'excerpt' => $article->excerpt(),
+            'body_markdown' => $article->bodyMarkdown(),
+            'seo_title' => $article->seo()->title(),
+            'seo_description' => $article->seo()->description(),
+            'author_name' => $article->author()->name(),
+            'author_type' => $article->author()->type()->value,
+            'expertises' => ['concevoir'],
+            'created_at' => '',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
     private function seedDraft(string $slug): Article
     {
         $repo = self::getContainer()->get(ArticleRepositoryInterface::class);

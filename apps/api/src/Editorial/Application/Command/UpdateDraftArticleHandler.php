@@ -19,20 +19,15 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * Étapes strictement ordonnées :
  * 1. Charger l'article par UUID (404 si inexistant).
- * 2. Vérifier que l'article est éditable (statut `Draft`) — sinon
- *    `ArticleNotEditableException` levée par l'agrégat.
- * 3. Construire les VOs (SeoMetadata, Author) et valider le corps
- *    Markdown si fourni — toute erreur ici stoppe l'exécution sans
- *    modifier l'article.
- * 4. Appliquer les mutations une à une (chacune est no-op si valeur
- *    identique — l'agrégat gère).
- * 5. Un seul `flush` en fin de traitement.
+ * 2. Construire les VOs (SeoMetadata, Author), valider le Markdown, et
+ *    vérifier les invariants de `createdAt` — tout ce qui peut échouer est
+ *    traité ici, avant toute écriture sur l'agrégat.
+ * 3. Appliquer les mutations une à une (chacune est no-op si valeur
+ *    identique — l'agrégat gère, et vérifie à nouveau le statut Draft).
+ * 4. Un seul `flush` en fin de traitement si au moins une mutation a eu lieu.
  *
- * Point clé : la validation précède l'application. Un handler qui
- * mixerait validation et mutation pourrait laisser l'article dans un
- * état partiellement mis à jour si une exception surgissait au milieu.
- * Ici, tout ce qui peut échouer est fait avant toute écriture sur
- * l'agrégat — atomicité garantie sans transaction explicite.
+ * Atomicité : si la pré-validation échoue (exception levée à l'étape 2),
+ * aucune propriété de l'agrégat n'a été modifiée.
  */
 final class UpdateDraftArticleHandler
 {
@@ -52,6 +47,8 @@ final class UpdateDraftArticleHandler
         }
 
         // 1) Pré-validation exhaustive avant toute mutation.
+        $now = $this->clock->now();
+
         $seo = null;
         if ($command->seoTitle !== null || $command->seoDescription !== null) {
             if ($command->seoTitle === null || $command->seoDescription === null) {
@@ -78,11 +75,23 @@ final class UpdateDraftArticleHandler
             $this->markdownValidator->validate($command->bodyMarkdown);
         }
 
+        if ($command->createdAt !== null) {
+            if ($command->createdAt > $now) {
+                throw new ArticleInvariantViolation(
+                    'La date de création ne peut pas être postérieure à l\'instant présent.',
+                );
+            }
+            if ($article->publishedAt() !== null && $command->createdAt > $article->publishedAt()) {
+                throw new ArticleInvariantViolation(
+                    'La date de création ne peut pas être postérieure à la date de première publication.',
+                );
+            }
+        }
+
         // 2) L'agrégat vérifiera son propre statut au premier appel de
         //    mutation. On délègue au domaine — cohérent avec la garantie
         //    « éditable seulement si Draft ».
         $before = $article->updatedAt();
-        $now = $this->clock->now();
 
         if ($command->title !== null) {
             $article->changeTitle($command->title, $now);

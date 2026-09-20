@@ -17,11 +17,15 @@
             type="datetime-local"
             name="created_at"
             value="{{ data.createdAt|date('Y-m-d\\TH:i') }}"
+            required
         >
         <p class="field-hint">
             Date de création éditoriale de l'article. Ne modifie pas la date
             de première publication (<code>publishedAt</code>), qui reste immuable.
         </p>
+        {% for message in errors.for('created_at') %}
+            <p class="field-error">{{ message }}</p>
+        {% endfor %}
     </div>
 {% endif %}
 

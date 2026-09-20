@@ -526,4 +526,46 @@ final class UpdateDraftArticleHandlerTest extends TestCase
             self::assertSame(ArticleStatus::Draft, $reloaded->status());
         }
     }
+
+    /**
+     * Atomicité : un titre valide soumis avec un `createdAt` futur ne doit
+     * laisser aucune mutation en mémoire — ni le titre ni les dates ne bougent.
+     */
+    public function testValidTitleWithInvalidCreatedAtLeavesAllFieldsUnchanged(): void
+    {
+        $id = Uuid::v7();
+        $originalCreatedAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $originalTitle = 'Titre original avant tentative';
+        $repository = new InMemoryArticleRepository();
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('atomicity-title-created-at')
+            ->withTitle($originalTitle)
+            ->withNow($originalCreatedAt)
+            ->build();
+        $originalUpdatedAt = $article->updatedAt();
+        $repository->save($article);
+
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        try {
+            $handler(new UpdateDraftArticle(
+                $id,
+                title: 'Nouveau titre qui ne doit pas être appliqué',
+                createdAt: new \DateTimeImmutable('2030-01-01T00:00:00+00:00'),
+            ));
+            self::fail('Expected ArticleInvariantViolation.');
+        } catch (ArticleInvariantViolation) {
+            $reloaded = $repository->findById($id);
+            self::assertNotNull($reloaded);
+            self::assertSame($originalTitle, $reloaded->title());
+            self::assertSame($originalCreatedAt->getTimestamp(), $reloaded->createdAt()->getTimestamp());
+            self::assertSame($originalUpdatedAt->getTimestamp(), $reloaded->updatedAt()->getTimestamp());
+        }
+    }
 }

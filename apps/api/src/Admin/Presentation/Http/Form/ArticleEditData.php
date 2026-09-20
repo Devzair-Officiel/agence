@@ -109,12 +109,11 @@ final class ArticleEditData
      * Lit le champ `created_at` depuis la requête (format HTML `datetime-local` :
      * `Y-m-d\TH:i` ou `Y-m-d\TH:i:s`).
      *
-     * - Absent ou vide → retourne `null` (pas de mutation de `createdAt`).
-     * - Présent et valide → retourne la date parsée en UTC.
+     * - Absent (champ non soumis) → retourne `null` (pas de mutation de `createdAt`).
+     * - Présent et vide → ajoute une erreur sur `created_at`, retourne `$fallback`.
      * - Présent et invalide (format inconnu, date impossible comme 2026-02-31,
-     *   warnings PHP sur dépassement) → ajoute une erreur sur le champ
-     *   `created_at` et retourne `$fallback` pour que le formulaire puisse
-     *   être re-rendu avec la valeur actuelle.
+     *   warnings PHP sur dépassement) → ajoute une erreur sur `created_at`, retourne `$fallback`.
+     * - Présent et valide → retourne la date parsée en UTC.
      *
      * Le parsing est strict : après `createFromFormat`, on vérifie
      * `getLastErrors()` pour détecter les normalisations silencieuses
@@ -127,9 +126,15 @@ final class ArticleEditData
         \DateTimeImmutable $fallback,
         FormErrorBag $errors,
     ): ?\DateTimeImmutable {
-        $raw = $request->request->get('created_at', '');
-        if (!\is_string($raw) || $raw === '') {
+        if (!$request->request->has('created_at')) {
             return null;
+        }
+
+        $raw = $request->request->get('created_at');
+        if (!\is_string($raw) || $raw === '') {
+            $errors->addField('created_at', 'La date de création est invalide.');
+
+            return $fallback;
         }
 
         $tz = new \DateTimeZone('UTC');
