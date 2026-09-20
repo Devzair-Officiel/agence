@@ -137,6 +137,7 @@ services:
       - "127.0.0.1:5433:5432"
     networks:
       devzair_internal: {}
+      devzair_db_admin: {}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -161,6 +162,12 @@ networks:
     # postgres est uniquement sur ce réseau → jamais joignable depuis web.
     internal: true
     name: devzair_internal
+
+  devzair_db_admin:
+    # Bridge uniquement nécessaire pour permettre le port localhost
+    # d'administration PostgreSQL.
+    driver: bridge
+    name: devzair_db_admin
   web:
     # Réseau Docker externe pré-créé sur le VPS par `docker network create web`.
     # Le Caddy global est sur ce réseau et atteint web et api via leurs aliases.
