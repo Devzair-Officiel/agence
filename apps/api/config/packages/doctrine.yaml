@@ -14,15 +14,9 @@ doctrine:
         # laisse Doctrine le lire là-bas pour éviter les divergences entre
         # `.env` et cette config.
         use_savepoints: true
-        # Type JSONB natif PostgreSQL : utilisé par les colonnes snapshot et
-        # configuration des entités Estimator (migrations EST-6/EST-7/EST-8).
-        # `type_mappings` est indispensable pour que l'introspection DBAL
-        # reconnaisse les colonnes `jsonb` existantes comme ce type lors de
-        # `schema:validate` / `schema:update`.
+        # Type Postgres natif jsonb pour les listes de piliers.
         types:
-            jsonb: App\Estimator\Infrastructure\Doctrine\Type\JsonbType
-        mapping_types:
-            jsonb: jsonb
+            json: Doctrine\DBAL\Types\JsonType
 
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'

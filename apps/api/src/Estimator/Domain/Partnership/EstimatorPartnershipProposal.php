@@ -25,8 +25,6 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'estimator_partnership_proposal')]
-#[ORM\Index(name: 'idx_estimator_partnership_status', columns: ['status'])]
-#[ORM\Index(name: 'idx_estimator_partnership_created_at', columns: ['created_at'])]
 class EstimatorPartnershipProposal
 {
     public const STATUS_PENDING_REVIEW = 'pending_review';
@@ -81,20 +79,20 @@ class EstimatorPartnershipProposal
     private ?string $relevanceText;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(name: 'questionnaire_snapshot', type: 'jsonb')]
+    #[ORM\Column(name: 'questionnaire_snapshot', type: Types::JSON)]
     private array $questionnaireSnapshot;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(name: 'estimate_snapshot', type: 'jsonb')]
+    #[ORM\Column(name: 'estimate_snapshot', type: Types::JSON)]
     private array $estimateSnapshot;
 
     #[ORM\Column(name: 'request_id', type: Types::STRING, length: 36)]
     private string $requestId;
 
-    #[ORM\Column(name: 'status', type: Types::STRING, length: 40, options: ['default' => 'pending_review'])]
+    #[ORM\Column(name: 'status', type: Types::STRING, length: 40)]
     private string $status;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'now()'])]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
     /**

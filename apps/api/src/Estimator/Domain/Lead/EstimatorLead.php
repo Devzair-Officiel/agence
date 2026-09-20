@@ -22,8 +22,6 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'estimator_lead')]
-#[ORM\Index(name: 'idx_estimator_lead_outcome', columns: ['outcome'])]
-#[ORM\Index(name: 'idx_estimator_lead_created_at', columns: ['created_at'])]
 class EstimatorLead
 {
     #[ORM\Id]
@@ -61,17 +59,17 @@ class EstimatorLead
     private string $pricingVersion;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(name: 'questionnaire_snapshot', type: 'jsonb')]
+    #[ORM\Column(name: 'questionnaire_snapshot', type: Types::JSON)]
     private array $questionnaireSnapshot;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(name: 'estimate_snapshot', type: 'jsonb')]
+    #[ORM\Column(name: 'estimate_snapshot', type: Types::JSON)]
     private array $estimateSnapshot;
 
     #[ORM\Column(name: 'request_id', type: Types::STRING, length: 36)]
     private string $requestId;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'now()'])]
+    #[ORM\Column(name: 'created_at', type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
     /**
