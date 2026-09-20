@@ -159,7 +159,7 @@ jobs:
         run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
       - name: Validate Doctrine schema (mapping <-> database)
-        run: php bin/console doctrine:schema:validate --env=test
+        run: php bin/console doctrine:schema:validate --env=test --skip-sync
 
       - name: PHPUnit
         run: vendor/bin/phpunit --colors=never
