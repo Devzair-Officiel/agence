@@ -18,6 +18,9 @@ use Psr\Log\LoggerInterface;
  *   - `admin.media.previewed`         : rendu binaire renvoyé par le contrôleur
  *                                       de prévisualisation (utile pour
  *                                       corréler un accès admin à un asset) ;
+ *   - `admin.media.downloaded`        : téléchargement binaire via
+ *                                       `AdminArticleImageDownloadController`
+ *                                       (Content-Disposition: attachment) ;
  *   - `admin.media.deleted`           : suppression physique + DB réussie ;
  *   - `admin.media.delete_failed`     : tentative de suppression refusée
  *                                       (csrf_invalid, media_in_use, not_found,
@@ -73,6 +76,15 @@ final class MediaAdminAuditLogger
     public function previewed(AdminUser $admin, string $assetId, string $mime): void
     {
         $this->adminLogger->info('admin.media.previewed', [
+            'admin_id' => $admin->id()->toRfc4122(),
+            'asset_id' => $assetId,
+            'mime' => $mime,
+        ]);
+    }
+
+    public function downloaded(AdminUser $admin, string $assetId, string $mime): void
+    {
+        $this->adminLogger->info('admin.media.downloaded', [
             'admin_id' => $admin->id()->toRfc4122(),
             'asset_id' => $assetId,
             'mime' => $mime,

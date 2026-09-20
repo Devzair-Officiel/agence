@@ -11,6 +11,7 @@ use App\Editorial\Application\Command\DeleteArchivedArticle;
 use App\Editorial\Application\Command\DeleteArchivedArticleHandler;
 use App\Editorial\Application\Query\GetAdminArticleForEdit;
 use App\Editorial\Application\Query\GetAdminArticleForEditHandler;
+use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
 use App\Editorial\Domain\Exception\ArticleNotDeletableException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -61,6 +62,12 @@ final class AdminArticleDeleteController extends AbstractController
             $view = $this->viewHandler->__invoke(new GetAdminArticleForEdit($uuid));
         } catch (ArticleNotFoundException) {
             throw new NotFoundHttpException();
+        }
+
+        if ($view->status !== ArticleStatus::Archived) {
+            $this->addFlash('error', 'L\'article doit être archivé avant de pouvoir être supprimé définitivement.');
+
+            return $this->redirectToEdit($uuid);
         }
 
         if ($request->isMethod('GET')) {

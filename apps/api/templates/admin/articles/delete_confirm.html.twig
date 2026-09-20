@@ -1,5 +1,7 @@
 {% extends 'admin/_layout.html.twig' %}
 
+{%- set _status_fr = {'draft': 'Brouillon', 'published': 'Publié', 'archived': 'Archivé'} -%}
+
 {% block title %}Supprimer définitivement — Administration Devzair{% endblock %}
 
 {% block body %}
@@ -28,11 +30,11 @@
                     exclusivement rattachées ne pourront pas être restaurés.
                 </p>
 
-                <dl class="admin-publication-card__meta" style="margin-bottom: 1.5rem;">
+                <dl class="admin-publication-card__meta">
                     <dt>Titre</dt>
                     <dd>{{ view.title }}</dd>
                     <dt>Statut</dt>
-                    <dd>Archivé</dd>
+                    <dd>{{ _status_fr[view.status.value] ?? view.status.value|capitalize }}</dd>
                     {% if view.publishedAt %}
                         <dt>Première publication</dt>
                         <dd>
@@ -43,7 +45,7 @@
                     {% endif %}
                 </dl>
 
-                <div class="admin-editor-actions" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <div class="admin-delete-confirm__actions">
                     <a href="{{ path('admin_article_edit', { id: view.id }) }}"
                        class="button-link">
                         Annuler

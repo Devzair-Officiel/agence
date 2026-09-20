@@ -17,7 +17,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
  * Bout-à-bout HTTP de l'édition d'un brouillon. Vérifie surtout le noyau
- * de sécurité : slug immuable, CSRF, refus si l'article n'est pas Draft.
+ * de sécurité : slug immuable, CSRF, refus si l'article n'est pas Draft,
+ * et validation stricte de `created_at`.
  */
 final class AdminArticleEditControllerTest extends WebTestCase
 {
@@ -133,6 +134,54 @@ final class AdminArticleEditControllerTest extends WebTestCase
         $this->client->request('GET', '/admin/articles/not-a-uuid/edit');
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testInvalidCreatedAtFormatReturns422(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('edit-invalid-date-format');
+        $id = $article->id()->toRfc4122();
+        $token = $this->fetchEditToken($id);
+
+        $this->client->request('POST', '/admin/articles/'.$id.'/edit', [
+            '_csrf_token' => $token,
+            'title' => $article->title(),
+            'excerpt' => $article->excerpt(),
+            'body_markdown' => $article->bodyMarkdown(),
+            'seo_title' => $article->seo()->title(),
+            'seo_description' => $article->seo()->description(),
+            'author_name' => $article->author()->name(),
+            'author_type' => $article->author()->type()->value,
+            'expertises' => ['concevoir'],
+            'created_at' => 'abc',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testImpossibleDateReturns422(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('edit-impossible-date');
+        $id = $article->id()->toRfc4122();
+        $token = $this->fetchEditToken($id);
+
+        // 2026-02-31 est une date impossible ; PHP la normalise silencieusement
+        // vers mars sans cette validation. La réponse doit être 422.
+        $this->client->request('POST', '/admin/articles/'.$id.'/edit', [
+            '_csrf_token' => $token,
+            'title' => $article->title(),
+            'excerpt' => $article->excerpt(),
+            'body_markdown' => $article->bodyMarkdown(),
+            'seo_title' => $article->seo()->title(),
+            'seo_description' => $article->seo()->description(),
+            'author_name' => $article->author()->name(),
+            'author_type' => $article->author()->type()->value,
+            'expertises' => ['concevoir'],
+            'created_at' => '2026-02-31T10:00',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
     }
 
     private function seedDraft(string $slug): Article

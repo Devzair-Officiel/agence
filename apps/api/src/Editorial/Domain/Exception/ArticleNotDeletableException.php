@@ -11,8 +11,9 @@ use App\Editorial\Domain\ArticleStatus;
  * qui n'est pas en statut `Archived`.
  *
  * Seul un article archivé peut être supprimé définitivement — règle métier
- * garantie par le handler (jamais contournée côté HTTP). Traduite en 409
- * par la couche de présentation.
+ * garantie par le handler indépendamment de l'UI. La couche de présentation
+ * retourne un 303 See Other + flash error lorsque cette exception est levée
+ * (parcours back-office HTML — pas d'API JSON sur cet endpoint).
  */
 final class ArticleNotDeletableException extends \DomainException
 {

@@ -18,16 +18,25 @@ use Symfony\Component\Uid\Uuid;
 /**
  * Couverture bout-à-bout du contrôleur de suppression définitive.
  *
- * Tests :
- *   1. Anonyme → redirection login ;
- *   2. Accès GET → page de confirmation (200) pour article archivé ;
- *   3. Article non archivé (Draft) → GET affiche la page mais POST refuse ;
- *   4. Article Archived → POST sans CSRF → redirige sans supprimer ;
- *   5. Article Archived → POST avec CSRF valide → suppression + liste ;
- *   6. Après suppression, findById() renvoie null ;
- *   7. UUID inconnu → 404 ;
- *   8. Article Published → POST refuse (409 via flash) ;
- *   9. POST uniquement pour supprimer — GET ne déclenche jamais la suppression.
+ * Défense en profondeur :
+ *   - Contrôleur (UI) : refuse GET et POST si l'article n'est pas Archived
+ *     (redirect 303 vers édition + flash error).
+ *   - Handler (domaine) : refuse toujours la suppression si l'article n'est pas
+ *     Archived, indépendamment de ce que l'UI vérifie.
+ *     → invariant couvert par DeleteArchivedArticleHandlerTest (unitaire).
+ *
+ * Tests HTTP :
+ *   1.  Anonyme → redirection login.
+ *   2.  Article Archived → GET affiche la page de confirmation (200).
+ *   3.  Article Archived → GET ne déclenche pas la suppression.
+ *   4.  Article Archived → POST sans CSRF → 303 sans supprimer.
+ *   5.  Article Archived → POST avec CSRF valide → suppression + liste.
+ *   6.  Après suppression, findById() renvoie null.
+ *   7.  UUID inconnu → 404.
+ *   8.  Article Draft → GET redirige vers édition (pas de confirmation).
+ *   9.  Article Published → GET redirige vers édition (pas de confirmation).
+ *   10. Article Draft → POST redirige sans supprimer (garde contrôleur).
+ *   11. Article Published → POST redirige sans supprimer (garde contrôleur).
  */
 final class AdminArticleDeleteControllerTest extends WebTestCase
 {
@@ -103,42 +112,6 @@ final class AdminArticleDeleteControllerTest extends WebTestCase
         self::assertNull($this->tryReloadArticle($id), 'L\'article doit être absent après suppression définitive.');
     }
 
-    public function testDeleteDraftArticleIsRefused(): void
-    {
-        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
-        $article = $this->seedDraft('draft-no-delete');
-        $id = $article->id()->toRfc4122();
-
-        // On obtient un token via la page de confirmation (affichée même pour Draft,
-        // mais la soumission doit être refusée par le handler).
-        $crawler = $this->client->request('GET', '/admin/articles/'.$id.'/delete');
-        $token = $crawler->filter('input[name="_csrf_token"]')->attr('value') ?? '';
-
-        $this->client->request('POST', '/admin/articles/'.$id.'/delete', ['_csrf_token' => $token]);
-
-        self::assertResponseRedirects();
-        self::assertNotNull($this->tryReloadArticle($id), 'Un article Draft ne doit pas être supprimable.');
-    }
-
-    public function testDeletePublishedArticleIsRefused(): void
-    {
-        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
-        $repo = self::getContainer()->get(ArticleRepositoryInterface::class);
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-        $article = (new ArticleBuilder())->withSlug('published-no-delete')->published()->build();
-        $repo->save($article);
-        $em->flush();
-        $id = $article->id()->toRfc4122();
-
-        $crawler = $this->client->request('GET', '/admin/articles/'.$id.'/delete');
-        $token = $crawler->filter('input[name="_csrf_token"]')->attr('value') ?? '';
-
-        $this->client->request('POST', '/admin/articles/'.$id.'/delete', ['_csrf_token' => $token]);
-
-        self::assertResponseRedirects();
-        self::assertNotNull($this->tryReloadArticle($id), 'Un article Published ne doit pas être supprimable.');
-    }
-
     public function testUnknownIdReturns404(): void
     {
         AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
@@ -165,6 +138,73 @@ final class AdminArticleDeleteControllerTest extends WebTestCase
             $repo->findById(Uuid::fromString($id)),
             'findById() doit renvoyer null après suppression définitive.',
         );
+    }
+
+    // ── Garde contrôleur : articles non archivés ──────────────────────────
+
+    public function testGetDraftArticleRedirectsToEdit(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('draft-get-guard');
+        $id = $article->id()->toRfc4122();
+
+        $this->client->request('GET', '/admin/articles/'.$id.'/delete');
+
+        self::assertResponseRedirects();
+        self::assertStringContainsString('/admin/articles/'.$id.'/edit', $this->client->getResponse()->headers->get('Location') ?? '');
+    }
+
+    public function testGetPublishedArticleRedirectsToEdit(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $repo = self::getContainer()->get(ArticleRepositoryInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $article = (new ArticleBuilder())->withSlug('published-get-guard')->published()->build();
+        $repo->save($article);
+        $em->flush();
+        $id = $article->id()->toRfc4122();
+
+        $this->client->request('GET', '/admin/articles/'.$id.'/delete');
+
+        self::assertResponseRedirects();
+        self::assertStringContainsString('/admin/articles/'.$id.'/edit', $this->client->getResponse()->headers->get('Location') ?? '');
+    }
+
+    /**
+     * Défense en profondeur : même si un attaquant forge un POST sur un article
+     * Draft, le contrôleur refuse (garde de statut) avant d'atteindre le handler.
+     * L'invariant handler est couvert séparément dans DeleteArchivedArticleHandlerTest.
+     */
+    public function testDeleteDraftArticleIsRefused(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $article = $this->seedDraft('draft-post-guard');
+        $id = $article->id()->toRfc4122();
+
+        $this->client->request('POST', '/admin/articles/'.$id.'/delete', ['_csrf_token' => 'any-value']);
+
+        self::assertResponseRedirects();
+        self::assertNotNull($this->tryReloadArticle($id), 'Un article Draft ne doit pas être supprimable.');
+    }
+
+    /**
+     * Défense en profondeur : POST forgé sur un article Published → le
+     * contrôleur refuse (garde de statut) avant d'atteindre le handler.
+     */
+    public function testDeletePublishedArticleIsRefused(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        $repo = self::getContainer()->get(ArticleRepositoryInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $article = (new ArticleBuilder())->withSlug('published-post-guard')->published()->build();
+        $repo->save($article);
+        $em->flush();
+        $id = $article->id()->toRfc4122();
+
+        $this->client->request('POST', '/admin/articles/'.$id.'/delete', ['_csrf_token' => 'any-value']);
+
+        self::assertResponseRedirects();
+        self::assertNotNull($this->tryReloadArticle($id), 'Un article Published ne doit pas être supprimable.');
     }
 
     private function seedDraft(string $slug): Article

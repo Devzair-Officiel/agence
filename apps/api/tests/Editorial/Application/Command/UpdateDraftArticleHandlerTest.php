@@ -12,6 +12,7 @@ use App\Editorial\Domain\Exception\ArticleInvariantViolation;
 use App\Editorial\Domain\Exception\ArticleNotEditableException;
 use App\Editorial\Domain\Exception\ArticleNotFoundException;
 use App\Editorial\Domain\ExpertiseIdentifier;
+use App\Editorial\Domain\ArticleStatus;
 use App\Editorial\Infrastructure\Markdown\MarkdownContentValidator;
 use App\Editorial\Infrastructure\Markdown\MarkdownSecurityPolicy;
 use App\Tests\Editorial\Support\ArticleBuilder;
@@ -421,5 +422,108 @@ final class UpdateDraftArticleHandlerTest extends TestCase
 
         self::assertFalse($result->mutated);
         self::assertSame($createdAt->getTimestamp(), $result->article->createdAt()->getTimestamp());
+    }
+
+    public function testRejectsFutureDateForCreatedAt(): void
+    {
+        $id = Uuid::v7();
+        $repository = new InMemoryArticleRepository();
+        $repository->save(
+            (new ArticleBuilder())
+                ->withId($id)
+                ->withSlug('created-at-future')
+                ->withNow(new \DateTimeImmutable('2026-08-01T09:00:00+00:00'))
+                ->build(),
+        );
+        $now = new \DateTimeImmutable('2026-08-10T10:00:00+00:00');
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock($now->format(\DateTimeInterface::ATOM)),
+            $this->validator(),
+        );
+
+        $this->expectException(ArticleInvariantViolation::class);
+        $this->expectExceptionMessageMatches('/postérieure à l\'instant présent/');
+
+        $handler(new UpdateDraftArticle($id, createdAt: new \DateTimeImmutable('2030-01-01T00:00:00+00:00')));
+    }
+
+    public function testRejectsCreatedAtAfterPublishedAt(): void
+    {
+        $id = Uuid::v7();
+        $repository = new InMemoryArticleRepository();
+        $publishedAt = new \DateTimeImmutable('2026-08-05T10:00:00+00:00');
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('created-at-after-published')
+            ->withNow(new \DateTimeImmutable('2026-08-01T09:00:00+00:00'))
+            ->published()
+            ->build();
+        // Restaurer en Draft pour permettre l'édition.
+        $article->archive(new \DateTimeImmutable('2026-08-06T09:00:00+00:00'));
+        $article->restore(new \DateTimeImmutable('2026-08-07T09:00:00+00:00'));
+        $repository->save($article);
+
+        $originalPublishedAt = $article->publishedAt();
+        $originalCreatedAt = $article->createdAt();
+        $originalUpdatedAt = $article->updatedAt();
+
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        try {
+            // createdAt après publishedAt (2026-08-01) mais avant now (2026-08-10) → doit échouer.
+            $handler(new UpdateDraftArticle(
+                $id,
+                createdAt: new \DateTimeImmutable('2026-08-05T12:00:00+00:00'),
+            ));
+            self::fail('Expected ArticleInvariantViolation.');
+        } catch (ArticleInvariantViolation $e) {
+            self::assertMatchesRegularExpression('/postérieure à la date de première publication/', $e->getMessage());
+            $reloaded = $repository->findById($id);
+            self::assertNotNull($reloaded);
+            // Aucune mutation ne doit avoir eu lieu.
+            self::assertSame($originalCreatedAt->getTimestamp(), $reloaded->createdAt()->getTimestamp());
+            self::assertSame($originalUpdatedAt->getTimestamp(), $reloaded->updatedAt()->getTimestamp());
+            self::assertNotNull($originalPublishedAt);
+            self::assertSame($originalPublishedAt->getTimestamp(), $reloaded->publishedAt()?->getTimestamp());
+        }
+    }
+
+    public function testRejectsFutureDateLeavesArticleUnchanged(): void
+    {
+        $id = Uuid::v7();
+        $originalCreatedAt = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $repository = new InMemoryArticleRepository();
+        $article = (new ArticleBuilder())
+            ->withId($id)
+            ->withSlug('created-at-future-unchanged')
+            ->withNow($originalCreatedAt)
+            ->build();
+        $originalUpdatedAt = $article->updatedAt();
+        $repository->save($article);
+
+        $handler = new UpdateDraftArticleHandler(
+            $repository,
+            $this->entityManagerExpectingNoFlush(),
+            new FixedClock('2026-08-10T10:00:00+00:00'),
+            $this->validator(),
+        );
+
+        try {
+            $handler(new UpdateDraftArticle($id, createdAt: new \DateTimeImmutable('2030-06-01T00:00:00+00:00')));
+            self::fail('Expected ArticleInvariantViolation.');
+        } catch (ArticleInvariantViolation) {
+            $reloaded = $repository->findById($id);
+            self::assertNotNull($reloaded);
+            self::assertSame($originalCreatedAt->getTimestamp(), $reloaded->createdAt()->getTimestamp());
+            self::assertSame($originalUpdatedAt->getTimestamp(), $reloaded->updatedAt()->getTimestamp());
+            self::assertSame(ArticleStatus::Draft, $reloaded->status());
+        }
     }
 }

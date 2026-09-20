@@ -83,7 +83,13 @@ final class AdminArticleEditController extends AbstractController
             return $response;
         }
 
-        $data = ArticleEditData::hydrate($request, $view);
+        $data = ArticleEditData::hydrate($request, $view, $errors);
+
+        if ($errors->hasErrors()) {
+            $this->audit->actionFailed($admin, 'edit', 'invalid_input', $view->id);
+
+            return $this->renderForm($view, $data, $errors, Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         try {
             $result = $this->updateHandler->__invoke(new UpdateDraftArticle(

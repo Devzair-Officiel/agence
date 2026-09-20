@@ -16,6 +16,8 @@ use App\Tests\Editorial\Support\ArticleBuilder;
 use App\Tests\Editorial\Support\EditorialDatabaseCleanup;
 use App\Tests\EditorialMedia\Support\EditorialMediaDatabaseCleanup;
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Handler\HandlerInterface;
+use Monolog\Handler\TestHandler;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -32,7 +34,8 @@ use Symfony\Component\Uid\Uuid;
  *   5. UUID inconnu → 404 ;
  *   6. POST → 405 ;
  *   7. Anonyme → redirection login ;
- *   8. Impossible de lire un fichier arbitraire via l'endpoint.
+ *   8. Impossible de lire un fichier arbitraire via l'endpoint ;
+ *   9. Téléchargement émet l'événement `admin.media.downloaded` sur le canal admin.
  */
 final class AdminArticleImageDownloadControllerTest extends WebTestCase
 {
@@ -175,6 +178,20 @@ final class AdminArticleImageDownloadControllerTest extends WebTestCase
         );
     }
 
+    public function testDownloadEmitsAuditEvent(): void
+    {
+        AdminHttpTestHelper::createAndLogin(self::getContainer(), $this->client);
+        [$article, $asset] = $this->seedArticleWithImage('download-audit-event');
+        $id = $article->id()->toRfc4122();
+
+        $this->client->request('GET', '/admin/articles/'.$id.'/image/download');
+
+        self::assertResponseIsSuccessful();
+        $flat = $this->adminChannelJson();
+        self::assertStringContainsString('admin.media.downloaded', $flat);
+        self::assertStringContainsString($asset->id()->toRfc4122(), $flat);
+    }
+
     /**
      * @return array{0: \App\Editorial\Domain\Article, 1: MediaAsset}
      */
@@ -227,6 +244,29 @@ final class AdminArticleImageDownloadControllerTest extends WebTestCase
         self::assertTrue($storage->exists($result->asset->storageKey()));
 
         return $result->asset;
+    }
+
+    private function adminChannelJson(): string
+    {
+        $handler = $this->adminTestHandler();
+        $records = array_filter(
+            $handler->getRecords(),
+            static fn ($r): bool => ($r instanceof \Monolog\LogRecord ? $r->channel : ($r['channel'] ?? null)) === 'admin',
+        );
+
+        return json_encode(array_values($records), \JSON_THROW_ON_ERROR);
+    }
+
+    private function adminTestHandler(): TestHandler
+    {
+        /** @var iterable<HandlerInterface> $handlers */
+        $handlers = self::getContainer()->get('monolog.logger.admin')->getHandlers();
+        foreach ($handlers as $handler) {
+            if ($handler instanceof TestHandler) {
+                return $handler;
+            }
+        }
+        self::fail('Aucun TestHandler branché sur le canal admin.');
     }
 
     private function purgeStorageDir(): void

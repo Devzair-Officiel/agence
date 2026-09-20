@@ -45,7 +45,7 @@ final class ArticleEditData
         );
     }
 
-    public static function hydrate(Request $request, AdminArticleEditView $view): self
+    public static function hydrate(Request $request, AdminArticleEditView $view, FormErrorBag $errors): self
     {
         // Slug jamais issu de la requête : on repose sur la valeur de la vue.
         $payload = new ArticleFormPayload(
@@ -60,7 +60,7 @@ final class ArticleEditData
             expertises: self::readExpertises($request),
         );
 
-        return new self($payload, self::readCreatedAt($request, $view->createdAt));
+        return new self($payload, self::readCreatedAt($request, $view->createdAt, $errors));
     }
 
     /**
@@ -109,25 +109,45 @@ final class ArticleEditData
      * Lit le champ `created_at` depuis la requête (format HTML `datetime-local` :
      * `Y-m-d\TH:i` ou `Y-m-d\TH:i:s`).
      *
-     * Si la valeur est absente, vide ou non parsable, on retourne la valeur
-     * courante de la vue — pas de régression silencieuse sur un champ mal
-     * renseigné : le contrôleur transmet `null` à la commande si la valeur
-     * n'a pas changé, et le handler ne touche pas à `createdAt`.
+     * - Absent ou vide → retourne `null` (pas de mutation de `createdAt`).
+     * - Présent et valide → retourne la date parsée en UTC.
+     * - Présent et invalide (format inconnu, date impossible comme 2026-02-31,
+     *   warnings PHP sur dépassement) → ajoute une erreur sur le champ
+     *   `created_at` et retourne `$fallback` pour que le formulaire puisse
+     *   être re-rendu avec la valeur actuelle.
      *
-     * La conversion conserve la timezone serveur (UTC en production). On ne
-     * change pas la convention de timezone du projet.
+     * Le parsing est strict : après `createFromFormat`, on vérifie
+     * `getLastErrors()` pour détecter les normalisations silencieuses
+     * (ex. 31 février → 3 mars).
+     *
+     * La timezone UTC est celle retenue par le projet (voir `SystemClock`).
      */
-    private static function readCreatedAt(Request $request, \DateTimeImmutable $fallback): \DateTimeImmutable
-    {
+    private static function readCreatedAt(
+        Request $request,
+        \DateTimeImmutable $fallback,
+        FormErrorBag $errors,
+    ): ?\DateTimeImmutable {
         $raw = $request->request->get('created_at', '');
         if (!\is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $tz = new \DateTimeZone('UTC');
+        $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $raw, $tz);
+        if ($parsed === false) {
+            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $raw, $tz);
+        }
+
+        if ($parsed === false) {
+            $errors->addField('created_at', 'La date de création est invalide.');
+
             return $fallback;
         }
 
-        $parsed = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $raw)
-            ?: \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $raw);
+        $parseErrors = \DateTimeImmutable::getLastErrors();
+        if ($parseErrors !== false && ($parseErrors['error_count'] > 0 || $parseErrors['warning_count'] > 0)) {
+            $errors->addField('created_at', 'La date de création est invalide.');
 
-        if ($parsed === false) {
             return $fallback;
         }
 

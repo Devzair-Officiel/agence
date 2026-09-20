@@ -378,6 +378,12 @@ class Article
      * - No-op si la valeur est identique (égalité de timestamp).
      * - `publishedAt` est strictement inchangé.
      * - `updatedAt` est mis à jour pour refléter la mutation (`$now`).
+     *
+     * Invariants :
+     * - `$date` ne peut pas être postérieure à `$now` (pas de date future).
+     * - Si `publishedAt` existe, `$date` ne peut pas lui être postérieure :
+     *   la chronologie création → publication doit rester cohérente.
+     * Toutes les validations ont lieu avant toute mutation.
      */
     public function changeCreatedAt(\DateTimeImmutable $date, \DateTimeImmutable $now): void
     {
@@ -388,6 +394,18 @@ class Article
         }
 
         $this->assertMonotonicNow($now);
+
+        if ($date > $now) {
+            throw new ArticleInvariantViolation(
+                'La date de création ne peut pas être postérieure à l\'instant présent.',
+            );
+        }
+
+        if ($this->publishedAt !== null && $date > $this->publishedAt) {
+            throw new ArticleInvariantViolation(
+                'La date de création ne peut pas être postérieure à la date de première publication.',
+            );
+        }
 
         $this->createdAt = $date;
         $this->updatedAt = $now;

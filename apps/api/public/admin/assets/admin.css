@@ -2688,3 +2688,11 @@ details[open] .admin-technical-summary::before {
     background: var(--border-default);
     margin: 0.375rem 0;
 }
+
+/* ── Confirmation de suppression ──────────────────────────────────────── */
+.admin-delete-confirm__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}

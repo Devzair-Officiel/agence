@@ -87,7 +87,7 @@ final class AdminArticleImageDownloadController extends AbstractController
         $ext = pathinfo($storageKeyRaw, \PATHINFO_EXTENSION);
         $filename = $view->slug.'-image.'.$ext;
 
-        $this->audit->previewed($admin, $asset->id()->toRfc4122(), $asset->mimeType()->mime());
+        $this->audit->downloaded($admin, $asset->id()->toRfc4122(), $asset->mimeType()->mime());
 
         $response = new StreamedResponse(static function () use ($stream): void {
             while (!feof($stream)) {
