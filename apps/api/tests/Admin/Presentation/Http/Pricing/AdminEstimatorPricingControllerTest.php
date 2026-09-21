@@ -47,6 +47,16 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
         // Restore a clean published config so estimator HTTP tests are not
         // affected by setUp()'s purgePricingTable() when test order is random.
         // Purge first to avoid unique-version or unique-published conflicts.
+        //
+        // IMPORTANT: Use self::getContainer() instead of $this->pricingRepo here.
+        // $this->pricingRepo was captured in setUp() from kernel K1. Each
+        // client->request() reboots the kernel; when K1 shuts down, Doctrine
+        // Bundle calls EntityManager::close() on K1's EM. A subsequent
+        // persist()+flush() on that closed EM silently fails (or throws and
+        // is swallowed), leaving the table empty for subsequent test classes.
+        // self::getContainer() always returns the CURRENT kernel's container
+        // (open EM), making the restore deterministic regardless of how many
+        // reboots occurred during the test.
         $this->purgePricingTable();
         $config = PricingConfiguration::create(
             id:            Uuid::v7(),
@@ -55,7 +65,9 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
             configuration: $this->v1Config(),
         );
         $config->publish();
-        $this->pricingRepo->save($config);
+        /** @var PricingConfigurationRepositoryInterface $freshRepo */
+        $freshRepo = self::getContainer()->get(PricingConfigurationRepositoryInterface::class);
+        $freshRepo->save($config);
         parent::tearDown();
     }
 
@@ -251,10 +263,14 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
 
     private function purgePricingTable(): void
     {
+        // Use self::getContainer() dynamically so this works correctly when
+        // called from tearDown() after kernel reboots closed $this->em.
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         /** @var Connection $conn */
-        $conn = $this->em->getConnection();
+        $conn = $em->getConnection();
         $conn->executeStatement('TRUNCATE TABLE estimator_pricing_configuration');
-        $this->em->clear();
+        $em->clear();
     }
 
     private function seedPublishedConfig(string $version): PricingConfiguration
