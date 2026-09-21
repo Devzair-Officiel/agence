@@ -6,6 +6,7 @@ namespace App\Estimator\Domain\Pricing;
 
 use App\Estimator\Domain\Pricing\Exception\InvalidPricingTransitionException;
 use App\Estimator\Domain\Pricing\Exception\PricingConfigurationImmutableException;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -25,6 +26,9 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity]
 #[ORM\Table(name: 'estimator_pricing_configuration')]
 #[ORM\UniqueConstraint(name: 'uniq_pricing_version', columns: ['version'])]
+#[ORM\UniqueConstraint(name: 'uniq_pricing_one_published', columns: ['status'], options: ['where' => "((status)::text = 'published'::text)"])]
+#[ORM\Index(name: 'idx_pricing_status', columns: ['status'])]
+#[ORM\Index(name: 'idx_pricing_created_at', columns: ['created_at'])]
 class PricingConfiguration
 {
     public const STATUS_DRAFT     = 'draft';
@@ -38,14 +42,14 @@ class PricingConfiguration
     #[ORM\Column(length: 80)]
     private string $version;
 
-    #[ORM\Column(length: 20, enumType: PricingConfigurationStatus::class)]
+    #[ORM\Column(length: 20, enumType: PricingConfigurationStatus::class, options: ['default' => 'draft'])]
     private PricingConfigurationStatus $status;
 
     #[ORM\Column(length: 3)]
     private string $currency;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: Types::JSONB)]
     private array $configuration;
 
     #[ORM\Column(type: 'uuid', nullable: true)]
@@ -54,13 +58,13 @@ class PricingConfiguration
     #[ORM\Column(type: 'uuid', nullable: true)]
     private ?Uuid $publishedBy;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'now()'])]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'now()'])]
     private \DateTimeImmutable $updatedAt;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $publishedAt;
 
     private function __construct(

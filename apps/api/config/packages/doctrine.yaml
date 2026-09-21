@@ -14,9 +14,6 @@ doctrine:
         # laisse Doctrine le lire là-bas pour éviter les divergences entre
         # `.env` et cette config.
         use_savepoints: true
-        # Type Postgres natif jsonb pour les listes de piliers.
-        types:
-            json: Doctrine\DBAL\Types\JsonType
 
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
