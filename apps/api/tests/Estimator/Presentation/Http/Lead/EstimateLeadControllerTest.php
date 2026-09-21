@@ -6,6 +6,7 @@ namespace App\Tests\Estimator\Presentation\Http\Lead;
 
 use App\Estimator\Infrastructure\Security\EstimateLeadRateLimiter;
 use App\Estimator\Presentation\Http\Lead\EstimateLeadController;
+use App\Tests\Estimator\Support\EstimatorPricingSeeder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -22,7 +23,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testVitrineSiteLeadReturns201(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -38,7 +39,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testHumanScopingLeadReturns201WithNullAmounts(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -56,7 +57,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testLeadWithOptionalFieldsReturns201(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -73,7 +74,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testResponseHeadersAreCorrect(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -94,7 +95,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testClientPricesAreNeverTrusted(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
 
         // Envoi d'un champ "estimate" fictif (jamais dans le DTO) — doit être ignoré
         $payloadWithFakePrice = array_merge(
@@ -117,7 +118,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testHoneypotFilledReturns202Silently(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -136,7 +137,7 @@ final class EstimateLeadControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['name']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -155,7 +156,7 @@ final class EstimateLeadControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['email']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -170,7 +171,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testInvalidEmailReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -185,7 +186,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testInvalidProjectTypeReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -201,7 +202,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testInvalidJsonReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -216,7 +217,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testPayloadTooLargeReturns413(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -233,7 +234,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testMissingOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -248,7 +249,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testDisallowedOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -268,7 +269,7 @@ final class EstimateLeadControllerTest extends WebTestCase
 
     public function testRateLimitExhausionReturns429WithRetryAfter(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->disableReboot();
 
         $factory = new RateLimiterFactory(
@@ -325,5 +326,13 @@ final class EstimateLeadControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
 
         return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function createClientWithPublishedPricing(): KernelBrowser
+    {
+        $client = self::createClient();
+        EstimatorPricingSeeder::seed(self::getContainer());
+
+        return $client;
     }
 }

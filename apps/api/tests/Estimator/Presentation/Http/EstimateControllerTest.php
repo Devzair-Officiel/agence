@@ -6,6 +6,7 @@ namespace App\Tests\Estimator\Presentation\Http;
 
 use App\Estimator\Infrastructure\Security\EstimateRateLimiter;
 use App\Estimator\Presentation\Http\EstimateController;
+use App\Tests\Estimator\Support\EstimatorPricingSeeder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -24,7 +25,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testVitrineSiteReturnsEstimated(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -41,7 +42,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testEcommerceReturnsEstimated(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -61,7 +62,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testBusinessAppReturnsEstimated(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -77,7 +78,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testRefonteReturnsEstimated(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -97,7 +98,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testUnknownWithSellOnlineObjectiveInfersEcommerce(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -116,7 +117,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testUnknownWithPresentBusinessObjectiveInfersVitrinesite(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -139,7 +140,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testConflictingStrongObjectivesReturnsHumanScopingRequired(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -158,7 +159,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testExplicitUnknownTypeReturnsHumanScopingRequired(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -177,7 +178,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testResponseContainsNoFloat(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -197,7 +198,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testPricingVersionIs2026v1(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -211,7 +212,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testRecurringItemsHavePeriodMonth(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -233,7 +234,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testAssumptionsAreSnakeCaseCodes(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -250,7 +251,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testResponseHeadersAreCorrect(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -273,7 +274,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testUnknownProjectTypeReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -289,7 +290,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testUnknownFeatureReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -307,7 +308,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testInvalidJsonReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -322,7 +323,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testPayloadTooLargeReturns413(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -337,7 +338,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testMissingRequiredFieldsReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -357,7 +358,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testMissingOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -372,7 +373,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testDisallowedOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -390,7 +391,7 @@ final class EstimateControllerTest extends WebTestCase
 
     public function testRateLimitExhausionReturns429WithRetryAfter(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
 
         // The kernel browser reboots between requests by default, which would
         // reset the InMemoryStorage on each request. disableReboot() keeps the
@@ -459,5 +460,13 @@ final class EstimateControllerTest extends WebTestCase
             true,
             flags: \JSON_THROW_ON_ERROR,
         );
+    }
+
+    private function createClientWithPublishedPricing(): KernelBrowser
+    {
+        $client = self::createClient();
+        EstimatorPricingSeeder::seed(self::getContainer());
+
+        return $client;
     }
 }

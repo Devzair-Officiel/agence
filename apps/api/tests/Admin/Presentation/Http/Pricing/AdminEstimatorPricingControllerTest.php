@@ -42,35 +42,6 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
         $this->purgePricingTable();
     }
 
-    protected function tearDown(): void
-    {
-        // Restore a clean published config so estimator HTTP tests are not
-        // affected by setUp()'s purgePricingTable() when test order is random.
-        // Purge first to avoid unique-version or unique-published conflicts.
-        //
-        // IMPORTANT: Use self::getContainer() instead of $this->pricingRepo here.
-        // $this->pricingRepo was captured in setUp() from kernel K1. Each
-        // client->request() reboots the kernel; when K1 shuts down, Doctrine
-        // Bundle calls EntityManager::close() on K1's EM. A subsequent
-        // persist()+flush() on that closed EM silently fails (or throws and
-        // is swallowed), leaving the table empty for subsequent test classes.
-        // self::getContainer() always returns the CURRENT kernel's container
-        // (open EM), making the restore deterministic regardless of how many
-        // reboots occurred during the test.
-        $this->purgePricingTable();
-        $config = PricingConfiguration::create(
-            id:            Uuid::v7(),
-            version:       '2026-v1',
-            currency:      'EUR',
-            configuration: $this->v1Config(),
-        );
-        $config->publish();
-        /** @var PricingConfigurationRepositoryInterface $freshRepo */
-        $freshRepo = self::getContainer()->get(PricingConfigurationRepositoryInterface::class);
-        $freshRepo->save($config);
-        parent::tearDown();
-    }
-
     // ─── Contrôle d'accès ────────────────────────────────────────────────
 
     public function testListRedirectsUnauthenticatedToLogin(): void
