@@ -461,16 +461,19 @@ test.describe("Modalités de paiement — estimated", () => {
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
     await expect(page.locator(".result__heading")).toBeVisible()
+    // Limiter les assertions au conteneur résultat — évite les faux positifs
+    // sur le payload de hydration Nuxt ou d'autres éléments hors section métier.
+    const resultText = await page.locator(".result").textContent()
     // Les récurrents affichent bien '/ mois'
-    const text = await page.locator("body").textContent()
-    expect(text).toContain("/ mois")
-    // Et le bloc paiement affiche 'échéances' sans '/mois' propre
-    expect(text).toContain("échéances")
-    // Ne jamais diviser : 130 000 / 3 ≈ 433 — jamais affiché
-    expect(text).not.toContain("433")
-    // Pas de terminologie bancaire
-    expect(text?.toLowerCase()).not.toContain("crédit")
-    expect(text?.toLowerCase()).not.toContain("financement")
+    expect(resultText).toContain("/ mois")
+    // Le bloc modalités de règlement affiche 'échéances'
+    const paymentTermsText = await page.locator(".payment-terms").textContent()
+    expect(paymentTermsText).toContain("échéances")
+    // Ne jamais diviser : 130 000 / 3 ≈ 433 — jamais affiché dans la section résultat
+    expect(resultText).not.toContain("433")
+    // Pas de terminologie bancaire dans la section résultat
+    expect(resultText?.toLowerCase()).not.toContain("crédit")
+    expect(resultText?.toLowerCase()).not.toContain("financement")
   })
 
   // Cas E : human_scoping → aucune section "échéance"
@@ -486,13 +489,15 @@ test.describe("Modalités de paiement — estimated", () => {
 
   // Anti-confusion : pas de montant par échéance affiché
   test("n'affiche jamais un montant calculé par échéance", async ({ page }) => {
-    // max 130 000 centimes / 3 ≈ 433 €
+    // max 130 000 centimes / 3 ≈ 433 € — jamais affiché dans la section résultat.
+    // On cible section.result et non body pour éviter les faux positifs liés au
+    // payload JSON de hydration Nuxt ou à d'autres éléments de page hors métier.
     await mockEstimateResponse(page, MOCK_ESTIMATED)
     await completeVitrineToLastStep(page)
     await page.getByRole("button", { name: /Voir mon estimation/i }).click()
     await expect(page.locator(".result__heading")).toBeVisible()
-    const text = await page.locator("body").textContent()
-    expect(text).not.toContain("433")
+    const resultText = await page.locator(".result").textContent()
+    expect(resultText).not.toContain("433")
   })
 })
 
