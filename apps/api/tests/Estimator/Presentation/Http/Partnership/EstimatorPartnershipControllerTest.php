@@ -6,6 +6,7 @@ namespace App\Tests\Estimator\Presentation\Http\Partnership;
 
 use App\Estimator\Infrastructure\Security\EstimatePartnershipRateLimiter;
 use App\Estimator\Presentation\Http\Partnership\EstimatorPartnershipController;
+use App\Tests\Estimator\Support\EstimatorPricingSeeder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -22,7 +23,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testVitrineSitePartnershipReturns201(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -39,7 +40,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testHumanScopingPartnershipReturns201WithNullAmounts(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -57,7 +58,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testPartnershipWithOptionalFieldsReturns201(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -76,7 +77,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testResponseHeadersAreCorrect(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -97,7 +98,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testClientPricesAreNeverTrusted(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
 
         $payloadWithFakePrice = array_merge(
             json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR),
@@ -122,7 +123,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testHoneypotFilledReturns202Silently(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -140,7 +141,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['name']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -159,7 +160,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['email']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -177,7 +178,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['partnership_type']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -192,7 +193,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testInvalidPartnershipTypeReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -211,7 +212,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
         $data = json_decode($this->payload(), true, 512, JSON_THROW_ON_ERROR);
         unset($data['proposal_text']);
 
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -226,7 +227,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testProposalTextTooLongReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -241,7 +242,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testInvalidJsonReturns400(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -256,7 +257,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testPayloadTooLargeReturns413(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -273,7 +274,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testMissingOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -288,7 +289,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testDisallowedOriginIsForbidden(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -308,7 +309,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testRateLimitExhausionReturns429WithRetryAfter(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->disableReboot();
 
         $factory = new RateLimiterFactory(
@@ -337,7 +338,7 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
 
     public function testNoAutomaticPartnershipCalculationInResponse(): void
     {
-        $client = self::createClient();
+        $client = $this->createClientWithPublishedPricing();
         $client->request(
             'POST',
             self::ENDPOINT,
@@ -392,5 +393,13 @@ final class EstimatorPartnershipControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
 
         return json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function createClientWithPublishedPricing(): KernelBrowser
+    {
+        $client = self::createClient();
+        EstimatorPricingSeeder::seed(self::getContainer());
+
+        return $client;
     }
 }

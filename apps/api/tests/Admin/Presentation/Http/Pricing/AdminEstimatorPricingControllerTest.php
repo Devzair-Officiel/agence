@@ -42,23 +42,6 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
         $this->purgePricingTable();
     }
 
-    protected function tearDown(): void
-    {
-        // Restore a clean published config so estimator HTTP tests are not
-        // affected by setUp()'s purgePricingTable() when test order is random.
-        // Purge first to avoid unique-version or unique-published conflicts.
-        $this->purgePricingTable();
-        $config = PricingConfiguration::create(
-            id:            Uuid::v7(),
-            version:       '2026-v1',
-            currency:      'EUR',
-            configuration: $this->v1Config(),
-        );
-        $config->publish();
-        $this->pricingRepo->save($config);
-        parent::tearDown();
-    }
-
     // ─── Contrôle d'accès ────────────────────────────────────────────────
 
     public function testListRedirectsUnauthenticatedToLogin(): void
@@ -251,10 +234,14 @@ final class AdminEstimatorPricingControllerTest extends WebTestCase
 
     private function purgePricingTable(): void
     {
+        // Use self::getContainer() dynamically so this works correctly when
+        // called from tearDown() after kernel reboots closed $this->em.
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         /** @var Connection $conn */
-        $conn = $this->em->getConnection();
+        $conn = $em->getConnection();
         $conn->executeStatement('TRUNCATE TABLE estimator_pricing_configuration');
-        $this->em->clear();
+        $em->clear();
     }
 
     private function seedPublishedConfig(string $version): PricingConfiguration
