@@ -10,6 +10,8 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        types:
+            datetimetz_immutable: App\Doctrine\Type\PostgresDateTimeTzImmutableType
         # `server_version` est déjà porté par la query string du DSN ; on
         # laisse Doctrine le lire là-bas pour éviter les divergences entre
         # `.env` et cette config.

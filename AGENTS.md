@@ -51,6 +51,26 @@ Lis d’abord `docs/README.md`, puis uniquement les documents indiqués pour la 
 | Pages `/services/**`, `/realisations/**`, ressources prix, SEO commercial | `docs/13-SEO-COMMERCIAL.md` |
 | Estimateur de projet (`/estimer-mon-projet`) | `docs/12-PROJECT-ESTIMATOR.md` |
 
+## Commandes de contrôle
+
+Frontend (apps/web) — en local, tout passe par le conteneur `web` :
+- `docker compose exec -T web npm run lint` / `typecheck` / `test` / `build`
+(En CI, ces mêmes commandes tournent nativement sur le runner — voir la CI pour la version Node exacte.)
+- Lint : `npm run lint` · Typecheck : `npm run typecheck` · Tests : `npm run test`
+- Build : `npm run build`
+- Tout d'un coup : `npm run quality` (lourd, à réserver à la fin d'une tâche)
+
+Backend (depuis `apps/api/`, PHP 8.4) :
+- `composer validate --strict`
+- `php bin/console lint:yaml config --parse-tags`
+- `php bin/console lint:container --env=test`
+- `vendor/bin/phpunit --colors=never`
+
+E2E Playwright : nécessite la stack complète (`docker compose up -d --build --wait`),
+puis `cd apps/web && npx playwright test`. Ne les lance que si la tâche touche un parcours utilisateur.
+
+Pendant l'itération, lance les contrôles ciblés. Ne lance pas le build à chaque petite modification.
+
 ## Méthode obligatoire
 
 Avant de coder :
@@ -76,6 +96,7 @@ Avant de conclure :
 3. signaler honnêtement les contrôles non exécutés ;
 4. mettre à jour la roadmap et le registre seulement si l’état a réellement changé ;
 5. résumer les fichiers modifiés et les résultats.
+
 
 ## État actuel
 
