@@ -44,10 +44,22 @@ const slug = computed(() => {
   return Array.isArray(raw) ? raw[0] : raw
 })
 
+console.info("[resource-page:ssr]", {
+  path: route.fullPath,
+  rawSlug: route.params.slug,
+  slug: slug.value,
+  slugType: typeof slug.value,
+})
+
 // Défense en profondeur : le format du slug est déjà validé côté Nitro
 // (`SLUG_PATTERN` dans `/_editorial/detail/[slug]`). Ici on rejette
 // simplement l'absence — vue-router garantit le reste.
 if (!slug.value || typeof slug.value !== "string") {
+  console.warn("[resource-page:invalid-slug]", {
+    path: route.fullPath,
+    rawSlug: route.params.slug,
+    slug: slug.value,
+  })
   throw createError({
     statusCode: 404,
     statusMessage: "Ressource introuvable",
@@ -55,7 +67,12 @@ if (!slug.value || typeof slug.value !== "string") {
   })
 }
 
+console.info("[resource-page:before-detail]", { slug: slug.value })
 const { article } = await useResourceDetail(slug.value)
+console.info("[resource-page:after-detail]", {
+  slug: slug.value,
+  articleSlug: article.value?.slug ?? null,
+})
 
 const path = computed(() => `/ressources/${article.value.slug}`)
 

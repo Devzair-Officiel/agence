@@ -15,8 +15,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Slug invalide." })
   }
 
+  console.info("[editorial-route:start]", { slug })
+
   const cache = editorialCache()
   const result = await cache.detail(slug)
+
+  console.info("[editorial-route:result]", { slug, status: result.status })
 
   switch (result.status) {
     case "ok":

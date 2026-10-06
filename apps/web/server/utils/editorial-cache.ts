@@ -143,9 +143,20 @@ export function createEditorialCache(options: EditorialApiOptions): EditorialCac
       const key = detailKey(slug)
       const cached = await readCache<ArticleDetail>(key)
 
+      console.info("[editorial-cache:before-api]", {
+        slug,
+        hasCachedEntry: Boolean(cached),
+        hasEtag: Boolean(cached?.etag),
+      })
+
       const firstResult = await api.detail({
         slug,
         ifNoneMatch: cached?.etag ?? null,
+      })
+
+      console.info("[editorial-cache:after-api]", {
+        slug,
+        status: firstResult.status,
       })
 
       if (firstResult.status === "not_modified") {

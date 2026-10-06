@@ -117,6 +117,10 @@ export function createEditorialApi(options: EditorialApiOptions) {
     async detail(params: DetailParams): Promise<EditorialResult<ArticleDetail>> {
       let response: FetchLikeResponse
       try {
+        console.info("[editorial-api:request]", {
+          slug: params.slug,
+          hasIfNoneMatch: Boolean(params.ifNoneMatch),
+        })
         response = await call(
           `/resources/${encodeURIComponent(params.slug)}`,
           params.ifNoneMatch ?? null,
@@ -124,6 +128,11 @@ export function createEditorialApi(options: EditorialApiOptions) {
       } catch {
         return { status: "unavailable", httpStatus: null }
       }
+      console.info("[editorial-api:response]", {
+        slug: params.slug,
+        status: response.status,
+        requestId: response.headers.get("x-request-id"),
+      })
       return handle(response, mapArticleDetailResponse)
     },
   }
