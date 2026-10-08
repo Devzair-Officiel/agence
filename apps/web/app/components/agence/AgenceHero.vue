@@ -107,8 +107,8 @@ const heroDesktopSrc = "/brand/agence-devzair-desktop.webp"
         Une agence digitale à taille humaine.
       </h1>
       <p class="agence-hero__lead">
-        Un interlocuteur direct, un engagement dans la durée avec chaque
-        entreprise accompagnée.
+        Devzair, c'est un interlocuteur direct et un engagement dans la durée
+        avec chaque entreprise accompagnée.
       </p>
       <dl class="agence-hero__pillars">
         <div class="agence-hero__pillar">

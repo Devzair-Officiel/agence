@@ -42,7 +42,7 @@ Une application métier bien conçue est d'abord un cadre : elle limite ce qui p
 
 Ce cadre a un coût — le développement — mais il produit une valeur difficile à obtenir dans un tableur : la confiance dans les données. Une entreprise qui peut affirmer, sans doute, que ses chiffres sont exacts, que les commandes ont été traitées, que les factures ont été envoyées, économise chaque semaine plusieurs heures de vérifications croisées. Ce gain est concret et se mesure.
 
-Nous parlons ici d'applications sur mesure — un développement conçu spécifiquement pour vos processus. Ce n'est pas la seule option ; certains besoins se traitent bien avec des outils SaaS existants. Notre article [site vitrine ou site sur mesure](/ressources/site-vitrine-ou-sur-mesure) traite d'ailleurs de cette question de choix. Le sur mesure devient pertinent quand les outils standard ne recouvrent pas vraiment vos processus, ou quand ils imposent des adaptations organisationnelles trop coûteuses.
+Nous parlons ici d'applications sur mesure — un développement conçu spécifiquement pour vos processus. Ce n'est pas la seule option ; certains besoins se traitent bien avec des outils SaaS existants. Le sur mesure devient pertinent quand les outils standard ne recouvrent pas vraiment vos processus, ou quand ils imposent des adaptations organisationnelles trop coûteuses.
 
 ## Les questions à se poser avant de lancer un projet
 

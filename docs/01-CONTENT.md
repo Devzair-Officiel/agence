@@ -489,11 +489,13 @@ Publiés depuis `content/resources/*.md` via le pipeline `app:editorial:import` 
 | Slug | Piliers | Intention |
 |---|---|---|
 | `creer-site-internet-professionnel` | concevoir, construire | Méthode complète pour un projet de site professionnel |
-| `site-vitrine-ou-sur-mesure` | construire, concevoir | Cadre de décision vitrine standardisée vs sur mesure |
-| `seo-creation-site-internet` | visibilite, concevoir | Décisions SEO à prendre dès la conception |
+| ~~`site-vitrine-ou-sur-mesure`~~ **retiré (2026-10-08)** | construire, concevoir | Cadre de décision vitrine standardisée vs sur mesure |
+| ~~`seo-creation-site-internet`~~ **retiré (2026-10-08)** | visibilite, concevoir | Décisions SEO à prendre dès la conception |
 | `application-metier-remplacer-excel` | construire, concevoir | Signaux indiquant qu'Excel n'est plus adapté |
 | `ameliorer-visibilite-locale-entreprise` | visibilite, valoriser | Leviers concrets de visibilité locale |
 | `maintenance-site-internet` | faire-evoluer, construire | Périmètre et intérêt d'une maintenance de site |
+
+**Mise à jour 2026-10-08** : `site-vitrine-ou-sur-mesure` et `seo-creation-site-internet` n'ont jamais été publiés en production (404) ; leurs sources sont archivées dans `content/archive/resources/` et retirées du bootstrap. Les liens internes qui y menaient ont été retirés des 4 autres articles (sources Git) ; la répercussion sur les articles publiés est manuelle (`docs/15-SEO-PRODUCTION.md` §16). Ne pas rediriger ces URL vers l'accueil.
 
 Bootstrap idempotent : `scripts/editorial-content-bootstrap.sh` (create-only sur import, re-publication idempotente sur dates identiques). Le script est sûr à ré-exécuter — les slugs déjà présents sont sautés silencieusement.
 

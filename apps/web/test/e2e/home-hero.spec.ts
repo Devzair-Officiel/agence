@@ -52,7 +52,7 @@ test.describe('/ (home)', () => {
     // Le texte apparaît aussi dans le pied de page (site.description), on cible
     // explicitement le paragraphe de tête du hero pour rester en mode strict.
     await expect(page.locator('.home-hero__lead')).toContainText(
-      'Sites internet, applications métier',
+      'Devzair est une agence digitale',
     )
 
     const primary = page.locator('.home-hero__ctas a[href="/contact"]')
@@ -123,7 +123,7 @@ test.describe('/ (home)', () => {
     await page.goto('/')
 
     await expect(page).toHaveTitle(
-      /Agence digitale pour sites web, applications et visibilité/,
+      'Devzair — Agence digitale : sites web, applications et SEO',
     )
 
     const html = page.locator('html')
@@ -149,7 +149,7 @@ test.describe('/ (home)', () => {
     const ogTitle = await page
       .locator('meta[property="og:title"]')
       .getAttribute('content')
-    expect(ogTitle ?? '').toContain('Agence digitale')
+    expect(ogTitle ?? '').toContain('Devzair — Agence digitale')
 
     const twitterCard = await page
       .locator('meta[name="twitter:card"]')

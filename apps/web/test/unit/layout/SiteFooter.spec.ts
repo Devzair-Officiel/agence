@@ -53,10 +53,11 @@ describe("SiteFooter", () => {
     expect(tagline.text()).not.toContain(".")
   })
 
-  it("renders the positioning description", () => {
-    expect(mountFooter().find(".site-footer__description").text()).toContain(
-      "solutions digitales cohérentes",
-    )
+  it("renders the positioning description naming Devzair", () => {
+    const text = mountFooter().find(".site-footer__description").text()
+    expect(text).toContain("Devzair est une agence digitale")
+    expect(text).toContain("solutions web cohérentes")
+    expect(text).toContain("accompagnons les entreprises")
   })
 
   // ── Expertises ─────────────────────────────────────────────────────

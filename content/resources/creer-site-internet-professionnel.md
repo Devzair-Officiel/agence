@@ -32,7 +32,7 @@ Structurer, c'est aussi accepter de renoncer. Un site professionnel ne dit pas t
 
 Beaucoup d'entreprises envisagent le référencement naturel comme une couche à ajouter après la mise en ligne. C'est une erreur coûteuse : la plupart des leviers SEO se décident en amont — arborescence, balisage, contenus, performance, maillage interne. Attendre la fin du projet pour « faire du SEO » revient à refaire une partie de ce qui vient d'être livré.
 
-Nous détaillons ce point dans un article dédié : [pourquoi le SEO doit être pensé dès la création d'un site](/ressources/seo-creation-site-internet). Le principe à retenir ici : les décisions structurelles prises pendant la conception déterminent la marge d'action ultérieure. Un site correctement pensé pour le référencement dès l'origine reste évolutif ; un site rattrapé à la fin subit ses choix passés.
+C'est pourquoi, lorsque nous menons ensemble la création et le [référencement naturel](/services/seo-referencement-naturel), nous définissons la structure du site en tenant compte des requêtes cibles dès la conception. Le principe à retenir ici : les décisions structurelles prises pendant la conception déterminent la marge d'action ultérieure. Un site correctement pensé pour le référencement dès l'origine reste évolutif ; un site rattrapé à la fin subit ses choix passés.
 
 ## Miser sur une base performante et accessible
 

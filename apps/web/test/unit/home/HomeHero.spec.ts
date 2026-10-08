@@ -22,12 +22,13 @@ describe("HomeHero", () => {
     expect(emphasis.element.tagName).toBe("SPAN")
   })
 
-  it("renders the introduction paragraph verbatim", () => {
+  it("introduces Devzair explicitly in the lead paragraph", () => {
     const wrapper = mount(HomeHero)
     const lead = wrapper.get(".home-hero__lead").text()
-    expect(lead).toContain("Sites internet, applications métier, identité visuelle")
+    expect(lead.startsWith("Devzair est une agence digitale")).toBe(true)
+    expect(lead).toContain("sites internet, d’applications métier")
     expect(lead).toContain("référencement")
-    expect(lead).toContain("évolutive.")
+    expect(lead).toContain("utiles et évolutifs.")
   })
 
   it("exposes the two CTAs as real links (not fake buttons)", () => {

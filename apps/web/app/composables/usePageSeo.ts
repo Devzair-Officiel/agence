@@ -36,6 +36,12 @@ export type PageSeoRobotsType =
 export interface PageSeoInput {
   /** Titre spécifique de la page (le template global ajoute « | Devzair »). */
   title: MaybeRefOrGetter<string>
+  /**
+   * Utilise `title` tel quel, sans le template global « %s | Devzair ».
+   * Réservé à l'accueil, dont le titre commence déjà par la marque : sans
+   * cette option, le titre final contiendrait deux fois « Devzair ».
+   */
+  absoluteTitle?: boolean
   /** Description propre à la page ; utilisée aussi en OG et Twitter. */
   description: string
   /** Chemin canonique : `/`, `/services`, `/ressources/mon-article`… */
@@ -105,9 +111,11 @@ export function usePageSeo(input: PageSeoInput): void {
   })
 
   // Le canonical passe par useHead : useSeoMeta ne gère pas les <link>.
-  if (canonicalUrl) {
+  // `titleTemplate: "%s"` neutralise le template global pour cette page.
+  if (canonicalUrl || input.absoluteTitle) {
     useHead({
-      link: [{ rel: "canonical", href: canonicalUrl }],
+      ...(input.absoluteTitle ? { titleTemplate: "%s" } : {}),
+      ...(canonicalUrl ? { link: [{ rel: "canonical", href: canonicalUrl }] } : {}),
     })
   }
 }

@@ -48,5 +48,13 @@ Contenu Markdown…
 ## Amorçage local
 
 Le script `scripts/editorial-content-bootstrap.sh` importe puis publie
-les fichiers présents ici, en sautant les slugs déjà en base
-(create-only). Il ne remplace jamais un article existant.
+les slugs de sa liste `SLUGS` (fichiers présents ici), en sautant les slugs
+déjà en base (create-only). Il ne remplace jamais un article existant : une
+correction de fichier n'est pas répercutée sur un article déjà publié (voir
+`docs/15-SEO-PRODUCTION.md`, procédure de republication).
+
+## Archive éditoriale
+
+Les sources retirées de la publication vivent dans `content/archive/resources/`.
+Elles ne sont ni importées ni publiées automatiquement, et aucun article
+publié ne doit pointer vers leurs URL.
