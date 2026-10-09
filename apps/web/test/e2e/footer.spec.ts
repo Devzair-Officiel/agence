@@ -79,6 +79,26 @@ test.describe('Footer Devzair', () => {
     expect(overflow).toBeLessThanOrEqual(1)
   })
 
+  test('centre la barre légale sur mobile, copyright en dernière ligne', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    const footer = page.locator(footerSelector)
+    const legal = await footer.locator('.site-footer__legal').boundingBox()
+    const list = await footer.locator('.site-footer__legal-list').boundingBox()
+    const backToTop = await footer.locator('.site-footer__back-to-top').boundingBox()
+    const copyright = await footer.locator('.site-footer__copyright').boundingBox()
+
+    expect(legal && list && backToTop && copyright).toBeTruthy()
+    const center = legal!.x + legal!.width / 2
+    for (const box of [list!, backToTop!, copyright!]) {
+      expect(Math.abs(box.x + box.width / 2 - center)).toBeLessThanOrEqual(2)
+    }
+    expect(list!.y + list!.height).toBeLessThanOrEqual(backToTop!.y)
+    expect(backToTop!.y + backToTop!.height).toBeLessThanOrEqual(copyright!.y)
+    expect(backToTop!.height).toBeGreaterThanOrEqual(44)
+  })
+
   test('conserve la marque au-dessus des trois colonnes lisibles sur tablette', async ({
     page,
   }) => {

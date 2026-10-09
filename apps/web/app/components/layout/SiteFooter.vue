@@ -393,7 +393,63 @@ onMounted(() => {
   transform: translateY(-3px);
 }
 
+/*
+ * Mobile : barre légale centrée, alignée sur les colonnes du dessus.
+ * Liens légaux → bouton « Retour en haut » → copyright en dernière ligne.
+ * Seul le copyright (non focusable) est réordonné : l'ordre de tabulation
+ * reste celui du DOM.
+ */
+@media (max-width: 639px) {
+  .site-footer__legal {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-5);
+    padding-block: var(--space-8) var(--space-6);
+    text-align: center;
+  }
+
+  .site-footer__copyright {
+    order: 1;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  .site-footer__legal-list {
+    justify-content: center;
+    column-gap: var(--space-5);
+    row-gap: 0;
+  }
+
+  .site-footer__legal-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .site-footer__back-to-top {
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-5);
+    border: 1px solid rgba(196, 203, 211, 0.3);
+    border-radius: 999px;
+    color: var(--color-cream-muted);
+    transition:
+      color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out),
+      transform var(--duration-instant) var(--ease-out);
+  }
+
+  .site-footer__back-to-top:hover,
+  .site-footer__back-to-top:focus-visible {
+    border-color: var(--color-cream-muted);
+  }
+
+  .site-footer__back-to-top:active {
+    transform: scale(0.96);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .site-footer__back-to-top:active { transform: none; }
   .site-footer__link,
   .site-footer__cta,
   .site-footer__legal-link,
