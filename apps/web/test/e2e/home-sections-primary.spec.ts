@@ -167,19 +167,89 @@ test.describe('/ (home) — sections primaires Phase 5B', () => {
     expect(blocking, 'Axe serious/critical violations').toEqual([])
   })
 
-  test('respects prefers-reduced-motion — no smooth scroll on the pillars carousel', async ({
+  test('respects prefers-reduced-motion — the mobile pillars accordion opens without transition', async ({
     browser,
   }) => {
-    const context = await browser.newContext({ reducedMotion: 'reduce' })
+    const context = await browser.newContext({
+      reducedMotion: 'reduce',
+      viewport: { width: 390, height: 844 },
+    })
     const page = await context.newPage()
     await page.goto('/')
 
-    const scrollBehavior = await page
-      .locator('.home-pillars__grid')
-      .evaluate((el) => getComputedStyle(el).scrollBehavior)
-    expect(scrollBehavior).toBe('auto')
+    // La feuille globale ramène déjà toute durée à 0.01ms : on vérifie
+    // qu'aucune transition perceptible ne subsiste sur le panneau.
+    const durations = await page
+      .locator('.home-pillars__card-panel')
+      .first()
+      .evaluate((el) => getComputedStyle(el).transitionDuration)
+    expect(durations.split(',').every((d) => parseFloat(d) < 0.001)).toBe(true)
 
     await context.close()
+  })
+})
+
+test.describe('/ (home) — expertises accordion on mobile', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('stacks the five pillars vertically, first one open, others collapsed', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const cards = page.locator('.home-pillars__card')
+    await expect(cards).toHaveCount(5)
+
+    const grid = page.locator('.home-pillars__grid')
+    const overflow = await grid.evaluate((el) => el.scrollWidth - el.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(1)
+
+    await expect(cards.nth(0).locator('.home-pillars__card-description')).toBeVisible()
+    for (let index = 1; index < 5; index += 1) {
+      await expect(cards.nth(index).locator('.home-pillars__card-tag')).toBeVisible()
+      await expect(cards.nth(index).locator('.home-pillars__card-description')).toBeHidden()
+    }
+  })
+
+  test('tapping a pillar header expands its detail and the link to the pillar', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const card = page.locator('.home-pillars__card').nth(1)
+    const toggle = card.locator('.home-pillars__card-toggle')
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    // Un tap avant l'hydratation est sans effet : on retente jusqu'à ce que
+    // le gestionnaire Vue soit attaché.
+    await expect(async () => {
+      if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+        await card.locator('.home-pillars__card-header').click()
+      }
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 1_000 })
+    }).toPass()
+    await expect(card.locator('.home-pillars__card-description')).toBeVisible()
+    await expect(card.locator('.home-pillars__card-more')).toBeVisible()
+    await expect(card.locator('.home-pillars__card-more')).toHaveAttribute(
+      'href',
+      '/expertises/construire',
+    )
+
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(card.locator('.home-pillars__card-description')).toBeHidden()
+  })
+})
+
+test.describe('/ (home) — expertises grid on desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test('shows every pillar detail with no accordion control', async ({ page }) => {
+    await page.goto('/')
+    const cards = page.locator('.home-pillars__card')
+    await expect(page.locator('.home-pillars__card-toggle:visible')).toHaveCount(0)
+    await expect(page.locator('.home-pillars__card-more:visible')).toHaveCount(0)
+    for (let index = 0; index < 5; index += 1) {
+      await expect(cards.nth(index).locator('.home-pillars__card-description')).toBeVisible()
+    }
   })
 })
 
@@ -212,7 +282,7 @@ for (const viewport of viewports) {
       await expect(page.locator('.home-pillars h2')).toHaveCount(1)
     })
 
-    test('every pillar is reachable in the DOM (mobile carousel keeps all five)', async ({
+    test('every pillar is reachable in the DOM (mobile accordion keeps all five)', async ({
       page,
     }) => {
       await page.goto('/')

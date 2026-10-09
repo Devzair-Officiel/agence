@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue"
 import BaseContainer from "~/components/base/BaseContainer.vue"
 import BaseEyebrow from "~/components/base/BaseEyebrow.vue"
 import { expertisePillars } from "~/config/expertise-pillars"
@@ -8,8 +9,11 @@ import { expertisePillars } from "~/config/expertise-pillars"
  * de `expertise-pillars.ts` (source unique — aucune duplication éditoriale).
  *
  * Rendu :
- *   - <768px  : carrousel scroll-snap CSS-natif (aucun JS, aucun bouton).
- *     Les 5 pôles sont dans le DOM, indexables et lisibles sans JS.
+ *   - <768px  : accordéon vertical. Les 5 pôles sont visibles d'un coup en
+ *     lignes compactes (numéro, nom, mots-clés) ; un tap déplie le détail
+ *     (description, prestations, lien vers le pôle). Le premier pôle est
+ *     ouvert par défaut, y compris dans le HTML serveur. Tout le contenu
+ *     reste dans le DOM (indexable) : seul l'affichage est replié.
  *   - 768–1023px : grille 2 colonnes standard, ordre naturel.
  *   - ≥1024px : grille asymétrique 3 colonnes × 3 lignes.
  *     Concevoir (variant "default", grand format) occupe 2 lignes en
@@ -20,21 +24,34 @@ import { expertisePillars } from "~/config/expertise-pillars"
  *
  * Accessibilité :
  *   - un H2 unique, un H3 par pôle ;
- *   - chaque carte est un lien vers `/expertises/{id}` via le pattern
- *     "stretched link" : seul le titre porte le `<NuxtLink>` (nom
+ *   - ≥768px : chaque carte est un lien vers `/expertises/{id}` via le
+ *     pattern "stretched link" : seul le titre porte le `<NuxtLink>` (nom
  *     accessible court, unique par carte), un `::after` étend la zone
- *     cliquable à toute la carte. Aucun élément interactif imbriqué dans
- *     le lien → pas de violation `nested-interactive` ;
- *   - la liste des services est une vraie `<ul>` sémantique ;
- *   - hint visuel + texte sr-only pour indiquer le geste de scroll sur
- *     mobile, sans être répétitif sur desktop (`@media` masque).
+ *     cliquable à toute la carte ;
+ *   - <768px : accordéon — un `<button>` `aria-expanded` / `aria-controls`
+ *     recouvre l'en-tête de la carte (zone de tap pleine largeur). Il reste
+ *     hors du H3 pour que le titre ne contienne qu'une fois le libellé dans
+ *     le HTML brut. Le panneau replié est `visibility: hidden` (hors de
+ *     l'ordre de tabulation) et porte le lien « Découvrir le pôle » ;
+ *   - la liste des services est une vraie `<ul>` sémantique.
  *
- * Défense en profondeur reduced-motion : aucun mouvement introduit ici,
- * mais on neutralise explicitement `scroll-behavior: smooth` si un
- * ancêtre le forçait.
+ * Animation : JS ne fait que basculer `data-open` ; l'ouverture est une
+ * transition CSS `grid-template-rows: 0fr → 1fr` (hauteur auto sans
+ * mesure JS). Neutralisée sous `prefers-reduced-motion`.
  */
 
 const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
+
+// Ouvertures indépendantes : comparer deux pôles reste possible.
+const openIds = ref<string[]>(pillars[0] ? [pillars[0].id] : [])
+
+const isOpen = (id: string) => openIds.value.includes(id)
+
+const toggle = (id: string) => {
+  openIds.value = isOpen(id)
+    ? openIds.value.filter((openId) => openId !== id)
+    : [...openIds.value, id]
+}
 </script>
 
 <template>
@@ -63,14 +80,6 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
         </NuxtLink>
       </header>
 
-      <p class="home-pillars__hint" aria-hidden="true">
-        Faites défiler horizontalement pour parcourir les cinq pôles
-      </p>
-      <p class="sr-only">
-        La liste ci-dessous se parcourt horizontalement au doigt ou au trackpad
-        sur mobile. Chaque pôle regroupe trois prestations principales.
-      </p>
-
       <ul
         class="home-pillars__grid"
         aria-label="Les cinq pôles d'expertise Devzair"
@@ -81,34 +90,64 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
           class="home-pillars__card"
           :data-variant="pillar.variant"
           :data-order="pillar.order"
+          :data-open="isOpen(pillar.id)"
         >
-          <span class="home-pillars__card-index" aria-hidden="true">
-            {{ String(pillar.order).padStart(2, "0") }}
-          </span>
-          <h3 class="home-pillars__card-title">
-            <NuxtLink
-              :to="`/expertises/${pillar.id}`"
-              class="home-pillars__card-link"
+          <div class="home-pillars__card-header">
+            <span class="home-pillars__card-index" aria-hidden="true">
+              {{ String(pillar.order).padStart(2, "0") }}
+            </span>
+            <h3 class="home-pillars__card-title">
+              <NuxtLink
+                :to="`/expertises/${pillar.id}`"
+                class="home-pillars__card-link"
+              >
+                {{ pillar.label }}
+              </NuxtLink>
+            </h3>
+            <p class="home-pillars__card-tag">{{ pillar.description }}</p>
+            <button
+              type="button"
+              class="home-pillars__card-toggle"
+              :aria-label="`Détail du pôle ${pillar.label}`"
+              :aria-expanded="isOpen(pillar.id)"
+              :aria-controls="`home-pillar-panel-${pillar.id}`"
+              @click="toggle(pillar.id)"
             >
-              {{ pillar.label }}
-            </NuxtLink>
-          </h3>
-          <p class="home-pillars__card-tag">{{ pillar.description }}</p>
-          <p class="home-pillars__card-description">
-            {{ pillar.longDescription }}
-          </p>
-          <ul
-            class="home-pillars__services"
-            :aria-label="`Prestations pour ${pillar.label}`"
+              <span class="home-pillars__card-icon" aria-hidden="true" />
+            </button>
+          </div>
+          <div
+            :id="`home-pillar-panel-${pillar.id}`"
+            class="home-pillars__card-panel"
           >
-            <li
-              v-for="service in pillar.services"
-              :key="service"
-              class="home-pillars__service"
-            >
-              {{ service }}
-            </li>
-          </ul>
+            <div class="home-pillars__card-panel-inner">
+              <div class="home-pillars__card-panel-content">
+                <p class="home-pillars__card-description">
+                  {{ pillar.longDescription }}
+                </p>
+                <ul
+                  class="home-pillars__services"
+                  :aria-label="`Prestations pour ${pillar.label}`"
+                >
+                  <li
+                    v-for="service in pillar.services"
+                    :key="service"
+                    class="home-pillars__service"
+                  >
+                    {{ service }}
+                  </li>
+                </ul>
+                <NuxtLink
+                  :to="`/expertises/${pillar.id}`"
+                  class="home-pillars__card-more"
+                >
+                  Découvrir le pôle
+                  <span class="sr-only">{{ pillar.label }}</span>
+                  <span class="home-pillars__card-more-arrow" aria-hidden="true">→</span>
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
         </li>
       </ul>
     </BaseContainer>
@@ -159,16 +198,6 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   max-width: 60ch;
 }
 
-.home-pillars__hint {
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-petrol);
-  margin: 0;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -206,30 +235,17 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   border-radius: 2px;
 }
 
-/* ----- Mobile : carrousel scroll-snap CSS-natif ----- */
 .home-pillars__grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  gap: var(--space-4);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--container-gutter-mobile);
-  scroll-behavior: smooth;
-  /* Marges négatives pour laisser le premier item toucher le bord du viewport
-     tout en conservant la gouttière du container au repos. */
-  margin-inline: calc(-1 * var(--container-gutter-mobile));
-  padding-inline: var(--container-gutter-mobile);
-  padding-block: var(--space-2) var(--space-4);
-  /* iOS momentum. */
-  -webkit-overflow-scrolling: touch;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .home-pillars__card {
   position: relative;
-  flex: 0 0 min(85%, 22rem);
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -242,6 +258,23 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
     transform var(--duration-base) var(--ease-out),
     border-color var(--duration-base) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out);
+}
+
+/*
+ * Les enveloppes de l'accordéon n'existent que pour le mobile : au-delà,
+ * `display: contents` rend leurs enfants à la colonne flex de la carte,
+ * dont la mise en page reste inchangée.
+ */
+.home-pillars__card-header,
+.home-pillars__card-panel,
+.home-pillars__card-panel-inner,
+.home-pillars__card-panel-content {
+  display: contents;
+}
+
+.home-pillars__card-toggle,
+.home-pillars__card-more {
+  display: none;
 }
 
 /*
@@ -265,24 +298,20 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   z-index: 1;
 }
 
-.home-pillars__card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-petrol);
-  box-shadow: var(--shadow-md);
+@media (hover: hover) and (min-width: 768px) {
+  .home-pillars__card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-petrol);
+    box-shadow: var(--shadow-md);
+  }
 }
 
-.home-pillars__card:has(.home-pillars__card-link:focus-visible) {
+.home-pillars__card:has(
+    .home-pillars__card-link:focus-visible,
+    .home-pillars__card-toggle:focus-visible
+  ) {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: var(--focus-ring-gap);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-pillars__card {
-    transition: none;
-  }
-  .home-pillars__card:hover {
-    transform: none;
-  }
 }
 
 .home-pillars__card-index {
@@ -400,23 +429,10 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
     gap: var(--space-10);
   }
 
-  .home-pillars__hint {
-    display: none;
-  }
-
   .home-pillars__grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-6);
-    overflow: visible;
-    scroll-snap-type: none;
-    margin-inline: 0;
-    padding-inline: 0;
-    padding-block: 0;
-  }
-
-  .home-pillars__card {
-    flex: initial;
   }
 }
 
@@ -476,9 +492,218 @@ const pillars = [...expertisePillars].sort((a, b) => a.order - b.order)
   }
 }
 
+/* ----- Mobile : accordéon ----- */
+@media (max-width: 767.98px) {
+  .home-pillars__card {
+    gap: 0;
+    padding: 0;
+  }
+
+  .home-pillars__card[data-open="true"] {
+    border-color: var(--color-petrol);
+    box-shadow: var(--shadow-md);
+  }
+
+  .home-pillars__card[data-variant="primary"][data-open="true"] {
+    border-left-color: var(--color-petrol);
+  }
+
+  .home-pillars__card-header {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
+    align-items: baseline;
+    padding: var(--space-4) calc(var(--space-5) + 2.25rem) var(--space-4)
+      var(--space-5);
+  }
+
+  .home-pillars__card-tag {
+    grid-column: 2;
+  }
+
+  /* Le panneau porte son propre lien : pas de lien étiré sur mobile. */
+  .home-pillars__card-link::after {
+    content: none;
+  }
+
+  /*
+   * Le bouton recouvre tout l'en-tête (au-dessus du lien du titre) pour
+   * une zone de tap pleine largeur ; l'icône se cale à droite.
+   */
+  .home-pillars__card-toggle {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .home-pillars__card-toggle::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .home-pillars__card-toggle:active::after {
+    opacity: 0.04;
+  }
+
+  /* Plus → moins : la barre verticale pivote et se couche sur l'horizontale. */
+  .home-pillars__card-icon {
+    position: absolute;
+    top: 50%;
+    right: var(--space-4);
+    width: 2rem;
+    height: 2rem;
+    margin-top: -1rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    opacity: 0.72;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out);
+  }
+
+  .home-pillars__card-icon::before,
+  .home-pillars__card-icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.75rem;
+    height: 1.5px;
+    margin: -0.75px 0 0 -0.375rem;
+    border-radius: 1px;
+    background-color: currentColor;
+    transition: transform var(--duration-slow) var(--ease-out);
+  }
+
+  .home-pillars__card-icon::after {
+    transform: rotate(90deg);
+  }
+
+  .home-pillars__card[data-open="true"] .home-pillars__card-icon {
+    opacity: 1;
+    transform: rotate(180deg);
+  }
+
+  .home-pillars__card[data-open="true"] .home-pillars__card-icon::after {
+    transform: rotate(0deg);
+  }
+
+  /*
+   * Hauteur auto animée sans mesure JS : la piste passe de 0fr à 1fr.
+   * Replié, le contenu est `visibility: hidden` (hors tabulation et
+   * arbre d'accessibilité) ; la bascule de visibilité est retardée à la
+   * fermeture pour laisser la transition se terminer.
+   */
+  .home-pillars__card-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--duration-slow) var(--ease-out);
+  }
+
+  .home-pillars__card[data-open="true"] .home-pillars__card-panel {
+    grid-template-rows: 1fr;
+  }
+
+  .home-pillars__card-panel-inner {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-slow) var(--ease-out),
+      visibility 0s linear var(--duration-slow);
+  }
+
+  .home-pillars__card[data-open="true"] .home-pillars__card-panel-inner {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--duration-slow) var(--ease-out) var(--duration-instant),
+      transform var(--duration-slow) var(--ease-out),
+      visibility 0s;
+  }
+
+  .home-pillars__card-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: 0 var(--space-5) var(--space-5);
+  }
+
+  .home-pillars__services {
+    margin-top: 0;
+  }
+
+  .home-pillars__card-more {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    align-self: flex-start;
+    margin-top: var(--space-1);
+    font-family: var(--font-family-body);
+    font-weight: var(--font-weight-body-strong);
+    font-size: 0.9375rem;
+    color: var(--text-accent);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+  }
+
+  .home-pillars__card-more:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: -1px;
+    border-radius: 2px;
+  }
+
+  .home-pillars__card-more-arrow {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .home-pillars__card-more:active .home-pillars__card-more-arrow {
+    transform: translateX(4px);
+  }
+
+  .home-pillars__card[data-variant="accent"] .home-pillars__card-more {
+    color: var(--color-cream);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .home-pillars__grid {
-    scroll-behavior: auto;
+  .home-pillars__card,
+  .home-pillars__card-panel,
+  .home-pillars__card-panel-inner,
+  .home-pillars__card[data-open="true"] .home-pillars__card-panel-inner,
+  .home-pillars__card-icon,
+  .home-pillars__card-icon::before,
+  .home-pillars__card-icon::after,
+  .home-pillars__card-toggle::after,
+  .home-pillars__card-more-arrow {
+    transition: none;
+  }
+
+  .home-pillars__card-panel-inner {
+    transform: none;
   }
 }
 </style>
