@@ -231,7 +231,13 @@ ou d'aligner à gauche une rangée incomplète, et reste 100 % CSS.
 
 Les animations doivent :
 
-- rester en CSS pure (`animation` ou `transition`), sans JavaScript ;
+- utiliser la technique la plus légère et la plus performante pour l’effet
+  visé : CSS (`animation`, `transition`) par défaut ; JavaScript uniquement
+  lorsque le CSS ne peut pas exprimer l’effet (par exemple réagir au sens du
+  scroll). Dans ce cas, le JavaScript se limite à calculer un état et à
+  basculer une classe ; le mouvement reste porté par une transition CSS
+  sur `transform` / `opacity`, l’écoute est passive et regroupée par
+  `requestAnimationFrame` (exemple : `useHideOnScroll` + `SiteHeader`) ;
 - être finies dans le temps (pas de `infinite`) ;
 - utiliser `animation-fill-mode: forwards` pour figer l’état final ;
 - **et** être neutralisées explicitement au niveau du composant en

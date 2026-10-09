@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
+import { useHideOnScroll } from "~/composables/useHideOnScroll"
 import { useMobileNavigation } from "~/composables/useMobileNavigation"
 import { estimatorCta, primaryCta, primaryNavigation } from "~/config/navigation"
 import { site } from "~/config/site"
 
 const { toggle, isOpen } = useMobileNavigation()
 
+const { isHidden } = useHideOnScroll()
+
 const menuButtonRef = ref<HTMLButtonElement | null>(null)
+
+// Le menu mobile ouvert garde le header (et son bouton de fermeture) visible.
+const isHeaderHidden = computed(() => isHidden.value && !isOpen.value)
 
 // Signal d'hydratation exposé via `data-hydrated` sur le bouton menu.
 // Utilisé par le helper E2E `openMobileNavigation` pour synchroniser sur
@@ -24,7 +30,7 @@ const onToggleMenu = () => {
 </script>
 
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'site-header--hidden': isHeaderHidden }">
     <BaseContainer as="div" width="wide" class="site-header__inner">
       <NuxtLink to="/" class="site-header__brand" :aria-label="`${site.name} — Accueil`">
         <picture>
@@ -103,6 +109,28 @@ const onToggleMenu = () => {
   border-bottom: 1px solid var(--border-default);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  /* Révélation : décélération douce, le header « glisse » en place. */
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+/* Masquage au scroll descendant : départ progressif, sans à-coup. */
+.site-header--hidden {
+  transform: translateY(-100%);
+  transition: transform var(--duration-slow) var(--ease-in-out);
+}
+
+/* Un focus clavier dans le header le rend toujours visible (WCAG 2.4.11). */
+.site-header--hidden:has(:focus-visible) {
+  transform: none;
+}
+
+/* Mouvement réduit : le header reste simplement en place. */
+@media (prefers-reduced-motion: reduce) {
+  .site-header,
+  .site-header--hidden {
+    transform: none;
+    transition: none;
+  }
 }
 
 /* Fallback quand backdrop-filter n'est pas disponible ou désactivé. */
