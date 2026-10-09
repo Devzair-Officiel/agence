@@ -69,8 +69,8 @@ test.describe("/agence — SSR et contenu éditorial", () => {
     // (`L&#39;agence`). On accepte l'une ou l'autre forme pour ne pas
     // dépendre d'un détail d'encodage.
     expect(body).toMatch(/L(?:'|&#39;)agence/)
-    expect(body).toContain(
-      "Un interlocuteur direct, un engagement dans la durée avec chaque entreprise accompagnée.",
+    expect(body).toMatch(
+      /Devzair, c(?:'|&#39;)est un interlocuteur direct et un engagement dans la durée avec chaque entreprise accompagnée\./,
     )
   })
 

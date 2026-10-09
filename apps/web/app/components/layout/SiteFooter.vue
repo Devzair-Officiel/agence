@@ -42,8 +42,9 @@ onMounted(() => {
           </NuxtLink>
           <p class="site-footer__tagline">Sites – Applications – Image – Visibilité</p>
           <p class="site-footer__description">
-            Nous concevons des solutions digitales cohérentes pour aider
-            les entreprises à être visibles, crédibles et efficaces en ligne.
+            Devzair est une agence digitale&nbsp;: nous concevons des
+            solutions web cohérentes et accompagnons les entreprises pour
+            qu’elles soient visibles, crédibles et efficaces en ligne.
           </p>
         </div>
 

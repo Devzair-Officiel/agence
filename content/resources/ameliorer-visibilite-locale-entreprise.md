@@ -28,7 +28,7 @@ Le premier levier est simple mais souvent bâclé : votre site doit indiquer cla
 
 Cette cohérence géographique doit se lire sans effort. Un visiteur qui arrive sur votre site depuis une recherche « [votre métier] [nom de ville] » doit trouver, dans les premières secondes, la confirmation qu'il est au bon endroit. Sinon il repart — et la visite ne se convertit pas.
 
-Cette question rejoint plus largement le [référencement pensé dès la création du site](/ressources/seo-creation-site-internet) : la présence géographique n'est pas un ajout tardif, elle se conçoit avec le reste. C'est aussi un travail de contenu que nous rangeons dans notre pôle [valoriser](/expertises/valoriser).
+Cette question rejoint plus largement le référencement pensé dès la création du site, que nous abordons dans notre article sur la [création d'un site internet professionnel](/ressources/creer-site-internet-professionnel) : la présence géographique n'est pas un ajout tardif, elle se conçoit avec le reste. C'est aussi un travail de contenu que nous rangeons dans notre pôle [valoriser](/expertises/valoriser).
 
 ## La fiche d'établissement Google, et ce qu'elle demande
 

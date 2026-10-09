@@ -49,10 +49,11 @@ import HomeEcosystemGraph from "~/components/home/HomeEcosystemGraph.vue"
           en ligne.
         </h1>
         <p class="home-hero__lead">
-          Sites internet, applications métier, identité visuelle, contenus
-          professionnels et référencement&nbsp;: nous réunissons les expertises
-          nécessaires pour construire une présence digitale cohérente et
-          évolutive.
+          Devzair est une agence digitale qui accompagne les entreprises dans
+          la création de sites internet, d’applications métier et de présences
+          digitales complètes. Nous réunissons stratégie, design, développement,
+          contenus professionnels et référencement pour construire des outils
+          utiles et évolutifs.
         </p>
 
         <div class="home-hero__ctas">

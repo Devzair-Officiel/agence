@@ -2071,6 +2071,11 @@ Audit live réalisé le 2026-09-06 sur `https://devzair.fr`.
 
 **Dépendances :** SEO-COM-1 à 9, Phase 12 (production VPS). Voir `docs/15-SEO-PRODUCTION.md`.
 
+**Mise à jour 2026-10-08 (audit live en lecture seule) :**
+- [x] Rebuild post SEO-COM-4/5/6/8 constaté : services, réalisations et article prix en 200, sitemap à 37 URLs.
+- [x] Search Console active (données disponibles) ; date de soumission du sitemap non documentée.
+- [ ] Sous-lot « marque et liens morts » (DEV-091) : code et tests prêts dans Git, **non déployés**. Actions humaines : rebuild web, republication manuelle des 4 articles concernés (`docs/15-SEO-PRODUCTION.md` §16), checklist §17.
+
 ---
 
 ---

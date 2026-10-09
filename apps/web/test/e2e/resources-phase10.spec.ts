@@ -2,10 +2,12 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 /**
- * Tests E2E Phase 10 — contenu éditorial réel des 6 articles pillar.
+ * Tests E2E Phase 10 — contenu éditorial réel des articles pillar.
  *
- * Ces tests dépendent de la présence en base des 6 slugs Phase 10
- * publiés (voir `scripts/editorial-content-bootstrap.sh`). Ils sont
+ * Ces tests dépendent de la présence en base des slugs Phase 10
+ * publiés (voir `scripts/editorial-content-bootstrap.sh`). Deux articles
+ * Phase 10 ont été retirés de la publication (2026-10-08, sources dans
+ * `content/archive/resources/`) : ils doivent rester absents. Ils sont
  * indépendants du jeu de fixtures `e2e-8b2-*` (autres suites).
  *
  * Portée : présence dans le listing/sitemap, SEO SSR (title, description,
@@ -15,15 +17,15 @@ import { expect, test } from '@playwright/test'
 
 const PHASE10_SLUGS = [
   'creer-site-internet-professionnel',
-  'site-vitrine-ou-sur-mesure',
-  'seo-creation-site-internet',
   'application-metier-remplacer-excel',
   'ameliorer-visibilite-locale-entreprise',
   'maintenance-site-internet',
 ] as const
 
+const RETIRED_SLUGS = ['seo-creation-site-internet', 'site-vitrine-ou-sur-mesure'] as const
+
 test.describe('Phase 10 — contenu éditorial réel', () => {
-  test('les 6 slugs Phase 10 sont visibles dans le listing paginé', async ({ page }) => {
+  test('les slugs Phase 10 publiés sont visibles dans le listing paginé', async ({ page }) => {
     const seen = new Set<string>()
     let currentPage = 1
     const maxPages = 20
@@ -48,12 +50,32 @@ test.describe('Phase 10 — contenu éditorial réel', () => {
     }
   })
 
-  test('/sitemap.xml contient les 6 URLs Phase 10', async ({ request }) => {
+  test('/sitemap.xml contient les URLs Phase 10 publiées et aucune URL retirée', async ({
+    request,
+  }) => {
     const response = await request.get('/sitemap.xml')
     expect(response.status()).toBe(200)
     const body = await response.text()
     for (const slug of PHASE10_SLUGS) {
       expect(body, `sitemap contient ${slug}`).toContain(`/ressources/${slug}`)
+    }
+    for (const slug of RETIRED_SLUGS) {
+      expect(body, `sitemap exclut ${slug}`).not.toContain(`/ressources/${slug}<`)
+    }
+  })
+
+  test('les articles retirés répondent 404 et ne sont liés par aucun article publié', async ({
+    request,
+  }) => {
+    for (const slug of RETIRED_SLUGS) {
+      const response = await request.get(`/ressources/${slug}`)
+      expect(response.status(), `/ressources/${slug}`).toBe(404)
+    }
+    for (const slug of PHASE10_SLUGS) {
+      const html = await (await request.get(`/ressources/${slug}`)).text()
+      for (const retired of RETIRED_SLUGS) {
+        expect(html, `${slug} → ${retired}`).not.toContain(`href="/ressources/${retired}"`)
+      }
     }
   })
 
@@ -74,7 +96,7 @@ test.describe('Phase 10 — contenu éditorial réel', () => {
   })
 
   test('article Phase 10 injecte BlogPosting + BreadcrumbList JSON-LD', async ({ request }) => {
-    const slug = 'seo-creation-site-internet'
+    const slug = 'ameliorer-visibilite-locale-entreprise'
     const response = await request.get(`/ressources/${slug}`)
     const body = await response.text()
 
@@ -86,7 +108,7 @@ test.describe('Phase 10 — contenu éditorial réel', () => {
 
     const blogPosting = scripts.find((s) => s['@type'] === 'BlogPosting')
     expect(blogPosting, 'BlogPosting JSON-LD présent').toBeDefined()
-    expect(blogPosting.headline).toMatch(/SEO/)
+    expect(blogPosting.headline).toMatch(/visibilité locale/i)
     expect(blogPosting.datePublished).toMatch(/^2026-08-/)
     expect(blogPosting.publisher).toEqual({
       '@id': expect.stringMatching(/#organization$/),
@@ -100,10 +122,8 @@ test.describe('Phase 10 — contenu éditorial réel', () => {
   })
 
   test('article Phase 10 rend le corps Markdown avec sections H2 lisibles', async ({ page }) => {
-    await page.goto('/ressources/site-vitrine-ou-sur-mesure')
-    await expect(page.locator('h1')).toHaveText(
-      /Site vitrine ou site sur mesure/,
-    )
+    await page.goto('/ressources/maintenance-site-internet')
+    await expect(page.locator('h1')).toHaveText(/maintenance/i)
     await expect(page.locator('.resource-content')).toBeVisible()
     const h2Count = await page.locator('.resource-content h2').count()
     expect(h2Count).toBeGreaterThanOrEqual(3)

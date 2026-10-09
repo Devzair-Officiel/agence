@@ -1,10 +1,37 @@
 # SEO Production — Plan et recette SEO-COM-10
 
-> Plan opérationnel de mise en production SEO. Audit live du 2026-09-06, décisions et actions humaines.
+> Plan opérationnel de mise en production SEO. Audit live du 2026-09-06, réconcilié par l'audit du 2026-10-08 (§0), décisions et actions humaines.
 
 ---
 
-## 1. État production au 2026-09-06
+## 0. État production vérifié au 2026-10-08
+
+Vérifications HTTP en lecture seule sur `https://devzair.fr` (aucune action sur le serveur ni sur la base).
+
+| Contrôle | État | Détail |
+|---|---|---|
+| Rebuild post SEO-COM-4/5/6/8 | ✓ Déployé | Services, réalisations et `/ressources/site-internet-pas-cher` répondent 200 |
+| Sitemap | ✓ 37 URLs | 8 pages principales, 5 expertises, 8 services, 4 réalisations, 10 articles, accueil ; seuls des articles publiés y figurent |
+| Robots | ✓ | Mode indexable, `/admin` exclu, politique IA DEC-096 + DEC-101 |
+| Accueil SSR | ✓ | Title, description, canonical `https://devzair.fr/`, `og:site_name=Devzair`, `og:image` absolue, un seul H1 |
+| Schema.org | ✓ | `Organization` (name, url, description, logo) + `WebSite` (name, url, publisher → `@id`) ; aucun `sameAs`, `address` ni `contactPoint` |
+| Assets | ✓ | `/og-image.png` et `/brand/logo_devzaire_agency.png` répondent 200 (`image/png`) |
+| Search Console | Active | Données disponibles (visibilité encore limitée) ; date de validation et de soumission du sitemap non documentées ici |
+| **Liens morts** | ⛔ 4 | 4 articles publiés pointent vers `/ressources/seo-creation-site-internet` et `/ressources/site-vitrine-ou-sur-mesure` (404) |
+| Marque dans `<main>` | ⚠ Faible | 29 pages sur 37 sans « Devzair » dans `<main>` ; hero de l'accueil sans mention de la marque |
+
+### Correctifs présents dans Git, NON déployés (2026-10-08)
+
+- Accueil : titre absolu `Devzair — Agence digitale : sites web, applications et SEO` (option `absoluteTitle` de `usePageSeo`, les autres pages gardent « %s | Devzair ») ; introduction du hero commençant par « Devzair est une agence digitale… ».
+- Footer (toutes pages) : description nommant Devzair et le rôle d'agence digitale.
+- `/agence` : introduction « Devzair, c'est un interlocuteur direct… ».
+- Sources Markdown des 4 articles corrigées ; deux sources retirées archivées dans `content/archive/resources/` ; slugs retirés du bootstrap.
+
+Les 4 articles publiés ne seront **pas** corrigés par le déploiement : l'import est create-only. Voir §16.
+
+---
+
+## 1. État production au 2026-09-06 (historique)
 
 | Contrôle | État | Détail |
 |---|---|---|
@@ -339,9 +366,11 @@ Pour les futurs déploiements automatisés (CI/CD) : inclure `NUXT_PUBLIC_SITE_I
 
 ## 15. Actions restantes — Priorisées
 
-### P0 — Bloquant (avant Search Console)
+> Mise à jour 2026-10-08 : le rebuild P0 est constaté en production (§0). Nouvelles actions humaines : déployer le lot « marque et liens morts » (§0), republier les 4 articles (§16), dérouler la checklist (§17).
 
-- [ ] **Rebuild + redéploiement production** avec le code `main` actuel (commit `b4470cd`)
+### P0 — Bloquant (avant Search Console) — FAIT (constaté le 2026-10-08)
+
+- [x] **Rebuild + redéploiement production** avec le code `main` actuel (commit `b4470cd`)
   - Commandes : voir §3
   - Vérifier HTTP 200 sur services, réalisations, article
   - Vérifier sitemap ≥ 26 URLs
@@ -360,6 +389,73 @@ Pour les futurs déploiements automatisés (CI/CD) : inclure `NUXT_PUBLIC_SITE_I
 - [ ] J+7 : contrôle indexation
 - [ ] J+14 : premières tendances
 - [ ] J+28 : bilan et décision articles prix
+
+---
+
+## 16. Republication d'un article déjà publié (correction de contenu)
+
+**Contexte** : `app:editorial:import` est create-only et l'agrégat `Article` n'accepte une modification qu'en `Draft`. Corriger un fichier `content/resources/*.md` ne modifie pas l'article publié. Le seul chemin existant est l'admin HTTP : `Published → Archived → Draft → (édition) → Published`.
+
+**Garanties vérifiées dans le code** :
+- le slug est immuable (`UpdateDraftArticle` ne le modifie jamais) ;
+- `publishedAt` (date de première publication, `BlogPosting.datePublished`) est conservé à la restauration et à la republication — la date saisie au moment de republier est ignorée ;
+- `updatedAt` est mis à jour (→ `dateModified`, `lastmod` du sitemap) ;
+- côté Nuxt, le cache éditorial revalide chaque détail par ETag et purge l'entrée sur 404 : aucune invalidation manuelle n'est nécessaire ; le listing `/ressources` est en SWR 60 s.
+
+**Indisponibilité** : entre « Archiver » et « Publier », l'article répond **404** et disparaît du listing et du sitemap. Préparer le texte avant d'archiver pour limiter la fenêtre à 1–2 minutes par article ; traiter les articles un par un, hors heure de forte audience.
+
+### Procédure manuelle (validation humaine obligatoire, en production)
+
+Pré-requis : sauvegarde PostgreSQL récente (`pg_dump`), accès admin, texte corrigé copié depuis le fichier Git correspondant.
+
+Pour chaque article (`ameliorer-visibilite-locale-entreprise`, `creer-site-internet-professionnel`, `maintenance-site-internet`, `application-metier-remplacer-excel`) :
+
+1. `/admin/articles` → ouvrir l'article ; noter le statut, la date de publication et l'image principale.
+2. Ouvrir l'édition et copier le corps Markdown actuel dans un fichier local (sauvegarde de retour arrière).
+3. **Archiver** l'article (l'URL publique passe en 404).
+4. **Restaurer** l'article (statut `Draft`).
+5. **Éditer** : remplacer uniquement le paragraphe concerné par la version de `content/resources/<slug>.md` ; enregistrer. Ne pas toucher au titre, à l'extrait ni au SEO.
+6. **Prévisualiser** et vérifier le lien remplacé.
+7. **Publier**. Vérifier que la date de publication affichée est l'ancienne.
+8. Contrôler immédiatement :
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" https://devzair.fr/ressources/<slug>       # 200
+   curl -s https://devzair.fr/ressources/<slug> | grep -c 'seo-creation-site-internet\|site-vitrine-ou-sur-mesure'  # 0
+   curl -s https://devzair.fr/ressources/<slug> | grep -o '"datePublished":"[^"]*"'   # date inchangée
+   ```
+
+**Ne pas** : relancer `editorial-content-bootstrap.sh` en production pour corriger un article, supprimer un article, rediriger les URL retirées vers l'accueil.
+
+**Retour arrière** : si l'édition pose problème, repasser par Archiver → Restaurer → coller le corps sauvegardé (étape 2) → Publier. Les URL retirées restent en 404 dans tous les cas.
+
+---
+
+## 17. Checklist après déploiement du lot « marque et liens morts » (2026-10-08)
+
+```bash
+# Accueil : titre unique de marque, introduction, H1 unique
+curl -s https://devzair.fr/ | grep -o '<title>[^<]*</title>'
+#   attendu : <title>Devzair — Agence digitale : sites web, applications et SEO</title>
+curl -s https://devzair.fr/ | grep -o 'og:title" content="[^"]*"'
+curl -s https://devzair.fr/ | grep -c '<h1'                                 # 1
+curl -s https://devzair.fr/ | grep -c 'Devzair est une agence digitale'     # ≥ 2 (hero + footer)
+curl -s https://devzair.fr/ | grep -o '<link rel="canonical"[^>]*>'          # https://devzair.fr/
+
+# Template inchangé ailleurs
+curl -s https://devzair.fr/agence | grep -o '<title>[^<]*</title>'          # … | Devzair
+
+# JSON-LD
+curl -s https://devzair.fr/ | grep -o '"@type":"\(Organization\|WebSite\)","@id":"[^"]*","[a-z]*":"[^"]*"'
+
+# URL retirées : 404, absentes du sitemap
+for s in seo-creation-site-internet site-vitrine-ou-sur-mesure; do
+  curl -s -o /dev/null -w "$s %{http_code}\n" https://devzair.fr/ressources/$s   # 404
+done
+curl -s https://devzair.fr/sitemap.xml | grep -c 'seo-creation-site-internet\|site-vitrine-ou-sur-mesure'  # 0
+curl -s https://devzair.fr/sitemap.xml | grep -c '<loc>'                         # 37 (inchangé)
+```
+
+Après republication des 4 articles (§16) : aucune page du sitemap ne doit contenir `href="/ressources/seo-creation-site-internet"` ni `href="/ressources/site-vitrine-ou-sur-mesure"`. Dans Search Console : inspecter `https://devzair.fr/` et demander une indexation ; suivre les impressions de la requête « devzair » sans attendre de résultat garanti.
 
 ---
 

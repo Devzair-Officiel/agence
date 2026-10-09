@@ -158,6 +158,35 @@ describe("usePageSeo — page noindex", () => {
   })
 })
 
+describe("usePageSeo — titre absolu", () => {
+  let captures: CaptureBag
+  beforeEach(() => {
+    captures = installStubs("https://devzair.fr", true)
+  })
+
+  it("neutralise le template global sans perdre le canonical", () => {
+    usePageSeo({
+      title: "Devzair — Agence digitale",
+      absoluteTitle: true,
+      description: "Accueil",
+      path: "/",
+    })
+    expect(captures.seo).toMatchObject({
+      title: "Devzair — Agence digitale",
+      ogTitle: "Devzair — Agence digitale",
+    })
+    expect(captures.head).toEqual({
+      titleTemplate: "%s",
+      link: [{ rel: "canonical", href: "https://devzair.fr/" }],
+    })
+  })
+
+  it("n'émet aucun titleTemplate par défaut", () => {
+    usePageSeo({ title: "Services", description: "Offre", path: "/services" })
+    expect(captures.head).not.toHaveProperty("titleTemplate")
+  })
+})
+
 describe("usePageSeo — directive robots explicite", () => {
   let captures: CaptureBag
   beforeEach(() => {

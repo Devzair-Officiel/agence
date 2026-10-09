@@ -150,8 +150,8 @@ test.describe('Phase 10A2 — pages expertise', () => {
   test('une page expertise avec article publié affiche « Ressources liées » et un lien vers la liste filtrée', async ({
     page,
   }) => {
-    // « visibilite » est utilisée par l'article SEO Phase 10 :
-    // ameliorer-visibilite-locale-entreprise + seo-creation-site-internet.
+    // « visibilite » est utilisée par l'article Phase 10
+    // ameliorer-visibilite-locale-entreprise.
     await page.goto('/expertises/visibilite')
     const heading = page.getByRole('heading', {
       name: /Nos ressources autour de l'expertise/i,

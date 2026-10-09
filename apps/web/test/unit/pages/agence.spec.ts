@@ -42,7 +42,7 @@ describe("/agence page", () => {
   it("publishes the hero lead verbatim", () => {
     const wrapper = mount(AgencePage)
     expect(wrapper.text()).toContain(
-      "Un interlocuteur direct, un engagement dans la durée avec chaque entreprise accompagnée.",
+      "Devzair, c'est un interlocuteur direct et un engagement dans la durée avec chaque entreprise accompagnée.",
     )
   })
 

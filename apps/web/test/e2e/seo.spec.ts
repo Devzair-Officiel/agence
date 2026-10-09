@@ -74,6 +74,32 @@ test.describe('SEO SSR — HTML initial', () => {
     // Aucune donnée fictive ne doit apparaître.
     expect(organization).not.toHaveProperty('aggregateRating')
     expect(organization).not.toHaveProperty('address')
+
+    const website = parsed['@graph'].find(
+      (n: { '@type': string }) => n['@type'] === 'WebSite',
+    )
+    expect(website.name).toBe('Devzair')
+    expect(website.url).toBe(organization.url)
+    expect(website.publisher).toEqual({ '@id': organization['@id'] })
+  })
+
+  test('l\'accueil nomme Devzair une seule fois dans le title et dans son introduction SSR', async ({
+    request,
+  }) => {
+    const { body } = await fetchSSR(request, '/')
+    const title = body.match(/<title>([^<]*)<\/title>/i)?.[1] ?? ''
+    expect(title).toBe('Devzair — Agence digitale : sites web, applications et SEO')
+    expect(title.match(/Devzair/g)).toHaveLength(1)
+    expect(body).toMatch(
+      /<meta[^>]+property="og:title"[^>]+content="Devzair — Agence digitale : sites web, applications et SEO"/i,
+    )
+    expect(body.match(/<h1[\s>]/gi)).toHaveLength(1)
+    expect(body).toMatch(/class="home-hero__lead"[^>]*>\s*Devzair est une agence digitale/)
+  })
+
+  test('les pages internes gardent le template global « | Devzair »', async ({ request }) => {
+    const { body } = await fetchSSR(request, '/agence')
+    expect(body).toMatch(/<title>Agence digitale à taille humaine \| Devzair<\/title>/)
   })
 
   test('/design-preview n\'est plus servi (supprimée Phase 5D)', async ({

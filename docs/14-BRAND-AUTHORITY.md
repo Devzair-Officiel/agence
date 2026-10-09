@@ -176,7 +176,14 @@ Ne pas rendre le dépôt privé sans décision explicite — vérifier simplemen
 
 ## 8. Schema Organization — État et règles
 
-### État actuel (2026-09-06)
+### Mise à jour 2026-10-08 (vérifiée en production)
+
+`site.ts` configure désormais `defaultOgImage: "/og-image.png"` et `organizationLogo: "/brand/logo_devzaire_agency.png"` ; `useSiteSchema.ts` alimente `organization.logo` depuis `organizationLogo` (la note technique ci-dessous est donc résolue). Les deux assets répondent 200 en production. `legalName`, `sameAs`, `address` et `contactPoint` restent absents. La validation formelle de cet asset comme logo officiel n'est pas tracée ici : action humaine §14 maintenue.
+
+Signaux de marque on-site ajoutés dans Git le 2026-10-08 (**non déployés** à cette date) : titre d'accueil `Devzair — Agence digitale : sites web, applications et SEO` (sans double « Devzair »), introduction du hero, description du footer et introduction de `/agence` nommant Devzair. Aucune donnée d'identité nouvelle n'a été ajoutée.
+
+
+### État au 2026-09-06 (historique)
 
 `useSiteSchema.ts` émet uniquement :
 
@@ -327,7 +334,7 @@ Stratégie : présenter un projet réel → partager l'étude de cas → permett
 
 ### P0 — Identité critique (requis avant toute mise à jour de site.ts)
 
-- [ ] **Confirmer le logo officiel** à utiliser pour le Schema.org et les profils externes (parmi : `logo.png`, `logo-hd.png`, `logo_devzaire_agency.png`, `agence-devzair.png`)
+- [ ] **Confirmer le logo officiel** (asset `logo_devzaire_agency.png` déjà utilisé dans le Schema.org depuis `organizationLogo` — confirmation formelle toujours attendue) — à utiliser pour le Schema.org et les profils externes (parmi : `logo.png`, `logo-hd.png`, `logo_devzaire_agency.png`, `agence-devzair.png`)
 - [ ] **Fournir l'image Open Graph officielle** — 1200×630 px — à placer dans `/public/og/og-default.webp`
 
 ### P1 — Profils officiels importants

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Bootstrap idempotent du contenu éditorial réel Phase 10.
 #
-# Rôle : garantir que les 6 articles pillar `content/resources/*.md`
-# existent en base et sont publiés — sans jamais écraser un article déjà
-# présent, sans réinitialiser sa date de publication. La commande
-# `app:editorial:import` est create-only (refuse si le slug existe),
-# donc ce script peut être exécuté autant de fois que nécessaire :
+# Rôle : garantir que les articles listés dans SLUGS (sources
+# `content/resources/*.md`) existent en base et sont publiés — sans
+# jamais écraser un article déjà présent, sans réinitialiser sa date de
+# publication. La commande `app:editorial:import` est create-only (refuse
+# si le slug existe), donc ce script peut être exécuté autant de fois que
+# nécessaire :
 # les slugs déjà présents sont sautés silencieusement.
 #
 # Usage :
@@ -42,18 +43,18 @@ fi
 # aujourd'hui pour rester robuste quelle que soit l'heure d'exécution.
 declare -A PUBLISHED_AT=(
   [creer-site-internet-professionnel]="2026-08-04T09:00:00+00:00"
-  [site-vitrine-ou-sur-mesure]="2026-08-05T09:00:00+00:00"
-  [seo-creation-site-internet]="2026-08-06T09:00:00+00:00"
   [application-metier-remplacer-excel]="2026-08-07T09:00:00+00:00"
   [ameliorer-visibilite-locale-entreprise]="2026-08-08T09:00:00+00:00"
   [maintenance-site-internet]="2026-08-09T01:30:00+00:00"
   [site-internet-pas-cher]="2026-09-05T09:00:00+00:00"
 )
 
+# Slugs retirés de la publication (2026-10-08) : `site-vitrine-ou-sur-mesure`
+# et `seo-creation-site-internet` ne sont pas publiés en production. Leurs
+# sources sont archivées dans `content/archive/resources/` et ne doivent pas
+# être réintroduites ici sans décision éditoriale explicite.
 SLUGS=(
   creer-site-internet-professionnel
-  site-vitrine-ou-sur-mesure
-  seo-creation-site-internet
   application-metier-remplacer-excel
   ameliorer-visibilite-locale-entreprise
   maintenance-site-internet

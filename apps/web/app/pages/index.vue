@@ -29,8 +29,11 @@ import HomeTrust from "~/components/home/HomeTrust.vue"
  *                        footer du layout)
  */
 
+// Titre absolu : l'accueil porte la marque en tête pour les recherches
+// « Devzair » ; le template global « | Devzair » la dupliquerait.
 usePageSeo({
-  title: "Agence digitale pour sites web, applications et visibilité",
+  title: "Devzair — Agence digitale : sites web, applications et SEO",
+  absoluteTitle: true,
   description:
     "Devzair accompagne les entreprises dans la création de sites internet, applications métier, identités visuelles, contenus professionnels et stratégies SEO sur mesure.",
   path: "/",
