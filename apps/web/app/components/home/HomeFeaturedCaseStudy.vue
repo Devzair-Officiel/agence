@@ -236,25 +236,28 @@ onBeforeUnmount(() => {
                   <dd class="home-case__meta-value">{{ study.year }}</dd>
                 </div>
               </dl>
-              <NuxtLink
-                v-if="study.status === 'published'"
-                :to="study.route"
-                class="home-case__cta"
-              >
-                Voir l'étude de cas
-                <span aria-hidden="true" class="home-case__cta-arrow">→</span>
-              </NuxtLink>
-              <a
-                v-else-if="study.href"
-                :href="study.href"
-                class="home-case__cta"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Voir le site
-                <span class="sr-only"> (nouvelle fenêtre)</span>
-                <span aria-hidden="true" class="home-case__cta-arrow">↗</span>
-              </a>
+              <div class="home-case__actions">
+                <NuxtLink
+                  v-if="study.status === 'published'"
+                  :to="study.route"
+                  class="home-case__cta"
+                >
+                  Voir l'étude de cas
+                  <span aria-hidden="true" class="home-case__cta-arrow">→</span>
+                </NuxtLink>
+                <!-- `href` n'est renseigné que pour un site en ligne autorisé par le client. -->
+                <a
+                  v-if="study.href"
+                  :href="study.href"
+                  class="home-case__cta home-case__cta--secondary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Voir le site
+                  <span class="sr-only"> {{ study.name }} (nouvelle fenêtre)</span>
+                  <span aria-hidden="true" class="home-case__cta-arrow">↗</span>
+                </a>
+              </div>
             </div>
           </article>
           </li>
@@ -586,12 +589,30 @@ onBeforeUnmount(() => {
   margin: 0;
 }
 
+.home-case__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/*
+ * CTA — retour tactile en trois temps, uniquement transform / box-shadow /
+ * couleurs (composités, sans reflow) :
+ *   - survol (pointeur fin) : le bouton se soulève, son ombre s'étend ;
+ *   - appui : il s'enfonce immédiatement (durée courte) ;
+ *   - relâchement : il revient avec un léger rebond (`--cta-spring`).
+ * Le survol est réservé à `(hover: hover)` pour éviter l'état « collé »
+ * après un tap sur mobile.
+ */
 .home-case__cta {
-  align-self: flex-start;
+  --cta-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --cta-shadow-color: color-mix(in srgb, var(--action-primary) 55%, transparent);
+
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-2);
   padding: var(--space-3) var(--space-5);
   font-family: var(--font-family-body);
   font-weight: var(--font-weight-body-strong);
@@ -600,15 +621,68 @@ onBeforeUnmount(() => {
   background-color: var(--action-primary);
   border-radius: var(--radius-pill);
   text-decoration: none;
+  box-shadow: 0 6px 16px -10px var(--cta-shadow-color);
+  -webkit-tap-highlight-color: transparent;
   transition:
     background-color var(--duration-base) var(--ease-out),
-    transform var(--duration-base) var(--ease-out);
+    color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    transform var(--duration-slow) var(--cta-spring);
   min-height: 44px;
 }
 
-.home-case__cta:hover {
-  background-color: var(--action-primary-hover);
-  transform: translateY(-1px);
+.home-case__cta--secondary {
+  --cta-shadow-color: color-mix(in srgb, var(--text-primary) 30%, transparent);
+
+  color: var(--text-primary);
+  background-color: transparent;
+  box-shadow:
+    inset 0 0 0 1px var(--border-default),
+    0 6px 16px -12px transparent;
+}
+
+.home-case__cta-arrow {
+  display: inline-block;
+  transition: transform var(--duration-slow) var(--cta-spring);
+}
+
+@media (hover: hover) {
+  .home-case__cta:hover {
+    background-color: var(--action-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -12px var(--cta-shadow-color);
+  }
+
+  .home-case__cta--secondary:hover {
+    background-color: color-mix(in srgb, var(--text-primary) 6%, transparent);
+    box-shadow:
+      inset 0 0 0 1px var(--text-primary),
+      0 12px 24px -14px var(--cta-shadow-color);
+  }
+
+  .home-case__cta:hover .home-case__cta-arrow {
+    transform: translateX(4px);
+  }
+
+  /* Flèche sortante : glisse en diagonale, dans le sens du ↗. */
+  .home-case__cta--secondary:hover .home-case__cta-arrow {
+    transform: translate(3px, -3px);
+  }
+}
+
+/* Appui : réponse immédiate, le bouton s'enfonce et son ombre se resserre. */
+.home-case__cta:active {
+  background-color: var(--action-primary-active);
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 2px 6px -4px var(--cta-shadow-color);
+  transition-duration: var(--duration-instant);
+}
+
+.home-case__cta--secondary:active {
+  background-color: color-mix(in srgb, var(--text-primary) 11%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--text-primary),
+    0 2px 6px -4px var(--cta-shadow-color);
 }
 
 .home-case__cta:focus-visible {
@@ -616,12 +690,15 @@ onBeforeUnmount(() => {
   outline-offset: var(--focus-ring-gap);
 }
 
-.home-case__cta-arrow {
-  transition: transform var(--duration-base) var(--ease-out);
-}
-
-.home-case__cta:hover .home-case__cta-arrow {
-  transform: translateX(3px);
+/* Mouvement réduit : seules les couleurs et ombres changent. */
+@media (prefers-reduced-motion: reduce) {
+  .home-case__cta,
+  .home-case__cta:hover,
+  .home-case__cta:active,
+  .home-case__cta-arrow,
+  .home-case__cta:hover .home-case__cta-arrow {
+    transform: none;
+  }
 }
 
 /* Réservé au lecteur d'écran — même règle que le skip link. */

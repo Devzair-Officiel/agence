@@ -90,6 +90,25 @@ describe("HomeFeaturedCaseStudy", () => {
     }
   })
 
+  it("links each published study to its case study and, when set, to its live website", () => {
+    const wrapper = mount(HomeFeaturedCaseStudy)
+    const items = wrapper.findAll(".home-case__item")
+    publishedStudies.forEach((study, index) => {
+      const item = items[index]!
+      expect(item.find(`a[href="${study.route}"]`).exists()).toBe(true)
+
+      const external = item.find(".home-case__cta--secondary")
+      if (!study.href) {
+        expect(external.exists()).toBe(false)
+        return
+      }
+      expect(external.attributes("href")).toBe(study.href)
+      expect(external.attributes("target")).toBe("_blank")
+      expect(external.attributes("rel")).toBe("noopener noreferrer")
+      expect(external.text()).toContain(`${study.name} (nouvelle fenêtre)`)
+    })
+  })
+
   it("carries no fictional client name or numeric proof (AGENTS.md rule 1)", () => {
     const wrapper = mount(HomeFeaturedCaseStudy)
     const text = wrapper.text()
