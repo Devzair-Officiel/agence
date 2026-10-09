@@ -238,6 +238,20 @@ describe("EstimatorProjectSummary", () => {
       expect(modifyButtons).toHaveLength(0)
     })
 
+    it("shows Modifier on every visited section when no step is in progress (result screen)", () => {
+      const wrapper = mount(EstimatorProjectSummary, {
+        props: {
+          ...baseProps,
+          projectType: "vitrinesite",
+          maxVisitedStep: 7,
+          currentStep: null,
+        },
+      })
+      expect(wrapper.findAll("button.summary__modify")).toHaveLength(7)
+      expect(wrapper.find(".summary__current-badge").exists()).toBe(false)
+      expect(wrapper.find(".summary__section--current").exists()).toBe(false)
+    })
+
     it("emits go-to-step with correct step number on Modifier click", async () => {
       const wrapper = mount(EstimatorProjectSummary, {
         props: {

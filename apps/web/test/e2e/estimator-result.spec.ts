@@ -406,6 +406,36 @@ test.describe("Invalidation du résultat", () => {
   })
 })
 
+test.describe("Modification d'une étape depuis le résultat", () => {
+  test("le récapitulatif ramène à l'étape choisie, y compris la dernière", async ({
+    page,
+  }) => {
+    await mockEstimateResponse(page, MOCK_ESTIMATED)
+    await completeVitrineToLastStep(page)
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.locator(".result__heading")).toBeVisible()
+
+    // Toutes les étapes sont modifiables depuis le résultat, dernière comprise.
+    await expect(page.locator(".summary__current-badge")).toHaveCount(0)
+    await expect(page.locator("button.summary__modify")).toHaveCount(7)
+
+    await page.getByRole("button", { name: "Modifier : Périmètre" }).click()
+    await expect(page.locator(".result__heading")).toHaveCount(0)
+    await expect(page.getByRole("progressbar")).toBeVisible()
+    await expect(page.locator("input[value='small']")).toBeChecked()
+    await expect(page.locator(".summary__section--current")).toContainText("Périmètre")
+
+    // Retour au résultat puis modification de la dernière étape.
+    await page.getByRole("button", { name: "Modifier : Accompagnement" }).click()
+    await page.getByRole("button", { name: /Voir mon estimation/i }).click()
+    await expect(page.locator(".result__heading")).toBeVisible()
+    await page.getByRole("button", { name: "Modifier : Accompagnement" }).click()
+    await expect(page.locator(".result__heading")).toHaveCount(0)
+    await expect(page.getByRole("button", { name: /Voir mon estimation/i })).toBeVisible()
+    await expect(page.locator(".summary__section--current")).toContainText("Accompagnement")
+  })
+})
+
 // ─── Modalités de paiement (EST-5) ───────────────────────────────────────────
 
 test.describe("Modalités de paiement — estimated", () => {

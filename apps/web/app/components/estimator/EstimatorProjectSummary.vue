@@ -20,7 +20,8 @@ import type {
 } from "~/types/estimator"
 
 const props = defineProps<{
-  currentStep: number
+  /** `null` : aucune étape en cours (écran résultat) — toutes les sections sont modifiables. */
+  currentStep: number | null
   maxVisitedStep: number
   path: EstimatorPath
   projectType: ProjectTypeCode | null

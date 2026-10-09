@@ -46,13 +46,15 @@ const showResult = computed(
 )
 const showError = computed(() => estimateStatus.value === "error")
 
-watch(currentStep, async () => {
+async function focusCurrentStep(): Promise<void> {
   await nextTick()
   const target = stepRef.value?.querySelector<HTMLElement>(
     "legend[tabindex='-1'], h2[tabindex='-1']",
   )
   target?.focus()
-})
+}
+
+watch(currentStep, focusCurrentStep)
 
 async function handleNext(): Promise<void> {
   if (isComplete.value) {
@@ -64,6 +66,19 @@ async function handleNext(): Promise<void> {
 
 function handleModifyAnswers(): void {
   clearResult()
+}
+
+/*
+ * Depuis le résultat (ou une erreur), le récapitulatif doit d'abord quitter
+ * cet écran pour que l'étape choisie redevienne visible. Le focus est
+ * replacé explicitement : l'étape demandée peut être l'étape courante,
+ * auquel cas le watcher de `currentStep` ne se déclenche pas.
+ */
+function handleGoToStep(step: number): void {
+  const leavesResult = showResult.value || showError.value
+  if (leavesResult) clearResult()
+  goToStep(step)
+  if (leavesResult) void focusCurrentStep()
 }
 
 async function handleRetry(): Promise<void> {
@@ -125,7 +140,7 @@ onMounted(() => {
           <!-- Résumé — toujours présent (sticky desktop) -->
           <div class="estimator-shell__summary">
             <EstimatorProjectSummary
-              :current-step="currentStep"
+              :current-step="showResult ? null : currentStep"
               :max-visited-step="maxVisitedStep"
               :path="path"
               :project-type="projectType"
@@ -138,7 +153,7 @@ onMounted(() => {
               :care-needs="careNeeds"
               :care-answered="careAnswered"
               :additional-feature-note="additionalFeatureNote"
-              @go-to-step="goToStep"
+              @go-to-step="handleGoToStep"
             />
           </div>
 
