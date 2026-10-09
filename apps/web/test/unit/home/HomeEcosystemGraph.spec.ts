@@ -90,6 +90,15 @@ describe("HomeEcosystemGraph", () => {
     }
   })
 
+  it("exposes a mobile label shift that centres each label on its pillar", () => {
+    const wrapper = mount(HomeEcosystemGraph)
+    for (const label of wrapper.findAll(".home-ecosystem-graph__pillar-label")) {
+      const style = label.attributes("style") ?? ""
+      expect(style).toMatch(/--label-shift-x:\s*-?\d+px/)
+      expect(style).toMatch(/--label-shift-y:\s*-?\d+px/)
+    }
+  })
+
   it("uses an expanded viewBox that accommodates the widest lateral labels and the top halo", () => {
     const wrapper = mount(HomeEcosystemGraph)
     // Marge latérale gauche portée à 32 unités SVG pour absorber la longueur

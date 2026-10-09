@@ -48,6 +48,12 @@ interface GraphPillarPosition {
   readonly labelAnchor: "start" | "middle" | "end"
   readonly labelDx: number
   readonly labelDy: number
+  /**
+   * Mobile (< 640px) : ordonnée de la ligne de base du libellé, relative au
+   * centre du pôle. Le libellé y est centré horizontalement sur le pôle
+   * (au-dessus si négatif, en dessous sinon) et la description est masquée.
+   */
+  readonly mobileLabelDy: number
 }
 
 // Cercle de 5 points autour du centre (280,260), rayon 165.
@@ -74,21 +80,23 @@ const positions: readonly GraphPillarPosition[] = [
   // le groupe scale à 1.15, rendant l'intrusion visible. On remonte donc
   // suffisamment pour que la description reste au-dessus du bord de l'anneau
   // même après amplification.
-  { pillarId: "concevoir", cx: 280, cy: 95, labelAnchor: "middle", labelDx: 0, labelDy: -78 },
+  { pillarId: "concevoir", cx: 280, cy: 95, labelAnchor: "middle", labelDx: 0, labelDy: -78, mobileLabelDy: -46 },
   // Construire — droite haut
-  { pillarId: "construire", cx: 437, cy: 209, labelAnchor: "start", labelDx: 46, labelDy: -6 },
+  { pillarId: "construire", cx: 437, cy: 209, labelAnchor: "start", labelDx: 46, labelDy: -6, mobileLabelDy: -46 },
   // Valoriser — droite bas
-  { pillarId: "valoriser", cx: 377, cy: 392, labelAnchor: "start", labelDx: 46, labelDy: -6 },
+  { pillarId: "valoriser", cx: 377, cy: 392, labelAnchor: "start", labelDx: 46, labelDy: -6, mobileLabelDy: 66 },
   // Visibilité — gauche bas
-  { pillarId: "visibilite", cx: 183, cy: 392, labelAnchor: "end", labelDx: -46, labelDy: -6 },
+  { pillarId: "visibilite", cx: 183, cy: 392, labelAnchor: "end", labelDx: -46, labelDy: -6, mobileLabelDy: 66 },
   // Faire évoluer — gauche haut
-  { pillarId: "faire-evoluer", cx: 123, cy: 209, labelAnchor: "end", labelDx: -46, labelDy: -6 },
+  { pillarId: "faire-evoluer", cx: 123, cy: 209, labelAnchor: "end", labelDx: -46, labelDy: -6, mobileLabelDy: -46 },
 ]
 
 interface GraphNode {
   readonly pillar: ExpertisePillar
   readonly position: GraphPillarPosition
   readonly descriptionLines: readonly string[]
+  /** Translation à appliquer au libellé desktop pour obtenir la pose mobile. */
+  readonly mobileLabelShift: Readonly<Record<"--label-shift-x" | "--label-shift-y", string>>
 }
 
 function wrapDescription(description: string): readonly string[] {
@@ -117,6 +125,10 @@ const nodes: readonly GraphNode[] = positions.map((position) => {
     pillar,
     position,
     descriptionLines: wrapDescription(pillar.description),
+    mobileLabelShift: {
+      "--label-shift-x": `${-position.labelDx}px`,
+      "--label-shift-y": `${position.mobileLabelDy - position.labelDy}px`,
+    },
   }
 })
 
@@ -305,6 +317,7 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
       />
       <!-- Étiquette centrale. -->
       <text
+        class="home-ecosystem-graph__center-label"
         :x="centerX"
         :y="centerY - 4"
         text-anchor="middle"
@@ -409,6 +422,7 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
             :x="node.position.cx + node.position.labelDx"
             :y="node.position.cy + node.position.labelDy"
             :text-anchor="node.position.labelAnchor"
+            :style="node.mobileLabelShift"
             fill="var(--color-cream)"
             font-family="var(--font-family-heading)"
             font-weight="600"
@@ -656,6 +670,70 @@ function onPillarClick(event: MouseEvent, pillarId: string) {
 .home-ecosystem-graph__pillar-link:hover .home-ecosystem-graph__pillar-label,
 .home-ecosystem-graph__pillar-link:focus-visible .home-ecosystem-graph__pillar-label {
   fill: var(--color-devzair-blue);
+}
+
+/*
+ * Mobile (< 640px) — même graphe, recomposé pour un écran étroit.
+ *
+ * Réduit tel quel, le viewBox desktop (664 unités de large) ramenait les
+ * libellés à ~8px et les descriptions à ~5px. On :
+ *   1. masque les descriptions (illisibles à cette taille et reprises par
+ *      la section « Nos expertises » juste en dessous) ;
+ *   2. centre chaque libellé au-dessus/au-dessous de son pôle
+ *      (`mobileLabelDy`, exposé via `--label-shift-*`) et l'agrandit ;
+ *   3. recadre le dessin : le viewBox n'étant pas pilotable en CSS, le SVG
+ *      est élargi puis décalé par marges négatives pour que la zone utile
+ *      (`--crop-*`, en unités du viewBox) occupe toute la largeur. Les
+ *      marges en % se rapportent à la largeur du conteneur, d'où l'usage
+ *      de `--crop-w` comme dénominateur partout. Les débords décoratifs
+ *      (halos, orbite) restent clippés par `.home-hero { overflow: hidden }`.
+ */
+@media (max-width: 639.98px) {
+  /* Plafonne la recomposition mobile : au-delà, le texte deviendrait trop gros. */
+  .home-ecosystem-navigation {
+    max-width: 28rem;
+    margin-inline: auto;
+  }
+
+  .home-ecosystem-graph {
+    /* Constantes du viewBox `-56 -100 664 620`. */
+    --viewbox-x: -56;
+    --viewbox-y: -100;
+    --viewbox-w: 664;
+    --viewbox-h: 620;
+    /* Zone utile à afficher sur mobile. */
+    --crop-x: 20;
+    --crop-y: 20;
+    --crop-w: 500;
+    --crop-h: 455;
+
+    width: calc(100% * var(--viewbox-w) / var(--crop-w));
+    max-width: none;
+    margin-left: calc(-100% * (var(--crop-x) - var(--viewbox-x)) / var(--crop-w));
+    margin-top: calc(-100% * (var(--crop-y) - var(--viewbox-y)) / var(--crop-w));
+    margin-bottom: calc(
+      -100% * (var(--viewbox-y) + var(--viewbox-h) - var(--crop-y) - var(--crop-h)) / var(--crop-w)
+    );
+  }
+
+  .home-ecosystem-graph__pillar-description {
+    display: none;
+  }
+
+  .home-ecosystem-graph__pillar-label {
+    font-size: 24px;
+    text-anchor: middle;
+    transform: translate(var(--label-shift-x), var(--label-shift-y));
+  }
+
+  .home-ecosystem-graph__pillar-index {
+    font-size: 17px;
+    transform: translateY(1.5px);
+  }
+
+  .home-ecosystem-graph__center-label {
+    font-size: 17px;
+  }
 }
 
 /*

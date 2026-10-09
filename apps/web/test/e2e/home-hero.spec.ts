@@ -240,7 +240,7 @@ for (const viewport of viewports) {
       await expect(page.locator('svg.home-ecosystem-graph')).toBeVisible()
     })
 
-    test('keeps every graph label and description inside the visible SVG', async ({
+    test('keeps every graph label and description inside the visible graph frame', async ({
       page,
     }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -248,23 +248,36 @@ for (const viewport of viewports) {
       const svg = page.locator('svg.home-ecosystem-graph')
       await expect(svg.locator('.home-ecosystem-graph__pillar').first()).toBeVisible()
 
-      const svgBox = await svg.boundingBox()
-      expect(svgBox).not.toBeNull()
+      // Sous 640px, le SVG est recadré par marges négatives : la zone
+      // réellement visible est le `<nav>` qui l'enveloppe, pas le SVG.
+      const frameBox = await page.locator('.home-ecosystem-navigation').boundingBox()
+      expect(frameBox).not.toBeNull()
+
+      const isMobile = viewport.width < 640
+      const descriptions = svg.locator('.home-ecosystem-graph__pillar-description')
+      await expect(descriptions).toHaveCount(5)
+      for (const description of await descriptions.all()) {
+        if (isMobile) await expect(description).toBeHidden()
+        else await expect(description).toBeVisible()
+      }
+
       const texts = svg.locator(
-        '.home-ecosystem-graph__pillar-label, .home-ecosystem-graph__pillar-description',
+        isMobile
+          ? '.home-ecosystem-graph__pillar-label'
+          : '.home-ecosystem-graph__pillar-label, .home-ecosystem-graph__pillar-description',
       )
-      await expect(texts).toHaveCount(10)
+      await expect(texts).toHaveCount(isMobile ? 5 : 10)
 
       for (const textNode of await texts.all()) {
         const box = await textNode.boundingBox()
         expect(box).not.toBeNull()
-        expect(box!.x).toBeGreaterThanOrEqual(svgBox!.x - 1)
-        expect(box!.y).toBeGreaterThanOrEqual(svgBox!.y - 1)
+        expect(box!.x).toBeGreaterThanOrEqual(frameBox!.x - 1)
+        expect(box!.y).toBeGreaterThanOrEqual(frameBox!.y - 1)
         expect(box!.x + box!.width).toBeLessThanOrEqual(
-          svgBox!.x + svgBox!.width + 1,
+          frameBox!.x + frameBox!.width + 1,
         )
         expect(box!.y + box!.height).toBeLessThanOrEqual(
-          svgBox!.y + svgBox!.height + 1,
+          frameBox!.y + frameBox!.height + 1,
         )
       }
     })
